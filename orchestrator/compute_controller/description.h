@@ -23,9 +23,9 @@ friend NFsManager;
 private:
 	nf_t type;
 	string uri;
-	//The next attribute are meningful only for DPDK VNFs
+	//The next attribute are meaningful only for DPDK VNFs
 	//FIXME: this is bad.. The same description should be valid for all the NFs. Then, it is up to the proper
-	//plugin to decide wheter an information has to be used or not.
+	//plugin to decide whether an information has to be used or not.
 	string cores;
 	string location;
 	

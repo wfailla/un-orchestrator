@@ -27,6 +27,13 @@ Description::Description(string type, string uri, string cores, string location)
 		this->type = KVM;
 		return;
 	} 
+#endif
+#ifdef ENABLE_NATIVE
+	else if(type == "native")
+	{
+		this->type = NATIVE;
+		return;
+	}
 #endif	
 
 	//[+] Add here other implementations for the execution environment

@@ -34,6 +34,9 @@
 #ifdef ENABLE_KVM
 	#include "plugins/kvm-libvirt/libvirt.h"
 #endif
+#ifdef ENABLE_NATIVE
+	#include "plugins/native/native.h"
+#endif
 //[+] Add here other implementations for the execution environment
 
 using namespace std;

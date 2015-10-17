@@ -364,6 +364,15 @@ bool ComputeController::selectImplementation()
 
 #endif
 
+#ifdef ENABLE_NATIVE
+	//Manage NATIVE execution environment
+	/*
+	 * TODO: insert implementation
+	 *
+	 * */
+
+#endif
+
 	//[+] Add here other implementations for the execution environment
 
 	delete(manager);
@@ -404,6 +413,11 @@ void ComputeController::selectImplementation(nf_t desiredType)
 #ifdef ENABLE_KVM
 						case KVM:
 							manager = new Libvirt();
+							break;
+#endif
+#ifdef ENABLE_NATIVE
+						case NATIVE:
+							manager = new Native();
 							break;
 #endif
 						//[+] Add here other implementations for the execution environment

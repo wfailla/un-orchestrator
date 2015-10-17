@@ -7,10 +7,13 @@
 using namespace std;
 
 typedef enum{
-	DPDK,
-	DOCKER,
+	DPDK
+	,DOCKER
 #ifdef ENABLE_KVM
-	KVM
+	,KVM
+#endif
+#ifdef ENABLE_NATIVE
+	,NATIVE
 #endif
 	//[+] Add here other implementations for the execution environment
 	}nf_t;
@@ -29,6 +32,10 @@ public:
 #ifdef ENABLE_KVM
 		else if(type == KVM)
 			return string("kvm");
+#endif
+#ifdef ENABLE_NATIVE
+		else if(type == NATIVE)
+			return string("native");
 #endif		
 
 		assert(0);
@@ -38,18 +45,22 @@ public:
 	static unsigned int toID(nf_t type)
 	{
 		if(type == DPDK)
-			return 2;
+			return 0;
 #ifdef ENABLE_DOCKER
 		else if(type == DOCKER)
 			return 1;
 #endif
 #ifdef ENABLE_KVM
 		else if(type == KVM)
-			return 0;
-#endif		
+			return 2;
+#endif
+#ifdef ENABLE_NATIVE
+		else if(type == NATIVE)
+			return 3;
+#endif
 
 		assert(0);
-		return 0;
+		return -1;
 	}
 
 	static bool isValid(string type)
@@ -60,7 +71,10 @@ public:
 #endif		
 #ifdef ENABLE_KVM
 		|| type == "kvm"
-#endif				
+#endif
+#ifdef ENABLE_NATIVE
+		|| type == "native"
+#endif
 		)
 			return true;
 	
