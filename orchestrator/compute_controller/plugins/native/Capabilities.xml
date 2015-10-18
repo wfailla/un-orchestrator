@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<tns:capabilities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tns="http://www.github.com/netgroup-polito/un-orchestrator/native_function_support"
+	xsi:schemaLocation="http://www.github.com/netgroup-polito/un-orchestrator/native_function_support Capabilities.xsd">
+	
+	<tns:capability name="iptables" location="./" type="executable"/>
+	<tns:capability name="ebtables" location="./"type="executable">
+	<tns:capability name="hw_accelerated_ipsec" 
+		location="/usr/bin/run_freescale_ipsec_encryption.sh"
+		type="script">
+</tns:capabilities>

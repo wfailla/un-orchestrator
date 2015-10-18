@@ -100,6 +100,15 @@ IF(ENABLE_DOCKER)
 ENDIF(ENABLE_DOCKER)
 
 OPTION(
+	ENABLE_NATIVE
+	"Turn on the support of NFs implemented in native form"
+	ON
+)
+IF(ENABLE_NATIVE)
+	ADD_DEFINITIONS(-DENABLE_NATIVE)
+ENDIF(ENABLE_NATIVE)
+
+OPTION(
 	ENABLE_KVM
 	"Turn on the support of NFs implemented in KVM virtual machines"
 	OFF
@@ -301,6 +310,21 @@ ELSE()
          ${SOURCES3}
     	)
 ENDIF(ENABLE_DOCKER)
+
+IF(ENABLE_NATIVE)
+    SET(SOURCES4
+    ${SOURCES3}
+	compute_controller/plugins/native/native.cc
+	compute_controller/plugins/native/native.h
+	compute_controller/plugins/native/native_constants.h
+	compute_controller/plugins/native/capability.h
+	compute_controller/plugins/native/capability.cc
+	)
+ELSE()
+     SET(SOURCES4
+         ${SOURCES3}
+    	)
+ENDIF(ENABLE_NATIVE)
 
 
 IF(UNIFY_NFFG)
