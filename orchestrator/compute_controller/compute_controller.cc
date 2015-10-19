@@ -1,8 +1,5 @@
 #include "compute_controller.h"
 
-#ifdef ENABLE_DOCKER
-	#include "plugins/docker/docker.cc"
-#endif
 pthread_mutex_t ComputeController::nfs_manager_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 map<int,uint64_t> ComputeController::cores;
