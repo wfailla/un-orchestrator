@@ -301,7 +301,7 @@ ENDIF(ENABLE_KVM)
 IF(ENABLE_DOCKER)
     SET(SOURCES4
     ${SOURCES3}
-	compute_controller/plugins/docker/docker.cc
+	compute_controller/plugins/native/docker.cc
 	compute_controller/plugins/docker/docker.h
 	compute_controller/plugins/docker/docker_constants.h
 	)

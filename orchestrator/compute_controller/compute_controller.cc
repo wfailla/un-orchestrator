@@ -1,5 +1,8 @@
 #include "compute_controller.h"
 
+#ifdef ENABLE_DOCKER
+	#include "plugins/docker/docker.cc"
+#endif
 pthread_mutex_t ComputeController::nfs_manager_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 map<int,uint64_t> ComputeController::cores;
@@ -366,10 +369,18 @@ bool ComputeController::selectImplementation()
 
 #ifdef ENABLE_NATIVE
 	//Manage NATIVE execution environment
-	/*
-	 * TODO: insert implementation
-	 *
-	 * */
+
+	manager = new Native();
+
+	if(manager->isSupported()){
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select native implementation if exists.");
+		selectImplementation(NATIVE);
+
+		if(allSelected())
+			return true;
+	} else {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
+	}
 
 #endif
 

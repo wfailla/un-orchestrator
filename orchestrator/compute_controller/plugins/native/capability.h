@@ -3,6 +3,11 @@
 
 #include <string>
 
+enum captype_t {
+	EXECUTABLE,
+	SCRIPT
+};
+
 class Capability {
 private:
 
@@ -16,9 +21,14 @@ private:
 	 */
 	std::string path;
 
+	/*
+	 * @brief: type of the capability
+	 */
+	captype_t type;
+
 public:
 
-	Capability(std::string name, std::string path);
+	Capability(std::string name, std::string path, captype_t type);
 	//it cloud be derived
 	virtual ~Capability();
 
@@ -31,6 +41,11 @@ public:
 	 * @brief: returns the path of the capability
 	 */
 	std::string getPath();
+
+	/*
+	 * @brief: returns the type of the capability
+	 */
+	captype_t getType();
 
 };
 

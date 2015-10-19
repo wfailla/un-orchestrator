@@ -30,7 +30,7 @@ public:
 	virtual ~NFsManager() {}
 
 	/**
-	*	@brief: check wheter the execution environment is supported or not
+	*	@brief: check whether the execution environment is supported or not
 	*/
 	virtual bool isSupported() = 0;
 

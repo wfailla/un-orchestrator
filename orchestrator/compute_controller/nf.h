@@ -55,6 +55,11 @@ public:
 	NF(string name);
 #endif
 	
+	/*
+	 * @brief: delete manager associated with the selected description (if it exists)
+	 */
+	~NF();
+
 	void addDescription(Description *description);
 	list<Description*> getAvailableDescriptions();
 	
@@ -66,6 +71,8 @@ public:
 	
 	string getName();
 	
+
+
 #ifdef UNIFY_NFFG
 	unsigned int getNumPorts();
 	string getTextDescription();
