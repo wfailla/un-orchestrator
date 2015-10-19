@@ -311,21 +311,6 @@ ELSE()
     	)
 ENDIF(ENABLE_DOCKER)
 
-IF(ENABLE_NATIVE)
-    SET(SOURCES4
-    ${SOURCES3}
-	compute_controller/plugins/native/native.cc
-	compute_controller/plugins/native/native.h
-	compute_controller/plugins/native/native_constants.h
-	compute_controller/plugins/native/capability.h
-	compute_controller/plugins/native/capability.cc
-	)
-ELSE()
-     SET(SOURCES4
-         ${SOURCES3}
-    	)
-ENDIF(ENABLE_NATIVE)
-
 
 IF(UNIFY_NFFG)
 	SET(SOURCES5
@@ -338,6 +323,21 @@ ELSE()
     	${SOURCES4}
 	)
 ENDIF(UNIFY_NFFG)
+
+IF(ENABLE_NATIVE)
+    SET(SOURCES6
+    ${SOURCES5}
+	compute_controller/plugins/native/native.cc
+	compute_controller/plugins/native/native.h
+	compute_controller/plugins/native/native_constants.h
+	compute_controller/plugins/native/capability.h
+	compute_controller/plugins/native/capability.cc
+	)
+ELSE()
+     SET(SOURCES6
+         ${SOURCES5}
+    	)
+ENDIF(ENABLE_NATIVE)
 
 
 
@@ -357,7 +357,7 @@ ENDIF(UNIFY_NFFG)
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES5}
+	${SOURCES6}
 )
 
 LINK_DIRECTORIES(
