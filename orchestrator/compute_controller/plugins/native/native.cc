@@ -92,24 +92,6 @@ bool Native::isSupported() {
 		return true;
 	}
 	
-	/*
-	 *	Sergio: eventuale chiamata a script
-	 *
-		int retVal;
-
-		retVal = system(CHECK_NATIVE);
-		retVal = retVal >> 8;
-
-		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Script returned: %d\n",retVal);
-	
-		if(retVal > 0)
-		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are supported.");
-			return true;
-		}
-	 *
-	 */
-
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
 	return false;
 }
