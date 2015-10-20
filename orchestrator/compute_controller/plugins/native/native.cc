@@ -3,8 +3,7 @@
 bool Native::isSupported() {
 /*
 	TODO:	IMPROVEMENTS:
-		read from a xml
-		call a script that checks the available functions in the system (e.g. iptables) and fills the structure
+		call a script that checks some available functions in the system (e.g. iptables) and fills the structure
 */
 	
 	//clear previous capabilities
@@ -87,28 +86,6 @@ bool Native::isSupported() {
 
 		}
 	}
-
-	/*
-	//read capabilities from capabilities_file
-	std::ifstream cap_stream(CAPABILITIES_FILE);
-	std::string str, name, path;
-	
-	while(std::getline(cap_stream, str)) {
-		//2 string per line expected
-		std::stringstream ss(str);
-		ss >> name;
-		if(ss)
-			ss >> path;
-		else{
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Wrong line in capabilities file: %s\n",str);
-			break;
-		}
-		if(ss){
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Wrong line in capabilities file: %s\n",str);
-			break;
-		}
-		capabilities.insert(std::pair<std::string, Capability>(name, Capability(name, path)));
-	}*/
 	
 	if(capabilities.size() > 0) {
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are supported.");
@@ -117,18 +94,20 @@ bool Native::isSupported() {
 	
 	/*
 	 *	Sergio: eventuale chiamata a script
-	int retVal;
+	 *
+		int retVal;
+
+		retVal = system(CHECK_NATIVE);
+		retVal = retVal >> 8;
+
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Script returned: %d\n",retVal);
 	
-	retVal = system(CHECK_NATIVE);
-	retVal = retVal >> 8;
-
-	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Script returned: %d\n",retVal);
-
-	if(retVal > 0)
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are supported.");
-		return true;
-	}
+		if(retVal > 0)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are supported.");
+			return true;
+		}
+	 *
 	 */
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
