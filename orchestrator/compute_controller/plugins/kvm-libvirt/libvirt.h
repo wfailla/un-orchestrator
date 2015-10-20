@@ -56,7 +56,7 @@ public:
 	Libvirt();
 	~Libvirt();
 	
-	bool isSupported();
+	bool isSupported(const Description&);
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);

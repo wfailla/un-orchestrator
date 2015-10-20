@@ -28,7 +28,7 @@ Libvirt::~Libvirt()
 		disconnect();
 }
 
-bool Libvirt::isSupported()
+bool Libvirt::isSupported(const Description&)
 {
 	connect();
 	

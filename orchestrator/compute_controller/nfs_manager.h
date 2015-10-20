@@ -32,7 +32,7 @@ public:
 	/**
 	*	@brief: check whether the execution environment is supported or not
 	*/
-	virtual bool isSupported() = 0;
+	virtual bool isSupported(const Description& description) = 0;
 
 	/**
 	*	@brief:	Retrieve and start the network function

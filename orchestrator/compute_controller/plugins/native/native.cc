@@ -1,97 +1,108 @@
 #include "native.h"
 
-bool Native::isSupported() {
-/*
-	TODO:	IMPROVEMENTS:
-		call a script that checks some available functions in the system (e.g. iptables) and fills the structure
-*/
-	
-	//clear previous capabilities
-	capabilities.clear();
-	
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Reading capabilities from file %s", CAPABILITIES_FILE);
-	
-	std::set<std::string>::iterator it;
-	xmlDocPtr schema_doc=NULL;
-	xmlSchemaParserCtxtPtr parser_ctxt=NULL;
-	xmlSchemaPtr schema=NULL;
-	xmlSchemaValidCtxtPtr valid_ctxt=NULL;
-	xmlDocPtr doc=NULL;
+std::map<std::string, Capability> *Native::capabilities;
 
-	//Validate the configuration file with the schema
-	schema_doc = xmlReadFile(CAPABILITIES_XSD, NULL, XML_PARSE_NONET);
-	if (schema_doc == NULL){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The schema cannot be loaded or is not well-formed.");
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
+Native::Native(){
+	if(capabilities == NULL){
+		capabilities = new std::map<std::string, Capability>;
 
-	parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
-	if (parser_ctxt == NULL){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a parser context for the schema \"%s\".",CAPABILITIES_XSD);
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
+		/*
+			TODO:	IMPROVEMENTS:
+				call a script that checks some available functions in the system (e.g. iptables) and fills the structure
+		*/
 
-	schema = xmlSchemaParse(parser_ctxt);
-	if (schema == NULL){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The XML \"%s\" schema is not valid.",CAPABILITIES_XSD);
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Reading capabilities from file %s", CAPABILITIES_FILE);
 
-	valid_ctxt = xmlSchemaNewValidCtxt(schema);
-	if (valid_ctxt == NULL){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a validation context for the XML schema \"%s\".",CAPABILITIES_XSD);
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
+		std::set<std::string>::iterator it;
+		xmlDocPtr schema_doc=NULL;
+		xmlSchemaParserCtxtPtr parser_ctxt=NULL;
+		xmlSchemaPtr schema=NULL;
+		xmlSchemaValidCtxtPtr valid_ctxt=NULL;
+		xmlDocPtr doc=NULL;
 
-	doc = xmlParseFile(CAPABILITIES_XSD); /*Parse the XML file*/
-	if (doc==NULL){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "XML file '%s' parsing failed.", CAPABILITIES_XSD);
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
+		//Validate the configuration file with the schema
+		schema_doc = xmlReadFile(CAPABILITIES_XSD, NULL, XML_PARSE_NONET);
+		if (schema_doc == NULL){
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The schema cannot be loaded or is not well-formed.");
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			throw new NativeException();
+		}
 
-	if(xmlSchemaValidateDoc(valid_ctxt, doc) != 0){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", CAPABILITIES_XSD);
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
+		parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
+		if (parser_ctxt == NULL){
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a parser context for the schema \"%s\".",CAPABILITIES_XSD);
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			throw new NativeException();
+		}
 
-	xmlNodePtr root = xmlDocGetRootElement(doc);
+		schema = xmlSchemaParse(parser_ctxt);
+		if (schema == NULL){
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The XML \"%s\" schema is not valid.",CAPABILITIES_XSD);
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			throw new NativeException();
+		}
 
-	for(xmlNodePtr cur_root_child=root->xmlChildrenNode; cur_root_child!=NULL; cur_root_child=cur_root_child->next) {
-		if ((cur_root_child->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(cur_root_child->name, (const xmlChar*)CAP_CAPABILITY_ELEMENT))){
-			xmlChar* attr_name = xmlGetProp(cur_root_child, (const xmlChar*)CAP_NAME_ATTRIBUTE);
-			assert(attr_name != NULL);
-			xmlChar* attr_type = xmlGetProp(cur_root_child, (const xmlChar*)CAP_TYPE_ATTRIBUTE);
-			assert(attr_type != NULL);
-			xmlChar* attr_location = xmlGetProp(cur_root_child, (const xmlChar*)CAP_LOCATION_ATTRIBUTE);
-			assert(attr_location != NULL);
+		valid_ctxt = xmlSchemaNewValidCtxt(schema);
+		if (valid_ctxt == NULL){
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a validation context for the XML schema \"%s\".",CAPABILITIES_XSD);
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			throw new NativeException();
+		}
 
-			std::string name((const char*)attr_name);
-			std::string path((const char*)attr_location);
-			std::string typeString((const char*)attr_type);
-			captype_t type = (typeString == TYPE_SCRIPT) ? EXECUTABLE : SCRIPT;
+		doc = xmlParseFile(CAPABILITIES_XSD); /*Parse the XML file*/
+		if (doc==NULL){
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "XML file '%s' parsing failed.", CAPABILITIES_XSD);
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			throw new NativeException();
+		}
 
-			capabilities.insert(std::pair<std::string, Capability>(name, Capability(name, path, type)));
+		if(xmlSchemaValidateDoc(valid_ctxt, doc) != 0){
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", CAPABILITIES_XSD);
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			throw new NativeException();
+		}
 
+		xmlNodePtr root = xmlDocGetRootElement(doc);
+
+		for(xmlNodePtr cur_root_child=root->xmlChildrenNode; cur_root_child!=NULL; cur_root_child=cur_root_child->next) {
+			if ((cur_root_child->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(cur_root_child->name, (const xmlChar*)CAP_CAPABILITY_ELEMENT))){
+				xmlChar* attr_name = xmlGetProp(cur_root_child, (const xmlChar*)CAP_NAME_ATTRIBUTE);
+				assert(attr_name != NULL);
+				xmlChar* attr_type = xmlGetProp(cur_root_child, (const xmlChar*)CAP_TYPE_ATTRIBUTE);
+				assert(attr_type != NULL);
+				xmlChar* attr_location = xmlGetProp(cur_root_child, (const xmlChar*)CAP_LOCATION_ATTRIBUTE);
+				assert(attr_location != NULL);
+
+				std::string name((const char*)attr_name);
+				std::string path((const char*)attr_location);
+				std::string typeString((const char*)attr_type);
+				captype_t type = (typeString == TYPE_SCRIPT) ? EXECUTABLE : SCRIPT;
+
+				capabilities->insert(std::pair<std::string, Capability>(name, Capability(name, path, type)));
+
+			}
 		}
 	}
-	
-	if(capabilities.size() > 0) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are supported.");
-		return true;
+}
+
+bool Native::isSupported(const Description& descr) {
+
+
+	if(capabilities->empty()) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
+		return false;
 	}
 	
+	/*
+	 * TODO: check dependences
+	 */
+
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
 	return false;
 }

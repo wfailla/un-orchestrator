@@ -1,6 +1,6 @@
 #include "docker.h"
 
-bool Docker::isSupported()
+bool Docker::isSupported(const Description&)
 {
 	int retVal;
 

@@ -16,7 +16,7 @@
 using namespace std;
 using namespace json_spirit;
 
-typedef enum{DPDK,DOCKER,KVM}nf_t;
+typedef enum{DPDK,DOCKER,KVM,NATIVE}nf_t;
 
 class Implementation
 {

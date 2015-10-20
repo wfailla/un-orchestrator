@@ -32,16 +32,26 @@ private:
 	*	@brief: contains the list of capabilities available through the node
 	*		name->path
 	*/
-	std::map<std::string, Capability> capabilities;
+	static std::map<std::string, Capability> *capabilities;
 	
 	static void freeXMLResources(xmlSchemaParserCtxtPtr parser_ctxt, xmlSchemaValidCtxtPtr valid_ctxt, xmlDocPtr schema_doc, xmlSchemaPtr schema, xmlDocPtr doc);
 
 
 public:
-	bool isSupported();
+	Native();
+
+	bool isSupported(const Description& descr);
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
+};
+
+class NativeException : public exception {
+public:
+	virtual const char* what() const throw()
+	{
+		return "NativeException";
+	}
 };
 
 #endif //NATIVE_H_

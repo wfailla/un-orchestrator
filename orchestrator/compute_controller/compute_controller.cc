@@ -314,8 +314,105 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 bool ComputeController::selectImplementation()
 {
-	NFsManager *manager = NULL;
+	//NFsManager *manager = NULL;
 
+	/*
+	 * Sergio
+	 */
+	//Select an implementation of the NF
+	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++){
+
+		NF *current = nf->second;
+
+		//A description is selected only for those functions that do not have a description yet
+		if(current->getSelectedDescription() == NULL){
+
+			list<Description*> descriptions = current->getAvailableDescriptions();
+			/*
+			 * TODO: descriptions.sort({COMPARATOR})
+			 */
+			list<Description*>::iterator descr;
+			for(descr = descriptions.begin(); descr != descriptions.end(); descr++){
+
+				switch((*descr)->getType()){
+
+#ifdef ENABLE_DOCKER
+					//Manage Docker execution environment
+				case DOCKER:{
+					NFsManager *dockerManager = new Docker();
+					if(dockerManager->isSupported(**descr)){
+						dockerManager->setDescription(*descr);
+						current->setSelectedDescription(dockerManager);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description has been selected for NF \"%s\".",nf->first.c_str());
+					} else
+						delete dockerManager;
+				}
+				break;
+#endif
+
+					//Manage DPDK execution environment
+				case DPDK:{
+					NFsManager *dpdkManager = new Dpdk();
+					if(dpdkManager->isSupported(**descr)){
+						dpdkManager->setDescription(*descr);
+						current->setSelectedDescription(dpdkManager);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description has been selected for NF \"%s\".",nf->first.c_str());
+					} else
+						delete dpdkManager;
+				}
+				break;
+
+#ifdef ENABLE_KVM
+					//Manage QEMU/KVM execution environment through libvirt
+				case KVM:{
+					NFsManager *libvirtManager = new Libvirt();
+					if(libvirtManager->isSupported(**descr)){
+						libvirtManager->setDescription(*descr);
+						current->setSelectedDescription(libvirtManager);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description has been selected for NF \"%s\".",nf->first.c_str());
+					} else
+						delete libvirtManager;
+				}
+				break;
+#endif
+
+#ifdef ENABLE_NATIVE
+					//Manage NATIVE execution environment
+				case NATIVE:
+					NFsManager *nativeManager;
+					try{
+						nativeManager = new Native();
+						if(nativeManager->isSupported(**descr)){
+							nativeManager->setDescription(*descr);
+							current->setSelectedDescription(nativeManager);
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description has been selected for NF \"%s\".",nf->first.c_str());
+						} else
+							delete nativeManager;
+					} catch (...) {
+						delete nativeManager;
+					}
+					break;
+#endif
+					//[+] Add here other implementations for the execution environment
+
+				default:
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available execution environments for description %s", NFType::toString((*descr)->getType()).c_str());
+				}
+
+
+			}
+		}
+	}
+
+	if(allSelected())
+		return true;
+
+	return false;
+
+	/*
+	 * Sergio_end
+	 */
+/*
 #ifdef ENABLE_DOCKER
 	//Manage Docker execution environment
 
@@ -385,9 +482,10 @@ bool ComputeController::selectImplementation()
 
 	delete(manager);
 
-	return false;
+	return false;*/
 }
 
+/*
 void ComputeController::selectImplementation(nf_t desiredType)
 {
 	//Select an implmentation of the NF
@@ -442,7 +540,7 @@ void ComputeController::selectImplementation(nf_t desiredType)
 			}
 		}
 	}
-}
+}*/
 
 bool ComputeController::allSelected()
 {
