@@ -18,7 +18,7 @@ public:
 	
 	//TODO: currently we are assuming that DPDK is alway supported. Not
 	//sure that this assumption is correct.
-	bool isSupported(const Description&);
+	bool isSupported(Description&);
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);

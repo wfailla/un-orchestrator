@@ -32,6 +32,7 @@ private:
 public:
 	Description(nf_t type, string uri, string cores, string location);
 	Description(string type, string uri, string cores, string location);
+	virtual ~Description();
 	
 	string getURI();
 	string getLocation();

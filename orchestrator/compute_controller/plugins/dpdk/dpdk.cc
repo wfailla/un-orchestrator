@@ -1,6 +1,6 @@
 #include "dpdk.h"
 
-bool Dpdk::isSupported(const Description&)
+bool Dpdk::isSupported(Description&)
 {
 	return true;
 }

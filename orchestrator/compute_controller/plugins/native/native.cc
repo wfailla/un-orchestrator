@@ -88,23 +88,23 @@ Native::Native(){
 
 			}
 		}
+		if(capabilities->empty()) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
+		}
 	}
 }
 
-bool Native::isSupported(const Description& descr) {
+bool Native::isSupported(Description& descr) {
 
-
-	if(capabilities->empty()) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
-		return false;
+	NativeDescription& nativeDescr = dynamic_cast<NativeDescription&>(descr);
+	std::list<std::string> *requirements = nativeDescr.getRequirements();
+	for(std::list<std::string>::iterator i = requirements->begin(); i != requirements->end(); i++){
+		std::string s = *i;
+		if(capabilities->find(s) != capabilities->end()){
+			return false;
+		}
 	}
-	
-	/*
-	 * TODO: check dependences
-	 */
-
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
-	return false;
+	return true;
 }
 
 bool Native::startNF(StartNFIn sni) {

@@ -6,6 +6,7 @@
 #include "../../nfs_manager.h"
 #include "native_constants.h"
 #include "capability.h"
+#include "native_description.h"
 
 #include <set>
 #include <string>
@@ -40,8 +41,7 @@ private:
 public:
 	Native();
 
-	bool isSupported(const Description& descr);
-	
+	bool isSupported(Description& descr);
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
 };

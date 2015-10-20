@@ -42,6 +42,8 @@ Description::Description(string type, string uri, string cores, string location)
 	return;
 }
 
+Description::~Description(){}
+
 nf_t Description::getType()
 {
 	return type;

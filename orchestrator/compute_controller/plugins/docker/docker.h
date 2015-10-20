@@ -24,7 +24,7 @@ private:
 	unsigned int convertNetmask(string netmask);
 
 public:
-	bool isSupported(const Description&);
+	bool isSupported(Description&);
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);

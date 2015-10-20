@@ -332,6 +332,8 @@ IF(ENABLE_NATIVE)
 	compute_controller/plugins/native/native_constants.h
 	compute_controller/plugins/native/capability.h
 	compute_controller/plugins/native/capability.cc
+	compute_controller/plugins/native/native_description.h
+	compute_controller/plugins/native/native_description.cc
 	)
 ELSE()
      SET(SOURCES6
