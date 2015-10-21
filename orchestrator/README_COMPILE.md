@@ -5,7 +5,7 @@ In order to execute the un-orchestrator, we need to setup different components, 
   * a set of libraries needed to compile the un-orchestrator code
   * a virtual switch (either xDPd or OpenvSwitch) as a base switch for
     our platform
-  * an execution environment for network functions, e.g., KVM for
+  * an execution environment for virtual network functions, e.g., KVM for
     executing VM, Docker, or other.
 
 ### Required libraries
@@ -18,7 +18,7 @@ In the following we list the steps required on an Ubuntu 14.04.
 	; - cmake: to create cross-platform makefiles
 	; - cmake-curses-gui: nice 'gui' to edit cmake files
 	; - libboost-all-dev: nice c++ library with tons of useful functions
-	;  -libmicrohttpd-dev: embedded micro http server
+	; -libmicrohttpd-dev: embedded micro http server
 	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev
 
 	; Install JSON Spirit (nice library to parse JSON files)
@@ -66,7 +66,8 @@ configured, which can be done by launching a script that allows you to:
   * Bind Ethernet device to IGB UIO module (bind all the ethernet
     interfaces that you want to use)
 
-Let's now launch the DPDK setup script:
+Let's now launch the DPDK setup script (note that the library has been downloaded
+togher with xDPd, and it is located at xdpd/libs/dpdk):
 
 	$ cd ../libs/dpdk/tools  
 	$ sudo ./setup.sh  
@@ -98,18 +99,17 @@ The list of OF-CONFIG dependencies:
 - libpthreads
 - libxml2 (including headers from the devel package)
 - libssh >= 0.6.4 (including headers)
-	- Download it from https://red.libssh.org/projects/libssh/files and for install it, follow the instructions in the INSTALL file present in a root directory
-	- can be skipped if using --disable-ssh
+	- download it from https://red.libssh.org/projects/libssh/files and for install it 
+	  following the INSTALL file present in the root directory
+	- this step can be skipped if using --disable-ssh
 - openvswitch 2.4.0
  
 - pyang >= 1.5.0
 - python 2.6 or higher with the following modules:
  - os, copy, string, re, argparse, subprocess, inspect, curses, xml, libxml2
  - only with TLS enabled: M2Crypto
-
 - only with TLS enabled by using the --enable-tls option
  - OpenSSL (libssl, libcrypto, including headers from the devel package)
-
 - roff2html
  - optional, used for building HTML version of man pages (make doc)
 - rpmbuild

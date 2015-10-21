@@ -12,10 +12,11 @@ the physical node.
 More in detail, when it receives a command to deploy a new NF-FG, it does all
 the operations required to actually implement the forwarding graph: 
 
-  * retrieve the most appropriate image for the selected network function;
-  * configure the virtual switch (vSwitch) to create a new LSI and the ports 
-    required to connect it to the network functions to be deployed;
-  * deploy and starts the network functions;
+  * retrieve the most appropriate image for the selected virtual network
+    function (VNF);
+  * configure the virtual switch (vSwitch) to create a new logical switching 
+    instance (LSI) and the ports required to connect it to the VNF to be deployed;
+  * deploy and starts the VNF;
   * translate the rules to steer the traffic into OpelFlow flowmod messages 
     to be sent to the vSwitch (some flowmod are sent to the new LSI, others 
     to the LSI-0, i.e. an LSI that steers the traffic into the proper graph.).
@@ -32,12 +33,15 @@ It consists of two parts:
   * the Openflow controller(s): a new Openflow controller is created for each
     new LSI, which is used to steer the traffic among the ports of the LSI
     itself;
-  * the switch manager: it is used to create/destroy LSI, create/destroy 
+  * the switch manager: it is used to create/destroy LSIs, create/destroy 
     virtual ports, and so on. In practice, it allows the un-orchestrator to
     interact with the vSwitch in order to perform management operations. Each
     virtual switch implementation (e.g., xDPd, OvS) may require a different
     implementation for the switch manager, according to the commands
     supported by the vSwitch itself.
+
+Currently, it supports Open vSwitch (OvS) and the extensible DataPath daemon
+(xDPd) as vSwitches.
 
 If you are interested to add the support for a new virtual switch, please 
 check the file network\_controller/switch\_manager/README.
@@ -54,6 +58,8 @@ Currently it supports network functions as (KVM) VMs, Docker and DPDK
 processes, although only a subset of them can be available depending on 
 the chosen vSwitch.
 
+If you are interested to add the support for a new hypervisor, please 
+check the file compute\_controller/README.
 
 ### NF-FG
 
@@ -76,4 +82,4 @@ Some additional files are provided to compile and use the un-orchestrator:
   * README_COMPILE.md: to compile the un-orchestrator
   * README_RUN.md: to start the un-orchestrator
   * README_RESTAPI.md: some usage examples about the REST interface of
-    the the un-orchestrator
+    the un-orchestrator
