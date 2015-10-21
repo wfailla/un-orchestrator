@@ -72,7 +72,23 @@ Let's now launch the DPDK setup script:
 	$ sudo ./setup.sh  
 
 
-#### Open vSwitch (of-config)
+#### Open vSwitch (of-config) [DEPRECATED]
+
+OpenvSwitch can be installed with either the OVSDB or OF-CONFIG plugins.
+Although both protocols allow to control the switch (e.g., create/delete
+new bridging instances, create/delete ports, etc), we found out
+that OF-CONFIG is rather limited in terms of capabilities. For instance,
+it cannot set the type of port configured on the switch (e.g., virtio
+or IVSHMEM), requiring the orchestrator to rely on a combination of
+OF-CONFIG commands and bash scripts to perform its job.
+
+For this reason we suggest to install OpenvSwitch with its native OSVDB 
+support (next section); although OVSDB is not standard, it seems that it
+does its job better than OF-CONFIG.
+
+In any case, the compilation instruction for setting up OpenvSwitch with 
+OF-CONFIG are the following (not guaranteed that those are 100% accurate,
+as the OF-CONFIG support in OpenvSwitch is rather primitive).
 
 The list of OF-CONFIG dependencies:
 
@@ -218,7 +234,7 @@ The previous command allows you to select some configuration parameters for the
 un-orchestrator, such as the virtual switch used, the version of Openflow to
 use, which kind of execution environment you want to enable, the NF-FG description,
 etc. When you're finished, exit from the 'ccmake' interface by *generating the
-configuration files* and type the following commands:
+configuration files* (press 'g' and 'x') and type the following commands:
 
 	; Create makefile scripts based on the previously selected options
 	$ cmake .
