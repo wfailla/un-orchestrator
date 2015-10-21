@@ -34,9 +34,11 @@ char *password(const char *username, const char *hostname){
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Insert ssh password for OFConfig server on OvS:");
 
 	i = scanf("%s", psw);
-	if(i<0)
+	if(i<0){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error scanf.");
-		
+		throw commandsException();
+	}
+	
 	return psw;
 }
 
@@ -869,9 +871,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 			/*execute VirtualLink.sh*/
 			pip = system(cmdLine);
-			if(pip < 0)
+			if(pip < 0){
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
-
+				throw commandsException();
+			}
+			
 			sprintf(cmdLine, PATH_SCRIPT_ID_PORT, bridge_name, vrt);
 
 			/*execute IdPort.sh*/
@@ -914,9 +918,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 	/*execute OFVersion.sh*/
 	pip = system(cmdLine);
-	if(pip < 0)
+	if(pip < 0){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
-
+		throw commandsException();
+	}
+	
 	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, virtual_links);
 
 	return clo;
@@ -1960,8 +1966,10 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli){
 
 	/*execute VirtualLink.sh*/
 	pip = system(cmdLine);
-	if(pip < 0)
+	if(pip < 0){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
+		throw commandsException();
+	}
 	
 	sprintf(cmdLine, PATH_SCRIPT_ID_PORT, bridge_name, vrt);
 
