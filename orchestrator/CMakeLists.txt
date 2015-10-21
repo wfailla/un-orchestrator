@@ -36,27 +36,6 @@ IF(${LOGGING_LEVEL_INDEX} EQUAL 4)
 ENDIF()
 # End of the rather complicated CMake code for setting the logging level
 
-# Rather complicated CMake code for selecting the Openflow version
-SET(OFP_VERSION "OFP_10" CACHE STRING "Openflow version: OFP_10, OFP_12, OFP_13")
-SET(OFP_VERSION_VALUES "OFP_10" "OFP_12" "OFP_13")
-SET_PROPERTY(CACHE OFP_VERSION PROPERTY STRINGS ${OFP_VERSION_VALUES})
-LIST(FIND OFP_VERSION_VALUES ${OFP_VERSION} OFP_VERSION_INDEX)
-
-IF(${OFP_VERSION_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${OFP_VERSION} not supported, valid entries are ${OFP_VERSION_VALUES}")
-ENDIF()
-IF(${OFP_VERSION_INDEX} EQUAL 0)
-	ADD_DEFINITIONS(-DOFP_VERSION=OFP_10)
-ENDIF()
-IF(${OFP_VERSION_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DOFP_VERSION=OFP_12)
-ENDIF()
-IF(${OFP_VERSION_INDEX} EQUAL 2)
-	ADD_DEFINITIONS(-DOFP_VERSION=OFP_13)
-ENDIF()
-# End of the rather complicated CMake code for setting the Openflow version
-
-
 # Rather complicated CMake code for selecting the virtual switch implementation
 SET(VSWITCH_IMPLEMENTATION "OVS-OVSDB" CACHE STRING "vSwitch implementation: XDPD, OVS, OVS-DPDK, OVS-OVSDB")
 SET(VSWITCH_IMPLEMENTATION_VALUES "XDPD" "OVS" "OVS-DPDK" "OVS-OVSDB") #Add here other implementations
