@@ -54,11 +54,6 @@ public:
 #else
 	NF(string name);
 #endif
-	
-	/*
-	 * @brief: delete manager associated with the selected description (if it exists)
-	 */
-	~NF();
 
 	void addDescription(Description *description);
 	list<Description*> getAvailableDescriptions();

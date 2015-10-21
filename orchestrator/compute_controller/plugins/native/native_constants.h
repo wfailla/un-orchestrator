@@ -5,7 +5,7 @@
 *	@brief: paths of the bash scripts used to manage native functions
 */
 #define CHECK_NATIVE				"./compute_controller/plugins/native/scripts/checkNativeFunctions.sh"
-#define PULL_AND_RUN_NATIVE_NF		"./compute_controller/plugins/native/scripts/pullAndRunNF.sh"
+#define PULL_AND_RUN_NATIVE_NF		"./compute_controller/plugins/native/scripts/pullAndRunNativeNF.sh"
 #define STOP_NATIVE_NF				"./compute_controller/plugins/native/scripts/stopNF.sh"
 
 /*

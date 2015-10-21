@@ -14,3 +14,7 @@ string NFsManager::getCores()
 {
 	return description->getCores();
 }
+
+NFsManager::~NFsManager(){
+	delete description;
+}

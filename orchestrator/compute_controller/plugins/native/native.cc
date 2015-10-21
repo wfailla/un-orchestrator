@@ -99,8 +99,8 @@ bool Native::isSupported(Description& descr) {
 	NativeDescription& nativeDescr = dynamic_cast<NativeDescription&>(descr);
 	std::list<std::string> *requirements = nativeDescr.getRequirements();
 	for(std::list<std::string>::iterator i = requirements->begin(); i != requirements->end(); i++){
-		std::string s = *i;
-		if(capabilities->find(s) != capabilities->end()){
+		if(capabilities->find(*i) == capabilities->end()){
+			//not found
 			return false;
 		}
 	}
@@ -115,10 +115,10 @@ bool Native::startNF(StartNFIn sni) {
 	std::map<unsigned int,pair<std::string, std::string> > ipv4PortsRequirements = sni.getIpv4PortsRequirements();
 	std::map<unsigned int, std::string> ethPortsRequirements = sni.getEthPortsRequirements();
 	
-	std::string uri_image = description->getURI();
+	std::string uri_script = description->getURI();
 	
 	std::stringstream command;
-	command << PULL_AND_RUN_NATIVE_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
+	command << PULL_AND_RUN_NATIVE_NF << " " << lsiID << " " << nf_name << " " << uri_script << " " << n_ports;
 	
 	//create the names of the ports
 	for(unsigned int i = 1; i <= n_ports; i++)

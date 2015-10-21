@@ -11,10 +11,6 @@ NF::NF(string name) :
 
 }
 
-NF::~NF() {
-	delete selectedDescription;
-}
-
 void NF::addDescription(Description *description)
 {
 	descriptions.push_back(description);

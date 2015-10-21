@@ -27,7 +27,7 @@ protected:
 
 public:
 
-	virtual ~NFsManager() {}
+	virtual ~NFsManager();
 
 	/**
 	*	@brief: check whether the execution environment is supported or not

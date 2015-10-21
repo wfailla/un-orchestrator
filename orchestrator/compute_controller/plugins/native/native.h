@@ -31,7 +31,6 @@ private:
 	
 	/**
 	*	@brief: contains the list of capabilities available through the node
-	*		name->path
 	*/
 	static std::map<std::string, Capability> *capabilities;
 	
@@ -39,6 +38,7 @@ private:
 
 
 public:
+
 	Native();
 
 	bool isSupported(Description& descr);
