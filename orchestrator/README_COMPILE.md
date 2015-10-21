@@ -84,6 +84,7 @@ The list of OF-CONFIG dependencies:
 - libssh >= 0.6.4 (including headers)
 	- Download it from https://red.libssh.org/projects/libssh/files and for install it, follow the instructions in the INSTALL file present in a root directory
 	- can be skipped if using --disable-ssh
+- openvswitch 2.3.1 or higher
  
 - pyang >= 1.5.0
 - python 2.6 or higher with the following modules:
@@ -123,7 +124,7 @@ in the root folder of that repository.
 
 At first, unpack archive with Open vSwitch source codes:
 
-    tar -xf openvswitch-2.3.1.tar.gz
+    tar -xf openvswitch-2.4.0.tar.gz
 
 Then configure Open vSwitch using:
 
