@@ -15,6 +15,7 @@ fi
 
 #IVANO: probably the check on the version can be removed. To me it seems that both Ubuntu and
 #Debian use the same syntax.
+#TODO: remove the Debian case. The UN is only supported in Ubuntu
 
 version=`cat /etc/*-release | grep "ID=ubuntu" | wc -l`
 if [ $version -ge 1 ]

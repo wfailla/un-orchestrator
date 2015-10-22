@@ -11,7 +11,7 @@ In order to execute the un-orchestrator, we need to setup different components, 
 ### Required libraries
 
 Several libraries are required to compile the un-orchestrator.
-In the following we list the steps required on an Ubuntu 14.04.
+In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install required libraries
 	; - build-essential: it includes GCC, basic libraries, etc
@@ -103,7 +103,6 @@ The list of OF-CONFIG dependencies:
 	  following the INSTALL file present in the root directory
 	- this step can be skipped if using --disable-ssh
 - openvswitch 2.4.0
- 
 - pyang >= 1.5.0
 - python 2.6 or higher with the following modules:
  - os, copy, string, re, argparse, subprocess, inspect, curses, xml, libxml2
@@ -138,34 +137,28 @@ in the root folder of that repository.
 
 ######Open vSwitch Installation
 
-At first, unpack archive with Open vSwitch source codes:
+At first, downaload the Open vSwitch source code from:
 
-    tar -xf openvswitch-2.4.0.tar.gz
+    http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
 
-Then configure Open vSwitch using:
+Unpack the archive just downloaded:
 
-    ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
+    $ tar -xf openvswitch-2.4.0.tar.gz
 
-Note: we discovered bad symbolic link 'build' in /lib/modules/$(uname -r)/ in Scientific Linux 6.6,
-therefore, we temporary fixed it by creating new symbolic link manually. For our case it was:
+Then move into the extracted folder and configure Open vSwitch using:
 
-    ln -s /usr/src/kernels/2.6.32-504.8.1.el6.x86_64/ /lib/modules/2.6.32-504.el6.x86_64/build
-
+    $ cd openvswitch-2.4.0
+    $ ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
+    
 After successful configuration of Open vSwitch, run standard commands:
 
-    make && make install
+    $  make && sudo make install
 
-When Open vSwitch is installed, it can be started:
+To start Open vSwitch at the boot of the machine (optional):
 
-    /usr/local/share/openvswitch/scripts/ovs-ctl start
-
-To start Open vSwitch after boot:
-
-    sed 's,/usr/share/,/usr/local/share/,' rhel/etc_init.d_openvswitch > /etc/init.d/openvswitch
-
-    chkconfig --add openvswitch
-
-    chkconfig openvswitch on
+    $ sed 's,/usr/share/,/usr/local/share/,' rhel/etc_init.d_openvswitch > /etc/init.d/openvswitch
+    $ chkconfig --add openvswitch
+    $ chkconfig openvswitch on
 
 Note: sed(1) is used to rewrite path to Open vSwitch scripts that is statically defined
 in openvswitch script.
@@ -179,42 +172,37 @@ possibilities from the ones listed in this section.
 
 #### Docker
 
-This is needed in order to suppor the Docker execution environment.
-
-**On Ubuntu**
-
-Follow the instruction provided here:
+In order to suppor the Docker execution environment, first follow the instructions
+provided here:
 
 	http://docs.docker.com/installation/  
+
+Then executes the following commands to properly configure the Docker environment:
 
 	$ sudo apt-get install lxc -y  
 	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
 	$ service docker restart
-
-**On Debian**
-
-Follow the instruction provided here:
-
-	https://scottlinux.com/2014/05/04/how-to-install-and-run-docker-on-debian-wheezy/
-
-	$ sudo apt-get install docker -y  
-	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
-	$ service docker.io restart
+	
+**WARNING: the Docker execution environment is only supported when using xDPd 
+as virtual switch.**
 
 #### Libvirt (and KVM)
 
 This is needed in order to run network functions in KVM-based virtual machines.
+To compile and install libvirt, execute the following command:
 
 	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils  
 
-To compile and install libvirt, execute the command shown above.
+If you run Libvirt for OVS or OVSDB, please put your template in the folder 
+"compute_controller/plugins/kvm-libvirt/nf_repository".
 
-If you run Libvirt for OVS or OVSDB should be put your template in a folder "compute_controller/plugins/kvm-libvirt/nf_repository".
+**WARNING: the KVM execution environment is only supported when using OvS 
+as virtual switch.**
 
 ### NF-FG library
 
 These steps are mandatory only if you plan to use the Network Functions - 
-Forwarding Graph (NF-FG) defined within the Unify project.
+Forwarding Graph (NF-FG) defined in WP3.
 
 	; Retrieve the NF-FG library.
 	
@@ -231,10 +219,10 @@ We are now ready to compile the un-orchestrator.
 	$ ccmake .  
 
 The previous command allows you to select some configuration parameters for the
-un-orchestrator, such as the virtual switch used, the version of Openflow to
-use, which kind of execution environment you want to enable, the NF-FG description,
-etc. When you're finished, exit from the 'ccmake' interface by *generating the
-configuration files* (press 'g' and 'x') and type the following commands:
+un-orchestrator, such as the virtual switch used, which kind of execution environment
+you want to enable, the NF-FG description, etc. When you're finished, exit from
+the 'ccmake' interface by *generating the configuration files* (press 'c' and 'g')
+and type the following commands:
 
 	; Create makefile scripts based on the previously selected options
 	$ cmake .
