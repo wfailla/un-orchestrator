@@ -178,7 +178,7 @@ Then executes the following commands to properly configure the Docker environmen
 	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
 	$ service docker restart
 	
-**WARNING: the Docker execution environment is only supported when using xDPd 
+**WARNING: the Docker execution environment is only supported if using xDPd 
 as virtual switch.**
 
 #### Libvirt (and KVM)
@@ -191,7 +191,7 @@ To compile and install libvirt, execute the following command:
 If you run Libvirt for OVS or OVSDB, please put your template in the folder 
 "compute_controller/plugins/kvm-libvirt/nf_repository".
 
-**WARNING: the KVM execution environment is only supported when using OvS 
+**WARNING: the KVM execution environment is only supported if using OvS 
 as virtual switch.**
 
 ### NF-FG library
