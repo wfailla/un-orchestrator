@@ -21,12 +21,16 @@ below.
 Folder 'config' contains some configuration file examples that can be used 
 to configure/test the un-orchestrator.
 
-  * config/physical\_ports-example.xml: configuration file describing
-    the physical ports to be handeld by the un-orchestrator.
+  * config/universal-node-example.xml: configuration file describing
+    the physical ports to be handeld by the un-orchestrator, as well as
+    the amount of CPU, memory and storage provided to the universal node.
   * config/simple\_passthrough\_nffg.json: simple graph that implements
     a simple passthrough function, i.e., traffic is received from a first
     physical port and sent out from a second physical port, after having
     been handled to the vswitch.
+  * config/passthrough\_with\_vnf\_nffg.json: graph that include a virtual
+    network function. Traffic is received from a first physical port, provided
+    to a network function, and then sent our from a second physical port.
 
 
 ### How to start xDPd to work with the un-orchestrator
@@ -43,7 +47,7 @@ on flows matched, and so on. The xcli can be run by just typing:
 	$ xcli
 
 
-### How to start OpenvSwitch to work with the un-orchestrator
+### How to start OvS (managed through OFCONFIG) to work with the un-orchestrator
 
 Start OVS:
 
@@ -63,7 +67,7 @@ For a the full list of the supported parameters, type:
     $ ofc-server -h
     
 
-### How to start OVSDB to work with the un-orchestrator
+### How to start OvS (managed through OpenOVSDB) to work with the un-orchestrator
     
 Start OVS:
 
