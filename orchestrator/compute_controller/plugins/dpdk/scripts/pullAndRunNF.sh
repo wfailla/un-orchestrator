@@ -31,6 +31,8 @@ exec_name=`echo $1"_"$tmp_file"_"$2`
 
 tmp=$3
 
+remote=false
+
 begin=${tmp:0:7}
 # file:// means that the NF is local
 if [ $begin == "file://" ]
@@ -41,6 +43,7 @@ then
 	cp $path $exec_name
 else
 	#The NF must be retrieved from a remote url
+	remote=true
 	sudo wget -O $exec_name $3
 	#wget returns 0 in case of success
 fi
@@ -52,6 +55,11 @@ then
 	echo "[pullAndRunNF] Image '"$3"' retrieved"
 else
 	echo "[pullAndRunNF] Impossible to retrieve image '"$3"'"
+	rm $tmp_file
+	if [ $remote == true ]
+	then
+		rm $exec_name
+	fi
 	exit 0
 fi
 
