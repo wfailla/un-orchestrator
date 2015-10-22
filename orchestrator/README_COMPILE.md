@@ -179,6 +179,15 @@ Then executes the following commands to properly configure the Docker environmen
 	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
 	$ exit
 	$ sudo service docker restart
+
+To check that everything was correct, run:
+
+	$ sudo docker run hello-world
+
+If you get an error, execute the following commands:
+
+	$ sudo apt-get update
+	$ sudo apt-get upgrade
 	
 **WARNING: the Docker execution environment is only supported if using xDPd 
 as virtual switch.**

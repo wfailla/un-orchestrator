@@ -3,22 +3,27 @@ containers.
 
 ===============================================================================
 
-Docker environment for network functions
+To install the Docker environment for network functions, first follow the 
+instructions provided here:
 
- On Ubuntu:  
-      follow the instruction provided here:  
-           http://docs.docker.com/installation/  
-      apt-get install lxc -y  
-      echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
-      service docker restart
+	http://docs.docker.com/installation/  
 
- On Debian:  
-      follow the instruction provided here:  
-          https://scottlinux.com/2014/05/04/how-to-install-and-run-docker-on-debian-wheezy/  
-          apt-get install docker -y  
-          echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
-          service docker.io restart  
-        
+Then executes the following commands to properly configure the Docker environment:
+
+	$ sudo apt-get install lxc -y  
+	$ sudo su
+	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
+	$ exit
+	$ sudo service docker restart
+
+To check that everything was correct, run:
+
+	$ sudo docker run hello-world
+
+If you get an error, execute the following commands:
+
+	$ sudo apt-get update
+	$ sudo apt-get upgrade
 ===============================================================================
 
 Please check individual README's in each sub-package.
