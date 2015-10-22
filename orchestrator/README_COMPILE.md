@@ -141,18 +141,13 @@ At first, downaload the Open vSwitch source code from:
 
     http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
 
-Unpack the archive just downloaded:
+Then execute the following commands:
 
     $ tar -xf openvswitch-2.4.0.tar.gz
-
-Then move into the extracted folder and configure Open vSwitch using:
-
     $ cd openvswitch-2.4.0
     $ ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
-    
-After successful configuration of Open vSwitch, run standard commands:
-
-    $  make && sudo make install
+    $ make
+    $ sudo make install
 
 To start Open vSwitch at the boot of the machine (optional):
 
