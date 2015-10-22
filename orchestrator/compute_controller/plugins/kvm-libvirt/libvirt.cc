@@ -245,7 +245,7 @@ bool Libvirt::startNF(StartNFIn sni)
 		for(unsigned int i=1;i<=n_ports;i++) {
 			// TODO: This is OVS vhostuser specific - Should be extracted to network plugin part...
 			/*add ports*/			
-			//Create name of port --> nf_name+b+lsiID+p+i
+			//Create name of port --> nf_name+p+i+b+lsiID
 			locale loc;	
 				
 			for (string::size_type j=0; j<nf_name.length(); ++j)
