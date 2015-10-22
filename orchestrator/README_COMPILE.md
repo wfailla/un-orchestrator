@@ -175,6 +175,7 @@ provided here:
 Then executes the following commands to properly configure the Docker environment:
 
 	$ sudo apt-get install lxc -y  
+	$ sudo su
 	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
 	$ service docker restart
 	
