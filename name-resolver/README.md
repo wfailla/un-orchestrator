@@ -10,6 +10,7 @@ Libraries required to compile the name-resolver:
 
 * JSON spirit  
       git clone https://github.com/sirikata/json-spirit
+      alternatively, a copy of the library is provided in [un-orchestrator]/contrib/json-spirit.zip
 
 * Libmicrohttpd  
       apt-get install libmicrohttpd-dev

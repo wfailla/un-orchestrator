@@ -23,6 +23,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install JSON Spirit (nice library to parse JSON files)
 	$ git clone https://github.com/sirikata/json-spirit
+	; alternatively, a copy of JSON Spirit is provided in [un-orchestrator]/contrib/json-spirit.zip
 	$ cd json-spirit/
 
 	; Now install the above library according to the description provided
@@ -30,6 +31,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
 	$ git clone https://github.com/bisdn/rofl-common  
+	; alternatively, a copy of ROFL-common is provided in [un-orchestrator]/contrib/rofl-common.zip
 	$ cd rofl-core/
 
 	; Now install the above library according to the description provided
