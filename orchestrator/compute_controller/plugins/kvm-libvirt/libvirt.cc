@@ -3,16 +3,16 @@
 
 void Libvirt::customErrorFunc(void *userdata, virErrorPtr err)
 {
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Failure of libvirt library call:\n");
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Code: %d\n", err->code);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Domain: %d\n", err->domain);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Message: %s\n", err->message);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Level: %d\n", err->level);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " str1: %s\n", err->str1);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " str2: %s\n", err->str2);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " str3: %s\n", err->str3);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " int1: %d\n", err->int1);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " int2: %d\n", err->int2);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Failure of libvirt library call:");
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tCode: %d", err->code);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tDomain: %d", err->domain);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tMessage: %s", err->message);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tLevel: %d", err->level);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tstr1: %s", err->str1);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tstr2: %s", err->str2);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tstr3: %s", err->str3);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tint1: %d", err->int1);
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tint2: %d", err->int2);
 }
 
 virConnectPtr Libvirt::connection = NULL;
@@ -43,12 +43,12 @@ void Libvirt::connect()
 		//The connection is already open
 		return;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Connecting to Libvirt ...\n");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Connecting to Libvirt ...");
 	connection = virConnectOpen("qemu:///system");
 	if (connection == NULL) 
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Failed to open connection to qemu:///system\n");
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Failed to open connection to qemu:///system");
 	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Open connection to qemu:///system successfull\n");
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Open connection to qemu:///system successfull");
 }
 
 void Libvirt::disconnect()
@@ -72,11 +72,12 @@ bool Libvirt::startNF(StartNFIn sni)
 	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
 	
 	bool ovsdpdk = false;
-	if (uri_image.compare(0, ovs.size(), ovs.c_str(), ovs.size()) != 0) {
-		ovsdpdk = true;
-	}
+	//TODO: distinguish based on compilation flag
+//	if (uri_image.compare(0, ovs.size(), ovs.c_str(), ovs.size()) != 0) {
+//		ovsdpdk = true;
+//	}
 	
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Using Libvirt XML template %s\n", uri_image.c_str());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Using Libvirt XML template %s", uri_image.c_str());
 	xmlInitParser();
 
 	xmlDocPtr doc;
@@ -86,21 +87,21 @@ bool Libvirt::startNF(StartNFIn sni)
 	/* Load XML document */
 	doc = xmlParseFile(uri_image.c_str());
 	if (doc == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to parse file \"%s\"\n", uri_image.c_str());
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to parse file \"%s\"", uri_image.c_str());
 		return 0;
 	}
 
 	/* xpath evaluation for Libvirt various elements we may want to update */
 	xpathCtx = xmlXPathNewContext(doc);
 	if(xpathCtx == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create new XPath context\n");
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create new XPath context");
 		xmlFreeDoc(doc);
 		return 0;
 	}
 	const xmlChar* xpathExpr = BAD_CAST "/domain/devices/interface|/domain/name|/domain/devices/emulator";
 	xpathObj = xmlXPathEvalExpression(xpathExpr, xpathCtx);
 	if(xpathObj == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"\n", xpathExpr);
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"", xpathExpr);
 		xmlXPathFreeContext(xpathCtx);
 		xmlFreeDoc(doc);
 		return 0;
@@ -114,7 +115,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	xmlNodeSetPtr nodes = xpathObj->nodesetval;
 	int size = (nodes) ? nodes->nodeNr : 0;
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "xpath return size: %d\n", size);
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "xpath return size: %d", size);
 	int i;
 	for(i = size - 1; i >= 0; i--) {
 	  	xmlNodePtr node = nodes->nodeTab[i];
@@ -145,10 +146,10 @@ bool Libvirt::startNF(StartNFIn sni)
 		   			}
 		   			break;
 		   		case XML_ATTRIBUTE_NODE:
-		   			fprintf(stdout, "Error, ATTRIBUTE found here\n");
+		   			fprintf(stdout, "Error, ATTRIBUTE found here");
 		   			break;
 		   		default:
-		   			fprintf(stdout, "Other type\n");
+		   			fprintf(stdout, "Other type");
 		   			break;
 		   	}
 		}
@@ -188,14 +189,14 @@ bool Libvirt::startNF(StartNFIn sni)
 	const xmlChar* xpathExpr_devs = BAD_CAST "/domain/devices";
 	xpathObj = xmlXPathEvalExpression(xpathExpr_devs, xpathCtx);
 	if(xpathObj == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"\n", xpathExpr);
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"", xpathExpr);
 		xmlXPathFreeContext(xpathCtx);
 		xmlFreeDoc(doc);
 		return 0;
 	}
 	nodes = xpathObj->nodesetval;
 	if (!nodes || (nodes->nodeNr != 1)) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "xpath(devices) failed accessing <devices> node\n");
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "xpath(devices) failed accessing <devices> node");
 		xmlXPathFreeContext(xpathCtx);
 		xmlFreeDoc(doc);
 		return 0;
@@ -210,6 +211,8 @@ bool Libvirt::startNF(StartNFIn sni)
 	
 	/* Create XML for VM */
 	if (ovsdpdk) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is DPDK in KVM");
+	
 		/* Create NICs */
 		for(unsigned int i=1;i<=n_ports;i++) {
 			// TODO: This is OVS vhostuser specific - Should be coordinated with network plugin part...
@@ -245,7 +248,7 @@ bool Libvirt::startNF(StartNFIn sni)
 		for(unsigned int i=1;i<=n_ports;i++) {
 			// TODO: This is OVS vhostuser specific - Should be extracted to network plugin part...
 			/*add ports*/			
-			//Create name of port --> nf_name+b+lsiID+p+i
+			//Create name of port --> nf_name+p+i+b+lsiID
 			locale loc;	
 				
 			for (string::size_type j=0; j<nf_name.length(); ++j)
@@ -282,7 +285,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	xmlCleanupParser();
 	
 #if 1  /* Debug */
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Dumping XML to %s\n", domain_name);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Dumping XML to %s", domain_name);
 	FILE* fp = fopen(domain_name, "w");
 	if (fp) {
 		fwrite(xmlconfig, 1, strlen(xmlconfig), fp);
@@ -315,7 +318,7 @@ bool Libvirt::stopNF(StopNFIn sni)
 
 	/*destroy the VM*/
 	if(virDomainDestroy(virDomainLookupByName(connection, vm_name)) != 0){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "failed to stop (destroy) VM. %s\n", vm_name);
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "failed to stop (destroy) VM. %s", vm_name);
 		return false;
 	}
 	

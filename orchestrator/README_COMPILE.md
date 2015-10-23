@@ -178,13 +178,14 @@ as virtual switch.**
 This is needed in order to run network functions in KVM-based virtual machines.
 To compile and install libvirt, execute the following command:
 
-	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils  
+	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
 
 If you run Libvirt for OVS or OVSDB, please put your template in the folder 
 "compute_controller/plugins/kvm-libvirt/nf_repository".
 
 **WARNING: the KVM execution environment is only supported if using OvS 
 as virtual switch.**
+
 
 ### NF-FG library
 
