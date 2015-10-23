@@ -20,6 +20,10 @@
 
 int main(int argc, char *argv[])
 {
+	
+	//This gives time to the UN to configure the network namespace of the container
+	sleep(3);
+
 	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t *from, *to;
 	struct pcap_pkthdr *header;

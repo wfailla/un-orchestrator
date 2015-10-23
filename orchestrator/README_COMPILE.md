@@ -48,14 +48,15 @@ possibilities listed in this section.
 
 In order to install xDPd, you have to follow the steps below.
 
-	git clone https://github.com/bisdn/xdpd  
-	cd xdpd/  
+	$ git clone https://github.com/bisdn/xdpd  
+	$ cd xdpd/  
 
 	;Install all the libraries required by the README provided in this folder  
-	bash autogen  
-	cd build  
-	../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"   
-	make
+	$ bash autogen  
+	$ cd build  
+	$ ../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"   
+	$ make
+	$sudo make install
 
 Now the DPDK library, which is being used by xDPd, must be properly
 configured, which can be done by launching a script that allows you to:
@@ -167,27 +168,10 @@ possibilities from the ones listed in this section.
 
 #### Docker
 
-In order to suppor the Docker execution environment, first follow the instructions
+In order to support the Docker execution environment, follow the instructions
 provided here:
 
 	http://docs.docker.com/installation/  
-
-Then executes the following commands to properly configure the Docker environment:
-
-	$ sudo apt-get install lxc -y  
-	$ sudo su
-	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
-	$ exit
-	$ sudo service docker restart
-
-To check that everything was correct, run:
-
-	$ sudo docker run hello-world
-
-If you get an error, execute the following commands:
-
-	$ sudo apt-get update
-	$ sudo apt-get upgrade
 	
 **WARNING: the Docker execution environment is only supported if using xDPd 
 as virtual switch.**
