@@ -196,7 +196,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     /*Insert a Controller*/
     row.Add("target", temp);
     row.Add("local_ip", "127.0.0.1");
-    row["connection_mode"] = "out-of-band";
+    row.Add("connection_mode", "out-of-band");
     row.Add("is_connected", true);
     
     first_obj.Add("row", row);
@@ -281,9 +281,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     ctrl.Clear();
     ctrl1.Clear();
     ctrl2.Clear();
-    peer.clear();
-    peer1.clear();
-    peer2.clear();
+    peer.Clear();
+    peer1.Clear();
+    peer2.Clear();
     
     dnumber_new = dnumber;
     
