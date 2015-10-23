@@ -254,15 +254,15 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     
     row.Add("controller", ctrl);
     
-    peer.push_back("map");
+    peer.Add("map");
 	
-	peer2.push_back("disable-in-band");
-	peer2.push_back(true);
+	peer2.Add("disable-in-band");
+	peer2.Add(true);
 			
-	peer1.push_back(peer2);
-	peer.push_back(peer1);
+	peer1.Add(peer2);
+	peer.Add(peer1);
     
-    row["other_config"] = peer;
+    row.Add("other_config", peer);
     
     //Add protocols
     row.Add("protocols", of_version);
@@ -712,8 +712,8 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	if(nf != 0)
 		row.Add("type", "internal");
 		
-	row["admin_state"] = true;
-	row["link_state:"] = true;
+	row.Add("admin_state", true);
+	row.Add("link_state:", true);
 		
 	first_obj.Add("row", row);
 		
@@ -1180,8 +1180,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			row.Add("name", temp);
 			row.Add("type", "internal");
 			
-			row["admin_state"] = true;
-			row["link_state:"] = true;
+			row.Add("admin_state", true);
+			row.Add("link_state", true);
 		
 			first_obj.Add("row", row);
 		
