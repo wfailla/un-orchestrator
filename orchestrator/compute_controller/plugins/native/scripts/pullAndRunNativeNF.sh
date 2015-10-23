@@ -32,6 +32,8 @@ script_name=`echo $1"_"$tmp_file"_"$2`
 
 tmp=$3
 
+remote=false
+
 begin=${tmp:0:7}
 # file:// means that the NF is local
 if [ $begin == "file://" ]
@@ -42,6 +44,7 @@ then
 	cp $path $script_name
 else
 	#The NF must be retrieved from a remote url
+	remote=true
 	sudo wget -O $script_name $3
 	#wget returns 0 in case of success
 fi
@@ -54,6 +57,10 @@ then
 else
 	echo "[pullAndRunNativeNF] Impossible to retrieve function '"$3"'"
 	rm $tmp_file
+	if [ $remote == true ]
+	then
+		rm $script_name
+	fi
 	exit 0
 fi
 
@@ -65,20 +72,22 @@ for (( c=0; c<$4; c++ ))
 do
 	#create virtual interface connected to the port of the vswitch (already created)
 	#name of the ovs port on the switch: <nf_name>p<#port>b<lsi_id>  => ${2}p${c+1}b${1}
- 	echo ip link add link ${2}p$((c+1))b${1} name ${!current} type macvtap
+ 	ip link add link ${2}p$((c+1))b${1} name ${!current} type macvtap
 
  	if [ ${!currentEthernet} != 0 ]
  	then
- 		echo ip link set ${!current} address ${!currentEthernet}
+ 		ip link set ${!current} address ${!currentEthernet}
  	fi
  	
  	if [ ${!currentIp} != 0 ]
  	then
 		#configure ip address for the interface???
-		echo ifconfig ${!current} ${!currentIp} up
+		ifconfig ${!current} ${!currentIp} up
 	fi
 	
-	echo ip link set ${!current} up
+	ip link set ${!current} up
+	ip link set ${!current} promisc on
+	#ip link set ${!current} arp on
 	
 	current=`expr $current + 1`
 	currentIp=`expr $currentIp + 1`
