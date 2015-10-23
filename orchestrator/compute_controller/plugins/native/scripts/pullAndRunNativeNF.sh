@@ -7,14 +7,14 @@
 #command line: 
 #	sudo ./nfs_manager/scripts/native/pullAndRunNativeNF.sh $1 $2 $3 $4 [$5 ...]
 
-#$1 LSI ID				(e.g., 2)
-#$2 NF name				(e.g., firewall)
-#$3 registry/nf[:tag] 			(e.g., localhost:5000/pcap:latest)
-#$4 number_of_ports			(e.g., 2)
-#The next $4 parameters are port names to be provided to the container (e.g., vEth0 vEth1)
-#The next $4 parameters are IPv4 addresses / network to be associated with that ports (e.g., 10.0.0.1/24)
+#$1 LSI ID										(e.g., 2)
+#$2 NF name										(e.g., firewall)
+#$3 registry/nf[:tag] 									(e.g., localhost:5000/pcap:latest)
+#$4 number_of_ports									(e.g., 2)
+#The next $4 parameters are the names of the port of the NF				(e.g., vEth0 vEth1)
+#The next $4 parameters are IPv4 addresses / network to be associated with that ports 	(e.g., 10.0.0.1/24)
 #	0 if no IPv4 address must be associated
-#The next $4 parameters are Eth addresses to be associated with that ports (e.g., aa:aa:aa:aa:aa:aa)
+#The next $4 parameters are Eth addresses to be associated with that ports 		(e.g., aa:aa:aa:aa:aa:aa)
 #	0 if no Ethernet address must be associated
 
 if (( $EUID != 0 )) 
@@ -98,7 +98,7 @@ done
 
 sudo chmod +x $script_name
 
-echo -ne sudo ./$script_name $1 $4 > $tmp_file
+echo -ne sudo ./$script_name $1 $2 $4 > $tmp_file
 
 #passing port names to the script
 current=5
@@ -107,6 +107,8 @@ do
 	echo -ne " " ${!current} >> $tmp_file
 	current=`expr $current + 1`
 done
+
+#command:= <script_name> <LSI_ID> <NF_NAME> <#PORTS> <PORT_NAMES ...>
 
 echo [`date`]"[pullAndRunNativeNF] Executing command: '"`cat $tmp_file`"'"
 
