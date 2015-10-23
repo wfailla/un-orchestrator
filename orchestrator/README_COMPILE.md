@@ -156,9 +156,6 @@ To start Open vSwitch at the boot of the machine (optional):
     $ chkconfig --add openvswitch
     $ chkconfig openvswitch on
 
-Note: sed(1) is used to rewrite path to Open vSwitch scripts that is statically defined
-in openvswitch script.
-
 
 ### Virtual Execution Environment for network functions
 
