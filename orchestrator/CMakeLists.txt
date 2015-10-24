@@ -97,6 +97,15 @@ IF(ENABLE_DPDK_KVM)
 ENDIF(ENABLE_DPDK_KVM)
 
 
+OPTION(DEBUG_KVM 
+	"Turn on the debug of the KVM-libvirt compute plugin" 
+	OFF
+)
+
+IF(DEBUG_KVM)
+	ADD_DEFINITIONS(-DDEBUG_KVM)
+ENDIF(DEBUG_KVM)
+
 OPTION(
 	POLITO_MESSAGE
 	"Turn on to support a slightly different JSON message describing the graph"

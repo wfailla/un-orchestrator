@@ -140,10 +140,10 @@ bool Libvirt::startNF(StartNFIn sni)
 		   			}
 		   			break;
 		   		case XML_ATTRIBUTE_NODE:
-		   			fprintf(stdout, "Error, ATTRIBUTE found here");
+		   			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "ATTRIBUTE found here");
 		   			break;
 		   		default:
-		   			fprintf(stdout, "Other type");
+		   			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Other type");
 		   			break;
 		   	}
 		}
@@ -280,7 +280,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
 	
-#if 1  /* Debug */
+#ifdef DEBUG_KVM 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Dumping XML to %s", domain_name);
 	FILE* fp = fopen(domain_name, "w");
 	if (fp) {
