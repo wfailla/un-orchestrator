@@ -60,7 +60,7 @@ void Libvirt::disconnect()
 bool Libvirt::startNF(StartNFIn sni)
 {
 	virDomainPtr dom = NULL;
-	char domain_name[64], port_name[64];
+	char domain_name[64];
 	const char *xmlconfig = NULL;
 	
 	string nf_name = sni.getNfName();
@@ -70,13 +70,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	/* Domain name */
 	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
-	
-	bool ovsdpdk = false;
-	//TODO: distinguish based on compilation flag
-//	if (uri_image.compare(0, ovs.size(), ovs.c_str(), ovs.size()) != 0) {
-//		ovsdpdk = true;
-//	}
-	
+		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Using Libvirt XML template %s", uri_image.c_str());
 	xmlInitParser();
 
@@ -210,67 +204,68 @@ bool Libvirt::startNF(StartNFIn sni)
     }
 	
 	/* Create XML for VM */
-	if (ovsdpdk) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is DPDK in KVM");
-	
-		/* Create NICs */
-		for(unsigned int i=1;i<=n_ports;i++) {
-			// TODO: This is OVS vhostuser specific - Should be coordinated with network plugin part...
-			char sock_path[255];
-			sprintf(sock_path, "%s/%s_%u", OVS_BASE_SOCK_PATH, domain_name, i);
-			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
-    	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
+#ifdef ENABLE_DPDK_KVM
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is DPDK in KVM");
 
-    	    xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
-    	    xmlNewProp(srcn, BAD_CAST "type", BAD_CAST "unix");
-    	    xmlNewProp(srcn, BAD_CAST "path", BAD_CAST sock_path);
-    	    xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "client");
+	/* Create NICs */
+	for(unsigned int i=1;i<=n_ports;i++) {
+		// TODO: This is OVS vhostuser specific - Should be coordinated with network plugin part...
+		char sock_path[255];
+		sprintf(sock_path, "%s/%s_%u", OVS_BASE_SOCK_PATH, domain_name, i);
+		xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
+	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
 
-    	    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
-    	    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
+	    xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
+	    xmlNewProp(srcn, BAD_CAST "type", BAD_CAST "unix");
+	    xmlNewProp(srcn, BAD_CAST "path", BAD_CAST sock_path);
+	    xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "client");
 
-			if(ethPortsRequirements.count(i) > 0) {
-	    	    xmlNodePtr macn = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
-	    	    xmlNewProp(macn, BAD_CAST "address", BAD_CAST (ethPortsRequirements.find(i)->second.c_str()));
-			}
+	    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
+	    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
 
-    	    xmlNodePtr drvn = xmlNewChild(ifn, NULL, BAD_CAST "driver", NULL);
-    	    xmlNodePtr drv_hostn = xmlNewChild(drvn, NULL, BAD_CAST "host", NULL);
-    	    xmlNewProp(drv_hostn, BAD_CAST "csum", BAD_CAST "off");
-    	    xmlNewProp(drv_hostn, BAD_CAST "gso", BAD_CAST "off");
-    	    xmlNodePtr drv_guestn = xmlNewChild(drvn, NULL, BAD_CAST "guest", NULL);
-    	    xmlNewProp(drv_guestn, BAD_CAST "tso4", BAD_CAST "off");
-    	    xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
-    	    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
+		if(ethPortsRequirements.count(i) > 0) {
+    	    xmlNodePtr macn = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
+    	    xmlNewProp(macn, BAD_CAST "address", BAD_CAST (ethPortsRequirements.find(i)->second.c_str()));
 		}
-	}else{
-		/* Create NICs */
-		for(unsigned int i=1;i<=n_ports;i++) {
-			// TODO: This is OVS vhostuser specific - Should be extracted to network plugin part...
-			/*add ports*/			
-			//Create name of port --> nf_name+p+i+b+lsiID
-			locale loc;	
-				
-			for (string::size_type j=0; j<nf_name.length(); ++j)
-    			nf_name[j] = tolower(nf_name[j], loc);
-    				
-			sprintf(port_name, "%sp%ub" "%" PRIu64, nf_name.c_str(), i, sni.getLsiID());
-			
-			
-			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
-    	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
-    	    xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
-    	    xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name);
-    	    xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
-
-    	    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
-    	    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
-    	    
-    	    xmlNodePtr virt = xmlNewChild(ifn, NULL, BAD_CAST "virtualport", NULL);
-    	    xmlNewProp(virt, BAD_CAST "type", BAD_CAST "openvswitch");
-		}
+	    xmlNodePtr drvn = xmlNewChild(ifn, NULL, BAD_CAST "driver", NULL);
+	    xmlNodePtr drv_hostn = xmlNewChild(drvn, NULL, BAD_CAST "host", NULL);
+	    xmlNewProp(drv_hostn, BAD_CAST "csum", BAD_CAST "off");
+	    xmlNewProp(drv_hostn, BAD_CAST "gso", BAD_CAST "off");
+	    xmlNodePtr drv_guestn = xmlNewChild(drvn, NULL, BAD_CAST "guest", NULL);
+	    xmlNewProp(drv_guestn, BAD_CAST "tso4", BAD_CAST "off");
+	    xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
+	    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
 	}
+#else
+	/* Create NICs */
+	for(unsigned int i=1;i<=n_ports;i++) {
+		// TODO: This is OVS vhostuser specific - Should be extracted to network plugin part...
+		/*add ports*/			
+		//Create name of port --> nf_name+p+i+b+lsiID
+		locale loc;	
+			
+		for (string::size_type j=0; j<nf_name.length(); ++j)
+			nf_name[j] = tolower(nf_name[j], loc);
+		
+		char port_name[64];		
+		sprintf(port_name, "%sp%ub" "%" PRIu64, nf_name.c_str(), i, sni.getLsiID());
+		
+		
+		xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
+	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
+
+	    xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
+	    xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name);
+	    xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
+
+	    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
+	    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
+	    
+	    xmlNodePtr virt = xmlNewChild(ifn, NULL, BAD_CAST "virtualport", NULL);
+	    xmlNewProp(virt, BAD_CAST "type", BAD_CAST "openvswitch");
+	}
+#endif
 
 	/* Cleanup of XPath data */
 	xmlXPathFreeContext(xpathCtx);
