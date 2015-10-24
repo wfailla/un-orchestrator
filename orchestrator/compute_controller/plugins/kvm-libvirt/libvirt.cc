@@ -238,9 +238,10 @@ bool Libvirt::startNF(StartNFIn sni)
 	    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
 	}
 #else
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is a 'standard process' in KVM");
+
 	/* Create NICs */
 	for(unsigned int i=1;i<=n_ports;i++) {
-		// TODO: This is OVS vhostuser specific - Should be extracted to network plugin part...
 		/*add ports*/			
 		//Create name of port --> nf_name+p+i+b+lsiID
 		locale loc;	
