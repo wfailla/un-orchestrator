@@ -260,8 +260,6 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h
     network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.cc
-    network_controller/switch_manager/plugins/ovs-ovsdb/Jzon.h
-    network_controller/switch_manager/plugins/ovs-ovsdb/Jzon.cpp
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 

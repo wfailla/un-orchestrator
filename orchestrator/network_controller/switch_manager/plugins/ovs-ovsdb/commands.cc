@@ -1,9 +1,8 @@
 #include "ovsdb_manager.h"
 #include "ovsdb_constants.h"
 
-/*Socket*/
-struct sockaddr_in saddr1;/* sturct addr server*/
 struct in_addr sIPaddr1;/* struct IP addr server*/
+char ErrBuf[BUFFER_SIZE];
 
 int rnumber = 1, rnumber_new = 1;
 uint64_t dnumber = 1;
@@ -42,8 +41,11 @@ commands::~commands(){
 
 /*connect to a ovs server using Socket*/
 int commands::cmd_connect() {
-	uint16_t tport_n, tport_h;
+	uint16_t tport_h;
 	int	result, s;
+	
+	struct addrinfo Hints;
+	struct addrinfo *AddrInfo;
 	
 	/*Read ip and port by the server*/
 	result = inet_aton(SOCKET_IP, &sIPaddr1);
@@ -56,22 +58,21 @@ int commands::cmd_connect() {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Invalid number of port.");
 		throw commandsException();
 	}
-  	tport_n = htons(tport_h);
+	
+	memset(&Hints, 0, sizeof(struct addrinfo));
 
-	/*creating Socket */
-    logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Creating Socket.");
-	if((s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Creation of Socket failed.");
+	Hints.ai_family= AF_INET;
+	Hints.ai_socktype= SOCK_STREAM;
+	
+	if (sock_initaddress (SOCKET_IP, SOCKET_PORT, &Hints, &AddrInfo, ErrBuf, sizeof(ErrBuf)) == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error resolving given address/port (%s/%s): %s",  SOCKET_IP, SOCKET_PORT, ErrBuf);
 		throw commandsException();
 	}
-	
-	/*preparing addr struct*/
-    saddr1.sin_family = AF_INET;
-	saddr1.sin_port   = tport_n;
-	saddr1.sin_addr   = sIPaddr1;
 
-	if(connect(s, (struct sockaddr *) &saddr1, sizeof(saddr1)) != 0){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Connection to the server failed.");
+	if ( (s=sock_open(AddrInfo, 0, 0,  ErrBuf, sizeof(ErrBuf))) == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Connection failure!");
 		throw commandsException();
 	}
 	
@@ -79,7 +80,9 @@ int commands::cmd_connect() {
 }
 
 int commands::cmd_disconnect(int s){
-	if(close(s) != 0){
+	char ErrBuf[BUFFER_SIZE];
+
+	if(sock_close(s, ErrBuf, sizeof(ErrBuf)) != 0){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Closing socket failed.");
 		throw commandsException();
 	}
@@ -89,21 +92,14 @@ int commands::cmd_disconnect(int s){
 
 /*
 *	@cli = struct CreateLsiIn
-*	@FIXME = without virtual Link
 */
 CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 
     unsigned int i=0;	
-    int len = 0;
-    size_t  nleft = 0;
-    ssize_t nwritten = 0;
+    int nwritten = 0;
     
     ssize_t r = 0;
-	
-	const char *ptr = "", *json = "";
-	char read_buf[4096];
-	
-	strcpy(read_buf, "");
+	char read_buf[4096] = "";
 	
 	/*Information for CreateLsiOut to return*/
 	CreateLsiOut *clo = NULL;
@@ -157,29 +153,29 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     s = cmd_connect();
     
     /*Root object contained three object [method, params, id]*/
-    Jzon::Object root;
-    root.Add("method", "transact");
+    Object root;
+    root["method"] = "transact";
 
-    Jzon::Array params;
-    params.Add("Open_vSwitch");
+    Array params;
+    params.push_back("Open_vSwitch");
     
-    Jzon::Object first_obj;
-    Jzon::Object row;
-    Jzon::Array iface;
-    Jzon::Array iface1;
-    Jzon::Array iface2;
+    Object first_obj;
+    Object row;
+    Array iface;
+    Array iface1;
+    Array iface2;
 	
 	//Create Bridge
-    /*create current name of a bridge*/
+    /*create current name of a bridge "Bridge+dnumber"*/
 	sprintf(temp, "%" PRIu64, dnumber);
 	strcat(sw, temp);
 	
 	/*fill the map switch_id*/
 	switch_id[dnumber] = string(sw);
 	
-	Jzon::Array peer;
-    Jzon::Array peer1;
-    Jzon::Array peer2;
+	Array peer;
+    Array peer1;
+    Array peer2;
     
     int l = 0;
     
@@ -190,237 +186,215 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	strcat(tcp_s, cli.getControllerPort().c_str());
 	strcpy(temp, tcp_s);
 	
-	first_obj.Add("op", "insert");
-    first_obj.Add("table", "Controller");
+	first_obj["op"] = "insert";
+    first_obj["table"] = "Controller";
     
     /*Insert a Controller*/
-    row.Add("target", temp);
-    row.Add("local_ip", "127.0.0.1");
-    row.Add("is_connected", true);
+    row["target"] = temp;
+    row["local_ip"] = "127.0.0.1";
+    row["connection_mode"] = "out-of-band";
+    row["is_connected"] = true;
     
-    first_obj.Add("row", row);
+    first_obj["row"] = row;
     
-    //Create the current name of a controller
-	sprintf(temp, "%" PRIu64, dnumber);
-	strcat(ctr, temp);
-	strcpy(temp, ctr);
-	strcpy(ctr, "ctrl");
+    //Create the current name of a controller --> ctrl+dnumber
+    sprintf(temp, "%s%" PRIu64, ctr, dnumber);
     
-    first_obj.Add("uuid-name", temp);
+    first_obj["uuid-name"] = temp;
     
-    params.Add(first_obj);
+    params.push_back(first_obj);
     
-    row.Clear();
-    first_obj.Clear();
+    row.clear();
+    first_obj.clear();
     
-	first_obj.Add("op", "insert");
-    first_obj.Add("table", "Bridge");
+	first_obj["op"] = "insert";
+    first_obj["table"] = "Bridge";
     
     /*Insert a bridge*/
-    row.Add("name", sw);
+    row["name"] = sw;
     
-    Jzon::Array port;
-	Jzon::Array port1;
-	Jzon::Array port2;
+    Array port;
+	Array port1;
+	Array port2;
 	
-	port.Add("set");
+	port.push_back("set");
     
-	port.Add(port1);
+	port.push_back(port1);
 	
-	row.Add("ports", port);
+	row["ports"] = port;
 	
-	port1.Clear();
-	port.Clear();
+	port1.clear();
+	port.clear();
     
-    Jzon::Array ctrl;
-    ctrl.Add("set");
+    Array ctrl;
+    ctrl.push_back("set");
 
-	Jzon::Array ctrl1;
+	Array ctrl1;
 	
-	Jzon::Array ctrl2;
+	Array ctrl2;
 
 	//Create the current name of a controller
-	sprintf(tmp, "%" PRIu64, dnumber);
-	strcat(ctr, tmp);
-	strcpy(tmp, ctr);
+	sprintf(tmp, "%s%" PRIu64, ctr, dnumber);
 	
-	ctrl2.Add("named-uuid");
-	ctrl2.Add(tmp);
+	ctrl2.push_back("named-uuid");
+	ctrl2.push_back(tmp);
 	
-	ctrl1.Add(ctrl2);
+	ctrl1.push_back(ctrl2);
+	 
+	ctrl.push_back(ctrl1);
+    
+    row["controller"] = ctrl;
+    
+	peer.push_back("map");
 	
-	ctrl.Add(ctrl1);
+	peer2.push_back("disable-in-band");
+	peer2.push_back("true");
+			
+	peer1.push_back(peer2);
+	peer.push_back(peer1);
     
-    row.Add("controller", ctrl);
+    row["other_config"] = peer;
     
-    //Add protocols
-    row.Add("protocols", of_version);
+    row["protocols"] = of_version;
     
-    first_obj.Add("row", row);
+    first_obj["row"] = row;
     
-    first_obj.Add("uuid-name", sw);
+    first_obj["uuid-name"] = sw;
     
-    params.Add(first_obj);
+    params.push_back(first_obj);
     
-    row.Clear();
-    first_obj.Clear();
-    port.Clear();
-    port1.Clear();
-    port2.Clear();
-    ctrl.Clear();
-    ctrl1.Clear();
-    ctrl2.Clear();
+    row.clear();
+    first_obj.clear();
+    port.clear();
+    port1.clear();
+    port2.clear();
+    ctrl.clear();
+    ctrl1.clear();
+    ctrl2.clear();
+    peer.clear();
+    peer1.clear();
+    peer2.clear();
     
     dnumber_new = dnumber;
     
     /*Object with four items [op, table, where, mutations]*/
-    Jzon::Object second_obj;
-    second_obj.Add("op", "mutate");
-    second_obj.Add("table", "Open_vSwitch");
+    Object second_obj;
+    second_obj["op"] = "mutate";
+    second_obj["table"] = "Open_vSwitch";
     
     /*Empty array [where]*/
-    Jzon::Array where;
-    second_obj.Add("where", where);
+    Array where;
+    second_obj["where"] = where;
     
     /*Array with one element*/
-    Jzon::Array w_array;
+    Array w_array;
     
     /*Array  with three elements*/
-    Jzon::Array m_array;
-    m_array.Add("bridges");
-    m_array.Add("insert");
+    Array m_array;
+    m_array.push_back("bridges");
+    m_array.push_back("insert");
     
     /*Array with two elements*/
-    Jzon::Array i_array;
-    i_array.Add("set");
+    Array i_array;
+    i_array.push_back("set");
     
     /*Array with one element*/
-    Jzon::Array s_array;
+    Array s_array;
     
     /*Array with two element*/
-    Jzon::Array a_array;
-    a_array.Add("named-uuid");
-    a_array.Add(sw);
+    Array a_array;
+    a_array.push_back("named-uuid");
+    a_array.push_back(sw);
     
-    s_array.Add(a_array);
+    s_array.push_back(a_array);
     
-    i_array.Add(s_array);
+    i_array.push_back(s_array);
     
-    m_array.Add(i_array);
+    m_array.push_back(i_array);
     
-    w_array.Add(m_array);
+    w_array.push_back(m_array);
     
-    second_obj.Add("mutations", w_array);
+    second_obj["mutations"] = w_array;
     
-    params.Add(second_obj);
+    params.push_back(second_obj);
     
-    root.Add("params", params);
+    root["params"] = params;
 
-	root.Add("id", id);
+	root["id"] = id;
 
-	w_array.Clear();
-	m_array.Clear();
-	i_array.Clear();
-	s_array.Clear();
-	a_array.Clear();
+	w_array.clear();
+	m_array.clear();
+	i_array.clear();
+	s_array.clear();
+	a_array.clear();
 	
 	//Increment transaction id
 	id++;
-
-	Jzon::Writer writer(root, Jzon::StandardFormat);
-    writer.Write();
-    std::string result = writer.GetResult();
     
-    len = result.size();
-    
-    json = result.c_str();
-    
-    ptr = result.c_str();
-    
-    Jzon::Object rootNode;
-    ofstream myfile;
     string *strr = new string[256];
     
-    for (nleft=len; nleft > 0; )
+    stringstream ss;
+ 	write_formatted(root, ss);
+    
+    nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+	if (nwritten == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		throw commandsException();
+	}
+    
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+	if (r == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		throw commandsException();
+	}
+
+	//Read json response
+	Value value;
+    read( read_buf, value );
+    Object rootNode = value.getObject();
+
+    for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
     {
-		nwritten = send(s, ptr, nleft, 0);
-		if (nwritten >0)
-		{
-	    	nleft -= nwritten;
-	    	ptr += nwritten;   
-		}
-    }
-    
-    strcpy(read_buf, "");
-    
-    unsigned kkkk = 0;
-    
-    r = 0;
-    
-    r = read(s, read_buf, 4096);
-    
-    read_buf[r-1] = '\0';
-    
-    string myString(read_buf);
-    
-  	myfile.open ("file1.json");
-  	myfile << read_buf;
-  	myfile.close();
-
-	Jzon::FileReader::ReadFile("file1.json", rootNode);
-
-    for (Jzon::Object::iterator it = rootNode.begin(); it != rootNode.end(); ++it)
-    {
-    	std::string name = (*it).first;
-        Jzon::Node &node = (*it).second;
-
-        /*find array [result]*/
-        if (node.IsArray())
+    	const string name = (*it).first;
+        const Value &node = (*it).second;
+        
+        if (name == "result")
         {
-        	/*convert Node in an Array*/
-     		const Jzon::Array &result = node.AsArray();
+     		const Array &result = node.getArray();
      	
-     		kkkk = result.GetCount();
-     	
-     		for(i=0;i<result.GetCount();i++){
-     			/*retrieve i-node*/
-		 		Jzon::Node &node1 = result.Get(i);
+     		for(i=0;i<result.size();i++){
+		 		Object uuidNode = result[i].getObject();
 		 		
-		 		/*convert it in a Object*/
-		 		Jzon::Object uuidNode = node1.AsObject();
-		 		
-		 		if (node1.IsObject()){
-		 			/*iterate in this Object*/
-		 			for (Jzon::Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-					{
-						std::string name1 = (*it1).first;
-		    			Jzon::Node &node1 = (*it1).second;
+		 		for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+				{
+					const string name1 = (*it1).first;
+		    		const Value &node1 = (*it1).second;
 		    			
-		    			/*search a uuid array*/
-						if(node1.IsArray()){
-							const Jzon::Array &stuff1 = node1.AsArray();
-							/*retriere the second element of this array*/
-		 					Jzon::Node &node2 = stuff1.Get(1);
-		 					strr[i] = node2.ToString();
-						}
+					if(name1 == "uuid"){
+						const Array &stuff1 = node1.getArray();
+		 				strr[i] = stuff1[1].getString();
+		 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, strr[i].c_str());
+					} else if(name1 == "error"){
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
+						throw commandsException();
 					}
-		 		}		
+				}	
      		}	
         }
 	} 
+
+	//store the switch-uuid
+    switch_uuid[dnumber] = strr[i-2];
     
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
     
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, json);
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
     
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
     
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
-    
-    if(kkkk!=0){
-		//store the switch-uuid
-    	switch_uuid[dnumber] = strr[i-2];
-	}
 
 	/*create ports*/
 	if(ports.size() !=0){
@@ -441,7 +415,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	
 	/*Create interfaces related by the nf ports*/
     if(nfs.size() != 0){    		
-		/*for each network function name in the list of nfs*/
+		/*for each network function port in the list of nfs*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 		{
 			list<string> nfs_ports = cli.getNetworkFunctionsPortNames(*nf);
@@ -453,7 +427,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 				add_ports(rnumber, (*nfp), dnumber, 1, s);
 				
 				locale loc;	
-				port2.Add("named-uuid");
+				port2.push_back("named-uuid");
 				string str = (*nfp);
 				
 				for (string::size_type i=0; i<str.length(); ++i)
@@ -539,46 +513,42 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     //increment switch number
     dnumber++;
     
-    root.Clear();
-    params.Clear();
-    row.Clear();
-    first_obj.Clear();
-    port2.Clear();
-    port1.Clear();
-    port.Clear();
-    peer.Clear();
-    peer1.Clear();
-    peer2.Clear();
+    root.clear();
+    params.clear();
+    row.clear();
+    first_obj.clear();
+    port2.clear();
+    port1.clear();
+    port.clear();
+    peer.clear();
+    peer1.clear();
+    peer2.clear();
     
     pnumber = nfnumber_old;
     
     uint64_t pi = 0;
     
-    Jzon::Array ma;
-	Jzon::Array maa;
+    Array ma;
+	Array maa;
 	
-	Jzon::Array third_object;
-	Jzon::Array fourth_object;
+	Array third_object;
+	Array fourth_object;
 	
 	//disconnect socket
     cmd_disconnect(s);
-	
-	//int nn = l;
 	
 	l = 0;
 	
     if(vport.size() != 0)
 	{
-		//rnumber_old = rnumber;
-	
 		for(list<uint64_t>::iterator nf = vport.begin(); nf != vport.end(); nf++)
 		{
 			//connect socket
 			s = cmd_connect();
 		
-			root.Add("method", "transact");
+			root["method"] = "transact";
 
-			params.Add("Open_vSwitch");
+			params.push_back("Open_vSwitch");
 		
 			pi = (*nf);
 			
@@ -604,8 +574,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			pnumber++;
 			rnumber++;
 			
-			root.Clear();
-			params.Clear();
+			root.clear();
+			params.clear();
 			
 			//Increment transaction id
 			id++;
@@ -630,14 +600,11 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	
 	char temp[64] = "", tmp[64] = "";
 	
-	int len;
-    size_t  nleft;
     ssize_t nwritten;
 	
-	const char *ptr, *json;
-	char read_buf[4096];
+	char read_buf[4096] = "";
 	
-	ssize_t r = 0;
+	int r = 0;
 	
 	locale loc;	
 	
@@ -645,14 +612,14 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	
 	map<string, unsigned int> ports;
 	
-	Jzon::Object root, first_obj, second_obj, row;
-	Jzon::Array params, iface, iface1, iface2, where, port1, port2, i_array;
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array;
 
-	Jzon::Array ma;
-	Jzon::Array maa;
+	Array ma;
+	Array maa;
 	
-	Jzon::Array third_object;
-	Jzon::Array fourth_object;
+	Array third_object;
+	Array fourth_object;
 
 	//connect socket
     s = cmd_connect();
@@ -688,219 +655,206 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 		}
 	}
 	
-	root.Add("method", "transact");
+	root["method"] = "transact";
 
-	params.Add("Open_vSwitch");
+	params.push_back("Open_vSwitch");
 		
-	first_obj.Add("op", "insert");
-	first_obj.Add("table", "Interface");
+	first_obj["op"] = "insert";
+	first_obj["table"] = "Interface";
 		
 	/*Insert an Interface*/
-	row.Add("name", temp);
+	row["name"] = temp;
 	if(nf != 0)
-		row.Add("type", "internal");
+		row["type"] = "internal";
 		
-	first_obj.Add("row", row);
+	//row["admin_state"] = true;
+	//row["link_state:"] = true;
 		
-	first_obj.Add("uuid-name", ifac);
+	first_obj["row"] = row;
 		
-	params.Add(first_obj);
+	first_obj["uuid-name"] = ifac;
 		
-	row.Clear();
-	first_obj.Clear();
+	params.push_back(first_obj);
+		
+	row.clear();
+	first_obj.clear();
 			
-	first_obj.Add("op", "insert");
-	first_obj.Add("table", "Port");
+	first_obj["op"] = "insert";
+	first_obj["table"] = "Port";
 		
 	/*Insert a port*/
-	row.Add("name", temp);
+	row["name"] = temp;
 		
-	iface.Add("set");
+	iface.push_back("set");
 	
-	iface2.Add("named-uuid");
-	iface2.Add(ifac);
+	iface2.push_back("named-uuid");
+	iface2.push_back(ifac);
 	
-	iface1.Add(iface2);
-	iface.Add(iface1);
+	iface1.push_back(iface2);
+	iface.push_back(iface1);
 		
-	row.Add("interfaces", iface);
+	row["interfaces"] = iface;
 		
-	first_obj.Add("row", row);
+	first_obj["row"] = row;
 		
-	first_obj.Add("uuid-name", temp);
+	first_obj["uuid-name"] = temp;
 		
-	params.Add(first_obj);
+	params.push_back(first_obj);
 		
 	//insert this port name into port_l
 	port_l[dnumber].push_back(temp);
 		
-	row.Clear();
-	first_obj.Clear();
-	iface.Clear();
-	iface1.Clear();
-	iface2.Clear();
+	row.clear();
+	first_obj.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
 		
-	first_obj.Add("op", "update");
-	first_obj.Add("table", "Bridge");
+	first_obj["op"] = "update";
+	first_obj["table"] = "Bridge";
 			   
-	third_object.Add("_uuid");
-	third_object.Add("==");
+	third_object.push_back("_uuid");
+	third_object.push_back("==");
 		
-	fourth_object.Add("uuid");
-	fourth_object.Add(switch_uuid[dnumber].c_str());
+	fourth_object.push_back("uuid");
+	fourth_object.push_back(switch_uuid[dnumber].c_str());
 		
-	third_object.Add(fourth_object);
-	where.Add(third_object);
+	third_object.push_back(fourth_object);
+	where.push_back(third_object);
 		
-	first_obj.Add("where", where);
+	first_obj["where"] = where;
 	
-	where.Clear();
+	where.clear();
 	
 	for(list<string>::iterator u = port_uuid[dnumber].begin(); u != port_uuid[dnumber].end(); u++)
 	{
-		port2.Add("uuid");
+		port2.push_back("uuid");
 			
-		port2.Add((*u));
+		port2.push_back((*u));
 	
-		port1.Add(port2);
+		port1.push_back(port2);
 	
-		port2.Clear();
+		port2.clear();
 	}
 		
 	for(list<string>::iterator u = vport_uuid[dnumber].begin(); u != vport_uuid[dnumber].end(); u++)
 	{
-		port2.Add("uuid");
+		port2.push_back("uuid");
 			
-		port2.Add((*u));
+		port2.push_back((*u));
 	
-		port1.Add(port2);
+		port1.push_back(port2);
 	
-		port2.Clear();
+		port2.clear();
 	}
 		
-	port2.Add("named-uuid");
-	port2.Add(temp);
+	port2.push_back("named-uuid");
+	port2.push_back(temp);
 	
-	port1.Add(port2);
+	port1.push_back(port2);
 	
-	port2.Clear();
+	port2.clear();
 		
 	/*Array with two elements*/
-	i_array.Add("set");
+	i_array.push_back("set");
 		   
-	i_array.Add(port1);
+	i_array.push_back(port1);
 		
-	row.Add("ports", i_array);
+	row["ports"] = i_array;
 		
-	first_obj.Add("row", row);
+	first_obj["row"] = row;
 		
-	params.Add(first_obj);
+	params.push_back(first_obj);
 		
-	second_obj.Clear();
+	second_obj.clear();
 		
 	/*Object with four items [op, table, where, mutations]*/
-	second_obj.Add("op", "mutate");
-	second_obj.Add("table", "Open_vSwitch");
+	second_obj["op"] = "mutate";
+	second_obj["table"] = "Open_vSwitch";
 		
 	/*Empty array [where]*/
-	second_obj.Add("where", where);
+	second_obj["where"] = where;
 		
 	/*Array with two element*/
-	maa.Add("next_cfg");
-	maa.Add("+=");
-	maa.Add(1);
+	maa.push_back("next_cfg");
+	maa.push_back("+=");
+	maa.push_back(1);
 			
-	ma.Add(maa);
+	ma.push_back(maa);
 		
-	second_obj.Add("mutations", ma);
+	second_obj["mutations"] = ma;
 			
-	params.Add(second_obj);
+	params.push_back(second_obj);
 		
-	ma.Clear();
-	maa.Clear();
-	row.Clear();
-	where.Clear();
-	first_obj.Clear();
-	second_obj.Clear();
-	third_object.Clear();
-	fourth_object.Clear();
-	i_array.Clear();
-	iface.Clear();
-	iface1.Clear();
-	iface2.Clear();
-	port1.Clear();
-	port2.Clear();
-	root.Add("params", params);
+	ma.clear();
+	maa.clear();
+	row.clear();
+	where.clear();
+	first_obj.clear();
+	second_obj.clear();
+	third_object.clear();
+	fourth_object.clear();
+	i_array.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
+	port1.clear();
+	port2.clear();
+	root["params"] = params;
 
-	root.Add("id", id);
+	root["id"] = id;
 
-	Jzon::Writer writer1(root, Jzon::StandardFormat);
-	writer1.Write();
-	std::string result1 = writer1.GetResult();
+	stringstream ss;
+ 	write_formatted(root, ss );
 		
-	len = result1.size();
-		
-	json = result1.c_str();
-		
-	ptr = result1.c_str();
-		
-	for (nleft=len; nleft > 0; )
+	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+	if (nwritten == sockFAILURE)
 	{
-		nwritten = send(s, ptr, nleft, 0);
-		if (nwritten >0)
-		{
-			nleft -= nwritten;
-			ptr += nwritten;   
-		}
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		throw commandsException();
 	}
-			
-	r = read(s, read_buf, 4096);
+    
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+	if (r == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		throw commandsException();
+	}
 		
-	read_buf[r-1] = '\0';
-		
-	string myString1(read_buf);
-		
-	ofstream myfile;
-	myfile.open ("file1.json");
-	myfile << read_buf;
-	myfile.close();
-		
-	Jzon::Object rootNode;  	
-	Jzon::FileReader::ReadFile("file1.json", rootNode);
+	Value value;
+    read( read_buf, value );
+    Object rootNode = value.getObject();
 
-	for (Jzon::Object::iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
 		//Search the first object related by updated Bridge
 		if(flag){
-			std::string name = (*it).first;
-			Jzon::Node &node = (*it).second;
-			if (node.IsArray())
+			const std::string name = (*it).first;
+			const Value &node = it->second;
+			if (name == "result")
 				{
-				 	const Jzon::Array &result = node.AsArray();
-					for(unsigned i=0;i<result.GetCount();i++)
+				 	const Array &result = node.getArray();
+				 	
+					for(unsigned i=0;i<result.size();i++)
 					{
-						Jzon::Node &node1 = result.Get(i);
-
-						Jzon::Object uuidNode = node1.AsObject();
+						Object uuidNode = result[i].getObject();
 							 		
-						if (node1.IsObject())
+						for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
 						{
-
-							 for (Jzon::Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-							 {
-								std::string name1 = (*it1).first;
-								Jzon::Node &node1 = (*it1).second;
+							std::string name1 = (*it1).first;
+							const Value &node1 = it1->second;
 							
-								if(node1.IsArray()){
-									const Jzon::Array &stuff1 = node1.AsArray();
-										
-								 	Jzon::Node &node2 = stuff1.Get(1);
-								 	//save the second element, the new port created
-						 			if(i==1){
-						 				//insert in a port_uuid the list of port-uuid for this switch
-						 				port_uuid[dnumber].push_back(node2.ToString());
-						 			}
+							if(name1 == "uuid"){
+								const Array &stuff1 = node1.getArray();
+									
+							 	//save the second element, the new port created
+								if(i==1){
+									//insert in a port_uuid the list of port-uuid for this switch
+									port_uuid[dnumber].push_back(stuff1[i].getString());
 								}
+							} else if(name1 == "error"){
+								logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
+								throw commandsException();
 							}
 						}		
 					}
@@ -911,14 +865,14 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 			
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, json);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
-	root.Clear();
-	params.Clear();
+	root.clear();
+	params.clear();
 			
 	//Increment transaction id
 	id++;
@@ -929,29 +883,24 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 
 void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 	
-	int len = 0;
-    size_t  nleft = 0;
     ssize_t nwritten = 0;
 	
-	ssize_t r = 0;
+	int r = 0;
 	
-	const char *ptr = "", *json = "";
 	char read_buf[4096] = "";
 	
 	locale loc;	
 	
-	//bool flag = false;
-	
 	map<string, unsigned int> ports;
 	
-	Jzon::Object root, first_obj, second_obj, row;
-	Jzon::Array params, iface, iface1, iface2, where, port1, port2, i_array, peer, peer1, peer2;
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array, peer, peer1, peer2;
 
-	Jzon::Array ma;
-	Jzon::Array maa;
+	Array ma;
+	Array maa;
 	
-	Jzon::Array third_object;
-	Jzon::Array fourth_object;
+	Array third_object;
+	Array fourth_object;
 
 	/*for all virtual link ports, destroy it*/
 	for(list<uint64_t>::iterator i = virtual_link_id[switch_id[dpi]].begin(); i != virtual_link_id[switch_id[dpi]].end(); i++){
@@ -965,125 +914,104 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 	//connect socket
     s = cmd_connect();
 
-	root.Add("method", "transact");
+	root["method"] = "transact";
 
-	params.Add("Open_vSwitch");
+	params.push_back("Open_vSwitch");
 				
-	first_obj.Add("op", "update");
-	first_obj.Add("table", "Open_vSwitch");
+	first_obj["op"] = "update";
+	first_obj["table"] = "Open_vSwitch";
 			   
-	first_obj.Add("where", where);
+	first_obj["where"] = where;
 	
 	switch_uuid.erase(dpi);
 	
 	for(map<uint64_t, string>::iterator sww = switch_uuid.begin(); sww != switch_uuid.end(); sww++)
 	{
-		port2.Add("uuid");
+		port2.push_back("uuid");
 			
-		port2.Add(sww->second);
+		port2.push_back(sww->second);
 	
-		port1.Add(port2);
+		port1.push_back(port2);
 	
-		port2.Clear();
+		port2.clear();
 	}
 		
 	/*Array with two elements*/
-	i_array.Add("set");
+	i_array.push_back("set");
 		   
-	i_array.Add(port1);
+	i_array.push_back(port1);
 		
-	row.Add("bridges", i_array);
+	row["bridges"] = i_array;
 		
-	first_obj.Add("row", row);
+	first_obj["row"] = row;
 		
-	params.Add(first_obj);
+	params.push_back(first_obj);
 		
-	second_obj.Clear();
+	second_obj.clear();
 		
 	/*Object with four items [op, table, where, mutations]*/
-	second_obj.Add("op", "mutate");
-	second_obj.Add("table", "Open_vSwitch");
+	second_obj["op"] = "mutate";
+	second_obj["table"] = "Open_vSwitch";
 		
 	/*Empty array [where]*/
-	second_obj.Add("where", where);
+	second_obj["where"] = where;
 			
 	/*Array with two element*/
-	maa.Add("next_cfg");
-	maa.Add("+=");
-	maa.Add(1);
+	maa.push_back("next_cfg");
+	maa.push_back("+=");
+	maa.push_back(1);
 			
-	ma.Add(maa);
+	ma.push_back(maa);
 		
-	second_obj.Add("mutations", ma);
+	second_obj["mutations"] = ma;
 			
-	params.Add(second_obj);
+	params.push_back(second_obj);
 	
-	ma.Clear();
-	maa.Clear();
-	row.Clear();
-	where.Clear();
-	first_obj.Clear();
-	second_obj.Clear();
-	third_object.Clear();
-	fourth_object.Clear();
-	i_array.Clear();
-	iface.Clear();
-	iface1.Clear();
-	iface2.Clear();
-	port1.Clear();
-	port2.Clear();
-	root.Add("params", params);
+	ma.clear();
+	maa.clear();
+	row.clear();
+	where.clear();
+	first_obj.clear();
+	second_obj.clear();
+	third_object.clear();
+	fourth_object.clear();
+	i_array.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
+	port1.clear();
+	port2.clear();
+	root["params"] = params;
 
-	root.Add("id", id);
+	root["id"] = id;
 
-	Jzon::Writer writer1(root, Jzon::StandardFormat);
-	writer1.Write();
-	std::string result1 = writer1.GetResult();
-		
-	len = result1.size();
-		
-	json = result1.c_str();
-		
-	ptr = result1.c_str();
+	stringstream ss;
+ 	write_formatted(root, ss );	
 	
-	ofstream myfile;
-	
-	Jzon::Object rootNode;  	
-	
-	for (nleft=len; nleft > 0; )
+	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+	if (nwritten == sockFAILURE)
 	{
-		nwritten = send(s, ptr, nleft, 0);
-		if (nwritten >0)
-		{
-			nleft -= nwritten;
-			ptr += nwritten;   
-		}
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		throw commandsException();
 	}
-		
-	strcpy(read_buf, "");
-			
-	r = read(s, read_buf, 4096);
-	
-	read_buf[r-1] = '\0';
-		
-	string myString1(read_buf);
-		
-	myfile.open ("file1.json");
-	myfile << read_buf;
-	myfile.close();
-	
-	Jzon::FileReader::ReadFile("file1.json", rootNode);
+    
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+	if (r == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		throw commandsException();
+	}
 			
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, json);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 
-	root.Clear();
-	params.Clear();
+	root.clear();
+	params.clear();
 			
 	//Increment transaction id
 	id++;
@@ -1098,14 +1026,11 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 	
 	char temp[64] = "", tmp[64] = "";
 	
-	int len;
-    size_t  nleft;
     ssize_t nwritten;
 	
-	const char *ptr, *json;
-	char read_buf[4096];
+	char read_buf[4096] = "";
 	
-	ssize_t r = 0;
+	int r = 0;
 	
 	locale loc;	
 	
@@ -1115,25 +1040,25 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 
 	list<string> nfp = anpi.getNetworkFunctionsPorts();
 	
-	Jzon::Object root, first_obj, second_obj, row;
-	Jzon::Array params, iface, iface1, iface2, where, port1, port2, i_array;
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array;
 
-	Jzon::Array ma;
-	Jzon::Array maa;
+	Array ma;
+	Array maa;
 	
-	Jzon::Array third_object;
-	Jzon::Array fourth_object;
+	Array third_object;
+	Array fourth_object;
 
 	//connect socket
     s = cmd_connect();
 
 	if(nfp.size() != 0){
 		
-		root.Add("method", "transact");
+		root["method"] = "transact";
 
-		params.Add("Open_vSwitch");
+		params.push_back("Open_vSwitch");
 		
-		/*for each network function name in the list of nfs*/
+		/*for each port in the list of nfp*/
 		for(list<string>::iterator nf = nfp.begin(); nf != nfp.end(); nf++)
 		{
 			char ifac[64] = "iface";
@@ -1163,47 +1088,50 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			sprintf(temp, "%d", rnumber);
 			strcat(ifac, temp);
 		
-			first_obj.Add("op", "insert");
-			first_obj.Add("table", "Interface");
+			first_obj["op"] = "insert";
+			first_obj["table"] = "Interface";
 		
-			row.Add("name", temp);
-			row.Add("type", "internal");
+			row["name"] = temp;
+			row["type"] = "internal";
+			
+			//row["admin_state"] = true;
+			//row["link_state:"] = true;
 		
-			first_obj.Add("row", row);
+			first_obj["row"] = row;
 		
-			first_obj.Add("uuid-name", ifac);
+			first_obj["uuid-name"] = ifac;
 		
-			params.Add(first_obj);
+			params.push_back(first_obj);
 		
-			row.Clear();
-			first_obj.Clear();
+			row.clear();
+			first_obj.clear();
 				
-			first_obj.Add("op", "insert");
-			first_obj.Add("table", "Port");
+			first_obj["op"] = "insert";
+			first_obj["table"] = "Port";
 		
-			row.Add("name", temp);
+			row["name"] = temp;
 		
-			iface.Add("set");
+			iface.push_back("set");
 	
-			iface2.Add("named-uuid");
-			iface2.Add(ifac);
+			iface2.push_back("named-uuid");
+			iface2.push_back(ifac);
 	
-			iface1.Add(iface2);
-			iface.Add(iface1);
+			iface1.push_back(iface2);
+			iface.push_back(iface1);
 		
-			row.Add("interfaces", iface);
+			row["interfaces"] = iface;
 		
-			first_obj.Add("row", row);
+			first_obj["row"] = row;
 		
-			first_obj.Add("uuid-name", temp);
+			first_obj["uuid-name"] = temp;
 		
-			params.Add(first_obj);
+			params.push_back(first_obj);
 		
-			row.Clear();
-			first_obj.Clear();
-			iface.Clear();
-			iface1.Clear();
-			iface2.Clear();
+			row.clear();
+			first_obj.clear();
+			iface.clear();
+			iface1.clear();
+			iface2.clear();
 				
 			//insert this port name into port_n
 			port_l[anpi.getDpid()].push_back(temp);
@@ -1213,42 +1141,42 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			rnumber++;
 		}
 		
-		first_obj.Add("op", "update");
-		first_obj.Add("table", "Bridge");
+		first_obj["op"] = "update";
+		first_obj["table"] = "Bridge";
 			   
-		third_object.Add("_uuid");
-		third_object.Add("==");
+		third_object.push_back("_uuid");
+		third_object.push_back("==");
 		
-		fourth_object.Add("uuid");
-		fourth_object.Add(switch_uuid[anpi.getDpid()].c_str());
+		fourth_object.push_back("uuid");
+		fourth_object.push_back(switch_uuid[anpi.getDpid()].c_str());
 		
-		third_object.Add(fourth_object);
-		where.Add(third_object);
+		third_object.push_back(fourth_object);
+		where.push_back(third_object);
 		
-		first_obj.Add("where", where);
+		first_obj["where"] = where;
 	
-		where.Clear();
+		where.clear();
 	
 		for(list<string>::iterator u = port_uuid[anpi.getDpid()].begin(); u != port_uuid[anpi.getDpid()].end(); u++)
 		{
-			port2.Add("uuid");
+			port2.push_back("uuid");
 				
-			port2.Add((*u));
+			port2.push_back((*u));
 	
-			port1.Add(port2);
+			port1.push_back(port2);
 	
-			port2.Clear();
+			port2.clear();
 		}
 		
 		for(list<string>::iterator u = vport_uuid[anpi.getDpid()].begin(); u != vport_uuid[anpi.getDpid()].end(); u++)
 		{
-			port2.Add("uuid");
+			port2.push_back("uuid");
 			
-			port2.Add((*u));
+			port2.push_back((*u));
 	
-			port1.Add(port2);
+			port1.push_back(port2);
 	
-			port2.Clear();
+			port2.clear();
 		}
 	
 		for(list<string>::iterator nff = nfp.begin(); nff != nfp.end(); nff++)
@@ -1270,147 +1198,137 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 					temp[j] = 'p';
 			}
 		
-			port2.Add("named-uuid");
-			port2.Add(temp);
+			port2.push_back("named-uuid");
+			port2.push_back(temp);
 	
-			port1.Add(port2);
+			port1.push_back(port2);
 	
-			port2.Clear();
+			port2.clear();
 		}
 		
 		/*Array with two elements*/
-		i_array.Add("set");
+		i_array.push_back("set");
 		   
-		i_array.Add(port1);
+		i_array.push_back(port1);
 		
-		row.Add("ports", i_array);
+		row["ports"] = i_array;
 		
-		first_obj.Add("row", row);
+		first_obj["row"] = row;
 		
-		params.Add(first_obj);
+		params.push_back(first_obj);
 		
-		second_obj.Clear();
+		second_obj.clear();
 		
 		/*Object with four items [op, table, where, mutations]*/
-		second_obj.Add("op", "mutate");
-		second_obj.Add("table", "Open_vSwitch");
+		second_obj["op"] = "mutate";
+		second_obj["table"] = "Open_vSwitch";
 		
 		/*Empty array [where]*/
-		second_obj.Add("where", where);
+		second_obj["where"] = where;
 			
 		/*Array with two element*/
-		maa.Add("next_cfg");
-		maa.Add("+=");
-		maa.Add(1);
+		maa.push_back("next_cfg");
+		maa.push_back("+=");
+		maa.push_back(1);
 			
-		ma.Add(maa);
+		ma.push_back(maa);
 		
-		second_obj.Add("mutations", ma);
+		second_obj["mutations"] = ma;
 			
-		params.Add(second_obj);
+		params.push_back(second_obj);
 		
-		ma.Clear();
-		maa.Clear();
-		row.Clear();
-		where.Clear();
-		first_obj.Clear();
-		second_obj.Clear();
-		third_object.Clear();
-		fourth_object.Clear();
-		i_array.Clear();
-		iface.Clear();
-		iface1.Clear();
-		iface2.Clear();
-		port1.Clear();
-		port2.Clear();
-		root.Add("params", params);
+		ma.clear();
+		maa.clear();
+		row.clear();
+		where.clear();
+		first_obj.clear();
+		second_obj.clear();
+		third_object.clear();
+		fourth_object.clear();
+		i_array.clear();
+		iface.clear();
+		iface1.clear();
+		iface2.clear();
+		port1.clear();
+		port2.clear();
+		root["params"] = params;
 
-		root.Add("id", id);
+		root["id"] = id;
 
-		Jzon::Writer writer1(root, Jzon::StandardFormat);
-		writer1.Write();
-		std::string result1 = writer1.GetResult();
+		stringstream ss;
+ 		write_formatted(root, ss );
 		
-		len = result1.size();
-		
-		json = result1.c_str();
-		
-		ptr = result1.c_str();
-		
-		for (nleft=len; nleft > 0; )
+		nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+		if (nwritten == sockFAILURE)
 		{
-			nwritten = send(s, ptr, nleft, 0);
-			if (nwritten >0)
-			{
-				nleft -= nwritten;
-				ptr += nwritten;   
-			}
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+			throw commandsException();
 		}
-			
-		r = read(s, read_buf, 4096);
+    
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+		if (r == sockFAILURE)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+			throw commandsException();
+		}
 		
-		read_buf[r-1] = '\0';
-		
-		string myString1(read_buf);
-		
-		ofstream myfile;
-		myfile.open ("file1.json");
-		myfile << read_buf;
-		myfile.close();
-		
-		Jzon::Object rootNode;  	
-		Jzon::FileReader::ReadFile("file1.json", rootNode);
+		Value value;
+    	read( read_buf, value );
+    	Object rootNode = value.getObject();
 
-		for (Jzon::Object::iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+		for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 		{
 			//Search the first object related by updated Bridge
 			if(flag){
 				std::string name = (*it).first;
-				Jzon::Node &node = (*it).second;
-					if (node.IsArray())
+				const Value &node = it->second;
+				if (name == "result")
+				{
+					const Array &result = node.getArray();
+					
+					if(result.size() > (nfp.size()*2)){
+				 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error.");
+						throw commandsException();
+				 	}
+					
+					for(unsigned i=0;i<result.size();i++)
 					{
-					 	const Jzon::Array &result = node.AsArray();
-						for(unsigned i=0;i<result.GetCount();i++){
-
-							Jzon::Node &node1 = result.Get(i);
-
-							Jzon::Object uuidNode = node1.AsObject();
-							 		
-							if (node1.IsObject()){
-
-							 	for (Jzon::Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-								{
-									std::string name1 = (*it1).first;
-									Jzon::Node &node1 = (*it1).second;
+						Object uuidNode = result[i].getObject();
+								 		
+						for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+						{
+							std::string name1 = (*it1).first;
+							const Value &node1 = it1->second;
 							
-									if(node1.IsArray()){
-										const Jzon::Array &stuff1 = node1.AsArray();
-										
-								 		Jzon::Node &node2 = stuff1.Get(1);
-								 		//save the second element, the new port created
-						 				if(i==1){
-						 					//insert in a port_uuid the list of port-uuid for this switch
-						 					port_uuid[anpi.getDpid()].push_back(node2.ToString());
-						 				}
-									}
+							if(name1 == "uuid"){
+								const Array &stuff1 = node1.getArray();
+									
+								 //save the second element, the new port created
+								if(i==1){
+									//insert in a port_uuid the list of port-uuid for this switch
+									port_uuid[dnumber].push_back(stuff1[i].getString());
 								}
-							 }		
-						 }
+							} else if(name1 == "error"){
+								logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
+								throw commandsException();
+							}
+						}		
 					}
+				}
 			}
 			flag = !flag;
 		}
 			
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, json);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
-		root.Clear();
-		params.Clear();
+		root.clear();
+		params.clear();
 			
 		//Increment transaction id
 		id++;
@@ -1426,14 +1344,11 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 
 void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 	
-	int len;
-    size_t  nleft;
     ssize_t nwritten;
 	
-	const char *ptr, *json;
-	char read_buf[4096];
+	char read_buf[4096] = "";
 	
-	ssize_t r = 0;
+	int r = 0;
 	
 	locale loc;	
 	
@@ -1441,39 +1356,39 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 
 	set<string> nfp = dnpi.getNFports();
 	
-	Jzon::Object root, first_obj, second_obj, row;
-	Jzon::Array params, iface, iface1, iface2, where, port1, port2, i_array;
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array;
 
-	Jzon::Array ma;
-	Jzon::Array maa;
+	Array ma;
+	Array maa;
 	
-	Jzon::Array third_object;
-	Jzon::Array fourth_object;
+	Array third_object;
+	Array fourth_object;
 
 	//connect socket
     s = cmd_connect();
 
 	if(nfp.size() != 0){
 		
-		root.Add("method", "transact");
+		root["method"] = "transact";
 
-		params.Add("Open_vSwitch");
+		params.push_back("Open_vSwitch");
 		
-		first_obj.Add("op", "update");
-		first_obj.Add("table", "Bridge");
+		first_obj["op"] = "update";
+		first_obj["table"] = "Bridge";
 			   
-		third_object.Add("_uuid");
-		third_object.Add("==");
+		third_object.push_back("_uuid");
+		third_object.push_back("==");
 		
-		fourth_object.Add("uuid");
-		fourth_object.Add(switch_uuid[dnpi.getDpid()].c_str());
+		fourth_object.push_back("uuid");
+		fourth_object.push_back(switch_uuid[dnpi.getDpid()].c_str());
 		
-		third_object.Add(fourth_object);
-		where.Add(third_object);
+		third_object.push_back(fourth_object);
+		where.push_back(third_object);
 		
-		first_obj.Add("where", where);
+		first_obj["where"] = where;
 	
-		where.Clear();
+		where.clear();
 		
 		list<string>::iterator uu = port_uuid[dnpi.getDpid()].begin();
 		
@@ -1494,122 +1409,107 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 	
 		for(list<string>::iterator u = port_uuid[dnpi.getDpid()].begin(); u != port_uuid[dnpi.getDpid()].end(); u++)
 		{
-			port2.Add("uuid");
+			port2.push_back("uuid");
 				
-			port2.Add((*u));
+			port2.push_back((*u));
 	
-			port1.Add(port2);
+			port1.push_back(port2);
 	
-			port2.Clear();
+			port2.clear();
 		}
 		
 		for(list<string>::iterator u = vport_uuid[dnpi.getDpid()].begin(); u != vport_uuid[dnpi.getDpid()].end(); u++)
 		{
-			port2.Add("uuid");
+			port2.push_back("uuid");
 			
-			port2.Add((*u));
+			port2.push_back((*u));
 	
-			port1.Add(port2);
+			port1.push_back(port2);
 	
-			port2.Clear();
+			port2.clear();
 		}
 		
 		/*Array with two elements*/
-		i_array.Add("set");
+		i_array.push_back("set");
 		   
-		i_array.Add(port1);
+		i_array.push_back(port1);
 		
-		row.Add("ports", i_array);
+		row["ports"] = i_array;
 		
-		first_obj.Add("row", row);
+		first_obj["row"] = row;
 		
-		params.Add(first_obj);
+		params.push_back(first_obj);
 		
-		second_obj.Clear();
+		second_obj.clear();
 		
 		/*Object with four items [op, table, where, mutations]*/
-		second_obj.Add("op", "mutate");
-		second_obj.Add("table", "Open_vSwitch");
+		second_obj["op"] = "mutate";
+		second_obj["table"] = "Open_vSwitch";
 		
 		/*Empty array [where]*/
-		second_obj.Add("where", where);
+		second_obj["where"] = where;
 			
 		/*Array with two element*/
-		maa.Add("next_cfg");
-		maa.Add("+=");
-		maa.Add(1);
+		maa.push_back("next_cfg");
+		maa.push_back("+=");
+		maa.push_back(1);
 			
-		ma.Add(maa);
+		ma.push_back(maa);
 		
-		second_obj.Add("mutations", ma);
+		second_obj["mutations"] = ma;
 			
-		params.Add(second_obj);
+		params.push_back(second_obj);
 		
-		ma.Clear();
-		maa.Clear();
-		row.Clear();
-		where.Clear();
-		first_obj.Clear();
-		second_obj.Clear();
-		third_object.Clear();
-		fourth_object.Clear();
-		i_array.Clear();
-		iface.Clear();
-		iface1.Clear();
-		iface2.Clear();
-		port1.Clear();
-		port2.Clear();
-		root.Add("params", params);
+		ma.clear();
+		maa.clear();
+		row.clear();
+		where.clear();
+		first_obj.clear();
+		second_obj.clear();
+		third_object.clear();
+		fourth_object.clear();
+		i_array.clear();
+		iface.clear();
+		iface1.clear();
+		iface2.clear();
+		port1.clear();
+		port2.clear();
+		root["params"] = params;
 
-		root.Add("id", id);
+		root["id"] = id;
 
-		Jzon::Writer writer1(root, Jzon::StandardFormat);
-		writer1.Write();
-		std::string result1 = writer1.GetResult();
+		stringstream ss;
+ 		write_formatted(root, ss );
 		
-		len = result1.size();
-		
-		json = result1.c_str();
-		
-		ptr = result1.c_str();
-		
-		for (nleft=len; nleft > 0; )
+		nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+		if (nwritten == sockFAILURE)
 		{
-			nwritten = send(s, ptr, nleft, 0);
-			if (nwritten >0)
-			{
-				nleft -= nwritten;
-				ptr += nwritten;   
-			}
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+			throw commandsException();
 		}
-			
-		r = read(s, read_buf, 4096);
-		
-		read_buf[r-1] = '\0';
-		
-		string myString1(read_buf);
-		
-		ofstream myfile;
-		myfile.open ("file1.json");
-		myfile << read_buf;
-		myfile.close();
+    
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+		if (r == sockFAILURE)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+			throw commandsException();
+		}
 			
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, json);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
-		root.Clear();
-		params.Clear();
+		root.clear();
+		params.clear();
 			
 		//Increment transaction id
 		id++;
 		
-		//disconnect socket
-    	cmd_disconnect(s);
+		cmd_disconnect(s);
 	}
 }
 
@@ -1693,14 +1593,11 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 
 void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint64_t dpi, int s){
 	
-	int len;
-    size_t  nleft;
     ssize_t nwritten;
 	
-	const char *ptr, *json;
 	char read_buf[4096];
 	
-	ssize_t r = 0;
+	int r = 0;
 	
 	locale loc;	
 	
@@ -1708,259 +1605,248 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 	
 	map<string, unsigned int> ports;
 	
-	Jzon::Object root, first_obj, second_obj, row;
-	Jzon::Array params, iface, iface1, iface2, where, port1, port2, i_array, peer, peer1, peer2;
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array, peer, peer1, peer2;
 
-	Jzon::Array ma;
-	Jzon::Array maa;
+	Array ma;
+	Array maa;
 	
-	Jzon::Array third_object;
-	Jzon::Array fourth_object;
+	Array third_object;
+	Array fourth_object;
 
 	//connect socket
     s = cmd_connect();
 
-	root.Add("method", "transact");
+	root["method"] = "transact";
 
-	params.Add("Open_vSwitch");
+	params.push_back("Open_vSwitch");
 			
-	first_obj.Add("op", "insert");
-	first_obj.Add("table", "Interface");
+	first_obj["op"] = "insert";
+	first_obj["table"] = "Interface";
 		
 	/*Insert an Interface*/
-	row.Add("name", vrt);
-	row.Add("type", "patch");
+	row["name"] = vrt;
+	row["type"] = "patch";
 		
 	/*Add options peer*/
-	peer.Add("map");
+	peer.push_back("map");
 	
-	peer2.Add("peer");
-	peer2.Add(trv);
+	peer2.push_back("peer");
+	peer2.push_back(trv);
 			
-	peer1.Add(peer2);
-	peer.Add(peer1);
+	peer1.push_back(peer2);
+	peer.push_back(peer1);
     
-    row.Add("options", peer);
+    row["options"] = peer;
 		
-	first_obj.Add("row", row);
+	first_obj["row"] = row;
 		
-	first_obj.Add("uuid-name", ifac);
+	first_obj["uuid-name"] = ifac;
 		
-	params.Add(first_obj);
+	params.push_back(first_obj);
 		
-	row.Clear();
-	first_obj.Clear();
+	row.clear();
+	first_obj.clear();
 				
-	first_obj.Add("op", "insert");
-	first_obj.Add("table", "Port");
+	first_obj["op"] = "insert";
+	first_obj["table"] = "Port";
 		
 	/*Insert a port*/
-	row.Add("name", vrt);
+	row["name"] = vrt;
 		
-	iface.Add("set");
+	iface.push_back("set");
 	
-	iface2.Add("named-uuid");
-	iface2.Add(ifac);
+	iface2.push_back("named-uuid");
+	iface2.push_back(ifac);
 	
-	iface1.Add(iface2);
-	iface.Add(iface1);
+	iface1.push_back(iface2);
+	iface.push_back(iface1);
 		
-	row.Add("interfaces", iface);
+	row["interfaces"] = iface;
 		
-	first_obj.Add("row", row);
+	first_obj["row"] = row;
 		
-	first_obj.Add("uuid-name", vrt);
+	first_obj["uuid-name"] = vrt;
 		
-	params.Add(first_obj);
+	params.push_back(first_obj);
 		
-	row.Clear();
-	first_obj.Clear();
-	peer.Clear();
-	peer1.Clear();
-	peer2.Clear();
-	iface.Clear();
-	iface1.Clear();
-	iface2.Clear();
+	row.clear();
+	first_obj.clear();
+	peer.clear();
+	peer1.clear();
+	peer2.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
 		
-	first_obj.Add("op", "update");
-	first_obj.Add("table", "Bridge");
+	first_obj["op"] = "update";
+	first_obj["table"] = "Bridge";
 			   
-	third_object.Add("_uuid");
-	third_object.Add("==");
+	third_object.push_back("_uuid");
+	third_object.push_back("==");
 		
-	fourth_object.Add("uuid");
-	fourth_object.Add(switch_uuid[dpi].c_str());
+	fourth_object.push_back("uuid");
+	fourth_object.push_back(switch_uuid[dpi].c_str());
 		
-	third_object.Add(fourth_object);
-	where.Add(third_object);
+	third_object.push_back(fourth_object);
+	where.push_back(third_object);
 		
-	first_obj.Add("where", where);
+	first_obj["where"] = where;
 	
-	where.Clear();
+	where.clear();
 	
 	for(list<string>::iterator u = port_uuid[dpi].begin(); u != port_uuid[dpi].end(); u++)
 	{
-		port2.Add("uuid");
+		port2.push_back("uuid");
 			
-		port2.Add((*u));
+		port2.push_back((*u));
 	
-		port1.Add(port2);
+		port1.push_back(port2);
 	
-		port2.Clear();
+		port2.clear();
 	}
 	
 	for(list<string>::iterator u = vport_uuid[dpi].begin(); u != vport_uuid[dpi].end(); u++)
 	{
-		port2.Add("uuid");
+		port2.push_back("uuid");
 			
-		port2.Add((*u));
+		port2.push_back((*u));
 	
-		port1.Add(port2);
+		port1.push_back(port2);
 	
-		port2.Clear();
+		port2.clear();
 	}
 	
-	port2.Add("named-uuid");
-	port2.Add(vrt);
+	port2.push_back("named-uuid");
+	port2.push_back(vrt);
 	
-	port1.Add(port2);
+	port1.push_back(port2);
 	
-	port2.Clear();
+	port2.clear();
 		
 	/*Array with two elements*/
-	i_array.Add("set");
+	i_array.push_back("set");
 		   
-	i_array.Add(port1);
+	i_array.push_back(port1);
 		
-	row.Add("ports", i_array);
+	row["ports"] = i_array;
 		
-	first_obj.Add("row", row);
+	first_obj["row"] = row;
 		
-	params.Add(first_obj);
+	params.push_back(first_obj);
 		
-	second_obj.Clear();
+	second_obj.clear();
 		
 	/*Object with four items [op, table, where, mutations]*/
-	second_obj.Add("op", "mutate");
-	second_obj.Add("table", "Open_vSwitch");
+	second_obj["op"] = "mutate";
+	second_obj["table"] = "Open_vSwitch";
 		
 	/*Empty array [where]*/
-	second_obj.Add("where", where);
+	second_obj["where"] = where;
 			
 	/*Array with two element*/
-	maa.Add("next_cfg");
-	maa.Add("+=");
-	maa.Add(1);
+	maa.push_back("next_cfg");
+	maa.push_back("+=");
+	maa.push_back(1);
 			
-	ma.Add(maa);
+	ma.push_back(maa);
 		
-	second_obj.Add("mutations", ma);
+	second_obj["mutations"] = ma;
 			
-	params.Add(second_obj);
+	params.push_back(second_obj);
 	
-	ma.Clear();
-	maa.Clear();
-	row.Clear();
-	where.Clear();
-	first_obj.Clear();
-	second_obj.Clear();
-	third_object.Clear();
-	fourth_object.Clear();
-	i_array.Clear();
-	iface.Clear();
-	iface1.Clear();
-	iface2.Clear();
-	port1.Clear();
-	port2.Clear();
-	root.Add("params", params);
+	ma.clear();
+	maa.clear();
+	row.clear();
+	where.clear();
+	first_obj.clear();
+	second_obj.clear();
+	third_object.clear();
+	fourth_object.clear();
+	i_array.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
+	port1.clear();
+	port2.clear();
+	root["params"] = params;
 
-	root.Add("id", id);
+	root["id"] = id;
 
-	Jzon::Writer writer1(root, Jzon::StandardFormat);
-	writer1.Write();
-	std::string result1 = writer1.GetResult();
-		
-	len = result1.size();
-		
-	json = result1.c_str();
-		
-	ptr = result1.c_str();
+	stringstream ss;
+ 	write_formatted(root, ss );
 	
-	for (nleft=len; nleft > 0; )
+	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+	if (nwritten == sockFAILURE)
 	{
-		nwritten = send(s, ptr, nleft, 0);
-		if (nwritten >0)
-		{
-			nleft -= nwritten;
-			ptr += nwritten;   
-		}
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		throw commandsException();
 	}
-			
-	r = read(s, read_buf, 4096);
+    
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+	if (r == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		throw commandsException();
+	}
 		
-	read_buf[r-1] = '\0';
-		
-	string myString1(read_buf);
-		
-	ofstream myfile;
-	myfile.open ("file1.json");
-	myfile << read_buf;
-	myfile.close();
-	
-	Jzon::Object rootNode;  	
-	Jzon::FileReader::ReadFile("file1.json", rootNode);
+	Value value;
+    read( read_buf, value );
+    Object rootNode = value.getObject();
 
-	for (Jzon::Object::iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
 		//Search the first object related by updated Bridge
 		if(flag){
 			std::string name = (*it).first;
-			Jzon::Node &node = (*it).second;
-			if (node.IsArray())
+			const Value &node = it->second;
+			if (name == "result")
 			{
-			 	const Jzon::Array &result = node.AsArray();
-				for(unsigned i=0;i<result.GetCount();i++){
-
-					Jzon::Node &node1 = result.Get(i);
-
-					Jzon::Object uuidNode = node1.AsObject();
-							 		
-	    			if (node1.IsObject()){
-
-					 	for (Jzon::Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-						{
-							std::string name1 = (*it1).first;
-							Jzon::Node &node1 = (*it1).second;
+				const Array &result = node.getArray();
+				
+				if(result.size() > NUM_UUID){
+					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error.");
+					throw commandsException();
+				}
+				
+				for(unsigned i=0;i<result.size();i++)
+				{
+					Object uuidNode = result[i].getObject();
+						 		
+					for (Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+					{
+						std::string name1 = (*it1).first;
+						Value &node1 = (*it1).second;
 							
-		     				if(node1.IsArray()){
-								const Jzon::Array &stuff1 = node1.AsArray();
-										
-						 		Jzon::Node &node2 = stuff1.Get(1);
-						 		//save the second element, the new port created
-				 				if(i==1){
-				 					//insert in a port_uuid the list of vport-uuid for this switch
-				 					vport_uuid[dpi].push_back(node2.ToString());
-				 				}
+						if(name1 == "uuid"){
+							const Array &stuff1 = node1.getArray();
+									
+						 	//save the second element, the new port created
+							if(i==1){
+								//insert in a port_uuid the list of port-uuid for this switch
+								port_uuid[dnumber].push_back(stuff1[i].getString());
 							}
+						} else if(name1 == "error"){
+							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
+							throw commandsException();
 						}
-					 }		
-				 }
+					}		
+				}
 			}
 		}
-		
 		flag = !flag;
 	}
 			
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, json);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
-	root.Clear();
-	params.Clear();
+	root.clear();
+	params.clear();
 			
 	//Increment transaction id
 	id++;
@@ -1999,53 +1885,48 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s){
 }
 
 void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s){
-	
-	int len;
-    size_t  nleft;
+
     ssize_t nwritten;
 	
-	const char *ptr, *json;
-	char read_buf[4096];
+	char read_buf[4096] = "";
 	
-	ssize_t r = 0;
+	int r = 0;
 	
 	locale loc;	
 	
-	//bool flag = false;
-	
 	map<string, unsigned int> ports;
 	
-	Jzon::Object root, first_obj, second_obj, row;
-	Jzon::Array params, iface, iface1, iface2, where, port1, port2, i_array, peer, peer1, peer2;
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array, peer, peer1, peer2;
 
-	Jzon::Array ma;
-	Jzon::Array maa;
+	Array ma;
+	Array maa;
 	
-	Jzon::Array third_object;
-	Jzon::Array fourth_object;
+	Array third_object;
+	Array fourth_object;
 
 	//connect socket
     s = cmd_connect();
 
-	root.Add("method", "transact");
+	root["method"] = "transact";
 
-	params.Add("Open_vSwitch");
+	params.push_back("Open_vSwitch");
 				
-	first_obj.Add("op", "update");
-	first_obj.Add("table", "Bridge");
+	first_obj["op"] = "update";
+	first_obj["table"] = "Bridge";
 			   
-	third_object.Add("_uuid");
-	third_object.Add("==");
+	third_object.push_back("_uuid");
+	third_object.push_back("==");
 		
-	fourth_object.Add("uuid");
-	fourth_object.Add(switch_uuid[dpi].c_str());
+	fourth_object.push_back("uuid");
+	fourth_object.push_back(switch_uuid[dpi].c_str());
 		
-	third_object.Add(fourth_object);
-	where.Add(third_object);
+	third_object.push_back(fourth_object);
+	where.push_back(third_object);
 		
-	first_obj.Add("where", where);
+	first_obj["where"] = where;
 	
-	where.Clear();
+	where.clear();
 	
 	//search the port-id and after erase this port-uuid
 	list<string>::iterator uu = vport_uuid[dpi].begin();
@@ -2064,120 +1945,103 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s){
 	//insert normal ports
 	for(list<string>::iterator u = port_uuid[dpi].begin(); u != port_uuid[dpi].end(); u++)
 	{
-		port2.Add("uuid");
+		port2.push_back("uuid");
 			
-		port2.Add((*u));
+		port2.push_back((*u));
 	
-		port1.Add(port2);
+		port1.push_back(port2);
 	
-		port2.Clear();
+		port2.clear();
 	}
 	
 	//insert vports
 	for(list<string>::iterator u = vport_uuid[dpi].begin(); u != vport_uuid[dpi].end(); u++)
 	{
-		port2.Add("uuid");
+		port2.push_back("uuid");
 			
-		port2.Add((*u));
+		port2.push_back((*u));
 	
-		port1.Add(port2);
+		port1.push_back(port2);
 	
-		port2.Clear();
+		port2.clear();
 	}
 		
 	/*Array with two elements*/
-	i_array.Add("set");
+	i_array.push_back("set");
 		   
-	i_array.Add(port1);
+	i_array.push_back(port1);
 		
-	row.Add("ports", i_array);
+	row["ports"] = i_array;
 		
-	first_obj.Add("row", row);
+	first_obj["row"] = row;
 		
-	params.Add(first_obj);
+	params.push_back(first_obj);
 		
-	second_obj.Clear();
+	second_obj.clear();
 		
 	/*Object with four items [op, table, where, mutations]*/
-	second_obj.Add("op", "mutate");
-	second_obj.Add("table", "Open_vSwitch");
+	second_obj["op"] = "mutate";
+	second_obj["table"] = "Open_vSwitch";
 		
 	/*Empty array [where]*/
-	second_obj.Add("where", where);
+	second_obj["where"] = where;
 			
 	/*Array with two element*/
-	maa.Add("next_cfg");
-	maa.Add("+=");
-	maa.Add(1);
+	maa.push_back("next_cfg");
+	maa.push_back("+=");
+	maa.push_back(1);
 			
-	ma.Add(maa);
+	ma.push_back(maa);
 		
-	second_obj.Add("mutations", ma);
+	second_obj["mutations"] = ma;
 			
-	params.Add(second_obj);
+	params.push_back(second_obj);
 	
-	ma.Clear();
-	maa.Clear();
-	row.Clear();
-	where.Clear();
-	first_obj.Clear();
-	second_obj.Clear();
-	third_object.Clear();
-	fourth_object.Clear();
-	i_array.Clear();
-	iface.Clear();
-	iface1.Clear();
-	iface2.Clear();
-	port1.Clear();
-	port2.Clear();
-	root.Add("params", params);
+	ma.clear();
+	maa.clear();
+	row.clear();
+	where.clear();
+	first_obj.clear();
+	second_obj.clear();
+	third_object.clear();
+	fourth_object.clear();
+	i_array.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
+	port1.clear();
+	port2.clear();
+	root["params"] = params;
 
-	root.Add("id", id);
+	root["id"] = id;
 
-	Jzon::Writer writer1(root, Jzon::StandardFormat);
-	writer1.Write();
-	std::string result1 = writer1.GetResult();
-		
-	len = result1.size();
-		
-	json = result1.c_str();
-		
-	ptr = result1.c_str();
+	stringstream ss;
+ 	write_formatted(root, ss );
 	
-	for (nleft=len; nleft > 0; )
+	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+	if (nwritten == sockFAILURE)
 	{
-		nwritten = send(s, ptr, nleft, 0);
-		if (nwritten >0)
-		{
-			nleft -= nwritten;
-			ptr += nwritten;   
-		}
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		throw commandsException();
 	}
-			
-	r = read(s, read_buf, 4096);
-		
-	read_buf[r-1] = '\0';
-		
-	string myString1(read_buf);
-		
-	ofstream myfile;
-	myfile.open ("file1.json");
-	myfile << read_buf;
-	myfile.close();
-	
-	Jzon::Object rootNode;  	
-	Jzon::FileReader::ReadFile("file1.json", rootNode);
+    
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+	if (r == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		throw commandsException();
+	}
 			
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, json);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
-	root.Clear();
-	params.Clear();
+	root.clear();
+	params.clear();
 			
 	//Increment transaction id
 	id++;
