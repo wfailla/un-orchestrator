@@ -6,7 +6,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "Jzon.h"
+#include <json_spirit/json_spirit.h>
+#include <json_spirit/value.h>
+#include <json_spirit/writer.h>
+
+#include "../../../../utils/sockutils.h"
 
 #include <iostream>
 #include <fstream>
@@ -32,6 +36,7 @@
 #define INTERRUPTED_BY_SIGNAL (errno == EINTR || errno == ECHILD)
 
 using namespace std;
+using namespace json_spirit;
 
 class commands
 {
