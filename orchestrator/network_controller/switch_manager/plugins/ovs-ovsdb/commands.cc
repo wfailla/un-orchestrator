@@ -350,6 +350,14 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		throw commandsException();
 	}
 
+ 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+    
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+    
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+    
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
+
 	//Read json response
 	Value value;
     read( read_buf, value );
@@ -386,14 +394,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 
 	//store the switch-uuid
     switch_uuid[dnumber] = strr[i-2];
-    
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-    
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-    
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-    
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	/*create ports*/
 	if(ports.size() !=0){
@@ -413,13 +413,16 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 	
 	/*Create interfaces related by the nf ports*/
-    if(nfs.size() != 0){    		
+    if(nfs.size() != 0){
+        		
 		/*for each network function port in the list of nfs*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 		{
 			list<string> nfs_ports = cli.getNetworkFunctionsPortNames(*nf);
 			
 			map<string,unsigned int> n_ports_1;
+			
+			nfs_ports.reverse();
 			
 			/*for each network function port in the list of nfs_ports*/
 			for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++){
@@ -581,7 +584,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			
 			l++;
 			
-			virtual_links.push_back(make_pair(nf_size+ports.size() + l, port_uuid[pi].size() + l));
+			virtual_links.push_back(make_pair(nf_size+ports.size() + l, port_uuid[pi].size()));
 			
 			//disconnect socket
 			cmd_disconnect(s);
@@ -606,8 +609,6 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	int r = 0;
 	
 	locale loc;	
-	
-	bool flag = true;
 	
 	map<string, unsigned int> ports;
 	
@@ -820,51 +821,6 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 		throw commandsException();
 	}
 		
-	Value value;
-    read( read_buf, value );
-    Object rootNode = value.getObject();
-
-	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
-	{	
-		//Search the first object related by updated Bridge
-		if(flag){
-		
-			const std::string name = (*it).first;
-			const Value &node = (*it).second;
-			
-			if (name == "result")
-				{
-				 	const Array &result = node.getArray();
-				 	
-					for(unsigned i=0;i<result.size();i++)
-					{
-						Object uuidNode = result[i].getObject();
-							 		
-						for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-						{
-							std::string name1 = (*it1).first;
-							const Value &node1 = (*it1).second;
-							
-							if(name1 == "uuid"){
-								const Array &stuff1 = node1.getArray();
-							 	//save the second element, the new port create
-							 	
-								if(i==1){
-									//insert in a port_uuid the list of port-uuid for this switch
-									port_uuid[dnumber].push_back(stuff1[1].getString());
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "PortUuid: %s", stuff1[1].getString().c_str());
-								}
-							} else if(name1 == "error"){
-								logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
-								throw commandsException();
-							}
-						}		
-					}
-				}
-			}
-			flag = !flag;
-	}
-			
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
@@ -872,6 +828,47 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
+		
+	Value value;
+    read( read_buf, value );
+    Object rootNode = value.getObject();
+
+	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+	{	
+		//Search the first object related by updated Bridge
+		
+		const std::string name = (*it).first;
+		const Value &node = (*it).second;
+			
+		if (name == "result")
+		{
+			const Array &result = node.getArray();
+				 	
+			for(unsigned i=0;i<result.size();i++)
+			{
+				Object uuidNode = result[i].getObject();
+							 		
+				for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+				{
+					std::string name1 = (*it1).first;
+					const Value &node1 = (*it1).second;
+							
+					if(name1 == "uuid"){
+						const Array &stuff1 = node1.getArray();
+					 	//save the second element, the new port create
+							 	
+						if(i==1){
+							//insert in a port_uuid the list of port-uuid for this switch
+							port_uuid[dnumber].push_back(stuff1[1].getString());
+						}
+					} else if(name1 == "error"){
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
+						throw commandsException();
+					}
+				}		
+			}
+		}
+	}
 			
 	root.clear();
 	params.clear();
@@ -1035,8 +1032,6 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 	int r = 0;
 	
 	locale loc;	
-	
-	bool flag = false;
 	
 	map<string, unsigned int> ports;
 
@@ -1274,53 +1269,6 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			throw commandsException();
 		}
 		
-		Value value;
-    	read( read_buf, value );
-    	Object rootNode = value.getObject();
-
-		for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
-		{
-			//Search the first object related by updated Bridge
-			if(flag){
-				std::string name = (*it).first;
-				const Value &node = it->second;
-				if (name == "result")
-				{
-					const Array &result = node.getArray();
-					
-					if(result.size() > (nfp.size()*2)){
-				 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error.");
-						throw commandsException();
-				 	}
-					
-					for(unsigned i=0;i<result.size();i++)
-					{
-						Object uuidNode = result[i].getObject();
-								 		
-						for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-						{
-							std::string name1 = (*it1).first;
-							const Value &node1 = it1->second;
-							
-							if(name1 == "uuid"){
-								const Array &stuff1 = node1.getArray();
-									
-								 //save the second element, the new port created
-								if(i==1){
-									//insert in a port_uuid the list of port-uuid for this switch
-									port_uuid[dnumber].push_back(stuff1[i].getString());
-								}
-							} else if(name1 == "error"){
-								logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
-								throw commandsException();
-							}
-						}		
-					}
-				}
-			}
-			flag = !flag;
-		}
-			
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
@@ -1328,6 +1276,46 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
+		
+		Value value;
+    	read( read_buf, value );
+    	Object rootNode = value.getObject();
+
+		for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+		{
+			//Search the first object related by updated Bridge
+			std::string name = (*it).first;
+			const Value &node = it->second;
+			if (name == "result")
+			{
+				const Array &result = node.getArray();
+				
+				for(unsigned i=0;i<result.size();i++)
+				{
+					Object uuidNode = result[i].getObject();
+								 		
+					for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+					{
+						std::string name1 = (*it1).first;
+						const Value &node1 = it1->second;
+							
+						if(name1 == "uuid")
+						{
+							const Array &stuff1 = node1.getArray();
+									
+							//save the second element, the new port created
+							if(i==1){
+								//insert in a port_uuid the list of port-uuid for this switch
+								port_uuid[dnumber].push_back(stuff1[i].getString());
+							}
+						} else if(name1 == "error"){
+							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
+							throw commandsException();
+						}
+					}		
+				}
+			}
+		}
 			
 		root.clear();
 		params.clear();
@@ -1597,13 +1585,11 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 	
     ssize_t nwritten;
 	
-	char read_buf[4096];
+	char read_buf[4096] = "";
 	
 	int r = 0;
 	
 	locale loc;	
-	
-	bool flag = false;
 	
 	map<string, unsigned int> ports;
 	
@@ -1792,6 +1778,14 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 		throw commandsException();
 	}
 		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);	
+		
 	Value value;
     read( read_buf, value );
     Object rootNode = value.getObject();
@@ -1799,53 +1793,38 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
 		//Search the first object related by updated Bridge
-		if(flag){
-			std::string name = (*it).first;
-			const Value &node = it->second;
-			if (name == "result")
+		std::string name = (*it).first;
+		const Value &node = it->second;
+		if (name == "result")
+		{
+			const Array &result = node.getArray();
+				
+			for(unsigned i=0;i<result.size();i++)
 			{
-				const Array &result = node.getArray();
-				
-				if(result.size() > NUM_UUID){
-					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error.");
-					throw commandsException();
-				}
-				
-				for(unsigned i=0;i<result.size();i++)
-				{
-					Object uuidNode = result[i].getObject();
+				Object uuidNode = result[i].getObject();
 						 		
-					for (Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-					{
-						std::string name1 = (*it1).first;
-						Value &node1 = (*it1).second;
+				for (Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+				{
+					std::string name1 = (*it1).first;
+					Value &node1 = (*it1).second;
 							
-						if(name1 == "uuid"){
-							const Array &stuff1 = node1.getArray();
+					if(name1 == "uuid")
+					{
+						const Array &stuff1 = node1.getArray();
 									
-						 	//save the second element, the new port created
-							if(i==1){
-								//insert in a port_uuid the list of port-uuid for this switch
-								port_uuid[dnumber].push_back(stuff1[i].getString());
-							}
-						} else if(name1 == "error"){
-							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
-							throw commandsException();
+						//save the second element, the new port created
+						if(i==1){
+							//insert in a port_uuid the list of port-uuid for this switch
+							port_uuid[dpi].push_back(stuff1[i].getString());
 						}
-					}		
-				}
+					} else if(name1 == "error"){
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
+						throw commandsException();
+					}
+				}		
 			}
 		}
-		flag = !flag;
 	}
-			
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
 	root.clear();
 	params.clear();
