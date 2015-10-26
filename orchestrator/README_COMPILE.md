@@ -64,7 +64,7 @@ configured, which can be done by launching a script that allows you to:
   * build the environment x86_64-native-linuxapp-gcc
   * Insert IGB UIO module
   * Insert KNI module
-  * Setup hugepage mappings for non-NUMA systems (1000 could be a
+  * Setup hugepage mappings for non-NUMA systems (1000 should be a
     reasonable number)
   * Bind Ethernet device to IGB UIO module (bind all the ethernet
     interfaces that you want to use)
