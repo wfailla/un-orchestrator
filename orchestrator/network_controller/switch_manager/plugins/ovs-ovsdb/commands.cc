@@ -375,7 +375,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
 		 				strr[i] = stuff1[1].getString();
-		 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, strr[i].c_str());
 					} else if(name1 == "error"){
 						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
 						throw commandsException();
@@ -608,7 +607,7 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	
 	locale loc;	
 	
-	bool flag = false;
+	bool flag = true;
 	
 	map<string, unsigned int> ports;
 	
@@ -667,8 +666,8 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	if(nf != 0)
 		row["type"] = "internal";
 		
-	//row["admin_state"] = true;
-	//row["link_state:"] = true;
+	row["admin_state"] = "up";
+	row["link_state"] = "up";
 		
 	first_obj["row"] = row;
 		
@@ -826,11 +825,13 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
     Object rootNode = value.getObject();
 
 	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
-	{
+	{	
 		//Search the first object related by updated Bridge
 		if(flag){
+		
 			const std::string name = (*it).first;
-			const Value &node = it->second;
+			const Value &node = (*it).second;
+			
 			if (name == "result")
 				{
 				 	const Array &result = node.getArray();
@@ -842,15 +843,16 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 						for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
 						{
 							std::string name1 = (*it1).first;
-							const Value &node1 = it1->second;
+							const Value &node1 = (*it1).second;
 							
 							if(name1 == "uuid"){
 								const Array &stuff1 = node1.getArray();
-									
-							 	//save the second element, the new port created
+							 	//save the second element, the new port create
+							 	
 								if(i==1){
 									//insert in a port_uuid the list of port-uuid for this switch
-									port_uuid[dnumber].push_back(stuff1[i].getString());
+									port_uuid[dnumber].push_back(stuff1[1].getString());
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "PortUuid: %s", stuff1[1].getString().c_str());
 								}
 							} else if(name1 == "error"){
 								logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Syntax error in Json request.");
@@ -1094,8 +1096,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			row["name"] = temp;
 			row["type"] = "internal";
 			
-			//row["admin_state"] = true;
-			//row["link_state:"] = true;
+			row["admin_state"] = "up";
+			row["link_state"] = "up";
 		
 			first_obj["row"] = row;
 		
