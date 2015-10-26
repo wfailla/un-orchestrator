@@ -11,7 +11,7 @@ You can create the Docker image with the network function by launching the follo
 
     sudo docker build --tag="example" .
 
-This will create the Docker image starting from the base image specified in `Dockerfile`; thw new image is stored in the Docker default folder on your filesystem (localhost).
+This will create the Docker image starting from the base image specified in `Dockerfile`; the new image is stored in the Docker default folder on your filesystem (localhost).
 
 If you want to be more generic and publish the Docker image in a (public or private) repository, you can use the following command:
 
