@@ -592,6 +592,17 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
     	
     rnumber_new = 1;
+    
+    
+    map<uint64_t, list<string> >::iterator pl = port_l.find(dnumber);
+    list<string> ls = pl->second;
+    
+    for(list<string>::iterator ppp = ls.begin(); ppp != ls.end(); ppp++)
+    {
+		stringstream command;
+		command << "ifconfig " << temp << " up";
+		system(command.str().c_str()); 
+    }
   
     clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, virtual_links);
     	
@@ -609,8 +620,6 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	int r = 0;
 	
 	locale loc;	
-	
-	map<string, unsigned int> ports;
 	
 	Object root, first_obj, second_obj, row;
 	Array params, iface, iface1, iface2, where, port1, port2, i_array;
