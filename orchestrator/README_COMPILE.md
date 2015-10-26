@@ -75,6 +75,7 @@ togher with xDPd, and it is located at xdpd/libs/dpdk):
 	$ cd ../libs/dpdk/tools  
 	$ sudo ./setup.sh  
 
+**WARNING: Currently, xDPd is not compiling on Linux kernels newer than 3.16.0-30.**
 
 #### Open vSwitch (of-config) [DEPRECATED]
 
