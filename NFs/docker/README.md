@@ -1,4 +1,4 @@
-# VNFs created with Docker
+# Docker-based VNF examples
 
 This folder contains some examples of network functions implemented as Docker 
 containers.
