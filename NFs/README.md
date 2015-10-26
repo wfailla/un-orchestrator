@@ -1,4 +1,4 @@
-This folder contains some examples of network functions.
+This folder contains some examples of virtual network functions.
 
 ===============================================================================
 

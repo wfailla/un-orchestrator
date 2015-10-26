@@ -1,6 +1,5 @@
 <domain type='kvm'>
-	<name>3_bridge1</name>
-	<uuid>0b17a146-40dc-4da3-946d-790dbb5f3312</uuid> <!-- FIXME: useless? -->
+	<name>example</name>
 	<memory unit='KiB'>4194304</memory>
 	<currentMemory unit='KiB'>4194304</currentMemory>
 	<vcpu placement='static'>4</vcpu>
@@ -49,28 +48,6 @@
 			<alias name='ide'/>
 			<address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
 		</controller>
-		<interface type='direct'>
-			<mac address='52:54:00:90:cc:8e'/>
-			<source dev='3_bridge1_1' mode='passthrough'/>
-			<virtualport type='openvswitch'>
-				<parameters interfaceid='b6bde7e1-afa8-4db7-a5d2-606cd5356e26'/>
-			</virtualport>
-			<target dev='macvtap0'/>
-			<model type='virtio'/>
-			<alias name='net0'/>
-			<address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-		</interface>
-		<interface type='direct'>
-			<mac address='52:54:00:e5:64:98'/>
-			<source dev='3_bridge1_2' mode='passthrough'/>
-			<virtualport type='openvswitch'>
-				<parameters interfaceid='9bf6b7ae-0b74-4e4a-83b0-927b4310efbc'/>
-			</virtualport>
-			<target dev='macvtap1'/>
-			<model type='virtio'/>
-			<alias name='net1'/>
-			<address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-		</interface>
 		<serial type='pty'>
 			<source path='/dev/pts/27'/>
 			<target port='0'/>
