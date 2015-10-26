@@ -1,13 +1,17 @@
-This folder contains examples of network functions implemented in Docker 
+# VNFs created with Docker
+
+This folder contains some examples of network functions implemented as Docker 
 containers.
 
-===============================================================================
+## How to install Docker
 
-To install the Docker environment for network functions, follow the instructions
+In order to create your own VNF, you need to install the Docker environment by following the instructions
 provided here:
 
 	http://docs.docker.com/installation/  
 
-===============================================================================
+## How to create your VNFs
 
 Please check individual README's in each sub-package.
+Those files will give you the instruction to create the Docker image for the selected VNF.
+Once you have that image, you can pass the link to the UN (by writing the appropriate entry in the name resolver configuration file) in order to instantiate it in your running environment.
