@@ -53,7 +53,7 @@ public:
 	
 	CreateLsiOut* cmd_editconfig_lsi (CreateLsiIn cli, int s);
 	
-	void add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s);
+	void add_ports(string p, uint64_t dnumber, int nf, int s);
 	
 	AddNFportsOut *cmd_editconfig_NFPorts(AddNFportsIn anpi, int s);
 	
