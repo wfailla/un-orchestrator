@@ -1,6 +1,6 @@
 ## DPDK-based DPI VNF
 
-This folder contains the instructions to build a DPI that exchanges packets with the virtual switch
+This file contains the instructions to build a DPI that exchanges packets with the virtual switch
 through the DPDK rte_rings.
 
 The virtual network function analyzes packets coming from the first interfaces and, if a packet is

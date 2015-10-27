@@ -1,6 +1,6 @@
 ## DPDK-based example VNF
 
-This folder contains the instructions to build a simple network function that exchanges packets with the virtual switch
+This file contains the instructions to build a simple network function that exchanges packets with the virtual switch
 through the DPDK rte_rings.
 
 When the VNF receives a packet on the interface 'i', it destination MAC address is modified and the packet is sent sent

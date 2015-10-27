@@ -1,6 +1,6 @@
 ## Docker-based firewall VNF
 
-This folder contains the instructions to build a Docker network function that includes a firewall based on iptables.
+This file contains the instructions to build a Docker network function that includes a firewall based on iptables.
 
 ### Configuring iptables
 
