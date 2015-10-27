@@ -18,7 +18,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; - cmake: to create cross-platform makefiles
 	; - cmake-curses-gui: nice 'gui' to edit cmake files
 	; - libboost-all-dev: nice c++ library with tons of useful functions
-	; -libmicrohttpd-dev: embedded micro http server
+	; - libmicrohttpd-dev: embedded micro http server
 	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev
 
 	; Install JSON Spirit (nice library to parse JSON files)
