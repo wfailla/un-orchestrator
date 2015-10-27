@@ -59,7 +59,7 @@ which can be described in the JSON syntax defined in WP5 as follow:
                 "id": "00000001",  
                 "match": 
                 {  
-                    "port": "eth1"  
+                    "port": "eth0"  
                 },  
                 "action": 
                 {  
@@ -74,14 +74,14 @@ which can be described in the JSON syntax defined in WP5 as follow:
                 },  
                 "action": 
                 {  
-                    "port": "eth2"  
+                    "port": "eth1"  
                 }  
             },  
             {  
                 "id": "00000003",  
                 "match": 
                 {  
-                    "port": "eth2"  
+                    "port": "eth1"  
                 },  
                 "action": 
                 {  
@@ -96,7 +96,7 @@ which can be described in the JSON syntax defined in WP5 as follow:
                 },  
                 "action": 
                 {      
-                    "port": "eth1"  
+                    "port": "eth0"  
                 }  
             } 
             ]  
