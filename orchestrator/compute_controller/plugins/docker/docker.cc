@@ -113,3 +113,10 @@ unsigned int Docker::convertNetmask(string netmask)
 	return slash;
 }
 
+bool Docker::interact(string name, string command)
+{
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Function not implemented in the Docker plugin");
+
+	assert("0");
+	return true;
+}

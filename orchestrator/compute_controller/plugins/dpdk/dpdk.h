@@ -22,6 +22,8 @@ public:
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
+	
+	bool interact(string name, string command);
 };
 
 #endif //DPDK_H_

@@ -56,3 +56,11 @@ bool Dpdk::stopNF(StopNFIn sni)
 	return true;
 
 }
+
+bool Dpdk::interact(string name, string command)
+{
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Function not implemented in the DPDK plugin");
+
+	assert("0");
+	return true;
+}
