@@ -820,13 +820,10 @@ void commands::add_ports(int rnumber, string p, uint64_t dnumber, int nf, int s)
 	}
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
-		
+				
 	Value value;
     read( read_buf, value );
     Object rootNode = value.getObject();
