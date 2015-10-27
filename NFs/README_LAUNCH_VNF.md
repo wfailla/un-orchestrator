@@ -106,3 +106,5 @@ which can be described in the JSON syntax defined in WP5 as follow:
 This json can be stored in a file (e.g., nffg.json) and provided to the un-orchestrar either through the command line at the boot of the orchestrator, or through the REST API exported by the un-orchestrator. In the latter case, the command to be used is the following:
 
       curl -i -H "Content-Type: application/json" -d "@nffg.json" -X PUT  http://un-orchestrator-address:port
+      
+At this point, the un-orchestrator inserts the proper rules in the vSwitch through the network controller, and retrieve and then starts the VNF through the compute controller, which in turn interacts with the Docker deamon using the proper plugin.
