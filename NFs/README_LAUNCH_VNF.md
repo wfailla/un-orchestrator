@@ -3,7 +3,7 @@
 This file details how to deploy and run a virtual network function (VNF) on the Universal Node (UN). This requires the execution of the following main steps (detailed in the remainder of the document):
 *	create the desired VNF image;
 *	register such a VNF in the name-resolver database;
-*	send to the un-orchestrator a Network Functions-Forwarding Graph (NF-FG) including the VNF to instantiated.
+*	send to the un-orchestrator a Network Functions-Forwarding Graph (NF-FG) including the VNF that has to be instantiated.
 
 ### Create the VNF image
 The universal node currently supports three types of VNFs: VNFs executed as Docker containers, VNFs executed inside KVM-based virtual machines, and VNFs based on the DPDK library (i.e., DPDK processes).  
@@ -31,7 +31,7 @@ This VNF is deployed as part of the service shown in the picture:
 
 ![service-graph](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/service-graph.png)
 
-To create the VNF image and store it in the local file system of the Universal Node, execute the following command in the folder containing the Docker file descibing the VNF:
+To create the VNF image and store it in the local file system of the Universal Node, execute the following command in the folder containing the Docker file describing the VNF:
 
     sudo docker build --tag="dummy" .
     
@@ -102,6 +102,8 @@ At this point, prepare a NF-FG and pass it to the un-orchestator, which will tak
     
 This json can be stored in a file (e.g., nffg.json) and provided to the un-orchestrar either through the command line at the boot of the un-orchestrator, or through its REST API. In the latter case, the command to be used is the following:
 
-      curl -i -H "Content-Type: application/json" -d "@nffg.json" -X PUT  http://un-orchestrator-address:port
-      
-At this point, the un-orchestrator inserts the proper rules in the vSwitch through the network controller, and retrieve and then starts the VNF through the compute controller, which in turn interacts with the Docker deamon using the proper plugin.
+      curl -i -H "Content-Type: application/json" -d "@nffg.json" -X PUT  http://un-orchestrator-address:port/graph/graphid
+
+where the `graphid` is an alphanumeric string that will uniquely identify your graph in the orchestrator.
+
+At this point, the un-orchestrator inserts the proper rules in the vSwitch through the network controller. Then, it retrieves and starts the VNF through the compute controller, which in turn interacts with the Docker deamon using the proper plugin.
