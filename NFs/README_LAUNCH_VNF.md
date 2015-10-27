@@ -44,7 +44,7 @@ Then, register it in the name-resolver by adding the following piece of XML to t
 
 At this point, to deploy the following graph on the universal node
 
-![Architecture](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/images/service-graph.png)
+![Architecture](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/service-graph.png)
 
 send the following JSON to the un-orchestator:
 
