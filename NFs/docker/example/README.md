@@ -1,6 +1,6 @@
 ## Docker-based example VNF
 
-This folder contains the instructions to build an example of Docker network function.
+This file contains the instructions to build an example of Docker network function.
 
 This function works as follows: when a packet is received on the interface eth0, its 
 destination MAC address is  changed, and the packet is sent on the interface eth1.

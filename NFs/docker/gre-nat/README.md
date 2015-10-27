@@ -1,6 +1,6 @@
 ## Docker-based NAT+GRE VNF
 
-This folder contains the instructions to build a Docker network function that provides NAT to traffic coming out of a bunch of GRE tunnels.
+This file contains the instructions to build a Docker network function that provides NAT to traffic coming out of a bunch of GRE tunnels.
 NAT is based on iptables.
 
 ### Configuring the VNF

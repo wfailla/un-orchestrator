@@ -1,6 +1,6 @@
 ## Docker-based NAT VNF
 
-This folder contains the instructions to build a Docker network function that includes a NAT based on iptables.
+This file contains the instructions to build a Docker network function that includes a NAT based on iptables.
 
 ### Configuring iptables
 

@@ -18,7 +18,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; - cmake: to create cross-platform makefiles
 	; - cmake-curses-gui: nice 'gui' to edit cmake files
 	; - libboost-all-dev: nice c++ library with tons of useful functions
-	; -libmicrohttpd-dev: embedded micro http server
+	; - libmicrohttpd-dev: embedded micro http server
 	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev
 
 	; Install JSON Spirit (nice library to parse JSON files)
@@ -64,7 +64,7 @@ configured, which can be done by launching a script that allows you to:
   * build the environment x86_64-native-linuxapp-gcc
   * Insert IGB UIO module
   * Insert KNI module
-  * Setup hugepage mappings for non-NUMA systems (1000 could be a
+  * Setup hugepage mappings for non-NUMA systems (1000 should be a
     reasonable number)
   * Bind Ethernet device to IGB UIO module (bind all the ethernet
     interfaces that you want to use)
@@ -75,6 +75,7 @@ togher with xDPd, and it is located at xdpd/libs/dpdk):
 	$ cd ../libs/dpdk/tools  
 	$ sudo ./setup.sh  
 
+**WARNING: Currently, xDPd is not compiling on Linux kernels newer than 3.16.0-30.**
 
 #### Open vSwitch (of-config) [DEPRECATED]
 

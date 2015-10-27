@@ -347,7 +347,7 @@ bool ComputeController::selectImplementation()
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK is not supported.");
 
 #ifdef ENABLE_KVM
-	////Manage QEMU/KVM execution environment through libvirt
+	//Manage QEMU/KVM execution environment through libvirt
 	
 	manager = new Libvirt();
 	
@@ -366,8 +366,7 @@ bool ComputeController::selectImplementation()
 
 	//[+] Add here other implementations for the execution environment
 
-	delete(manager);
-
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported implementation!");
 	return false;
 }
 
@@ -431,7 +430,7 @@ bool ComputeController::allSelected()
 		NF *current = nf->second;
 		if(current->getSelectedDescription() == NULL)
 		{
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The NF \"%s\" has not been selected yet.",nf->first.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The NF \"%s\" has not been selected yet.",nf->first.c_str());
 			retVal = false;
 		}
 	}
