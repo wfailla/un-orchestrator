@@ -246,10 +246,11 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     SET(SOURCES2
     ${SOURCES}
-	network_controller/switch_manager/plugins/ovs/commands.h
-	network_controller/switch_manager/plugins/ovs/commands.cc
-	network_controller/switch_manager/plugins/ovs/ovs_manager.h
-	network_controller/switch_manager/plugins/ovs/ovs_manager.cc
+	network_controller/switch_manager/plugins/ovs-ofconfig/commands.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/commands.cc
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_constants.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.cc
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
@@ -267,6 +268,7 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     ${SOURCES}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
+	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_constants.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h
     network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.cc
     )
