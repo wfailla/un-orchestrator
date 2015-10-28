@@ -24,6 +24,14 @@ the operations required to actually implement the forwarding graph:
 Similarly, the un-orchestrator takes care of updating or destroying a graph,
 when the proper messages are received.
 
+As evident in the picture below, which provides an overall view of the UN, the
+un-orchestrator includes several modules; the most important ones are the network
+controller and the conpute controller, which are exploited by the itself to interact
+respectively with the vSwitch and the hypervisor(s). This two modules are detailed in
+the following.
+
+![universal-node](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/universal-node.png)
+
 
 ### The network controller
 
@@ -44,7 +52,7 @@ Currently, it supports Open vSwitch (OvS) and the extensible DataPath daemon
 (xDPd) as vSwitches.
 
 If you are interested to add the support for a new virtual switch, please 
-check the file network\_controller/switch\_manager/README.
+check the file `network\_controller/switch\_manager/README`.
 
 
 ### The compute controller
@@ -56,10 +64,18 @@ those ports to the running vSwitch.
 
 Currently it supports network functions as (KVM) VMs, Docker and DPDK 
 processes, although only a subset of them can be available depending on 
-the chosen vSwitch.
+the chosen vSwitch. The following table shows which execution environments
+are supported with the different vSwitches.
+
+|                            | Docker     | KVM    | DPDK  | KVM-DPDK (usvhost) |  KVM-DPDK (dpdkr)       |
+|----------------------------|------------|--------|-------|--------------------|-------------------------|
+| **xDPd**                   |    **Y**   | **Y**  | **Y** |        N           |          N              |
+| **OvS (OVSDB / OFconfig)** |    **Y**   |  **Y** |  N    |        N           |          N              |
+| **OvS-DPDK**               |    N       |  N     |   N   |       **Y**        |  *Under implementation* |
+
 
 If you are interested to add the support for a new hypervisor, please 
-check the file compute\_controller/README.
+check the file `compute\_controller/README`.
 
 ### NF-FG
 
@@ -79,7 +95,7 @@ up an additional library as described in README_COMPILE.md#nf-fg-library.
 
 Some additional files are provided to compile and use the un-orchestrator:
 
-  * README_COMPILE.md: to compile the un-orchestrator
-  * README_RUN.md: to start the un-orchestrator
-  * README_RESTAPI.md: some usage examples about the REST interface of
+  * `README_COMPILE.md`: to compile the un-orchestrator
+  * `README_RUN.md`: to start the un-orchestrator
+  * `README_RESTAPI.md`: some usage examples about the REST interface of
     the un-orchestrator
