@@ -50,10 +50,17 @@ It consists of two parts:
 
 Currently, it supports Open vSwitch (OvS) and the extensible DataPath daemon
 (xDPd) as vSwitches.
-
 If you are interested to add the support for a new virtual switch, please 
 check the file `network_controller/switch_manager/README`.
 
+Note that, according to the picture above, the network controller creates a first
+LSI (called LSI-0) that is connected to the physical interfaces and to several other
+LSIs. Each one of these further LSIs corresponds to a different NF-FG; hence, it is
+connected to the VNFs of such a NF-FG, and takes care of steering the traffic among
+them as required by the graph description. Instead the LSI-0, being the only one connected
+to the physical interafces of the UN and to all the other graphs, dispatches the
+traffic entering into the node to the proper graph, and properly handles the packets
+already processed in a graph.
 
 ### The compute controller
 
