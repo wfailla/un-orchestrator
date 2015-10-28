@@ -31,6 +31,8 @@ public:
 			return string("kvm");
 #endif		
 
+		//[+] Add here other implementations for the execution environment
+
 		assert(0);
 		return "";
 	}
@@ -48,6 +50,8 @@ public:
 			return 0;
 #endif		
 
+		//[+] Add here other implementations for the execution environment
+
 		assert(0);
 		return 0;
 	}
@@ -64,8 +68,8 @@ public:
 		)
 			return true;
 	
-		assert(0);
-		
+		//[+] Add here other implementations for the execution environment
+	
 		return false;
 	}
 };
