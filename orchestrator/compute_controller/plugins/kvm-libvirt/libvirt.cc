@@ -204,7 +204,7 @@ bool Libvirt::startNF(StartNFIn sni)
     }
 	
 	/* Create XML for VM */
-#ifdef ENABLE_DPDK_KVM
+#ifdef ENABLE_KVM_DPDK_USVHOST
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is DPDK in KVM");
 
 	/* Create NICs */
