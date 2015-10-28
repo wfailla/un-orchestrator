@@ -849,7 +849,13 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
     	stringstream command;
 		command << ACTIVATE_INTERFACE << " " << temp;
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
-		system(command.str().c_str());
+		int retVal = system(command.str().c_str());
+		retVal = retVal >> 8;
+		
+		assert(retVal == 0);
+
+		if(retVal != 0)
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
 	}
 
 }
