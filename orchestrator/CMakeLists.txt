@@ -96,6 +96,16 @@ IF(ENABLE_KVM_DPDK_USVHOST)
 	ADD_DEFINITIONS(-DENABLE_KVM_DPDK_USVHOST -DENABLE_KVM)
 ENDIF(ENABLE_KVM_DPDK_USVHOST)
 
+OPTION(ENABLE_KVM_DPDK_IVSHMEM
+	"Turn on the support of NFs implemented as DPDK processes in KVM virtual machines. Ivshmem between guest and host is used for networking" 
+	OFF
+)
+
+IF(ENABLE_KVM_DPDK_IVSHMEM)
+	#FIXME: is kvm optional in this case?
+	ADD_DEFINITIONS(-DENABLE_KVM_DPDK_IVSHMEM)
+ENDIF(ENABLE_KVM_DPDK_IVSHMEM)
+
 
 OPTION(DEBUG_KVM 
 	"Turn on the debug of the KVM-libvirt compute plugin" 
