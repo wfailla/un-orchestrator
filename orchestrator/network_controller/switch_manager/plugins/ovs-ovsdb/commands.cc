@@ -841,6 +841,17 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 
 	//disconnect socket
     cmd_disconnect(s);
+    
+    //XXX: this code is a trick that activates a VNF ports through ifconfig. In fact, we noted that on some system
+    //this operation has not done by OVSDB
+    if(nf != 0)
+    {
+    	stringstream command;
+		command << ACTIVATE_INTERFACE << " " << temp;
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+		system(command.str().c_str());
+	}
+
 }
 
 void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
