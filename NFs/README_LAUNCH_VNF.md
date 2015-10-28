@@ -108,10 +108,10 @@ where the `graphid` is an alphanumeric string that will uniquely identify your g
 
 At this point the un-orchestrator
 *   through the *network controller*, creates a new LSI, inserts the proper Openflow rules in such an LSI in order to steer the traffic among the VNFs of the graph, and inserts the proper Openflow rules in the LSI-0 (which is the only LSI connected to the physical interfaces) in order to inject the proper traffic in the graph, and properly handle the network packets exiting from such a graph;
-*   through the *compute controller*, starts the Docker image implementing the VNF with name *dummy*.
+*   through the *compute controller*, starts the Docker image implementing the VNF with name *dummy* (the image associated with the name of the VNF is obtained through the name-resolver).
 
-The following picture depicts the internal connections and the flow tables of the LSIs, after that the required NF-FG has been implemented in the Universal Node.
+The following picture shows how the NF-FG of the example is actually implemented on the UN; in particular, it depicts the connections among LSIs and the VNF, and the rules in the flow tables of the involved LSIs.
 
 ![deployment](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/deployment.png)
 
-To conclude, a second graph deployed on the UN will trigger the creation of a new LSI, again connected with the LSI-0; the LSI-0 will then be instructed to dispacth the traffic coming from the physical ports among the deployed NF-FGs, according the the NF-FGs themselves.
+To conclude, the deployment of a second graph will trigger the creation of a new LSI, again connected with the LSI-0; the LSI-0 will then be instructed to properly dispacth the traffic coming from the physical ports among the deployed NF-FGs, according the the NF-FGs themselves.
