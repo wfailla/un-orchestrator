@@ -170,9 +170,6 @@ In order to support the Docker execution environment, follow the instructions
 provided here:
 
 	http://docs.docker.com/installation/  
-	
-**WARNING: the Docker execution environment is only supported if using xDPd 
-as virtual switch.**
 
 #### Libvirt (and KVM)
 
@@ -183,10 +180,6 @@ To compile and install libvirt, execute the following command:
 
 If you run Libvirt for OVS or OVSDB, please put your template in the folder 
 "compute_controller/plugins/kvm-libvirt/nf_repository".
-
-**WARNING: the KVM execution environment is only supported if using OvS 
-as virtual switch.**
-
 
 ### NF-FG library
 

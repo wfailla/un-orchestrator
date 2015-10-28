@@ -8,7 +8,9 @@ using namespace std;
 
 typedef enum{
 	DPDK,
+#if defined(ENABLE_DOCKER) || defined(VSWITCH_IMPLEMENTATION_XDPD)
 	DOCKER,
+#endif
 #ifdef ENABLE_KVM
 	KVM
 #endif
@@ -22,7 +24,7 @@ public:
 	{
 		if(type == DPDK)
 			return string("dpdk");
-#ifdef ENABLE_DOCKER
+#if defined(ENABLE_DOCKER) || defined(VSWITCH_IMPLEMENTATION_XDPD)
 		else if(type == DOCKER)
 			return string("docker");
 #endif
