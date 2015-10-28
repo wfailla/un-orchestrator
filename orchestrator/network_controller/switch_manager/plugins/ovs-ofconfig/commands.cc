@@ -1,5 +1,5 @@
-#include "ovs_manager.h"
-#include "ovs_constants.h"
+#include "ofconfig_manager.h"
+#include "ofconfig_constants.h"
 
 struct nc_session* session = NULL;
 

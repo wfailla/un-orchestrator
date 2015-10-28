@@ -37,8 +37,8 @@ ENDIF()
 # End of the rather complicated CMake code for setting the logging level
 
 # Rather complicated CMake code for selecting the virtual switch implementation
-SET(VSWITCH_IMPLEMENTATION "OVS-OVSDB" CACHE STRING "vSwitch implementation: XDPD, OVS, OVS-DPDK, OVS-OVSDB")
-SET(VSWITCH_IMPLEMENTATION_VALUES "XDPD" "OVS" "OVS-DPDK" "OVS-OVSDB") #Add here other implementations
+SET(VSWITCH_IMPLEMENTATION "OVS-OVSDB" CACHE STRING "vSwitch implementation: XDPD, OVS-OFCONFIG, OVS-DPDK, OVS-OVSDB")
+SET(VSWITCH_IMPLEMENTATION_VALUES "XDPD" "OVS-OFCONFIG" "OVS-DPDK" "OVS-OVSDB") #Add here other implementations
 SET_PROPERTY(CACHE VSWITCH_IMPLEMENTATION PROPERTY STRINGS ${VSWITCH_IMPLEMENTATION_VALUES})
 LIST(FIND VSWITCH_IMPLEMENTATION_VALUES ${VSWITCH_IMPLEMENTATION} VSWITCH_IMPLEMENTATION_INDEX)
 
@@ -49,7 +49,7 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_XDPD)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVS)
+	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OFCONFIG)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDPDK)
@@ -246,10 +246,11 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     SET(SOURCES2
     ${SOURCES}
-	network_controller/switch_manager/plugins/ovs/commands.h
-	network_controller/switch_manager/plugins/ovs/commands.cc
-	network_controller/switch_manager/plugins/ovs/ovs_manager.h
-	network_controller/switch_manager/plugins/ovs/ovs_manager.cc
+	network_controller/switch_manager/plugins/ovs-ofconfig/commands.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/commands.cc
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_constants.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.cc
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
@@ -267,6 +268,7 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     ${SOURCES}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
+	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_constants.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h
     network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.cc
     )
