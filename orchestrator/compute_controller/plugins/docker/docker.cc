@@ -40,7 +40,7 @@ bool Docker::startNF(StartNFIn sni)
 		command << " " << lsiID << "_" << nf_name << "_" << i;
 #endif		
 
-#if defined(VSWITCH_IMPLEMENTATION_OVSDB) || defined(VSWITCH_IMPLEMENTATION_OVS)
+#if defined(VSWITCH_IMPLEMENTATION_OVSDB) || defined(VSWITCH_IMPLEMENTATION_OFCONFIG)
 		command << " " << nf_name << "p" << i << "b" << lsiID;
 #endif
 	}

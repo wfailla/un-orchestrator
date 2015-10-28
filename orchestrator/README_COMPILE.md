@@ -23,7 +23,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install JSON Spirit (nice library to parse JSON files)
 	$ git clone https://github.com/sirikata/json-spirit
-	; alternatively, a copy of JSON Spirit is provided in [un-orchestrator]/contrib/json-spirit.zip
+	; alternatively, a copy of JSON Spirit is provided in `[un-orchestrator]/contrib/json-spirit.zip`
 	$ cd json-spirit/
 
 	; Now install the above library according to the description provided
@@ -31,7 +31,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
 	$ git clone https://github.com/bisdn/rofl-common  
-	; alternatively, a copy of ROFL-common is provided in [un-orchestrator]/contrib/rofl-common.zip
+	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	$ cd rofl-core/
 
 	; Now install the above library according to the description provided
@@ -170,9 +170,6 @@ In order to support the Docker execution environment, follow the instructions
 provided here:
 
 	http://docs.docker.com/installation/  
-	
-**WARNING: the Docker execution environment is only supported if using xDPd 
-as virtual switch.**
 
 #### Libvirt (and KVM)
 
@@ -181,12 +178,12 @@ To compile and install libvirt, execute the following command:
 
 	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
 
-If you run Libvirt for OVS or OVSDB, please put your template in the folder 
-"compute_controller/plugins/kvm-libvirt/nf_repository".
+#### DPDK processes
 
-**WARNING: the KVM execution environment is only supported if using OvS 
-as virtual switch.**
+In order to run VNFs implemented as DPDK processes, no further operation is required,
+since the DPDK library have alredy been installed together with the vSwitch.
 
+**WARNING: DPDK processes are only supported when using xDPd as vSwitch**
 
 ### NF-FG library
 

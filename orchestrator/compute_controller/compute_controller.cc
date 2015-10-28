@@ -198,6 +198,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					return false;
 		    	}
 
+				bool next = false;
 		    	//Itearate on the implementations
 		    	for( unsigned int impl = 0; impl < impl_array.size(); ++impl)
 				{
@@ -224,8 +225,10 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							type = impl_value.getString();
 							if(!NFType::isValid(type))
 							{
-								logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid implementation type \"%s\"",type.c_str());
-								return false;
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid implementation type \"%s\". Skip it.",type.c_str());
+								//return false;
+								next = true;
+								break;
 							}
 						}
 						else if(impl_name == "uri")
@@ -249,6 +252,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							return false;
 						}
 					}
+					
+					if(next)
+					{
+						//The current network function is of a type not supported by the orchestator
+						next = false;
+						continue;
+					}
+					
 					if(!foundURI || !foundType)
 					{
 						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into an implementation description");
@@ -298,6 +309,13 @@ bool ComputeController::parseAnswer(string answer, string nf)
 #endif	
 		);
 		assert(possibleDescriptions.size() != 0);
+		
+		if(possibleDescriptions.size() == 0)
+		{
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Cannot find a supported implementation for the network function \"%s\"",nf.c_str());
+			return false;
+		}		
+		
 		for(list<Description*>::iterator impl = possibleDescriptions.begin(); impl != possibleDescriptions.end(); impl++)
 			new_nf->addDescription(*impl);
 

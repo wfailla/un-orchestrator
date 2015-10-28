@@ -204,7 +204,7 @@ bool Libvirt::startNF(StartNFIn sni)
     }
 	
 	/* Create XML for VM */
-#ifdef ENABLE_DPDK_KVM
+#ifdef ENABLE_KVM_DPDK_USVHOST
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is DPDK in KVM");
 
 	/* Create NICs */
@@ -249,9 +249,15 @@ bool Libvirt::startNF(StartNFIn sni)
 		for (string::size_type j=0; j<nf_name.length(); ++j)
 			nf_name[j] = tolower(nf_name[j], loc);
 		
-		char port_name[64];		
-		sprintf(port_name, "%sp%ub" "%" PRIu64, nf_name.c_str(), i, sni.getLsiID());
+		char port_name[64];
 		
+#if defined(VSWITCH_IMPLEMENTATION_OVSDB) || defined(VSWITCH_IMPLEMENTATION_OFCONFIG)
+		sprintf(port_name, "%sp%ub" "%" PRIu64, nf_name.c_str(), i, sni.getLsiID());
+#endif
+
+#ifdef VSWITCH_IMPLEMENTATION_XDPD
+		sprintf(port_name, "%" PRIu64 "_%s_%u",sni.getLsiID(), nf_name.c_str(), i);
+#endif		
 		
 		xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
