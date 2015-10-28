@@ -265,13 +265,6 @@ bool doChecks(void)
 	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The support to OFCONFIG is deprecated.");
 #endif
 
-#if (defined(VSWITCH_IMPLEMENTATION_OVSDB) || defined(VSWITCH_IMPLEMENTATION_OVS) || defined(VSWITCH_IMPLEMENTATION_OVSDPDK)) && defined(ENABLE_DOCKER)
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The orchestrator cannot be run with the current configuration.");
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Docker containers are not supported with OvS.");
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Please change the configuration through 'ccmake .'");
-	return false;
-#endif
-
 	return true;
 }
 

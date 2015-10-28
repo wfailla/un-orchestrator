@@ -42,7 +42,7 @@
 	
 	<network-function name="firewall"  num-ports="2" description="iptables based firewall">
 		<!-- Only a docker implementation is available for this network function -->
-		<implementation type="docker" uri="iptables"/>
+		<implementation type="docker" uri="firewall"/>
 	</network-function>
    
 	<network-function name="dpi"  num-ports="2" description="DPI based on DPDK">
