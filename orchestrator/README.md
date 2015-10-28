@@ -52,7 +52,7 @@ Currently, it supports Open vSwitch (OvS) and the extensible DataPath daemon
 (xDPd) as vSwitches.
 
 If you are interested to add the support for a new virtual switch, please 
-check the file `network\_controller/switch\_manager/README`.
+check the file `network_controller/switch_manager/README`.
 
 
 ### The compute controller
@@ -75,7 +75,7 @@ are supported with the different vSwitches.
 
 
 If you are interested to add the support for a new hypervisor, please 
-check the file `compute\_controller/README`.
+check the file `compute_controller/README`.
 
 ### NF-FG
 
