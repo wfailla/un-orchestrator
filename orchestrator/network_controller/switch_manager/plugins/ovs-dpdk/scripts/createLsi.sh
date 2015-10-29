@@ -13,8 +13,6 @@ controller_ip=$2
 controller_port=$3
 ofp_version=$4
 
-. ./network_controller/switch_manager/plugins/ovs-dpdk/scripts/ovs.conf
-
 if (( $EUID != 0 ))
 then
     echo "[$0] This script must be executed with ROOT privileges"
