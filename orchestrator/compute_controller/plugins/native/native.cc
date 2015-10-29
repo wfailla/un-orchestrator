@@ -112,7 +112,7 @@ bool Native::startNF(StartNFIn sni) {
 	uint64_t lsiID = sni.getLsiID();
 	std::string nf_name = sni.getNfName();
 	unsigned int n_ports = sni.getNumberOfPorts();
-	std::map<unsigned int,pair<std::string, std::string> > ipv4PortsRequirements = sni.getIpv4PortsRequirements();
+	std::map<unsigned int,pair<std::string, std::string>> ipv4PortsRequirements = sni.getIpv4PortsRequirements();
 	std::map<unsigned int, std::string> ethPortsRequirements = sni.getEthPortsRequirements();
 	
 	std::string uri_script = description->getURI();
