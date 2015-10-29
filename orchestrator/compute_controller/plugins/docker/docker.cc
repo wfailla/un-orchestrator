@@ -34,7 +34,16 @@ bool Docker::startNF(StartNFIn sni)
 	
 	//create the names of the ports
 	for(unsigned int i = 1; i <= n_ports; i++)
+	{
+		//TODO: the name of the port should be created outside of the network controller
+#ifdef VSWITCH_IMPLEMENTATION_XDPD
 		command << " " << lsiID << "_" << nf_name << "_" << i;
+#endif		
+
+#if defined(VSWITCH_IMPLEMENTATION_OVSDB) || defined(VSWITCH_IMPLEMENTATION_OFCONFIG)
+		command << " " << nf_name << "p" << i << "b" << lsiID;
+#endif
+	}
 		
 	//specify the IPv4 requirements for the ports
 	for(unsigned int i = 1; i <= n_ports; i++)

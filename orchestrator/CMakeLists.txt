@@ -36,30 +36,9 @@ IF(${LOGGING_LEVEL_INDEX} EQUAL 4)
 ENDIF()
 # End of the rather complicated CMake code for setting the logging level
 
-# Rather complicated CMake code for selecting the Openflow version
-SET(OFP_VERSION "OFP_10" CACHE STRING "Openflow version: OFP_10, OFP_12, OFP_13")
-SET(OFP_VERSION_VALUES "OFP_10" "OFP_12" "OFP_13")
-SET_PROPERTY(CACHE OFP_VERSION PROPERTY STRINGS ${OFP_VERSION_VALUES})
-LIST(FIND OFP_VERSION_VALUES ${OFP_VERSION} OFP_VERSION_INDEX)
-
-IF(${OFP_VERSION_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${OFP_VERSION} not supported, valid entries are ${OFP_VERSION_VALUES}")
-ENDIF()
-IF(${OFP_VERSION_INDEX} EQUAL 0)
-	ADD_DEFINITIONS(-DOFP_VERSION=OFP_10)
-ENDIF()
-IF(${OFP_VERSION_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DOFP_VERSION=OFP_12)
-ENDIF()
-IF(${OFP_VERSION_INDEX} EQUAL 2)
-	ADD_DEFINITIONS(-DOFP_VERSION=OFP_13)
-ENDIF()
-# End of the rather complicated CMake code for setting the Openflow version
-
-
 # Rather complicated CMake code for selecting the virtual switch implementation
-SET(VSWITCH_IMPLEMENTATION "OVS-OVSDB" CACHE STRING "vSwitch implementation: XDPD, OVS, OVS-DPDK, OVS-OVSDB")
-SET(VSWITCH_IMPLEMENTATION_VALUES "XDPD" "OVS" "OVS-DPDK" "OVS-OVSDB") #Add here other implementations
+SET(VSWITCH_IMPLEMENTATION "OVS-OVSDB" CACHE STRING "vSwitch implementation: XDPD, OVS-OFCONFIG, OVS-DPDK, OVS-OVSDB")
+SET(VSWITCH_IMPLEMENTATION_VALUES "XDPD" "OVS-OFCONFIG" "OVS-DPDK" "OVS-OVSDB") #Add here other implementations
 SET_PROPERTY(CACHE VSWITCH_IMPLEMENTATION PROPERTY STRINGS ${VSWITCH_IMPLEMENTATION_VALUES})
 LIST(FIND VSWITCH_IMPLEMENTATION_VALUES ${VSWITCH_IMPLEMENTATION} VSWITCH_IMPLEMENTATION_INDEX)
 
@@ -70,7 +49,7 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_XDPD)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVS)
+	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OFCONFIG)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDPDK)
@@ -108,14 +87,34 @@ IF(ENABLE_NATIVE)
 	ADD_DEFINITIONS(-DENABLE_NATIVE)
 ENDIF(ENABLE_NATIVE)
 
-OPTION(
-	ENABLE_KVM
-	"Turn on the support of NFs implemented in KVM virtual machines"
+
+OPTION(ENABLE_KVM 
+	"Turn on the support of NFs implemented in KVM virtual machines" 
 	OFF
 )
+
 IF(ENABLE_KVM)
 	ADD_DEFINITIONS(-DENABLE_KVM)
 ENDIF(ENABLE_KVM)
+
+OPTION(ENABLE_KVM_DPDK_USVHOST
+	"Turn on the support of NFs implemented as DPDK processes in KVM virtual machines. User space VHOST is used for networking" 
+	OFF
+)
+
+IF(ENABLE_KVM_DPDK_USVHOST)
+	ADD_DEFINITIONS(-DENABLE_KVM_DPDK_USVHOST -DENABLE_KVM)
+ENDIF(ENABLE_KVM_DPDK_USVHOST)
+
+
+OPTION(DEBUG_KVM 
+	"Turn on the debug of the KVM-libvirt compute plugin" 
+	OFF
+)
+
+IF(DEBUG_KVM)
+	ADD_DEFINITIONS(-DDEBUG_KVM)
+ENDIF(DEBUG_KVM)
 
 OPTION(
 	POLITO_MESSAGE
@@ -154,6 +153,9 @@ IF(UNIFY_NFFG)
 	ADD_DEFINITIONS(-DUNIFY_NFFG)
 ENDIF(UNIFY_NFFG)
 
+MARK_AS_ADVANCED(
+	DEBUG_KVM DEBUG_OPENFLOW
+)
 
 # Set source files
 SET(SOURCES
@@ -257,10 +259,11 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     SET(SOURCES2
     ${SOURCES}
-	network_controller/switch_manager/plugins/ovs/commands.h
-	network_controller/switch_manager/plugins/ovs/commands.cc
-	network_controller/switch_manager/plugins/ovs/ovs_manager.h
-	network_controller/switch_manager/plugins/ovs/ovs_manager.cc
+	network_controller/switch_manager/plugins/ovs-ofconfig/commands.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/commands.cc
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_constants.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.h
+	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.cc
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
@@ -278,15 +281,14 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     ${SOURCES}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
+	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_constants.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h
     network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.cc
-    network_controller/switch_manager/plugins/ovs-ovsdb/Jzon.h
-    network_controller/switch_manager/plugins/ovs-ovsdb/Jzon.cpp
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 
 
-IF(ENABLE_KVM)
+IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
     SET(SOURCES3
     ${SOURCES2}
 	compute_controller/plugins/kvm-libvirt/libvirt.cc
@@ -296,7 +298,7 @@ ELSE()
      SET(SOURCES3
          ${SOURCES2}
     	)
-ENDIF(ENABLE_KVM)
+ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
 
 IF(ENABLE_DOCKER)
     SET(SOURCES4
@@ -389,11 +391,11 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
 #Links specific for libvirt (KVM)
-IF(ENABLE_KVM)
+IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
 	TARGET_LINK_LIBRARIES( node-orchestrator
 		libvirt.so
 	)
-ENDIF(ENABLE_KVM)
+ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
 
 #Links specific for the NF-FG library defined in the Unify project
 IF(UNIFY_NFFG)

@@ -12,6 +12,11 @@
 #include <string.h>
 
 /**
+*	Global variables (defined in ../utils/constants.h)
+*/
+ofp_version_t OFP_VERSION;
+
+/**
 *	Private variables
 */
 struct MHD_Daemon *http_daemon = NULL;
@@ -62,6 +67,9 @@ int main(int argc, char *argv[])
 	
 	if(!doChecks())
 		exit(EXIT_FAILURE);	
+	
+	//XXX: change this line to use different versions of Openflow
+	OFP_VERSION = OFP_12;	
 	
 	int core_mask;
 	int rest_port;
@@ -252,24 +260,9 @@ bool usage(void)
 */
 bool doChecks(void)
 {
-#ifdef VSWITCH_IMPLEMENTATION_XDPD
-	switch(OFP_VERSION)
-	{
-		case OFP_12:
-			break;
-		default:
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The orchestrator cannot be run with the current configuration.");
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "xDPd is only supported with Openflow 1.2.");
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Please change the configuration through 'ccmake .'");
-			return false;
-	}
-#endif
 
-#if (defined(VSWITCH_IMPLEMENTATION_OVSDB) || defined(VSWITCH_IMPLEMENTATION_OVS) || defined(VSWITCH_IMPLEMENTATION_OVSDPDK)) && defined(ENABLE_DOCKER)
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The orchestrator cannot be run with the current configuration.");
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Docker containers are not supported with OvS.");
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Please change the configuration through 'ccmake .'");
-	return false;
+#ifdef VSWITCH_IMPLEMENTATION_OFCONFIG
+	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The support to OFCONFIG is deprecated.");
 #endif
 
 	return true;

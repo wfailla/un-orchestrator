@@ -1,5 +1,5 @@
-#include "ovs_manager.h"
-#include "ovs_constants.h"
+#include "ofconfig_manager.h"
+#include "ofconfig_constants.h"
 
 struct nc_session* session = NULL;
 
@@ -28,12 +28,17 @@ commands::~commands(){
 //return the password related by username and hostname
 char *password(const char *username, const char *hostname){
 	
-	char *psw = new char[64];	
+	char *psw = new char[64];
+	int i = 0;	
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Insert ssh password for OFConfig server on OvS:");
 
-	scanf("%s", psw);
-
+	i = scanf("%s", psw);
+	if(i<0){
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error scanf.");
+		throw commandsException();
+	}
+	
 	return psw;
 }
 
@@ -180,7 +185,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 	list<pair<unsigned int, unsigned int> > virtual_links;
 	map<string,unsigned int> n_ports;
 
-	int rnumber_old = 0, dnumber_new = 0, nfnumber_old = 0;
+	int rnumber_old = 0, dnumber_new = 0, nfnumber_old = 0, pip = 0;
 
 	NC_EDIT_TESTOPT_TYPE testopt = NC_EDIT_TESTOPT_SET;
 	NC_DATASTORE target = NC_DATASTORE_RUNNING /*by default is running*/;
@@ -865,8 +870,12 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 			sprintf(cmdLine, PATH_SCRIPT_VIRTUAL_LINK, bridge_name, peer_name, vrt, trv);
 
 			/*execute VirtualLink.sh*/
-			system(cmdLine);
-
+			pip = system(cmdLine);
+			if(pip < 0){
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
+				throw commandsException();
+			}
+			
 			sprintf(cmdLine, PATH_SCRIPT_ID_PORT, bridge_name, vrt);
 
 			/*execute IdPort.sh*/
@@ -908,8 +917,12 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 	sprintf(cmdLine, PATH_SCRIPT_OF_VERSION, switch_name, of_version);
 
 	/*execute OFVersion.sh*/
-	system(cmdLine);
-
+	pip = system(cmdLine);
+	if(pip < 0){
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
+		throw commandsException();
+	}
+	
 	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, virtual_links);
 
 	return clo;
@@ -1933,6 +1946,8 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli){
 	uint64_t port_id_1 = 0, port_id_2 = 0;
 
 	char cmdLine[4096];
+	
+	int pip = 0;
 
 	//int pnumber_old = 0;
 
@@ -1950,7 +1965,11 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli){
     sprintf(cmdLine, PATH_SCRIPT_VIRTUAL_LINK, bridge_name, peer_name, vrt, trv);
 
 	/*execute VirtualLink.sh*/
-	system(cmdLine);
+	pip = system(cmdLine);
+	if(pip < 0){
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
+		throw commandsException();
+	}
 	
 	sprintf(cmdLine, PATH_SCRIPT_ID_PORT, bridge_name, vrt);
 

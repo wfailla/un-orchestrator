@@ -8,7 +8,9 @@ using namespace std;
 
 typedef enum{
 	DPDK
+#if defined(ENABLE_DOCKER) || defined(VSWITCH_IMPLEMENTATION_XDPD)
 	,DOCKER
+#endif
 #ifdef ENABLE_KVM
 	,KVM
 #endif
@@ -25,7 +27,7 @@ public:
 	{
 		if(type == DPDK)
 			return string("dpdk");
-#ifdef ENABLE_DOCKER
+#if defined(ENABLE_DOCKER) || defined(VSWITCH_IMPLEMENTATION_XDPD)
 		else if(type == DOCKER)
 			return string("docker");
 #endif
@@ -37,6 +39,8 @@ public:
 		else if(type == NATIVE)
 			return string("native");
 #endif		
+
+		//[+] Add here other implementations for the execution environment
 
 		assert(0);
 		return "";
@@ -59,6 +63,8 @@ public:
 			return 3;
 #endif
 
+		//[+] Add here other implementations for the execution environment
+
 		assert(0);
 		return -1;
 	}
@@ -78,8 +84,8 @@ public:
 		)
 			return true;
 	
-		assert(0);
-		
+		//[+] Add here other implementations for the execution environment
+	
 		return false;
 	}
 };

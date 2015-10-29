@@ -5,24 +5,25 @@ In order to execute the un-orchestrator, we need to setup different components, 
   * a set of libraries needed to compile the un-orchestrator code
   * a virtual switch (either xDPd or OpenvSwitch) as a base switch for
     our platform
-  * an execution environment for network functions, e.g., KVM for
+  * an execution environment for virtual network functions, e.g., KVM for
     executing VM, Docker, or other.
 
 ### Required libraries
 
 Several libraries are required to compile the un-orchestrator.
-In the following we list the steps required on an Ubuntu 14.04.
+In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install required libraries
 	; - build-essential: it includes GCC, basic libraries, etc
 	; - cmake: to create cross-platform makefiles
 	; - cmake-curses-gui: nice 'gui' to edit cmake files
 	; - libboost-all-dev: nice c++ library with tons of useful functions
-	;  -libmicrohttpd-dev: embedded micro http server
+	; - libmicrohttpd-dev: embedded micro http server
 	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev
 
 	; Install JSON Spirit (nice library to parse JSON files)
 	$ git clone https://github.com/sirikata/json-spirit
+	; alternatively, a copy of JSON Spirit is provided in `[un-orchestrator]/contrib/json-spirit.zip`
 	$ cd json-spirit/
 
 	; Now install the above library according to the description provided
@@ -30,6 +31,7 @@ In the following we list the steps required on an Ubuntu 14.04.
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
 	$ git clone https://github.com/bisdn/rofl-common  
+	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	$ cd rofl-core/
 
 	; Now install the above library according to the description provided
@@ -46,14 +48,15 @@ possibilities listed in this section.
 
 In order to install xDPd, you have to follow the steps below.
 
-	git clone https://github.com/bisdn/xdpd  
-	cd xdpd/  
+	$ git clone https://github.com/bisdn/xdpd  
+	$ cd xdpd/  
 
 	;Install all the libraries required by the README provided in this folder  
-	bash autogen  
-	cd build  
-	../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"   
-	make
+	$ bash autogen  
+	$ cd build  
+	$ ../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"   
+	$ make
+	$sudo make install
 
 Now the DPDK library, which is being used by xDPd, must be properly
 configured, which can be done by launching a script that allows you to:
@@ -61,18 +64,36 @@ configured, which can be done by launching a script that allows you to:
   * build the environment x86_64-native-linuxapp-gcc
   * Insert IGB UIO module
   * Insert KNI module
-  * Setup hugepage mappings for non-NUMA systems (1000 could be a
+  * Setup hugepage mappings for non-NUMA systems (1000 should be a
     reasonable number)
   * Bind Ethernet device to IGB UIO module (bind all the ethernet
     interfaces that you want to use)
 
-Let's now launch the DPDK setup script:
+Let's now launch the DPDK setup script (note that the library has been downloaded
+togher with xDPd, and it is located at xdpd/libs/dpdk):
 
 	$ cd ../libs/dpdk/tools  
 	$ sudo ./setup.sh  
 
+**WARNING: Currently, xDPd is not compiling on Linux kernels newer than 3.16.0-30.**
 
-#### Open vSwitch (of-config)
+#### Open vSwitch (of-config) [DEPRECATED]
+
+OpenvSwitch can be installed with either the OVSDB or OF-CONFIG plugins.
+Although both protocols allow to control the switch (e.g., create/delete
+new bridging instances, create/delete ports, etc), we found out
+that OF-CONFIG is rather limited in terms of capabilities. For instance,
+it cannot set the type of port configured on the switch (e.g., virtio
+or IVSHMEM), requiring the orchestrator to rely on a combination of
+OF-CONFIG commands and bash scripts to perform its job.
+
+For this reason we suggest to install OpenvSwitch with its native OSVDB 
+support (next section); although OVSDB is not standard, it seems that it
+does its job better than OF-CONFIG.
+
+In any case, the compilation instruction for setting up OpenvSwitch with 
+OF-CONFIG are the following (not guaranteed that those are 100% accurate,
+as the OF-CONFIG support in OpenvSwitch is rather primitive).
 
 The list of OF-CONFIG dependencies:
 
@@ -82,17 +103,16 @@ The list of OF-CONFIG dependencies:
 - libpthreads
 - libxml2 (including headers from the devel package)
 - libssh >= 0.6.4 (including headers)
-	- Download it from https://red.libssh.org/projects/libssh/files and for install it, follow the instructions in the INSTALL file present in a root directory
-	- can be skipped if using --disable-ssh
- 
+	- download it from https://red.libssh.org/projects/libssh/files and for install it 
+	  following the INSTALL file present in the root directory
+	- this step can be skipped if using --disable-ssh
+- openvswitch 2.4.0
 - pyang >= 1.5.0
 - python 2.6 or higher with the following modules:
  - os, copy, string, re, argparse, subprocess, inspect, curses, xml, libxml2
  - only with TLS enabled: M2Crypto
-
 - only with TLS enabled by using the --enable-tls option
  - OpenSSL (libssl, libcrypto, including headers from the devel package)
-
 - roff2html
  - optional, used for building HTML version of man pages (make doc)
 - rpmbuild
@@ -119,39 +139,23 @@ in the root folder of that repository.
 
 #### Open vSwitch (OVSDB)
 
-######Open vSwitch Installation
+At first, downaload the Open vSwitch source code from:
 
-At first, unpack archive with Open vSwitch source codes:
+    http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
 
-    tar -xf openvswitch-2.3.1.tar.gz
+Then execute the following commands:
 
-Then configure Open vSwitch using:
+    $ tar -xf openvswitch-2.4.0.tar.gz
+    $ cd openvswitch-2.4.0
+    $ ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
+    $ make
+    $ sudo make install
 
-    ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
+To start Open vSwitch at the boot of the machine (optional):
 
-Note: we discovered bad symbolic link 'build' in /lib/modules/$(uname -r)/ in Scientific Linux 6.6,
-therefore, we temporary fixed it by creating new symbolic link manually. For our case it was:
-
-    ln -s /usr/src/kernels/2.6.32-504.8.1.el6.x86_64/ /lib/modules/2.6.32-504.el6.x86_64/build
-
-After successful configuration of Open vSwitch, run standard commands:
-
-    make && make install
-
-When Open vSwitch is installed, it can be started:
-
-    /usr/local/share/openvswitch/scripts/ovs-ctl start
-
-To start Open vSwitch after boot:
-
-    sed 's,/usr/share/,/usr/local/share/,' rhel/etc_init.d_openvswitch > /etc/init.d/openvswitch
-
-    chkconfig --add openvswitch
-
-    chkconfig openvswitch on
-
-Note: sed(1) is used to rewrite path to Open vSwitch scripts that is statically defined
-in openvswitch script.
+    $ sed 's,/usr/share/,/usr/local/share/,' rhel/etc_init.d_openvswitch > /etc/init.d/openvswitch
+    $ chkconfig --add openvswitch
+    $ chkconfig openvswitch on
 
 
 ### Virtual Execution Environment for network functions
@@ -162,42 +166,29 @@ possibilities from the ones listed in this section.
 
 #### Docker
 
-This is needed in order to suppor the Docker execution environment.
-
-**On Ubuntu**
-
-Follow the instruction provided here:
+In order to support the Docker execution environment, follow the instructions
+provided here:
 
 	http://docs.docker.com/installation/  
-
-	$ sudo apt-get install lxc -y  
-	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
-	$ service docker restart
-
-**On Debian**
-
-Follow the instruction provided here:
-
-	https://scottlinux.com/2014/05/04/how-to-install-and-run-docker-on-debian-wheezy/
-
-	$ sudo apt-get install docker -y  
-	$ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker  
-	$ service docker.io restart
 
 #### Libvirt (and KVM)
 
 This is needed in order to run network functions in KVM-based virtual machines.
+To compile and install libvirt, execute the following command:
 
-	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils  
+	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
 
-To compile and install libvirt, execute the command shown above.
+#### DPDK processes
 
-If you run Libvirt for OVS or OVSDB should be put your template in a folder "compute_controller/plugins/kvm-libvirt/nf_repository".
+In order to run VNFs implemented as DPDK processes, no further operation is required,
+since the DPDK library have alredy been installed together with the vSwitch.
+
+**WARNING: DPDK processes are only supported when using xDPd as vSwitch**
 
 ### NF-FG library
 
 These steps are mandatory only if you plan to use the Network Functions - 
-Forwarding Graph (NF-FG) defined within the Unify project.
+Forwarding Graph (NF-FG) defined in WP3.
 
 	; Retrieve the NF-FG library.
 	
@@ -214,10 +205,10 @@ We are now ready to compile the un-orchestrator.
 	$ ccmake .  
 
 The previous command allows you to select some configuration parameters for the
-un-orchestrator, such as the virtual switch used, the version of Openflow to
-use, which kind of execution environment you want to enable, the NF-FG description,
-etc. When you're finished, exit from the 'ccmake' interface by *generating the
-configuration files* and type the following commands:
+un-orchestrator, such as the virtual switch used, which kind of execution environment
+you want to enable, the NF-FG description, etc. When you're finished, exit from
+the 'ccmake' interface by *generating the configuration files* (press 'c' and 'g')
+and type the following commands:
 
 	; Create makefile scripts based on the previously selected options
 	$ cmake .

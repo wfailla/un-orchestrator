@@ -8,7 +8,7 @@ REST interface (which features an embedded HTTP server).
 Some examples are available in the 'config' folder.
 
 **WARNING: these commands are not valid if you use the NF-FG library defined in
-the Unify project.**
+WP3.**
 
 ### Main REST commands accepted by the un-orchestrator
 
@@ -31,8 +31,7 @@ Retrieve information on the available physical interfaces:
 
 
 ### NF-FG examples
-This section provides some NF-FG graphs that can be used to configure
-the un-orchestrator.
+This section provides some NF-FG that can be used to configure the un-orchestrator.
 
 ### vSwitch pass-through example
 
@@ -68,13 +67,14 @@ REST tool (e.g., some nice plugins for Mozilla Firefox). Just in case,
 you can also use the cURL command line tool, such as in the following
 example:
 
-    curl -i -H "Content-Type: application/json" -d myGraph.json -X PUT  http://un-orchestrator-address:port
+    curl -i -H "Content-Type: application/json" -d "@myGraph.json" -X PUT  http://un-orchestrator-address:port
 
+===============================================================================
 
-* This example is more complex, and it includes a network function called "bridge".
-  Packets coming from the interface ge0 are sent to the first port of the network
-  function (bridge:1), while packes coming from the second port of the network
-  function (bridge:2) are sent on the network interface ge1
+This example is more complex, and it includes a network function called "bridge".
+Packets coming from the interface ge0 are sent to the first port of the network
+function (bridge:1), while packes coming from the second port of the network
+function (bridge:2) are sent on the network interface ge1
   
 PUT /graph/myGraph HTTP/1.1   
 Content-Type : application/json   
@@ -114,7 +114,9 @@ Content-Type : application/json
     	}  
     }  
 
-This example implements the following graph:
+===============================================================================
+
+Example implementing the following graph:
 
     eth0 -> firewall -> if (tcp_dst == 80) -> web cache  -> nat  -> eth1  
                         else \--------------------------/ 
@@ -199,17 +201,19 @@ Content-Type : application/json
 	    }  
     }  
 
-* This example implements the following graph:
+===============================================================================
+
+Example implementing the following graph:
 
    eth0 <-> bridge <-> eth1
    
-   It is worth noting that only the packets to/from a specific MAC address can
-   enter into the bridge, while packets with other MAC addresses are not considered
-   by this graph.
-   Moreover, the bridge has a third interface (bridge:3) having an IPv4 address,
-   and the graph specifies a proper path for the packets to/from this address,
-   in order, for instance, to allow the client to contact the network function
-   through SSH.
+It is worth noting that only the packets to/from a specific MAC address can
+enter into the bridge, while packets with other MAC addresses are not considered
+by this graph.
+Moreover, the bridge has a third interface (bridge:3) having an IPv4 address,
+and the graph specifies a proper path for the packets to/from this address,
+in order, for instance, to allow the client to contact the network function
+through SSH.
 
 PUT /graph/myGraph HTTP/1.1   
 Content-Type : application/json 
@@ -324,14 +328,16 @@ Content-Type : application/json
         }  
     }  
 
-* It is possible to connect multiple graphs together by using the so called "endpoints".
-  An endpoint is always in the form "graph_id:endpoint_id_in_the_graph", where "graph_id"
-  is the graph that defines the endpoint.
-  A graph that want to use and endpoint defined by another graph, can do it only if that
-  endpoint has been specified by that graph. 
-  
-  As an example, the following command defines an endpoint "myGraph:1", while the second
-  command uses that endpoint.
+===============================================================================
+
+It is possible to connect multiple graphs together by using the so called "endpoints".
+An endpoint is always in the form "graph_id:endpoint_id_in_the_graph", where "graph_id"
+is the graph that defines the endpoint.
+A graph that want to use and endpoint defined by another graph, can do it only if that
+endpoint has been specified by that graph. 
+
+As an example, the following command defines an endpoint "myGraph:1", while the second
+command uses that endpoint.
 
 PUT /graph/myGraph HTTP/1.1   
 Content-Type : application/json
