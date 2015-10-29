@@ -170,6 +170,15 @@ AddVirtualLinkOut *OVSDPDKManager::addVirtualLink(AddVirtualLinkIn avli)
 void OVSDPDKManager::destroyLsi(uint64_t dpid)
 { // SwitchManager implementation
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")\n", dpid);
+	stringstream cmd;
+	cmd << CMD_DESTROY_LSI << " " << dpid;
+	
+	int retVal = system(cmd.str().c_str());
+	retVal = retVal >> 8;
+	if(retVal == 0) {
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to destroy LSI");
+		throw OVSDPDKManagerException();
+	}
 }
 
 void OVSDPDKManager::destroyVirtualLink(DestroyVirtualLinkIn dvli)
