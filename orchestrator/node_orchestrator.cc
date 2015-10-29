@@ -261,7 +261,7 @@ bool usage(void)
 bool doChecks(void)
 {
 
-#ifdef VSWITCH_IMPLEMENTATION_OVS
+#ifdef VSWITCH_IMPLEMENTATION_OFCONFIG
 	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The support to OFCONFIG is deprecated.");
 #endif
 

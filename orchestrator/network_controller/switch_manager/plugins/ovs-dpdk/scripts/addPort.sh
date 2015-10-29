@@ -22,8 +22,6 @@ then
     exit 0
 fi
 
-VSCTL="$OVS_DIR/utilities/ovs-vsctl"
-
 echo "[$0] Adding port $port to bridge $bridgeName (type=$port_type id=$port_id)"
 
 type_cmd="type=$port_type"
@@ -54,6 +52,6 @@ fi
 
 echo "type_cmd=$type_cmd"
 
-$VSCTL --no-wait add-port $bridgeName $port -- set Interface $port $type_cmd ofport_request=$port_id
+ovs-vsctl --no-wait add-port $bridgeName $port -- set Interface $port $type_cmd ofport_request=$port_id
 
 exit 1

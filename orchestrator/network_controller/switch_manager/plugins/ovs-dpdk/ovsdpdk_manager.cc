@@ -12,8 +12,7 @@ OVSDPDKManager::~OVSDPDKManager()
 }
 
 void OVSDPDKManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
-{ // SwitchManager implementation
-	//logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "checkPhysicalInterfaces(dpid: %" PRIu64 " NF:%s NFType:%d)\n", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
+{ 
 }
 
 CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
@@ -83,7 +82,15 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 		PortsNameIdMap nf_ports_ids;
 		for(list<string>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++) {
 			unsigned int port_id = m_NextPortId++;
+			
+#ifdef ENABLE_KVM_DPDK_USVHOST
 			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
+#elif ENABLE_KVM_DPDK_IVSHMEM
+			const char* port_type = "dpdkr";
+#else
+			const char* port_type = NULL;
+			assert(0);
+#endif
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
 			stringstream cmd_add;
 			cmd_add << CMD_ADD_PORT << " " << dpid << " " << dpid << "_" << *nfp << " " << port_type << " " << port_id;

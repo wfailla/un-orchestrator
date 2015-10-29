@@ -20,8 +20,8 @@
 	#include "../../network_controller/switch_manager/plugins/xdpd/xdpd_manager.h"
 	#define SWITCH_MANAGER_IMPLEMENTATION XDPDManager
 #endif
-#ifdef VSWITCH_IMPLEMENTATION_OVS
-	#include "../../network_controller/switch_manager/plugins/ovs/ovs_manager.h"
+#ifdef VSWITCH_IMPLEMENTATION_OFCONFIG
+	#include "../../network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.h"
 	#define SWITCH_MANAGER_IMPLEMENTATION OVSManager
 #endif
 #ifdef VSWITCH_IMPLEMENTATION_OVSDPDK
