@@ -242,16 +242,30 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	//Get the command line generator
 	IvshmemCmdLineGenerator cmdgenerator;
+
+	xmlNodePtr qemucmdline = xmlNewChild(xmlDocGetRootElement(doc), NULL, BAD_CAST "qemu:commandline", NULL);	
 		
 	for(unsigned int i=1; i <= n_ports; i++)
 	{	
+		//Retrieve the command line
+		
 		stringstream portname;;
 		portname << "dpdkr" << i;
 	
 		char cmdline[512];
-		
 		if(!cmdgenerator.get_cmdline(portname.str().c_str(), cmdline, 512))
 			return false;
+						
+	//	<qemu:arg value='-set'/>
+	//  <qemu:arg value='device.virtio-disk0.ioeventfd=off'/>				
+						
+		//Add the command line to the xml for libvirt		
+		
+		xmlNodePtr qemuarg = xmlNewChild(qemucmdline, NULL, BAD_CAST "qemu:arg", NULL);
+		xmlNewProp(qemuarg, BAD_CAST "value", BAD_CAST "-device");
+		
+		xmlNodePtr qemuarg2 = xmlNewChild(qemucmdline, NULL, BAD_CAST "qemu:arg", NULL);
+		xmlNewProp(qemuarg2, BAD_CAST "value", BAD_CAST &cmdline[8]);
 	}
 		
 #else
