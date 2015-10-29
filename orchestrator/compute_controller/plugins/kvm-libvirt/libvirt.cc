@@ -273,22 +273,10 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	/* Create NICs */
 	for(unsigned int i=1;i<=n_ports;i++) {
-		/*add ports*/			
-		//Create name of port --> nf_name+p+i+b+lsiID
-		locale loc;	
-			
-		for (string::size_type j=0; j<nf_name.length(); ++j)
-			nf_name[j] = tolower(nf_name[j], loc);
+		char port_name[64] = "";
 		
-		char port_name[64];
-		
-#if defined(VSWITCH_IMPLEMENTATION_OVSDB) || defined(VSWITCH_IMPLEMENTATION_OFCONFIG)
-		sprintf(port_name, "%sp%ub" "%" PRIu64, nf_name.c_str(), i, sni.getLsiID());
-#endif
-
-#ifdef VSWITCH_IMPLEMENTATION_XDPD
-		sprintf(port_name, "%" PRIu64 "_%s_%u",sni.getLsiID(), nf_name.c_str(), i);
-#endif		
+		/*name of port --> lsiID_nfname_i*/		
+		sprintf(port_name, "%" PRIu64 "_%s_%u", sni.getLsiID(), nf_name.c_str(), i);
 		
 		xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
