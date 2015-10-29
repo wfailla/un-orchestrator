@@ -12,8 +12,6 @@ s_port_id=$3
 d_port_id=$4
 enable_flooding=$6
 
-. ./network_controller/switch_manager/plugins/ovs-dpdk/scripts/ovs.conf
-
 if (( $EUID != 0 ))
 then
     echo "[$0] This script must be executed with ROOT privileges"
