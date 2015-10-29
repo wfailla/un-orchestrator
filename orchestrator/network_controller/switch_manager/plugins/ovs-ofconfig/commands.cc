@@ -220,7 +220,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 	char sw[64] = "Bridge", ctr[64] = "Controller", vrt[64] = "VirtualPort", trv[64] = "VPort";
 
-	char temp[64] = "", tmp[64] = "", switch_name[64] = "", of_version[64] = "";
+	char temp[64] = "", switch_name[64] = "", of_version[64] = "";
 
 	char cmdLine[4096];
 
@@ -400,23 +400,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 					throw commandsException();
 				}
 
-				string str = (*nfp);
-
-				//Create port name to lower case
-				for (string::size_type i=0; i<str.length(); ++i)
-					str[i] = tolower(str[i], loc);
-						
-				//Create the current port name
-				strcpy(tmp, (char *)(str).c_str());
-				sprintf(temp, "%" PRIu64, dnumber);
-				strcat(tmp, "b");
-				strcat(tmp, temp);
-				strcpy(temp, tmp);
-				
-				for(unsigned int j=0;j<strlen(temp);j++){
-					if(temp[j] == '_')
-						temp[j] = 'p';
-				}
+				/*create name of port --> lsiId_portName*/
+				sprintf(temp, "%" PRIu64 "_%s", dnumber, (*nfp).c_str());
 
 				/*add element "name"*/
 				rc = xmlTextWriterWriteElement(writer, BAD_CAST "name",
@@ -629,23 +614,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 					throw commandsException();
 				}
 
-				string str = (*nfp);
-
-				//Create port name to lower case
-				for (string::size_type i=0; i<str.length(); ++i)
-					str[i] = tolower(str[i], loc);
-						
-				//Create the current port name
-				strcpy(tmp, (char *)(str).c_str());
-				sprintf(temp, "%" PRIu64, dnumber);
-				strcat(tmp, "b");
-				strcat(tmp, temp);
-				strcpy(temp, tmp);
-				
-				for(unsigned int j=0;j<strlen(temp);j++){
-					if(temp[j] == '_')
-						temp[j] = 'p';
-				}
+				/*create name of port --> lsiId_portName*/
+				sprintf(temp, "%" PRIu64 "_%s", dnumber, (*nfp).c_str());
 
 				/*add content "port"*/
 				rc = xmlTextWriterWriteRaw(writer, BAD_CAST temp);
@@ -1343,7 +1313,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 	char *config = TMP_XML_FILE;
 	FILE *output = NULL;
 
-	char temp[64] = "", tmp[64] = "";
+	char temp[64] = "";
 
 	int nfnumber_old = 0;
 
@@ -1402,23 +1372,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 		/*for each port in the list of the getNetworkFunctionsPorts*/
 		for(list<string>::iterator p = nfp.begin(); p != nfp.end(); p++){
 
-			string str = (*p);
-
-			//Create port name to lower case
-			for (string::size_type i=0; i<str.length(); ++i)
-				str[i] = tolower(str[i], loc);
-						
-			//Create the current port name
-			strcpy(tmp, (char *)(str).c_str());
-			sprintf(temp, "%" PRIu64, anpi.getDpid());
-			strcat(tmp, "b");
-			strcat(tmp, temp);
-			strcpy(temp, tmp);
-				
-			for(unsigned int j=0;j<strlen(temp);j++){
-				if(temp[j] == '_')
-					temp[j] = 'p';
-			}
+			/*create name of port --> lsiId_portName*/
+			sprintf(temp, "%" PRIu64 "_%s", anpi.getDpid(), (*p).c_str());
 
 			/*create an element name "port as child of "resources""*/			
 			rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
@@ -1549,23 +1504,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 		/*for each port in the list of the ports*/
 		for(list<string>::iterator p = nfp.begin(); p != nfp.end(); p++){
 
-			string str = (*p);
-
-			//Create port name to lower case
-			for (string::size_type i=0; i<str.length(); ++i)
-				str[i] = tolower(str[i], loc);
-						
-			//Create the current port name
-			strcpy(tmp, (char *)(str).c_str());
-			sprintf(temp, "%" PRIu64, anpi.getDpid());
-			strcat(tmp, "b");
-			strcat(tmp, temp);
-			strcpy(temp, tmp);
-				
-			for(unsigned int j=0;j<strlen(temp);j++){
-				if(temp[j] == '_')
-					temp[j] = 'p';
-			}
+			/*create name of port --> lsiId_portName*/
+			sprintf(temp, "%" PRIu64 "_%s", anpi.getDpid(), (*p).c_str());
 
 			/*add element "port"*/
 			rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
