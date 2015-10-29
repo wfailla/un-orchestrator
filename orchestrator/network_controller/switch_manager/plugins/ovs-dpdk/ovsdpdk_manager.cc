@@ -77,6 +77,12 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 	NfPortsMapMap out_nf_ports;
 	list<pair<unsigned int, unsigned int> > out_virtual_links;
 	set<string> nfs = cli.getNetworkFunctionsName();
+	
+#ifdef ENABLE_KVM_DPDK_IVSHMEM
+	//FIXME: Must be global
+	int counter = 1;	
+#endif
+	
 	for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++) {
 		nf_t nf_type = nf_types[*nf];
 		list<string> nf_ports = cli.getNetworkFunctionsPortNames(*nf);
@@ -86,15 +92,20 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			
 #ifdef ENABLE_KVM_DPDK_USVHOST
 			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
+			const char* port_name = dpid << "_" << *nfp;
 #elif ENABLE_KVM_DPDK_IVSHMEM
 			const char* port_type = "dpdkr";
+			stringstream sspn;
+			sspn << "dpdkr" << counter;
+			string port_name = sspn.str();
+			counter++;
 #else
 			const char* port_type = NULL;
 			assert(0);
 #endif
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
 			stringstream cmd_add;
-			cmd_add << CMD_ADD_PORT << " " << dpid << " " << dpid << "_" << *nfp << " " << port_type << " " << port_id;
+			cmd_add << CMD_ADD_PORT << " " << dpid << " " << /*dpid << "_" << *nfp*/ port_name << " " << port_type << " " << port_id;
 			cmd_add << " " << OVS_BASE_SOCK_PATH;
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 			int retVal = system(cmd_add.str().c_str());

@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <string>
+#include <sstream>
 #include <list>
 #include <map>
 #include <string.h>
@@ -19,6 +20,8 @@
 
 #include "../../nfs_manager.h"
 #include "../../startNF_in.h"
+
+#include "ivshmem_cmdline_generator.h"
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>

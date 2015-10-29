@@ -102,8 +102,7 @@ OPTION(ENABLE_KVM_DPDK_IVSHMEM
 )
 
 IF(ENABLE_KVM_DPDK_IVSHMEM)
-	#FIXME: is kvm optional in this case?
-	ADD_DEFINITIONS(-DENABLE_KVM_DPDK_IVSHMEM)
+	ADD_DEFINITIONS(-DENABLE_KVM_DPDK_IVSHMEM -DENABLE_KVM)
 ENDIF(ENABLE_KVM_DPDK_IVSHMEM)
 
 
@@ -288,7 +287,7 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 
 
-IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST OR ENABLE_KVM_DPDK_IVSHMEM)
     SET(SOURCES3
     ${SOURCES2}
 	compute_controller/plugins/kvm-libvirt/libvirt.cc
@@ -298,7 +297,7 @@ ELSE()
      SET(SOURCES3
          ${SOURCES2}
     	)
-ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST OR ENABLE_KVM_DPDK_IVSHMEM)
 
 IF(ENABLE_DOCKER)
     SET(SOURCES4
@@ -326,11 +325,29 @@ ELSE()
 	)
 ENDIF(UNIFY_NFFG)
 
+IF(ENABLE_KVM_DPDK_IVSHMEM)
+	SET(SOURCES6
+	${SOURCES5}
+	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
+	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
+	)
+	
+	IF(NOT DEFINED ENV{DPDK_PATH})
+		message(FATAL_ERROR "Could not find DPDK_PATH environment variable. Please set it to the DPDK folder.")
+	ENDIF(NOT DEFINED ENV{DPDK_PATH}) 
+ELSE()
+	SET(SOURCES6
+	${SOURCES5}
+	)
+ENDIF(ENABLE_KVM_DPDK_IVSHMEM)
 
 
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
+	IF(ENABLE_KVM_DPDK_IVSHMEM)
+		$ENV{DPDK_PATH}/include
+	ENDIF(ENABLE_KVM_DPDK_IVSHMEM)
 )
 
 #Include specific for the NF-FG library defined in the Unify project
@@ -344,7 +361,7 @@ ENDIF(UNIFY_NFFG)
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES5}
+	${SOURCES6}
 )
 
 LINK_DIRECTORIES(
@@ -352,8 +369,15 @@ LINK_DIRECTORIES(
 	/usr/local/lib/
 	/usr/x86_64-linux-gnu/
 	/usr/lib/x86_64-linux-gnu/
-	/usr/lib/python2.7/config-x86_64-linux-gnu/
+	/usr/lib/python2.7/config-x86_64-linux-gnu/	
 )
+
+IF(ENABLE_KVM_DPDK_IVSHMEM)
+	LINK_DIRECTORIES(
+		$ENV{DPDK_PATH}/lib
+	)
+ENDIF(ENABLE_KVM_DPDK_IVSHMEM)
+
 
 
 TARGET_LINK_LIBRARIES( node-orchestrator
@@ -374,13 +398,26 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
 #Links specific for libvirt (KVM)
-IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST OR ENABLE_KVM_DPDK_IVSHMEM)
 	TARGET_LINK_LIBRARIES( node-orchestrator
 		libvirt.so
 	)
-ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST OR ENABLE_KVM_DPDK_IVSHMEM)
 
-#Links specific for the NF-FG library defined in the Unify project
+#Links specific for libvirt (KVM) when used with ivshmem
+IF(ENABLE_KVM_DPDK_IVSHMEM)
+    TARGET_LINK_LIBRARIES( node-orchestrator
+			$ENV{DPDK_PATH}/lib/libdpdk.a 
+			-ldl 
+			-latomic
+			-lpthread
+			-lm
+			-ludev #sudo apt-get install libudev-dev 
+	)
+ENDIF(ENABLE_KVM_DPDK_IVSHMEM)
+
+
+#Links specific for the NF-FG library defined in WP3
 IF(UNIFY_NFFG)
     TARGET_LINK_LIBRARIES( node-orchestrator
 		libpython2.7.so

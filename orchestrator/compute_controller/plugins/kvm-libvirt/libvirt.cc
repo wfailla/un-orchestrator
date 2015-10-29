@@ -205,7 +205,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	
 	/* Create XML for VM */
 #ifdef ENABLE_KVM_DPDK_USVHOST
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is DPDK in KVM");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-USVHOS");
 
 	/* Create NICs */
 	for(unsigned int i=1;i<=n_ports;i++) {
@@ -237,6 +237,23 @@ bool Libvirt::startNF(StartNFIn sni)
 	    xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
 	    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
 	}
+#elif ENABLE_KVM_DPDK_IVSHMEM	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-IVSHMEM");
+
+	//Get the command line generator
+	IvshmemCmdLineGenerator cmdgenerator;
+		
+	for(unsigned int i=1; i <= n_ports; i++)
+	{	
+		stringstream portname;;
+		portname << "dpdkr" << i;
+	
+		char cmdline[512];
+		
+		if(!cmdgenerator.get_cmdline(portname.str().c_str(), cmdline, 512))
+			return false;
+	}
+		
 #else
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is a 'standard process' in KVM");
 
