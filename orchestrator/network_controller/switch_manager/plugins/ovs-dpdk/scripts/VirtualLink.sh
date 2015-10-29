@@ -11,6 +11,7 @@ d_port_name=`echo VLink_$2-to-$1_$5`
 s_port_id=$3
 d_port_id=$4
 enable_flooding=$6
+ofpversion=$7
 
 if (( $EUID != 0 ))
 then
@@ -23,8 +24,8 @@ ovs-vsctl add-port $d_br $d_port_name -- set Interface $d_port_name type=patch o
 
 if [ $enable_flooding -eq 0 ]
 then
-    ovs-ofctl mod-port $s_br $s_port_id noflood
-    ovs-ofctl mod-port $d_br $d_port_id noflood
+    ovs-ofctl mod-port $s_br $s_port_id noflood --protocol=$ofpversion
+    ovs-ofctl mod-port $d_br $d_port_id noflood --protocol=$ofpversion
 fi
 
 exit 1

@@ -118,6 +118,19 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Virtual link to LSI %u: %u:%u <-> %u:%u", *vl, dpid, s_port_id, *vl, d_port_id);
 		stringstream cmd_add;
 		cmd_add << CMD_VIRTUAL_LINK << " " << dpid << " " << *vl << " " << s_port_id << " " << d_port_id << " " << vlink_n << " " << enable_flooding;
+		// Set the OpenFlow version
+		switch(OFP_VERSION) {
+			case OFP_10:
+				cmd << "OpenFlow10";
+				break;
+			case OFP_12:
+				cmd << "OpenFlow12";
+				break;
+			case OFP_13:
+				cmd << "OpenFlow13";
+				break;
+		}
+
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 		int retVal = system(cmd_add.str().c_str());
 		retVal = retVal >> 8;
