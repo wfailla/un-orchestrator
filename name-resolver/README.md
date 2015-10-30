@@ -24,7 +24,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 ## Compile the name-resolver
 
-We are now ready to compile the name-resolcer.
+We are now ready to compile the name-resolver.
 
 	$ cd name-resolver
 
