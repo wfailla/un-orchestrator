@@ -21,7 +21,9 @@
 #include "../../nfs_manager.h"
 #include "../../startNF_in.h"
 
-#include "ivshmem_cmdline_generator.h"
+#ifdef ENABLE_KVM_DPDK_IVSHMEM
+	#include "ivshmem_cmdline_generator.h"
+#endif
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>

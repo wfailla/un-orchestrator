@@ -57,6 +57,7 @@ void Libvirt::disconnect()
 	connection = NULL;
 }
 
+#if not defined(ENABLE_KVM_DPDK_IVSHMEM)
 bool Libvirt::startNF(StartNFIn sni)
 {
 	virDomainPtr dom = NULL;
@@ -237,38 +238,6 @@ bool Libvirt::startNF(StartNFIn sni)
 	    xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
 	    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
 	}
-#elif ENABLE_KVM_DPDK_IVSHMEM	
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-IVSHMEM");
-
-	//Get the command line generator
-	IvshmemCmdLineGenerator cmdgenerator;
-
-	xmlNodePtr qemucmdline = xmlNewChild(xmlDocGetRootElement(doc), NULL, BAD_CAST "qemu:commandline", NULL);	
-		
-	n_ports=1;	
-	for(unsigned int i=1; i <= n_ports; i++)
-	{	
-		//Retrieve the command line
-		
-		stringstream portname;;
-		portname << "dpdkr" << i;
-	
-		char cmdline[512];
-		if(!cmdgenerator.get_cmdline(portname.str().c_str(), cmdline, 512))
-			return false;
-						
-	//	<qemu:arg value='-set'/>
-	//  <qemu:arg value='device.virtio-disk0.ioeventfd=off'/>				
-						
-		//Add the command line to the xml for libvirt		
-		
-		xmlNodePtr qemuarg = xmlNewChild(qemucmdline, NULL, BAD_CAST "qemu:arg", NULL);
-		xmlNewProp(qemuarg, BAD_CAST "value", BAD_CAST "-device");
-		
-		xmlNodePtr qemuarg2 = xmlNewChild(qemucmdline, NULL, BAD_CAST "qemu:arg", NULL);
-		xmlNewProp(qemuarg2, BAD_CAST "value", BAD_CAST &cmdline[8]);
-	}
-		
 #else
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is a 'standard process' in KVM");
 
@@ -328,6 +297,134 @@ bool Libvirt::startNF(StartNFIn sni)
 	
 	return true;
 }
+#else
+bool Libvirt::startNF(StartNFIn sni)
+{
+	//XXX: Libvirt do not define xml tags to define an ivhsmem device to be attached with the virtual machine.
+	//However, it define the <qemu:commandline> tag to provide to libvirt generic strings to be used in the
+	//qemu command line. Unfortunately, through this mechanism we got an error when libvirt tries to boot the VM.
+	//As a consequence, we decide to directly use the QEMU command line for ivshmem virtual machine. I know, this
+	//way the code is dirty, but it seems to be the better (fastest) solution to implement ivhsmem support in the
+	//universal node.
+	
+	//XXX: we ignore all the information written in the xml file, except the path with the VM image
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-IVSHMEM");	
+	
+
+	char domain_name[64];	
+	string nf_name = sni.getNfName();
+	unsigned int n_ports = sni.getNumberOfPorts();
+	string uri_image = description->getURI();
+
+	/* Domain name */
+	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
+		
+	//Parse the VM template	
+		
+	xmlInitParser();
+	xmlDocPtr doc;
+
+	/* Load XML document */
+	doc = xmlParseFile(uri_image.c_str());
+	if (doc == NULL) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to parse file \"%s\"", uri_image.c_str());
+		return 0;
+	}
+
+	char *disk_path = NULL;
+
+	xmlNodePtr root = xmlDocGetRootElement(doc);
+	for(xmlNodePtr cur_root_child=root->xmlChildrenNode; cur_root_child!=NULL; cur_root_child=cur_root_child->next) 
+	{
+		if ((cur_root_child->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(cur_root_child->name, (const xmlChar*)"devices")))
+		{
+			//We are in the <devices> element			
+			xmlNodePtr devices = cur_root_child;
+			for(xmlNodePtr device = devices->xmlChildrenNode; device != NULL; device = device->next) 
+			{
+				if ((device->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(device->name, (const xmlChar*)"disk")))
+				{					
+					//We are in the <disk> element
+					xmlChar* attr_type = xmlGetProp(device, (const xmlChar*)"type");
+					xmlChar* attr_device = xmlGetProp(device, (const xmlChar*)"device");
+										
+					if(strcmp((const char*)attr_type,"file")==0 && strcmp((const char*)attr_device,"disk")==0)
+					{						
+						xmlNodePtr disk = device;
+					
+						//we are in the proper disk						
+						for(xmlNodePtr indisk = disk->xmlChildrenNode; indisk != NULL; indisk = indisk->next) 
+						{
+						
+							if ((indisk->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(indisk->name, (const xmlChar*)"source")))
+							{	
+								//We are in the <source> element
+								//Retrieve the path of the disk
+								xmlChar* attr_file = xmlGetProp(indisk, (const xmlChar*)"file");
+								
+								disk_path  = (char*)malloc(sizeof(char) * (strlen((const char*)attr_file) + 1));
+								memcpy(disk_path, attr_file, strlen((const char*)attr_file));
+								disk_path[strlen((const char*)attr_file)] = '\0';					
+								goto after_parsing;
+							}
+						}
+						
+					}
+				}
+			}
+		}	
+		
+	}//end iteration over the document
+	
+after_parsing:
+	
+	if(disk_path == NULL)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Wrong XML file describing the VM to run: no path for VM disk found.");
+		return false;
+	}
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual machine disk available at path: '%s'",disk_path);
+	
+	
+	//Get the command line generator and prepare the command line
+	IvshmemCmdLineGenerator cmdgenerator;
+	
+	
+	stringstream ivshmemcmdline;
+	for(unsigned int i=1; i <= n_ports; i++)
+	{	
+		//Retrieve the command line
+		
+		stringstream portname;;
+		portname << "dpdkr" << i;
+	
+		char cmdline[512];
+		if(!cmdgenerator.get_cmdline(portname.str().c_str(), cmdline, 512))
+			return false;
+			
+		ivshmemcmdline << " " << cmdline;
+	}
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command line part for ivshmem '%s'",ivshmemcmdline.str().c_str());
+	
+	
+	stringstream command;
+	command << QEMU << " " << nf_name << " " << disk_path << " '" << ivshmemcmdline.str().c_str() << "'";
+
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "---------> '%s'",command.str().c_str());
+	
+	int retVal = system(command.str().c_str());
+	retVal = retVal >> 8;
+	
+	if(retVal == 0)
+		return false;
+		
+	return true;
+}	
+#endif
 
 bool Libvirt::stopNF(StopNFIn sni)
 {
@@ -351,3 +448,4 @@ bool Libvirt::interact(string name, string command)
 {
 	return true;
 }
+
