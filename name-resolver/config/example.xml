@@ -47,7 +47,7 @@
    
 	<network-function name="dpi"  num-ports="2" description="DPI based on DPDK">
 		<!-- Only a DPDK implementaion is available for this network funcion -->
-		<implementation type="dpdk" uri="./NFs/dpdk/example/build/dpi" cores="1" location="local"/>
+		<implementation type="dpdk" uri="../NFs/dpdk/dpi/build/dpi" cores="1" location="local"/>
 	</network-function>
 	
 </network-functions>
