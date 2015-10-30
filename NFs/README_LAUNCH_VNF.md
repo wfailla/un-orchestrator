@@ -14,7 +14,7 @@ Once the VNF image is created, such a VNF must be registered in the name-resolve
 This operation requires to edit the configuration file of the name-reselver and reboot the name-resolver itself; an example of such a file is available at `../name-resolver/config/example.xml`.
 
 ### Provide the graph description to the un-orchestrator
-In order to deploy your VNF on the UN, you must provide to the un-orchestration a NF-FG including such a VNF (to compile and then execute the un-orchestrator, please check the files `../orchestrator/README_COMPILE.md` and `../orchestrator/README_COMPILE.md`).
+In order to deploy your VNF on the UN, you must provide to the un-orchestration a NF-FG including such a VNF (to compile and then execute the un-orchestrator, please check the files `../orchestrator/README_COMPILE.md` and `../orchestrator/README_RUN.md`).
 
 The un-orchestrator supports two NF-FG versions:
   * the initial JSON-based format defined in WP5;
