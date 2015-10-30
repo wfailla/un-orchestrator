@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-	targetNamespace="http://www.github.com/netgroup-polito/un-orchestrator/native_function_support"
 	xmlns:tns="http://www.github.com/netgroup-polito/un-orchestrator/native_function_support"
-	elementFormDefault="qualified">
+	targetNamespace="http://www.github.com/netgroup-polito/un-orchestrator/native_function_support"
+	elementFormDefault="qualified" version="1.0">
 	
 	<xsd:attribute name="name">
 		<xsd:simpleType>
 			<xsd:restriction base="xsd:string">
-				<xsd:pattern value="([a-z]|[A-Z]|[]0-9|_|-)+)">
+				<xsd:pattern value="([a-z]|[A-Z]|[0-9]|_|-)+"/>
 			</xsd:restriction>
 		</xsd:simpleType>
 	</xsd:attribute>
@@ -24,11 +24,11 @@
 	<xsd:element name="capabilities">
 		<xsd:complexType>
 			<xsd:sequence>
-				<xsd:element name="capability" minOccur="0" maxOccur="unbounded">
+				<xsd:element name="capability" minOccurs="0" maxOccurs="unbounded">
 					<xsd:complexType>
-						<xsd:attribute ref="name" use="required"/>
+						<xsd:attribute ref="tns:name" use="required"/>
 						<xsd:attribute name="location" use="required"/>
-						<xsd:attribute ref="type" use="required"/>
+						<xsd:attribute ref="tns:type" use="required"/>
 					</xsd:complexType>
 				</xsd:element>
 			</xsd:sequence>

@@ -3,11 +3,11 @@
 	xmlns:tns="http://www.github.com/netgroup-polito/un-orchestrator/native_function_support"
 	xsi:schemaLocation="http://www.github.com/netgroup-polito/un-orchestrator/native_function_support Capabilities.xsd">
 	
-	<tns:capability name="iptables" location="./" type="executable"/>
-	<tns:capability name="ebtables" location="./"type="executable"/>
-	<tns:capability name="iproute2" location="./" type="executable"/>
-	<tns:capability name="ipsec-tools" location="./" type="executable"/>
-	<tns:capability name="hw_accelerated_ipsec" 
+	<tns:capability tns:name="iptables" location="./" tns:type="executable"/>
+	<tns:capability tns:name="ebtables" location="./" tns:type="executable"/>
+	<tns:capability tns:name="iproute2" location="./" tns:type="executable"/>
+	<tns:capability tns:name="ipsec-tools" location="./" tns:type="executable"/>
+	<tns:capability tns:name="hw_accelerated_ipsec" 
 		location="/usr/bin/run_freescale_ipsec_encryption.sh"
-		type="script"/>
+		tns:type="script"/>
 </tns:capabilities>

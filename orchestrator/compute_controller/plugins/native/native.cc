@@ -53,16 +53,16 @@ Native::Native(){
 			throw new NativeException();
 		}
 
-		doc = xmlParseFile(CAPABILITIES_XSD); /*Parse the XML file*/
+		doc = xmlParseFile(CAPABILITIES_FILE); /*Parse the XML file*/
 		if (doc==NULL){
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "XML file '%s' parsing failed.", CAPABILITIES_XSD);
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "XML file '%s' parsing failed.", CAPABILITIES_FILE);
 			/*Free the allocated resources*/
 			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
 			throw new NativeException();
 		}
 
 		if(xmlSchemaValidateDoc(valid_ctxt, doc) != 0){
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", CAPABILITIES_XSD);
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", CAPABILITIES_FILE);
 			/*Free the allocated resources*/
 			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
 			throw new NativeException();
@@ -85,7 +85,7 @@ Native::Native(){
 				captype_t type = (typeString == TYPE_SCRIPT) ? EXECUTABLE : SCRIPT;
 
 				capabilities->insert(std::pair<std::string, Capability>(name, Capability(name, path, type)));
-
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Read %s capability.", name.c_str());
 			}
 		}
 		if(capabilities->empty()) {
