@@ -1,6 +1,13 @@
 #include "libvirt.h"
 #include "libvirt_constants.h"
 
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
+	virConnectPtr Libvirt::connection = NULL;
+#else
+	unsigned int Libvirt::next_tcp_port = FIRST_PORT_FOR_MONITOR;
+#endif
+
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
 void Libvirt::customErrorFunc(void *userdata, virErrorPtr err)
 {
 	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Failure of libvirt library call:");
@@ -14,29 +21,37 @@ void Libvirt::customErrorFunc(void *userdata, virErrorPtr err)
 	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tint1: %d", err->int1);
 	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tint2: %d", err->int2);
 }
-
-virConnectPtr Libvirt::connection = NULL;
+#endif
 
 Libvirt::Libvirt()
 {
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
 	virSetErrorFunc(NULL, customErrorFunc);
+#endif
 }
 
 Libvirt::~Libvirt()
 {
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
 	if(connection != NULL)
 		disconnect();
+#endif
 }
 
 bool Libvirt::isSupported()
 {
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
 	connect();
 	
 	if(connection == NULL)
 		return false;
+#endif
+
+	//TODO check if it supported in case of plain QEMU
 	return true;
 }
 
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
 void Libvirt::connect()
 {
 	if(connection != NULL)
@@ -56,6 +71,7 @@ void Libvirt::disconnect()
 	virConnectClose(connection);
 	connection = NULL;
 }
+#endif
 
 #if not defined(ENABLE_KVM_DPDK_IVSHMEM)
 bool Libvirt::startNF(StartNFIn sni)
@@ -411,10 +427,9 @@ after_parsing:
 	
 	
 	stringstream command;
-	command << QEMU << " " << nf_name << " " << disk_path << " '" << ivshmemcmdline.str().c_str() << "'";
-
+	command << QEMU << " " << nf_name << " " << next_tcp_port << " " << disk_path << "'" << ivshmemcmdline.str().c_str() << "'";
 	
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "---------> '%s'",command.str().c_str());
+	next_tcp_port++; //FIXME: protect with mutex?
 	
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -428,6 +443,7 @@ after_parsing:
 
 bool Libvirt::stopNF(StopNFIn sni)
 {
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
 	char *vm_name = new char[64];
 	
 	/*image_name*/
@@ -440,7 +456,7 @@ bool Libvirt::stopNF(StopNFIn sni)
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "failed to stop (destroy) VM. %s", vm_name);
 		return false;
 	}
-	
+#endif	
 	return true;
 }
 

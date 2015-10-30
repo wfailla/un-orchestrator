@@ -4,8 +4,8 @@
 #Date: Oct 30th 2015
 
 #$1 network function name
-#$2 disk path
-#$3 final part of the command line related to ivshmem
+#$2	TCP port to be used for the monitor
+#$3 disk path + 'part of the command line related to ivshmem'
 
 if (( $EUID != 0 ))
 then
@@ -15,12 +15,15 @@ fi
 
 #FIXE: smp and memory should be provided externally
 
-echo "+++++++++"
-echo $3
-echo "+++++++++"
+echo "[$0] Executing command 'sudo qemu-system-x86_64 -name $1 -cpu host -smp 1 -machine accel=kvm,usb=off -m 1024 -drive file=$3 -snapshot -daemonize -monitor tcp:127.0.0.1:$2,server,nowait'"
 
-echo "[$0] Executing command 'sudo qemu-system-x86_64 -name $1 -cpu host -smp 1 -machine accel=kvm,usb=off -m 1024 -drive file=$2 $3 -snapshot'"
+sudo `echo qemu-system-x86_64 -name $1 -cpu host -smp 1 -machine accel=kvm,usb=off -m 1024 -drive file=$3 -snapshot -daemonize -monitor tcp:127.0.0.1:$2,server,nowait`
+ret=`echo $?`
 
-sudo `echo qemu-system-x86_64 -name $1 -cpu host -smp 1 -machine accel=kvm,usb=off -m 1024 -drive file=$2 -snapshot -daemonize`
-
-exit 1
+if [ $ret -eq 0 ]
+then
+	exit 1
+else
+	echo "[$0] Something went wrong while starting the virtual machine"
+	exit 0
+fi

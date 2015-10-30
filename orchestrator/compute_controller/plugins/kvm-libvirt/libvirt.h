@@ -39,8 +39,24 @@ using namespace std;
 class Libvirt : public NFsManager
 {
 private:
-	static virConnectPtr connection;
+
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
 	
+	/**
+	*	@bfief: Connection towards Libvirt
+	*/
+	static virConnectPtr connection;
+#else
+
+	/**
+	*	@brief: TCP port to be assigned to the VM monitor to
+	*		the next VM to be executed
+	*/
+	static unsigned int next_tcp_port;
+#endif
+
+
+#ifndef ENABLE_KVM_DPDK_IVSHMEM	
 	/**
 	*	@brief:	Open a connection with QEMU/KVM
 	*/
@@ -55,6 +71,7 @@ private:
 	*	@brief: Custom error handler
 	*/
 	static void customErrorFunc(void *userdata, virErrorPtr err);
+#endif
 
 public:
 
