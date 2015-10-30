@@ -18,17 +18,17 @@ below.
 
 ### Configuration file examples
 
-Folder 'config' contains some configuration file examples that can be used 
+Folder `config` contains some configuration file examples that can be used 
 to configure/test the un-orchestrator.
 
-  * config/universal-node-example.xml: configuration file describing
+  * `config/universal-node-example.xml`: configuration file describing
     the physical ports to be handeld by the un-orchestrator, as well as
     the amount of CPU, memory and storage provided to the universal node.
-  * config/simple\_passthrough\_nffg.json: simple graph that implements
+  * `config/simple\_passthrough\_nffg.json`: simple graph that implements
     a simple passthrough function, i.e., traffic is received from a first
     physical port and sent out from a second physical port, after having
     been handled to the vswitch.
-  * config/passthrough\_with\_vnf\_nffg.json: graph that include a virtual
+  * `config/passthrough\_with\_vnf\_nffg.json`: graph that include a virtual
     network function. Traffic is received from a first physical port, provided
     to a network function, and then sent our from a second physical port.
 
@@ -40,7 +40,7 @@ Start xDPd:
 	$ cd [xdpd]/build/src/xdpd
 	$ sudo ./xdpd
     
-xDPd comes with a command line tool called xcli, that can be used to check 
+xDPd comes with a command line tool called `xcli`, that can be used to check 
 the  flows installed in the lsis, which are the lsis deployed, see statistics 
 on flows matched, and so on. The xcli can be run by just typing:
 
@@ -49,19 +49,19 @@ on flows matched, and so on. The xcli can be run by just typing:
 
 ### How to start OvS (managed through OFCONFIG) to work with the un-orchestrator
 
-Start OVS:
+Start OvS:
 
 	$ sudo /usr/share/openvswitch/scripts/ovs-ctl start
 
 In addition, you have to start the OF-CONFIG server, which represents the
 daemon the implements the protocol used to configure the switch.
 
-OF-CONFIG server can be started by
+OF-CONFIG server can be started by:
 
 	$ sudo ofc-server
 
 By default, ofc-server starts in daemon mode. To avoid daemon mode, use the
-'-f' parameter.
+`-f` parameter.
 For a the full list of the supported parameters, type:
 
     $ ofc-server -h
@@ -73,6 +73,6 @@ Start OVS:
 
 	$ sudo /usr/share/openvswitch/scripts/ovs-ctl start
 
-Start ovsdb-server
+Start ovsdb-server:
 
 	$ sudo ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6632
