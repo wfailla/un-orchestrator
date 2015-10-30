@@ -23,6 +23,7 @@
 
 #ifdef ENABLE_KVM_DPDK_IVSHMEM
 	#include "ivshmem_cmdline_generator.h"
+	#include "../../../utils/sockutils.h"
 #endif
 
 #include <libxml/encoding.h>
@@ -53,6 +54,12 @@ private:
 	*		the next VM to be executed
 	*/
 	static unsigned int next_tcp_port;
+	
+	/**
+	*	@brief: The map associates each VNF with the TCP port to
+	*		be used to connect to it
+	*/
+	static map<string,string> monitor;
 #endif
 
 

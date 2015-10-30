@@ -14,6 +14,7 @@
 	#define QEMU					"./compute_controller/plugins/kvm-libvirt/scripts/qemu_run.sh"
 	
 	#define	FIRST_PORT_FOR_MONITOR	4000
+	#define QUIT_COMMAND			"quit\n\r"
 #endif
 
 #endif //LIBVIRT_CONSTANTS_H_

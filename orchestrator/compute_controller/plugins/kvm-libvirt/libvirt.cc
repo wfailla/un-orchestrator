@@ -5,6 +5,7 @@
 	virConnectPtr Libvirt::connection = NULL;
 #else
 	unsigned int Libvirt::next_tcp_port = FIRST_PORT_FOR_MONITOR;
+	map<string,string> Libvirt::monitor;
 #endif
 
 #ifndef ENABLE_KVM_DPDK_IVSHMEM
@@ -86,7 +87,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	string uri_image = description->getURI();
 
 	/* Domain name */
-	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
+	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), nf_name.c_str());
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Using Libvirt XML template %s", uri_image.c_str());
 	xmlInitParser();
@@ -334,7 +335,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	string uri_image = description->getURI();
 
 	/* Domain name */
-	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
+	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), nf_name.c_str());
 		
 	//Parse the VM template	
 		
@@ -427,9 +428,12 @@ after_parsing:
 	
 	
 	stringstream command;
-	command << QEMU << " " << nf_name << " " << next_tcp_port << " " << disk_path << "'" << ivshmemcmdline.str().c_str() << "'";
+	command << QEMU << " " << domain_name << " " << next_tcp_port << " " << disk_path << "'" << ivshmemcmdline.str().c_str() << "'";
 	
-	next_tcp_port++; //FIXME: protect with mutex?
+	stringstream portstream;
+	portstream << next_tcp_port;
+	monitor[domain_name] = portstream.str();	//FIXME: protect with mutex?
+	next_tcp_port++; 						//FIXME: protect with mutex?
 	
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -443,12 +447,12 @@ after_parsing:
 
 bool Libvirt::stopNF(StopNFIn sni)
 {
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
-	char *vm_name = new char[64];
-	
 	/*image_name*/
+	char *vm_name = new char[64];
 	sprintf(vm_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
 
+#ifndef ENABLE_KVM_DPDK_IVSHMEM
+	
 	assert(connection != NULL);
 
 	/*destroy the VM*/
@@ -456,6 +460,46 @@ bool Libvirt::stopNF(StopNFIn sni)
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "failed to stop (destroy) VM. %s", vm_name);
 		return false;
 	}
+#else
+	//To stop the VNF, use its own network monitor	
+	assert(monitor.count(vm_name) == 1);
+	
+	string tcpport = monitor.find(vm_name)->second;
+	
+	struct addrinfo *AddrInfo;
+	struct addrinfo Hints;
+	char ErrBuf[BUFFER_SIZE];
+	int socket;						// keeps the socket ID for this connection
+	int WrittenBytes;				// Number of bytes written on the socket
+	
+	char *command= QUIT_COMMAND;
+	
+	memset(&Hints, 0, sizeof(struct addrinfo));
+	
+	Hints.ai_family= AF_INET;
+	Hints.ai_socktype= SOCK_STREAM;
+	
+	if (sock_initaddress ("127.0.0.1", tcpport.c_str(), &Hints, &AddrInfo, ErrBuf, sizeof(ErrBuf)) == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error resolving given address/port (%s/%s): %s",  "127.0.0.1",  tcpport.c_str(), ErrBuf);
+		return false;
+	}
+	
+	if ( (socket= sock_open(AddrInfo, 0, 0,  ErrBuf, sizeof(ErrBuf))) == sockFAILURE)
+	{
+		// AddrInfo is no longer required
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot contact the VM: %s", ErrBuf);
+		return false;
+	}
+
+	WrittenBytes= sock_send(socket, command, strlen(command), ErrBuf, sizeof(ErrBuf));
+	if (WrittenBytes == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		return false;
+
+	}
+
 #endif	
 	return true;
 }

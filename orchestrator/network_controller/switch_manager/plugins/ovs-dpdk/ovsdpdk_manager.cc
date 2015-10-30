@@ -107,7 +107,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 #endif
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
 			stringstream cmd_add;
-			cmd_add << CMD_ADD_PORT << " " << dpid << " " << /*dpid << "_" << *nfp*/ port_name << " " << port_type << " " << port_id;
+			cmd_add << CMD_ADD_PORT << " " << dpid << " " << port_name << " " << port_type << " " << port_id;
 			cmd_add << " " << OVS_BASE_SOCK_PATH;
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 			int retVal = system(cmd_add.str().c_str());
