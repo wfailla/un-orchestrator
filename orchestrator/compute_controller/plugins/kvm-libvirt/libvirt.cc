@@ -245,6 +245,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	xmlNodePtr qemucmdline = xmlNewChild(xmlDocGetRootElement(doc), NULL, BAD_CAST "qemu:commandline", NULL);	
 		
+	n_ports=1;	
 	for(unsigned int i=1; i <= n_ports; i++)
 	{	
 		//Retrieve the command line
