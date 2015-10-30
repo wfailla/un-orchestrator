@@ -6,12 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <rte_config.h>
-#include <rte_eal.h>
-#include <rte_ivshmem.h>
-#include <rte_mempool.h>
-#include <rte_ring.h>
-
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
 
@@ -21,10 +15,10 @@ private:
 	static bool init;
 
 	static bool dpdk_init(void);
-	
+
 public:
 	IvshmemCmdLineGenerator();
-	
+
 	/*
 	* @brief:	initializes dpdk as a secondary process using fake arguments
 	*
