@@ -74,11 +74,11 @@ processes, although only a subset of them can be available depending on
 the chosen vSwitch. The following table shows which execution environments
 are supported with the different vSwitches.
 
-|                            | Docker     | KVM    | DPDK  | KVM-DPDK (usvhost) |  KVM-DPDK (dpdkr)       |
-|----------------------------|------------|--------|-------|--------------------|-------------------------|
-| **xDPd**                   |    **Y**   | **Y**  | **Y** |        N           |          N              |
-| **OvS (OVSDB / OFconfig)** |    **Y**   |  **Y** |  N    |        N           |          N              |
-| **OvS-DPDK**               |    N       |  N     |   N   |       **Y**        |  *Under implementation* |
+|                            | Docker     | KVM    | DPDK  | KVM-DPDK (usvhost) | KVM-DPDK (dpdkr) |
+|----------------------------|------------|--------|-------|--------------------|------------------|
+| **xDPd**                   |    **Y**   | **Y**  | **Y** |        N           |         N        |
+| **OvS (OVSDB / OFconfig)** |    **Y**   |  **Y** |  N    |        N           |         N        |
+| **OvS-DPDK**               |    N       |  N     |   N   |       **Y**        |       **Y**      |
 
 
 If you are interested to add the support for a new hypervisor, please 
