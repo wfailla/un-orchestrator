@@ -71,8 +71,8 @@ currentEthernet=`expr $currentIp + $4`
 for (( c=0; c<$4; c++ ))
 do
 	#create virtual interface connected to the port of the vswitch (already created)
-	#name of the ovs port on the switch: <nf_name>p<#port>b<lsi_id>  => ${2}p${c+1}b${1}
- 	ip link add link ${2}p$((c+1))b${1} name ${!current} type macvtap
+	#name of the ovs port on the switch: <lsi_id>_<nf_name>_<i> => ${1}_${2}_$((c+1))
+ 	ip link add link ${1}_${2}_$((c+1)) name ${!current} type macvtap
 
  	if [ ${!currentEthernet} != 0 ]
  	then
