@@ -365,7 +365,8 @@ bool ComputeController::selectImplementation()
 			 * TODO: descriptions.sort({COMPARATOR})
 			 */
 			list<Description*>::iterator descr;
-			for(descr = descriptions.begin(); descr != descriptions.end(); descr++){
+			bool selected = false;
+			for(descr = descriptions.begin(); descr != descriptions.end() && !selected; descr++){
 
 				switch((*descr)->getType()){
 
@@ -376,6 +377,7 @@ bool ComputeController::selectImplementation()
 					if(dockerManager->isSupported(**descr)){
 						dockerManager->setDescription(*descr);
 						current->setSelectedDescription(dockerManager);
+						selected = true;
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description has been selected for NF \"%s\".",nf->first.c_str());
 					} else
 						delete dockerManager;
@@ -389,7 +391,8 @@ bool ComputeController::selectImplementation()
 					if(dpdkManager->isSupported(**descr)){
 						dpdkManager->setDescription(*descr);
 						current->setSelectedDescription(dpdkManager);
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description has been selected for NF \"%s\".",nf->first.c_str());
+						selected = true;
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description has been selected for NF \"%s\".",nf->first.c_str());
 					} else
 						delete dpdkManager;
 				}
@@ -402,6 +405,7 @@ bool ComputeController::selectImplementation()
 					if(libvirtManager->isSupported(**descr)){
 						libvirtManager->setDescription(*descr);
 						current->setSelectedDescription(libvirtManager);
+						selected = true;
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description has been selected for NF \"%s\".",nf->first.c_str());
 					} else
 						delete libvirtManager;
@@ -418,10 +422,12 @@ bool ComputeController::selectImplementation()
 						if(nativeManager->isSupported(**descr)){
 							nativeManager->setDescription(*descr);
 							current->setSelectedDescription(nativeManager);
+							selected = true;
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description has been selected for NF \"%s\".",nf->first.c_str());
 						} else
 							delete nativeManager;
 					} catch (...) {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native exception has been thrown");
 						delete nativeManager;
 					}
 					break;
