@@ -157,6 +157,46 @@ To start Open vSwitch at the boot of the machine (optional):
     $ chkconfig --add openvswitch
     $ chkconfig openvswitch on
 
+#### Open vSwitch (OVSDB) with DPDK support
+
+Before installing OvS with DPDK, you must download and compile the DPDK library. At first, download
+the source code from:
+
+	http://dpdk.org/browse/dpdk/snapshot/dpdk-2.1.0.tar.gz
+	
+Then execute the following commands:
+
+    $ tar -xf dpdk-2.1.0.tar.gz
+    $ cd dpdk-2.1.0
+    $ export DPDK_DIR=\`pwd\`
+    ; modify the file `$DPDK_DIR/config/common_linuxapp` so that 
+    ; `CONFIG_RTE_BUILD_COMBINE_LIBS=y`
+    ; `CONFIG_RTE_LIBRTE_VHOST=y`
+
+To compile OvS with the DPDK support in order to use the `user space vhost` ports, execute:
+
+	$ make install T=x86_64-native-linuxapp-gcc
+	$ export DPDK_BUILD=$DPDK_DIR/x86_64-native-linuxapp-gcc/
+
+Instead, to compile OvS with the DPDK support in order to use `ivshmem` ports, execute:
+
+	$ make install T=x86_64-ivshmem-linuxapp-gcc
+	$ export DPDK_BUILD=$DPDK_DIR/x86_64-ivshmem-linuxapp-gcc/
+
+Details on the `user space vhost` and `ivshmem` are available on the [DPDK website](http://dpdk.org/)
+
+Now, downaload the Open vSwitch source code from:
+
+    http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
+    
+Then execute the following commands:
+
+	$ tar -xf openvswitch-2.4.0.tar.gz
+    $ cd openvswitch-2.4.0
+	$ ./boot.sh
+	$ ./configure --with-dpdk=$DPDK_BUILD
+	$ make
+	$ sudo make install
 
 ### Virtual Execution Environment for network functions
 
