@@ -76,3 +76,20 @@ Start OVS:
 Start ovsdb-server
 
 	$ sudo ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6632
+	
+### How to start OvS (managed through OpenOVSDB) with DPDK support to work with the un-orchestrator
+
+Start ovsdb-server:
+
+	$ sudo ovsdb-server --remote=punix:/usr/local/var/run/openvswitch/db.sock \
+		--remote=db:Open_vSwitch,Open_vSwitch,manager_options  --pidfile --detach
+	
+The first time after the ovsdb database creation, initialize it:
+
+	$ sudo ovs-vsctl --no-wait init
+
+Start the switching daemon:	
+
+	$ sudo ovs-vswitchd --dpdk -c 0x1 -n 4 --socket-mem 1024,0 \
+		-- unix:$DB_SOCK --pidfile --detach
+		

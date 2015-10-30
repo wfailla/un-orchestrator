@@ -197,6 +197,15 @@ Then execute the following commands:
 	$ ./configure --with-dpdk=$DPDK_BUILD
 	$ make
 	$ sudo make install
+	
+No create the ovsbd database:	
+	
+	$ mkdir -p /usr/local/etc/openvswitch
+	$ mkdir -p /usr/local/var/run/openvswitch
+	$ rm /usr/local/etc/openvswitch/conf.db
+	$ sudo ovsdb-tool create /usr/local/etc/openvswitch/conf.db  \
+		/usr/local/share/openvswitch/vswitch.ovsschema
+
 
 ### Virtual Execution Environment for network functions
 
