@@ -333,14 +333,13 @@ IF(ENABLE_KVM_DPDK_IVSHMEM)
 	)
 	
 	IF(NOT DEFINED ENV{DPDK_PATH})
-		message(FATAL_ERROR "Could not find DPDK_PATH environment variable. Please set it to the DPDK folder.")
+		message(FATAL_ERROR "Could not find DPDK_PATH environment variable. Please set it to [dpdk-folder]/x86_64-ivshmem-linuxapp-gcc/")
 	ENDIF(NOT DEFINED ENV{DPDK_PATH}) 
 ELSE()
 	SET(SOURCES6
 	${SOURCES5}
 	)
 ENDIF(ENABLE_KVM_DPDK_IVSHMEM)
-
 
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
