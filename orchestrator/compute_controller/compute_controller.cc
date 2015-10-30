@@ -181,14 +181,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		    	numports = value.getInt();
 #endif
 		    }
-		    else if(name == "description")
+		    else if(name == "summary")
 		    {
 #ifdef UNIFY_NFFG
 				foundTextDescription = true;
 		    	text_description = value.getString();
 #endif
 		    }
-		    else if(name == "implementations")
+		    else if(name == "descriptions")
 		    {
 		    	foundImplementations = true;
 		    	const Array& impl_array = value.getArray();
@@ -208,11 +208,13 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					bool foundType = false;
 					bool foundCores = false;
 					bool foundLocation = false;
+					bool foundDependencies = false;
 
 					string type;
 			    	string uri;
 					string cores;
 					string location;
+					string dependencies;
 
 					for( Object::const_iterator im = implementation.begin(); im != implementation.end(); ++im )
 					{
@@ -246,9 +248,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							foundLocation = true;
 							location = impl_value.getString();
 						}
+						else if(impl_name == "dependencies")
+						{
+							foundDependencies = true;
+							dependencies = impl_value.getString();
+						}
 						else
 						{
-							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within an implementation",impl_name.c_str());
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within a description",impl_name.c_str());
 							return false;
 						}
 					}
@@ -273,15 +280,23 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							return false;
 						}
 					}
-					else if(foundCores || foundLocation)
+					else if(type == "native")
 					{
-						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received with a wrong attribute (\"cores\", \"location\", or both)",type.c_str());
+						if(!foundLocation || !foundDependencies)
+						{
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"dependencies\" attribute, \"location\" attribute, or both",type.c_str());
+							return false;
+						}
+					}
+					else if(foundCores || foundLocation || foundDependencies)
+					{
+						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received with a wrong attribute (\"cores\", \"location\" or \"dependencies\")",type.c_str());
 						return false;
 					}
 
 					possibleDescriptions.push_back(new Description(type,uri,cores,location));
 				}
-		    } //end if(name == "implementations")
+		    } //end if(name == "descriptions")
 		    else
 			{
 				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\"",name.c_str());
