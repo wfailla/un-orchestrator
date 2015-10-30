@@ -435,6 +435,11 @@ IF(${ENABLE_KVM_INDEX} EQUAL 3)
 	)
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 3)
 
+#Enable c++11 in order to compile with new dpdk releases
+IF(${ENABLE_KVM_INDEX} EQUAL 3)
+	set_source_files_properties (SOURCE compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc APPEND_STRING PROPERTY COMPILE_FLAGS " -std=c++11")
+	#set (CMAKE_CXX_FLAGS "-std=c++11")
+ENDIF(${ENABLE_KVM_INDEX} EQUAL 3)
 
 #Links specific for the NF-FG library defined in WP3
 IF(UNIFY_NFFG)

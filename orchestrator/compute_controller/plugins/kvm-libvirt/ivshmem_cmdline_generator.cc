@@ -1,5 +1,11 @@
 #include "ivshmem_cmdline_generator.h"
 
+#include <rte_config.h>
+#include <rte_eal.h>
+#include <rte_ivshmem.h>
+#include <rte_mempool.h>
+#include <rte_ring.h>
+
 #define DPDKR_FORMAT "dpdkr%d"
 #define DPDKR_TX_FORMAT DPDKR_FORMAT"_tx"
 #define DPDKR_RX_FORMAT DPDKR_FORMAT"_rx"
@@ -47,7 +53,7 @@ bool IvshmemCmdLineGenerator::get_cmdline(const char * port_name, char * cmdline
 	struct rte_ring * rx;
 	struct rte_ring * tx;
 	struct rte_mempool * packets_pool;
-	
+
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating command line for port '%s'", port_name);
 
 	/*lazy dpdk initialization */
@@ -123,7 +129,7 @@ bool IvshmemCmdLineGenerator::get_cmdline(const char * port_name, char * cmdline
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command line can not be generated", port_name);
 		return false;
 	}
-	
+
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command line: '%s'", cmdline);
 
 	return true;
