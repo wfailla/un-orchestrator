@@ -77,7 +77,7 @@ bool RestServer::init(string fileName)
 		{
 			xmlChar* attr_name = xmlGetProp(cur_root_child, (const xmlChar*)NAME_ATTRIBUTE);
 			xmlChar* attr_nports = xmlGetProp(cur_root_child, (const xmlChar*)NUM_PORTS_ATTRIBUTE);
-			xmlChar* attr_description = xmlGetProp(cur_root_child, (const xmlChar*)DESCRIPTION_ATTRIBUTE);
+			xmlChar* attr_summary = xmlGetProp(cur_root_child, (const xmlChar*)SUMMARY_ATTRIBUTE);
 		
 			int nports = 0;
 
@@ -87,63 +87,76 @@ bool RestServer::init(string fileName)
 
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Network function: %s",attr_name);
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Number of ports: %d",nports);
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Description: %s",attr_description);
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Description: %s",attr_summary);
 
 			string name((const char*)attr_name);
-			string description((const char*)attr_description);
-			NF *nf = new NF(name,nports,description);
+			string summary((const char*)attr_summary);
+			NF *nf = new NF(name,nports,summary);
 	
 			xmlNodePtr nf_elem = cur_root_child;
-			for(xmlNodePtr cur_impl = nf_elem->xmlChildrenNode; cur_impl != NULL; cur_impl = cur_impl->next)
+			for(xmlNodePtr cur_descr = nf_elem->xmlChildrenNode; cur_descr != NULL; cur_descr = cur_descr->next)
 			{
-				if ((cur_impl->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(cur_impl->name, (const xmlChar*)IMPLEMENTATION_ELEMENT))) 
-				{
-					xmlChar* attr_type = xmlGetProp(cur_impl, (const xmlChar*)TYPE_ATTRIBUTE);
-					xmlChar* attr_uri = xmlGetProp(cur_impl, (const xmlChar*)URI_ATTRIBUTE);
-					xmlChar* attr_cores = xmlGetProp(cur_impl, (const xmlChar*)CORES_ATTRIBUTE);
-					xmlChar* attr_location = xmlGetProp(cur_impl, (const xmlChar*)LOCATION_ATTRIBUTE);
-					
-					assert(attr_type != NULL);
+				if ((cur_descr->type == XML_ELEMENT_NODE)){
+
+					xmlChar* attr_uri = xmlGetProp(cur_descr, (const xmlChar*)URI_ATTRIBUTE);
+
 					assert(attr_uri != NULL);
-					
-					//TODO: understand if this check can be implemented in the schema
-					if(strcmp((const char*)attr_type,"dpdk")==0)
-					{
-						//the attributes "cores" and "location" must be present
-						if((attr_cores == NULL) || (attr_location == NULL))
-						{
-							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", fileName.c_str());
-							/*Free the allocated resources*/
-							freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-							return false;
-						}
-					}
-					else
-					{
-						//the attributes "cores" and "location" must not be present
-						if((attr_cores != NULL) || (attr_location != NULL))
-						{
-							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", fileName.c_str());
-							/*Free the allocated resources*/
-							freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-							return false;
-						}
-					}
-					
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\ttype: %s - URI: %s",attr_type,attr_uri);
-					if(attr_cores != NULL)
-						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tcores: %s",attr_cores);
-					
+
+					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tURI: %s",attr_uri);
+
 					string uri((const char*)attr_uri);
-					nf_t type = (strcmp((const char*)attr_type,"dpdk") == 0)? DPDK : ((strcmp((const char*)attr_type,"docker") == 0)? DOCKER : KVM);
-					stringstream cores, location;
-					if(attr_cores != NULL)
-					{
+
+					if(!strcmp((const char*)cur_descr->name, DPDK_DESCRIPTION)){
+						xmlChar* attr_cores = xmlGetProp(cur_descr, (const xmlChar*)CORES_ATTRIBUTE);
+						xmlChar* attr_location = xmlGetProp(cur_descr, (const xmlChar*)LOCATION_ATTRIBUTE);
+
+						assert(attr_cores != NULL);
+						assert(attr_location != NULL);
+
+						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tcores: %s",attr_cores);
+						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tlocation: %s",attr_location);
+
+						stringstream cores, location;
 						cores << attr_cores;
 						location << attr_location;
+
+						nf->addImplementation(new DPDKDescription(DPDK,uri,cores.str(),location.str()));
+					} else
+
+					if(!strcmp((const char*)cur_descr->name, DOCKER_DESCRIPTION)){
+
+						nf->addImplementation(new Description(DOCKER,uri));
+					} else
+
+					if(!strcmp((const char*)cur_descr->name, KVM_DESCRIPTION)){
+
+						nf->addImplementation(new Description(DOCKER,uri));
+					} else
+
+					if(!strcmp((const char*)cur_descr->name, NATIVE_DESCRIPTION)){
+						xmlChar* attr_dependencies = xmlGetProp(cur_descr, (const xmlChar*)DEPENDENCIES_ATTRIBUTE);
+						xmlChar* attr_location = xmlGetProp(cur_descr, (const xmlChar*)LOCATION_ATTRIBUTE);
+
+						assert(attr_dependencies != NULL);
+						assert(attr_location != NULL);
+
+						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tdependencies: %s",attr_dependencies);
+						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tlocation: %s",attr_location);
+
+						stringstream dependencies, location;
+
+						location << attr_location;
+						dependencies << attr_dependencies;
+
+						nf->addImplementation(new NativeDescription(NATIVE,uri,dependencies.str(),location.str()));
 					}
-					nf->addImplementation(new Implementation(type,uri,cores.str(),location.str()));
-				}			
+					//[+] Add here other implementations for the execution environment
+					else
+					{
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unknown implementation %s in configuration file %s", (const char*) cur_descr->name, fileName.c_str());
+						assert(0);
+					}
+				}
 			}
 			nfs.insert(nf);
 		}

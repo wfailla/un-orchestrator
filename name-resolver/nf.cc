@@ -7,9 +7,9 @@ NF::NF(string name, int nports, string description) :
 
 }
 
-void NF::addImplementation(Implementation *implementation)
+void NF::addImplementation(Description *description)
 {
-	implementations.push_back(implementation);
+	descriptions.push_back(description);
 }
 
 string NF::getName()
@@ -23,15 +23,15 @@ Object NF::toJSON()
 	
 	nf["name"]  = name;
 	nf["nports"]  = nports;
-	nf["description"] = description;
+	nf["summary"] = description;
 	
-	Array impl;
-	for(list<Implementation*>::iterator i = implementations.begin(); i != implementations.end();i++)
+	Array descr;
+	for(list<Description*>::iterator i = descriptions.begin(); i != descriptions.end();i++)
 	{
-		impl.push_back((*i)->toJSON());
+		descr.push_back((*i)->toJSON());
 	}
 	
-	nf["implementations"] = impl;
+	nf["descriptions"] = descr;
 	
 	return nf;
 }

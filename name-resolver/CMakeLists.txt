@@ -77,8 +77,13 @@ SET(SOURCES
 	
 	nf.h
 	nf.cc
-	implementation.h
-	implementation.cc
+	description.h
+	description.cc
+	
+	descriptions/dpdk_description.h
+	descriptions/dpdk_description.cc
+	descriptions/native_description.h
+	descriptions/native_description.cc
 	
 	logger.h
 	logger.c

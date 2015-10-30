@@ -1,8 +1,6 @@
 #ifndef NF_H_
 #define NF_H_ 1
 
-#pragma once
-
 #include <string>
 #include <assert.h>
 #include <list>
@@ -13,12 +11,12 @@
 
 #include "constants.h"
 
-#include "implementation.h"
+#include "description.h"
+#include "descriptions/native_description.h"
+#include "descriptions/dpdk_description.h"
 
 using namespace std;
 using namespace json_spirit;
-
-class Implementation;
 
 class NF
 {
@@ -39,13 +37,13 @@ private:
 	string description;
 		
 	/**
-	*	@brief: list of implementations for the network function
+	*	@brief: list of possible implementations for the network function
 	*/
-	list<Implementation*> implementations;
+	list<Description*> descriptions;
 	
 public:
 	NF(string name, int nports, string description);
-	void addImplementation(Implementation *implementation);
+	void addImplementation(Description *description);
 	
 	string getName();
 	
