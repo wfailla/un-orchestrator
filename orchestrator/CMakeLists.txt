@@ -58,8 +58,6 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
 ENDIF()
 
-# End of the rather complicated CMake code for setting the Openflow version
-
 OPTION(
 	RUN_NFS
 	"Turn on the actually run the NFs"
