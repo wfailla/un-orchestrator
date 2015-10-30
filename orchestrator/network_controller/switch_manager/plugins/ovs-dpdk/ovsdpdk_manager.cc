@@ -13,7 +13,7 @@ OVSDPDKManager::~OVSDPDKManager()
 
 void OVSDPDKManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 { // SwitchManager implementation
-	//logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "checkPhysicalInterfaces(dpid: %" PRIu64 " NF:%s NFType:%d)\n", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
+	//logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "checkPhysicalInterfaces(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
 }
 
 CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
@@ -118,6 +118,19 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Virtual link to LSI %u: %u:%u <-> %u:%u", *vl, dpid, s_port_id, *vl, d_port_id);
 		stringstream cmd_add;
 		cmd_add << CMD_VIRTUAL_LINK << " " << dpid << " " << *vl << " " << s_port_id << " " << d_port_id << " " << vlink_n << " " << enable_flooding;
+		// Set the OpenFlow version
+		switch(OFP_VERSION) {
+			case OFP_10:
+				cmd << "OpenFlow10";
+				break;
+			case OFP_12:
+				cmd << "OpenFlow12";
+				break;
+			case OFP_13:
+				cmd << "OpenFlow13";
+				break;
+		}
+
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 		int retVal = system(cmd_add.str().c_str());
 		retVal = retVal >> 8;
@@ -139,10 +152,10 @@ AddNFportsOut *OVSDPDKManager::addNFPorts(AddNFportsIn anpi)
 { // SwitchManager implementation
   
 	AddNFportsOut *anpo = NULL;
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)\n", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
 	list<string> nfs_ports = anpi.getNetworkFunctionsPorts();
 	for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tport: %s\n", (*nfp).c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tport: %s", (*nfp).c_str());
 	}
 	return anpo;
 }
@@ -150,18 +163,27 @@ AddNFportsOut *OVSDPDKManager::addNFPorts(AddNFportsIn anpi)
 AddVirtualLinkOut *OVSDPDKManager::addVirtualLink(AddVirtualLinkIn avli)
 { // SwitchManager implementation
 	AddVirtualLinkOut *avlo = NULL;
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addVirtualLink(dpid: %" PRIu64 " -> %" PRIu64 ")\n", avli.getDpidA(), avli.getDpidB());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addVirtualLink(dpid: %" PRIu64 " -> %" PRIu64 ")", avli.getDpidA(), avli.getDpidB());
 	return avlo;
 }
 
 void OVSDPDKManager::destroyLsi(uint64_t dpid)
 { // SwitchManager implementation
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")\n", dpid);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")", dpid);
+	stringstream cmd;
+	cmd << CMD_DESTROY_LSI << " " << dpid;
+	
+	int retVal = system(cmd.str().c_str());
+	retVal = retVal >> 8;
+	if(retVal == 0) {
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to destroy LSI");
+		throw OVSDPDKManagerException();
+	}
 }
 
 void OVSDPDKManager::destroyVirtualLink(DestroyVirtualLinkIn dvli)
 { // SwitchManager implementation
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyVirtualLink(%" PRIu64 ".%" PRIu64 " -> %" PRIu64 ".%" PRIu64 ")\n",
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyVirtualLink(%" PRIu64 ".%" PRIu64 " -> %" PRIu64 ".%" PRIu64 ")",
 			dvli.getDpidA(), dvli.getIdA(), dvli.getDpidB(), dvli.getIdB());
 
 }

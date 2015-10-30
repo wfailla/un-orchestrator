@@ -588,6 +588,7 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
     s = cmd_connect();
 
 	char ifac[64] = "iface";
+    char p_n[64] = "";
 		
 	//Create the current name of a interface
 	if(nf == 0){
@@ -595,6 +596,8 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 		strcat(ifac, temp);
 		
 		strcpy(temp, p.c_str());
+		
+		strcpy(p_n, p.c_str());
 	}else{
 		string str = p;
 		
@@ -616,6 +619,9 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 			if(temp[j] == '_')
 				temp[j] = 'p';
 		}
+		
+		/*create name of port --> lsiId_portName*/
+		sprintf(p_n, "%" PRIu64 "_%s", dnumber, p.c_str());
 	}
 	
 	root["method"] = "transact";
@@ -626,7 +632,7 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 	first_obj["table"] = "Interface";
 		
 	/*Insert an Interface*/
-	row["name"] = temp;
+	row["name"] = p_n;
 	if(nf != 0)
 		row["type"] = "internal";
 		
@@ -648,7 +654,7 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 	first_obj["table"] = "Port";
 		
 	/*Insert a port*/
-	row["name"] = temp;
+	row["name"] = p_n;
 		
 	iface.push_back("set");
 	
@@ -847,7 +853,7 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
     if(nf != 0)
     {
     	stringstream command;
-		command << ACTIVATE_INTERFACE << " " << temp;
+		command << ACTIVATE_INTERFACE << " " << p_n;
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 		int retVal = system(command.str().c_str());
 		retVal = retVal >> 8;
@@ -1039,6 +1045,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 		for(list<string>::iterator nf = nfp.begin(); nf != nfp.end(); nf++)
 		{
 			char ifac[64] = "iface";
+			char p_n[64] = "";
 				
 			//Create the current name of a interface
 			sprintf(temp, "%d", rnumber);
@@ -1068,7 +1075,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			first_obj["op"] = "insert";
 			first_obj["table"] = "Interface";
 		
-			row["name"] = temp;
+			sprintf(p_n, "%" PRIu64 "_%s", anpi.getDpid(), (*nf).c_str());
+			row["name"] = p_n;
 			row["type"] = "internal";
 			
 			row["admin_state"] = "up";
@@ -1088,7 +1096,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			first_obj["op"] = "insert";
 			first_obj["table"] = "Port";
 		
-			row["name"] = temp;
+			row["name"] = p_n;
 		
 			iface.push_back("set");
 	

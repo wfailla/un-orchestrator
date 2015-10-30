@@ -2,7 +2,7 @@
 
 #Author: UNIFY Consortium
 #Date: 2015-07-02 
-#Brief: Add a port to a bridge
+#Brief: Create a bridge
 
 #$1 LSI id
 #$2 controller ip
