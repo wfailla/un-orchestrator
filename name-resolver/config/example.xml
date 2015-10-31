@@ -20,11 +20,11 @@
 		In case of dpdk (secondary) process, the file specifies the URI from which
 		the executable can be retrieved and the number of cores required by the
 		network function. Since the URI can be a web URL or a path on the local file
-		system, the file also specifies to interpretate the URI through the attribute
+		system, the file also specifies to interpret the URI through the attribute
 		location.
 		
 		In case of KVM virtual machine, the file specifies an URI that points to an XML 
-		Libvirt doamin definition, which the orchestrator uses as a template for the 
+		Libvirt domain definition, which the orchestrator uses as a template for the 
 		creation and execution of the network function.
 		
 		In case of native functionality, the file specifies the URI from which
@@ -54,8 +54,8 @@
 	</network-function>
    
 	<network-function name="dpi"  num-ports="2" summary="DPI based on DPDK">
-		<!-- Only a DPDK implementaion is available for this network funcion -->
-		<dpdk uri="./NFs/dpdk/example/build/dpi" cores="1" location="local"/>
+		<!-- Only a DPDK implementation is available for this network function -->
+		<dpdk uri="../NFs/dpdk/dpi/build/dpi" cores="1" location="local"/>
 	</network-function>
 	
 </network-functions>
