@@ -39,8 +39,9 @@
 		<docker uri="example"/>
 		<dpdk uri="https://nf_repository.com/example" cores="1" location="remote"/>
 		<dpdk uri="../NFs/dpdk/example/build/example" cores="1" location="local"/>
+		<native uri="file://../NFs/native/example/nativeNF_example.sh" dependencies="iptables ebtables" location="local"/>
 		<kvm uri="../NFs/kvm/example/example_vnf_template.xml"/>
-		<native uri="../NFs/native/native_example.commmands" dependencies="iptables ebtables" location="local"/>
+		
 	</network-function>
 
 	<network-function name="usvhost_example"  summary="Network function based on user space vhost">
