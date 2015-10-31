@@ -13,6 +13,7 @@
 #include <sstream>
 #include <fstream>
 #include <stdlib.h>
+#include <typeinfo>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>

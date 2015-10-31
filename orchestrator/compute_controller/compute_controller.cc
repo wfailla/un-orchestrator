@@ -199,11 +199,11 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		    	}
 
 				bool next = false;
-		    	//Itearate on the implementations
+		    	//Iterate on the descriptions
 		    	for( unsigned int impl = 0; impl < impl_array.size(); ++impl)
 				{
 					//This is an implementation, with a type and an URI
-					Object implementation = impl_array[impl].getObject();
+					Object description = impl_array[impl].getObject();
 					bool foundURI = false;
 					bool foundType = false;
 					bool foundCores = false;
@@ -216,7 +216,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					string location;
 					string dependencies;
 
-					for( Object::const_iterator im = implementation.begin(); im != implementation.end(); ++im )
+					for( Object::const_iterator im = description.begin(); im != description.end(); ++im )
 					{
 				 	    const string& impl_name  = im->first;
 						const Value&  impl_value = im->second;
@@ -227,7 +227,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							type = impl_value.getString();
 							if(!NFType::isValid(type))
 							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid implementation type \"%s\". Skip it.",type.c_str());
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid description type \"%s\". Skip it.",type.c_str());
 								//return false;
 								next = true;
 								break;
@@ -262,14 +262,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					
 					if(next)
 					{
-						//The current network function is of a type not supported by the orchestator
+						//The current network function is of a type not supported by the orchestrator
 						next = false;
 						continue;
 					}
 					
 					if(!foundURI || !foundType)
 					{
-						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into an implementation description");
+						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into a description");
 						return false;
 					}
 					if(type == "dpdk")
@@ -287,6 +287,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"dependencies\" attribute, \"location\" attribute, or both",type.c_str());
 							return false;
 						}
+						std::stringstream stream(dependencies);
+						std::string s;
+						std::list<std::string>* dep_list = new std::list<std::string>;
+						while(stream >> s){
+							dep_list->push_back(s);
+						}
+						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,cores,location,dep_list)));
+						break;
 					}
 					else if(foundCores || foundLocation || foundDependencies)
 					{
@@ -295,6 +303,9 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					}
 
 					possibleDescriptions.push_back(new Description(type,uri,cores,location));
+					/*
+					 * TODO: add description only for specific type of execution environment
+					 */
 				}
 		    } //end if(name == "descriptions")
 		    else
@@ -327,7 +338,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		
 		if(possibleDescriptions.size() == 0)
 		{
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Cannot find a supported implementation for the network function \"%s\"",nf.c_str());
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Cannot find a supported description for the network function \"%s\"",nf.c_str());
 			return false;
 		}		
 		
@@ -348,10 +359,6 @@ bool ComputeController::parseAnswer(string answer, string nf)
 bool ComputeController::selectImplementation()
 {
 	//NFsManager *manager = NULL;
-
-	/*
-	 * Sergio
-	 */
 	//Select an implementation of the NF
 	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++){
 
@@ -424,11 +431,13 @@ bool ComputeController::selectImplementation()
 							current->setSelectedDescription(nativeManager);
 							selected = true;
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description has been selected for NF \"%s\".",nf->first.c_str());
-						} else
+						} else {
 							delete nativeManager;
-					} catch (...) {
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native exception has been thrown");
+						}
+					} catch (exception& e) {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
 						delete nativeManager;
+						return false;
 					}
 					break;
 #endif
@@ -438,150 +447,17 @@ bool ComputeController::selectImplementation()
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available execution environments for description %s", NFType::toString((*descr)->getType()).c_str());
 				}
 
-
 			}
 		}
 	}
 
-	if(allSelected())
+	if(allSelected()){
 		return true;
+	}
 	
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported implementation!");
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported description!");
 	return false;
-
-	/*
-	 * Sergio_end
-	 */
-/*
-#ifdef ENABLE_DOCKER
-	//Manage Docker execution environment
-
-	manager = new Docker();
-	if(manager->isSupported())
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select a Docker implementation if exists.");
-		selectImplementation(DOCKER);
-		
-		if(allSelected())
-			return true;
-	}
-	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker deamon is not running (at least, it is not running with the LXC implementation).");
-#endif
-
-	//Manage DPDK execution environment
-
-	manager = new Dpdk();
-	if(manager->isSupported())
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select DPDK implementation if exists.");
-	
-		selectImplementation(DPDK);
-		if(allSelected())
-			return true;
-	}
-	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK is not supported.");
-
-#ifdef ENABLE_KVM
-	//Manage QEMU/KVM execution environment through libvirt
-	
-	manager = new Libvirt();
-	
-	if(manager->isSupported())
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select QEMU/KVM implementation if exists.");
-		selectImplementation(KVM);
-		
-		if(allSelected())
-			return true;
-	}
-	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "QEMU/KVM is not supported.");
-
-#endif
-
-#ifdef ENABLE_NATIVE
-	//Manage NATIVE execution environment
-
-	manager = new Native();
-
-	if(manager->isSupported()){
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select native implementation if exists.");
-		selectImplementation(NATIVE);
-
-		if(allSelected())
-			return true;
-	} else {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native functions are not supported.");
-	}
-
-#endif
-
-	//[+] Add here other implementations for the execution environment
-
-	delete(manager);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported implementation!");
-	return false;*/
-
 }
-
-/*
-void ComputeController::selectImplementation(nf_t desiredType)
-{
-	//Select an implmentation of the NF
-	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
-	{
-		NF *current = nf->second;
-		
-		//An descritpion is selected only for those functions that do not have a description yet
-		if(current->getSelectedDescription() == NULL)
-		{
-			list<Description*> descriptions = current->getAvailableDescriptions();
-
-			list<Description*>::iterator impl;
-			for(impl = descriptions.begin(); impl != descriptions.end(); impl++)
-			{
-				if((*impl)->getType() == desiredType)
-				{
-					NFsManager *manager = NULL;
-
-					//Create the proper NFsManager according to the selected type
-					switch(desiredType)
-					{
-						case DPDK:
-							manager = new Dpdk();
-							break;
-#ifdef ENABLE_DOCKER
-						case DOCKER:
-							manager = new Docker();
-							break;
-#endif
-#ifdef ENABLE_KVM
-						case KVM:
-							manager = new Libvirt();
-							break;
-#endif
-#ifdef ENABLE_NATIVE
-						case NATIVE:
-							manager = new Native();
-							break;
-#endif
-						//[+] Add here other implementations for the execution environment
-						default:
-							assert(0);
-					}
-					
-					manager->setDescription(*impl);					
-					current->setSelectedDescription(manager);
-										
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s description has been selected for NF \"%s\".",NFType::toString(desiredType).c_str(),nf->first.c_str());
-					break;
-				}
-			}
-		}
-	}
-}*/
 
 bool ComputeController::allSelected()
 {

@@ -95,14 +95,20 @@ Native::Native(){
 }
 
 bool Native::isSupported(Description& descr) {
+	try{
+		NativeDescription& nativeDescr = dynamic_cast<NativeDescription&>(descr);
+		std::list<std::string> *requirements = nativeDescr.getRequirements();
+		for(std::list<std::string>::iterator i = requirements->begin(); i != requirements->end(); i++){
 
-	NativeDescription& nativeDescr = dynamic_cast<NativeDescription&>(descr);
-	std::list<std::string> *requirements = nativeDescr.getRequirements();
-	for(std::list<std::string>::iterator i = requirements->begin(); i != requirements->end(); i++){
-		if(capabilities->find(*i) == capabilities->end()){
-			//not found
-			return false;
+			if(capabilities->find(*i) == capabilities->end()){
+				//not found
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Capability %s not found", i->c_str());
+				return false;
+			}
 		}
+	} catch(exception& exc) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s", exc.what());
+		return false;
 	}
 	return true;
 }
@@ -161,7 +167,11 @@ bool Native::stopNF(StopNFIn sni) {
 	std::string nf_name = sni.getNfName();
 
 	std::stringstream command;
-	command << STOP_NATIVE_NF << " " << lsiID << " " << nf_name;
+	/*
+	 * FIXME: get number of ports from caller
+	 */
+	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "FIXME: get real number of ports!!!");
+	command << STOP_NATIVE_NF << " " << lsiID << " " << nf_name << " " << 2;
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	int retVal = system(command.str().c_str());
