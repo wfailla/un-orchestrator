@@ -279,6 +279,8 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"cores\" attribute, \"location\" attribute, or both",type.c_str());
 							return false;
 						}
+						possibleDescriptions.push_back(dynamic_cast<Description*>(new DPDKDescription(type,uri,cores,location)));
+						break;
 					}
 					else if(type == "native")
 					{
@@ -293,7 +295,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						while(stream >> s){
 							dep_list->push_back(s);
 						}
-						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,cores,location,dep_list)));
+						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,location,dep_list)));
 						break;
 					}
 					else if(foundCores || foundLocation || foundDependencies)
@@ -302,7 +304,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						return false;
 					}
 
-					possibleDescriptions.push_back(new Description(type,uri,cores,location));
+					possibleDescriptions.push_back(new Description(type,uri));
 					/*
 					 * TODO: add description only for specific type of execution environment
 					 */

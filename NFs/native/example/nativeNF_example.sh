@@ -23,11 +23,15 @@ fi
 #enable ipv4 forwarding
 sysctl -w net.ipv4.ip_forward=1
 
+#debug
+#set -x
+
 current=4
 for (( c=0; c < 2; c++ ))
 do
-	
-	ebtables -A forward -i ${!current} -j mark --set-mark ${!current}_mark --mark-target CONTINUE
+
+	ebtables -A FORWARD -i ${!current} -j mark --set-mark 0x$(echo "obase=16; $1" | bc)cade$((c+1)) --mark-target CONTINUE
+
 	current=`expr $current + 1`
 done 
 
@@ -35,10 +39,14 @@ done
 stop_file="$1_$2_stop"
 
 echo "" > $stop_file
+
+#debug
+#echo "set -x" >> $stop_file
+
 current=4
 for (( c=0; c < 2; c++))
 do
-	echo ebtables -D forward -i ${!current} >> $stop_file
+	echo ebtables -D FORWARD -i ${!current} -j mark --set-mark 0x$(echo "obase=16; $1" | bc)cade$((c+1)) --mark-target CONTINUE >> $stop_file
 	current=`expr $current + 1`
 done
 

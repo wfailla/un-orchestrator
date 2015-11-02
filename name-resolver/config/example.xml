@@ -30,16 +30,16 @@
 		In case of native functionality, the file specifies the URI from which
 		the script or executable can be retrieved and the list of dependencies required
 		by the network function. Since the URI can be a web URL or a path on the local file
-		system, the file also specifies to interpretate the URI through the attribute
+		system, the file also specifies to interpret the URI through the attribute
 		location.
 	-->
 
 	<network-function name="example" num-ports="2" summary="Example VNF with several implementations">
 		<!-- Several implementations are available for this network function -->
+		<native uri="../NFs/native/example/nativeNF_example.sh" dependencies="iptables ebtables" location="local"/>
 		<docker uri="example"/>
 		<dpdk uri="https://nf_repository.com/example" cores="1" location="remote"/>
 		<dpdk uri="../NFs/dpdk/example/build/example" cores="1" location="local"/>
-		<native uri="file://../NFs/native/example/nativeNF_example.sh" dependencies="iptables ebtables" location="local"/>
 		<kvm uri="../NFs/kvm/example/example_vnf_template.xml"/>
 		
 	</network-function>

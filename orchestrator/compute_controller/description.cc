@@ -1,13 +1,8 @@
 #include "description.h"
 
-Description::Description(nf_t type, string uri, string cores, string location) :
-	type(type), uri(uri), cores(cores), location(location)
-{
-}
+Description::Description(nf_t type, string uri) : type(type), uri(uri) {}
 
-Description::Description(string type, string uri, string cores, string location) :
-	 uri(uri), cores(cores), location(location)
-{
+Description::Description(string type, string uri) : uri(uri) {
 
 	if(type == "dpdk")
 	{
@@ -54,18 +49,3 @@ string Description::getURI()
 	return uri;
 }
 
-string Description::getCores()
-{
-	return cores;
-}
-
-string Description::getLocation()
-{
-	assert(type == DPDK 
-#ifdef ENABLE_KVM
-	|| type == KVM
-#endif
-	);
-
-	return location;
-}

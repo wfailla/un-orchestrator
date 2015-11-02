@@ -121,10 +121,22 @@ bool Native::startNF(StartNFIn sni) {
 	std::map<unsigned int, pair<std::string, std::string> > ipv4PortsRequirements = sni.getIpv4PortsRequirements();
 	std::map<unsigned int, std::string> ethPortsRequirements = sni.getEthPortsRequirements();
 	
+	std::stringstream uri;
+
+	try {
+		NativeDescription& nativeDescr = dynamic_cast<NativeDescription&>(*description);
+		if(nativeDescr.getLocation() == "local")
+			uri << "file://";
+	} catch (exception& e) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s", e.what());
+		return false;
+	}
+
 	std::string uri_script = description->getURI();
+	uri << uri_script;
 	
 	std::stringstream command;
-	command << PULL_AND_RUN_NATIVE_NF << " " << lsiID << " " << nf_name << " " << uri_script << " " << n_ports;
+	command << PULL_AND_RUN_NATIVE_NF << " " << lsiID << " " << nf_name << " " << uri.str() << " " << n_ports;
 	
 	//create the names of the ports
 	for(unsigned int i = 1; i <= n_ports; i++)
@@ -167,11 +179,7 @@ bool Native::stopNF(StopNFIn sni) {
 	std::string nf_name = sni.getNfName();
 
 	std::stringstream command;
-	/*
-	 * FIXME: get number of ports from caller
-	 */
-	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "FIXME: get real number of ports!!!");
-	command << STOP_NATIVE_NF << " " << lsiID << " " << nf_name << " " << 2;
+	command << STOP_NATIVE_NF << " " << lsiID << " " << nf_name;
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	int retVal = system(command.str().c_str());

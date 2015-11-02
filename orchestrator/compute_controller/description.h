@@ -7,7 +7,6 @@
 
 #include "../utils/logger.h"
 #include "../utils/constants.h"
-#include "nfs_manager.h"
 
 #include <string>
 #include <assert.h>
@@ -23,23 +22,14 @@ friend NFsManager;
 private:
 	nf_t type;
 	string uri;
-	//The next attribute are meaningful only for DPDK VNFs
-	//FIXME: this is bad.. The same description should be valid for all the NFs. Then, it is up to the proper
-	//plugin to decide whether an information has to be used or not.
-	string cores;
-	string location;
 	
 public:
-	Description(nf_t type, string uri, string cores, string location);
-	Description(string type, string uri, string cores, string location);
+	Description(nf_t type, string uri);
+	Description(string type, string uri);
 	virtual ~Description();
 	
 	string getURI();
-	string getLocation();
 	nf_t getType();
-	
-protected:
-	string getCores();
 };
 
 #endif //DESCRIPTION_H_

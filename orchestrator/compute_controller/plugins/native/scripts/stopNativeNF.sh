@@ -8,8 +8,10 @@
 
 #$1 LSI ID							(e.g., 2)
 #$2 NF name							(e.g., firewall)
-#$3 number_of_ports						(e.g., 2)
-#The next $3 parameters are the names of the port of the NF	(e.g., vEth0 vEth1)
+
+#not needed anymore
+##$3 number_of_ports						(e.g., 2)
+##The next $3 parameters are the names of the port of the NF	(e.g., vEth0 vEth1)
 
 if (( $EUID != 0 )) 
 then
@@ -24,13 +26,13 @@ if [ -e $file ]
 then
 	tmp_file="$1_$2_tmp"
 	echo "" > $tmp_file
-	echo -ne sudo ./$file $1 $2 $3 > $tmp_file
-	port=4
-	for((c=0; c<$3; c++))
-	do
-		echo -ne " " ${!port} >> $tmp_file
-		port=`expr $port + 1`
-	done
+	echo -ne sudo ./$file $1 $2 > $tmp_file
+	#port=4
+	#for((c=0; c<$3; c++))
+	#do
+	#	echo -ne " " ${!port} >> $tmp_file
+	#	port=`expr $port + 1`
+	#done
 	
 	sudo chmod +x $file
 	
@@ -40,18 +42,18 @@ then
 	bash $tmp_file
 	
 	# remove files after the execution
-	#rm $file
+	rm $file
 	rm $tmp_file
 fi
 
-#delete virtual interfaces related to the NF
-current=4
-
-for((c=0; c<$3; c++))
-do
-	ip link del ${!current}
-	current=`expr $current + 1`
-done
+#delete virtual interfaces related to the NF => not needed anymore
+#current=4
+#
+#for((c=0; c<$3; c++))
+#do
+#	ip link del ${!current}
+#	current=`expr $current + 1`
+#done
 
 echo "[stopNativeNF] Native NF stopped"
 

@@ -15,17 +15,28 @@ bool Dpdk::startNF(StartNFIn sni)
 	string uri_image = description->getURI();	
 		
 	stringstream uri;
-	if(description->getLocation() == "local")
-		uri << "file://";
+
+	try {
+		DPDKDescription& dpdkDescr = dynamic_cast<DPDKDescription&>(*description);
+		if(dpdkDescr.getLocation() == "local")
+			uri << "file://";
+	} catch (exception& e) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s", e.what());
+		return false;
+	}
+
 	uri << uri_image;
 
 	stringstream command;
-	command << PULL_AND_RUN_DPDK_NF << " " << lsiID << " " << nf_name << " " << uri.str() << " " << coreMask <<  " " << NUM_MEMORY_CHANNELS << " " << n_ports;
+	command << PULL_AND_RUN_DPDK_NF << " " << lsiID << " " <<
+			nf_name << " " << uri.str() << " " << coreMask <<
+			" " << NUM_MEMORY_CHANNELS << " " << n_ports;
 
 	for(unsigned int i = 1; i <= n_ports; i++)
 		command << " " << lsiID << "_" << nf_name << "_" << i;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+			"Executing command \"%s\"",command.str().c_str());
 
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -45,7 +56,8 @@ bool Dpdk::stopNF(StopNFIn sni)
 		
 	command << STOP_DPDK_NF << " " << lsiID << " " << nf_name;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+			"Executing command \"%s\"",command.str().c_str());
 	
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -55,4 +67,25 @@ bool Dpdk::stopNF(StopNFIn sni)
 
 	return true;
 
+}
+
+string Dpdk::getCores() {
+	string cores;
+	try {
+
+		DPDKDescription& dpdkDescr = dynamic_cast<DPDKDescription&>(*description);
+		cores = dpdkDescr.getCores();
+
+	} catch (exception& e) {
+
+		/*
+		 * Bad cast
+		 * It is not a DPDK description
+		 */
+
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__,
+				"Exception %s raised! Wrong description treated as dpdk description", e.what());
+		return "";
+	}
+	return cores;
 }

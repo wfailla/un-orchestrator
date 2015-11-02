@@ -23,6 +23,8 @@ then
     exit 0
 fi
 
+
+
 tmp_file="$1_$2_tmp"
 
 echo "" > $tmp_file
@@ -70,9 +72,11 @@ currentIp=`expr $current + $4`
 currentEthernet=`expr $currentIp + $4`
 for (( c=0; c<$4; c++ ))
 do
+
 	#create virtual interface connected to the port of the vswitch (already created)
 	#name of the ovs port on the switch: <lsi_id>_<nf_name>_<i> => ${1}_${2}_$((c+1))
- 	ip link add link ${1}_${2}_$((c+1)) name ${!current} type macvtap
+	#!not needed anymore
+ 	#ip link add link ${1}_${2}_$((c+1)) name ${!current} type macvtap
 
  	if [ ${!currentEthernet} != 0 ]
  	then
@@ -87,7 +91,8 @@ do
 	
 	ip link set ${!current} up
 	ip link set ${!current} promisc on
-	#ip link set ${!current} arp on
+	ip link set ${!current} arp on
+	
 	
 	current=`expr $current + 1`
 	currentIp=`expr $currentIp + 1`

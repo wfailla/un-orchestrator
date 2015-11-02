@@ -22,6 +22,8 @@ public:
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
+
+	string getCores();
 };
 
 #endif //DPDK_H_

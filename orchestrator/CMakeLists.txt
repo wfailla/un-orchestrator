@@ -234,6 +234,8 @@ SET(SOURCES
 	compute_controller/plugins/dpdk/dpdk.h
 	compute_controller/plugins/dpdk/dpdk.cc
 	compute_controller/plugins/dpdk/dpdk_constants.h
+	compute_controller/plugins/dpdk/dpdk_description.h
+	compute_controller/plugins/dpdk/dpdk_description.cc
 	
 	node_resource_manager/rest_server/rest_server.h
 	node_resource_manager/rest_server/rest_server.cc
