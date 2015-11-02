@@ -28,7 +28,7 @@ to configure/test the un-orchestrator.
     a simple passthrough function, i.e., traffic is received from a first
     physical port and sent out from a second physical port, after having
     been handled to the vswitch.
-  * `config/passthrough\with\vnf\nffg.json`: graph that include a virtual
+  * `config/passthrough_with_vnf_nffg.json`: graph that include a virtual
     network function. Traffic is received from a first physical port, provided
     to a network function, and then sent out from a second physical port.
 
