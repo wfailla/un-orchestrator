@@ -403,7 +403,7 @@ IF(${ENABLE_KVM_INDEX} EQUAL 3)
 			-latomic
 			-lpthread
 			-lm
-			-ludev #sudo apt-get install libudev-dev 
+			-ludev
 	)
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 3)
 
