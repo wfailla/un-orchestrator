@@ -45,10 +45,9 @@ Set up DPDK (after each reboot of the physical machine), in order to:
   * Bind Ethernet device to IGB UIO module (bind all the ethernet interfaces
     that you want to use)
 
-	; Launch the DPDK setup script (note that the library has been downloaded togher with xDPd, 
-	; and it is located at [xdpd]/libs/dpdk)  
 	$ cd [xdpd]/libs/dpdk/tools  
 	$ sudo ./setup.sh  
+	; Follow the instructions provided in the script
 
 
 Start xDPd:
