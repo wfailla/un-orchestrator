@@ -80,7 +80,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 	list<pair<unsigned int, unsigned int> > out_virtual_links;
 	set<string> nfs = cli.getNetworkFunctionsName();
 	
-#ifdef ENABLE_KVM_DPDK_IVSHMEM
+#ifdef ENABLE_KVM_IVSHMEM
 	//FIXME: Must be global
 	int counter = 1;	
 #endif
@@ -97,7 +97,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
 			
 			sspn << dpid << "_" << *nfp;
-#elif ENABLE_KVM_DPDK_IVSHMEM
+#elif ENABLE_KVM_IVSHMEM
 			const char* port_type = "dpdkr";
 			sspn << "dpdkr" << counter;
 			counter++;

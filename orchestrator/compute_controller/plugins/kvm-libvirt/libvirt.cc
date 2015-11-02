@@ -1,14 +1,14 @@
 #include "libvirt.h"
 #include "libvirt_constants.h"
 
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
+#ifndef ENABLE_KVM_IVSHMEM
 	virConnectPtr Libvirt::connection = NULL;
 #else
 	unsigned int Libvirt::next_tcp_port = FIRST_PORT_FOR_MONITOR;
 	map<string,string> Libvirt::monitor;
 #endif
 
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
+#ifndef ENABLE_KVM_IVSHMEM
 void Libvirt::customErrorFunc(void *userdata, virErrorPtr err)
 {
 	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Failure of libvirt library call:");
@@ -26,14 +26,14 @@ void Libvirt::customErrorFunc(void *userdata, virErrorPtr err)
 
 Libvirt::Libvirt()
 {
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
+#ifndef ENABLE_KVM_IVSHMEM
 	virSetErrorFunc(NULL, customErrorFunc);
 #endif
 }
 
 Libvirt::~Libvirt()
 {
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
+#ifndef ENABLE_KVM_IVSHMEM
 	if(connection != NULL)
 		disconnect();
 #endif
@@ -41,7 +41,7 @@ Libvirt::~Libvirt()
 
 bool Libvirt::isSupported()
 {
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
+#ifndef ENABLE_KVM_IVSHMEM
 	connect();
 	
 	if(connection == NULL)
@@ -52,7 +52,7 @@ bool Libvirt::isSupported()
 	return true;
 }
 
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
+#ifndef ENABLE_KVM_IVSHMEM
 void Libvirt::connect()
 {
 	if(connection != NULL)
@@ -74,7 +74,7 @@ void Libvirt::disconnect()
 }
 #endif
 
-#if not defined(ENABLE_KVM_DPDK_IVSHMEM)
+#if not defined(ENABLE_KVM_IVSHMEM)
 bool Libvirt::startNF(StartNFIn sni)
 {
 	virDomainPtr dom = NULL;
@@ -222,8 +222,11 @@ bool Libvirt::startNF(StartNFIn sni)
     }
 	
 	/* Create XML for VM */
-#ifdef ENABLE_KVM_DPDK_USVHOST
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-USVHOS");
+#ifdef VSWITCH_IMPLEMENTATION_OVSDPDK
+
+	//XXX: userspace vhost is only used in case of ovs-dpdk
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-USVHOST");
 
 	/* Create NICs */
 	for(unsigned int i=1;i<=n_ports;i++) {
@@ -451,7 +454,7 @@ bool Libvirt::stopNF(StopNFIn sni)
 	char *vm_name = new char[64];
 	sprintf(vm_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
 
-#ifndef ENABLE_KVM_DPDK_IVSHMEM
+#ifndef ENABLE_KVM_IVSHMEM
 	
 	assert(connection != NULL);
 

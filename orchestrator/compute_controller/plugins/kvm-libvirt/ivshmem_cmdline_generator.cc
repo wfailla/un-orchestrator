@@ -41,7 +41,7 @@ bool IvshmemCmdLineGenerator::dpdk_init(void)
 		NULL
 	};
 
-	if(rte_eal_init(sizeof(arg)/sizeof(char *) -1, (char**)arg) < 0)
+	if(rte_eal_init(sizeof(arg)/sizeof(*arg) -1, (char**)arg) < 0)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK can not be initialized");
 		pthread_mutex_unlock(&IvshmemCmdLineGenerator_mutex);
