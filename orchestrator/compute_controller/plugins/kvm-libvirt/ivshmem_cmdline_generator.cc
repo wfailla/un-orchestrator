@@ -23,23 +23,22 @@ IvshmemCmdLineGenerator::IvshmemCmdLineGenerator()
 bool IvshmemCmdLineGenerator::dpdk_init(void)
 {
 	pthread_mutex_lock(&IvshmemCmdLineGenerator_mutex);
-	
+
 	if(init)
 		return true;
 
 	/* does not exist a nicer way to do it? */
-	char arg0[] = "./something";
-	char arg1[] = "--proc-type=secondary";
-	char arg2[] = "-c";
-	char arg3[] = "0x1";
-	char arg4[] = "-n";
-	char arg5[] = "4";
-	char arg6[] = "--";
+	/* XXX: why -n is not required? */
+	char * arg[]
+	{
+		"./something",
+		"--proc-type=secondary",
+		"-c",
+		"0x1",
+		"--"
+	};
 
-	char * argv[] = {arg0, arg1, arg2, arg3, arg4, arg5, arg6};
-	int argc = 7;
-
-	if(rte_eal_init(argc, argv) < 0)
+	if(rte_eal_init(sizeof(arg)/sizeof(char *), arg) < 0)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK can not be initialized");
 		pthread_mutex_unlock(&IvshmemCmdLineGenerator_mutex);
@@ -47,7 +46,7 @@ bool IvshmemCmdLineGenerator::dpdk_init(void)
 	}
 
 	init = true;
-	
+
 	pthread_mutex_unlock(&IvshmemCmdLineGenerator_mutex);
 	return true;
 }
