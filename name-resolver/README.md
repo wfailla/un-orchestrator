@@ -1,7 +1,7 @@
 # Name-resolver
 
 The name-resolver is a module that provides information for all the possible
-implementations for a netowrk function. 
+implementations for a network function. 
 
 ## Required libraries
 
@@ -54,4 +54,4 @@ understand how to use the different options.
 
 Please check `config/example.xml` to understand the configuration file required by
 the name-resolver. This file represents a database containing information on all 
-the possible implementaions for each available network function.
+the possible implementations for each available network function.
