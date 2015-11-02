@@ -214,7 +214,7 @@ Two flavors of virtual machines are supported:
 To install the standard QEMU/KVM execution environment, execute the 
 following command:
 
-	$ sudo apt-get install libudev-dev libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
+	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
 
 #### QEMU with IVSHMEM support
 
