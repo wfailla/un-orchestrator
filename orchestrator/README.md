@@ -71,18 +71,20 @@ those ports to the running vSwitch.
 
 Currently it supports network functions as (KVM) VMs, Docker and DPDK 
 processes, although only a subset of them can be available depending on 
-the chosen vSwitch. The following table shows which execution environments
+the chosen vSwitch. If you are interested to add the support for a new 
+hypervisor, please check the file `compute_controller/README`.
+
+### Compute and network controllers: supported combinations
+
+The following table shows which execution environments
 are supported with the different vSwitches.
 
-|                            | Docker     | KVM    | DPDK  | KVM-DPDK (usvhost) | KVM-DPDK (dpdkr) |
-|----------------------------|------------|--------|-------|--------------------|------------------|
-| **xDPd**                   |    **Y**   | **Y**  | **Y** |        N           |         N        |
-| **OvS (OVSDB / OFconfig)** |    **Y**   |  **Y** |  N    |        N           |         N        |
-| **OvS-DPDK**               |    N       |  N     |   N   |       **Y**        |       **Y**      |
+|                            | Docker     |  KVM  | DPDK processes | KVM-DPDK (ivshmem) |
+|----------------------------|------------|-------|----------------|--------------------|
+| **xDPd**                   |    **Y**   | **Y** |      **Y**     |          N         |
+| **OvS (OVSDB / OFconfig)** |    **Y**   | **Y** |        N       |          N         |
+| **OvS-DPDK**               |    N       | **Y** |        N       |        **Y**       |
 
-
-If you are interested to add the support for a new hypervisor, please 
-check the file `compute_controller/README`.
 
 ### NF-FG
 

@@ -156,26 +156,21 @@ Then execute the following commands:
     ; `CONFIG_RTE_BUILD_COMBINE_LIBS=y`
     ; `CONFIG_RTE_LIBRTE_VHOST=y`
 
-To compile OvS with the DPDK support in order to use the `user space vhost` ports, execute:
-
-	$ make install T=x86_64-native-linuxapp-gcc
-	$ export DPDK_BUILD=$DPDK_DIR/x86_64-native-linuxapp-gcc/
-
-Instead, to compile OvS with the DPDK support in order to use `ivshmem` ports, execute:
+To compile OvS with the DPDK support, execute:
 
 	$ make install T=x86_64-ivshmem-linuxapp-gcc
 	$ export DPDK_BUILD=$DPDK_DIR/x86_64-ivshmem-linuxapp-gcc/
 
-Details on the `user space vhost` and `ivshmem` are available on the [DPDK website](http://dpdk.org/)
+Details on the DPDK ports, namely `user space vhost` and `ivshmem`, are available
+on the [DPDK website](http://dpdk.org/)
 
-Now, download the Open vSwitch source code from:
+Now, download the Open vSwitch source code:
 
-    http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
+    $ git clone https://github.com/openvswitch/ovs
     
 Then execute the following commands:
 
-	$ tar -xf openvswitch-2.4.0.tar.gz
-    $ cd openvswitch-2.4.0
+    $ cd ovs
 	$ ./boot.sh
 	$ ./configure --with-dpdk=$DPDK_BUILD
 	$ make
@@ -203,12 +198,42 @@ provided here:
 
 	http://docs.docker.com/installation/  
 
-### Libvirt (and KVM)
+### QEMU/KVM
 
 This is needed in order to run network functions in KVM-based virtual machines.
-To compile and install libvirt, execute the following command:
+Two flavors of virtual machines are supported:
+	* virtual machines that exchange packets with the vSwitch through the `virtio` driver.
+	  This configuration allows you to run both traditional processes and DPDK-based
+	  processes vithin the virtual machines;
+	* virtual machines that exchange packets with the vSwitch through shared memory
+	  (`ivshmem`). This configuration is oriented to performance, and only supports
+	  DPDK-based processes within the virtual machine.
+	  
+#### Standard QEMU/KVM
 
-	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
+To install the standard QEMU/KVM execution environment, execute the 
+following command:
+
+	$ sudo apt-get install libudev-dev libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
+
+#### QEMU with IVSHMEM support
+
+To compile and install the QEMU/KVM execution environment with the support to `ivshmem`,
+first execute the following command:
+
+	sudo apt-get install libudev-dev libvirt-dev libvirt-bin bridge-utils  
+
+Then, it is necessary to install a patched version of QEMU.
+In order to install the patched QEMU, you have to follow the steps below.
+
+	$ git clone https://github.com/01org/dpdk-ovs
+	$ cd dpdk-ovs/qemu
+	$ mkdir -p bin/
+	$ cd bin
+	$ sudo apt-get install git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
+	$ ../configure
+	$ make
+	$ sudo make install
 
 ### DPDK processes
 

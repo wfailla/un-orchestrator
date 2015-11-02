@@ -104,12 +104,13 @@ Configure the system (after each reboot of the physical machine):
 	$ rm -r /dev/hugepages
 	
 	; Mount huge pages directory
+	$ mkdir /dev/hugepages
 	$ mount -t hugetlbfs nodev /dev/hugepages
 	
 Set up DPDK (after each reboot of the physical machine):
 
 	$ sudo modprobe uio
-	$ sudo insmod [dpdk-folder]/kmod/igb_uio.ko
+	$ sudo insmod [dpdk-folder]/x86_64-ivshmem-linuxapp-gcc/kmod/igb_uio.ko
 	; Bind the physical network device to `igb_uio`. The following row
 	; shows how to bind eth1. Repeat the command for each network interface
 	; you want to bind.
@@ -126,6 +127,7 @@ The first time after the ovsdb database creation, initialize it:
 
 Start the switching daemon:	
 
+	$ export DB_SOCK=/usr/local/var/run/openvswitch/db.sock 
 	$ sudo ovs-vswitchd --dpdk -c 0x1 -n 4 --socket-mem 1024,0 \
 		-- unix:$DB_SOCK --pidfile --detach
 		
