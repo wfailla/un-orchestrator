@@ -61,8 +61,7 @@ on flows matched, and so on. The xcli can be run by just typing:
 
 	$ xcli
 
-
-## How to start OvS (managed through OFCONFIG) to work with the un-orchestrator
+### How to start OvS (managed through OFCONFIG) to work with the un-orchestrator [DEPRECATED]
 
 Start OvS:
 
