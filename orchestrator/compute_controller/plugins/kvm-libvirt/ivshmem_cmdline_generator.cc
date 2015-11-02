@@ -11,16 +11,19 @@
 #define DPDKR_RX_FORMAT DPDKR_FORMAT"_rx"
 
 bool IvshmemCmdLineGenerator::init = false;
+pthread_mutex_t IvshmemCmdLineGenerator::IvshmemCmdLineGenerator_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 IvshmemCmdLineGenerator::IvshmemCmdLineGenerator()
 {
-	//TODO: handle error in initializetion
+	//TODO: handle error in initialization
 	dpdk_init();
 }
 
 
 bool IvshmemCmdLineGenerator::dpdk_init(void)
 {
+	pthread_mutex_lock(&IvshmemCmdLineGenerator_mutex);
+	
 	if(init)
 		return true;
 
@@ -39,10 +42,13 @@ bool IvshmemCmdLineGenerator::dpdk_init(void)
 	if(rte_eal_init(argc, argv) < 0)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK can not be initialized");
+		pthread_mutex_unlock(&IvshmemCmdLineGenerator_mutex);
 		return false;
 	}
 
 	init = true;
+	
+	pthread_mutex_unlock(&IvshmemCmdLineGenerator_mutex);
 	return true;
 }
 
@@ -58,10 +64,7 @@ bool IvshmemCmdLineGenerator::get_cmdline(const char * port_name, char * cmdline
 
 	/*lazy dpdk initialization */
 	if(!init)
-	{
-		if(dpdk_init() < 0)
-			return false;
-	}
+		return false;
 
 	/* it has to read just one integer that is the port name */
 	if(sscanf(port_name, DPDKR_FORMAT, &port_no) != 1)

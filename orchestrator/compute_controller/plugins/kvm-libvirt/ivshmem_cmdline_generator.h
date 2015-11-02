@@ -12,6 +12,11 @@
 class IvshmemCmdLineGenerator
 {
 private:
+	/**
+	*	@brief: mutex to protect the initialization of DPDK
+	*/
+	static pthread_mutex_t IvshmemCmdLineGenerator_mutex;
+
 	static bool init;
 
 	static bool dpdk_init(void);
