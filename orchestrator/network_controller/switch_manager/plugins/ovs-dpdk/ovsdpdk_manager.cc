@@ -93,17 +93,15 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			unsigned int port_id = m_NextPortId++;
 			
 			stringstream sspn;
-#ifdef ENABLE_KVM_DPDK_USVHOST
-			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
-			
-			sspn << dpid << "_" << *nfp;
-#elif ENABLE_KVM_IVSHMEM
+#ifdef ENABLE_KVM_IVSHMEM
 			const char* port_type = "dpdkr";
 			sspn << "dpdkr" << counter;
 			counter++;
 #else
-			const char* port_type = NULL;
-			assert(0);
+			//XXX for sure this is vhost user
+			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
+			
+			sspn << dpid << "_" << *nfp;
 #endif
 			string port_name = sspn.str();
 
