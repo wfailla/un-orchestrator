@@ -8,7 +8,7 @@ In order to execute the un-orchestrator, we need to setup different components, 
   * an execution environment for virtual network functions, e.g., KVM for
     executing VM, Docker, or other.
 
-### Required libraries
+## Required libraries
 
 Several libraries are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
@@ -37,14 +37,14 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; Now install the above library according to the description provided
 	; in the cloned folder
 
-### Install the proper virtual switch
+## Install the proper virtual switch
 
 The current un-orchestrator supports different types of virtual switches.
 You have to install the one that you want to use, choosing from the
 possibilities listed in this section.
 
 
-#### xDPd
+### xDPd
 
 In order to install xDPd, you have to follow the steps below.
 
@@ -58,26 +58,9 @@ In order to install xDPd, you have to follow the steps below.
 	$ make
 	$sudo make install
 
-Now the DPDK library, which is being used by xDPd, must be properly
-configured, which can be done by launching a script that allows you to:
-
-  * build the environment x86_64-native-linuxapp-gcc
-  * Insert IGB UIO module
-  * Insert KNI module
-  * Setup hugepage mappings for non-NUMA systems (1000 should be a
-    reasonable number)
-  * Bind Ethernet device to IGB UIO module (bind all the ethernet
-    interfaces that you want to use)
-
-Let's now launch the DPDK setup script (note that the library has been downloaded
-togher with xDPd, and it is located at xdpd/libs/dpdk):
-
-	$ cd ../libs/dpdk/tools  
-	$ sudo ./setup.sh  
-
 **WARNING: Currently, xDPd is not compiling on Linux kernels newer than 3.16.0-30.**
 
-#### Open vSwitch (of-config) [DEPRECATED]
+### Open vSwitch (of-config) [DEPRECATED]
 
 OpenvSwitch can be installed with either the OVSDB or OF-CONFIG plugins.
 Although both protocols allow to control the switch (e.g., create/delete
@@ -137,7 +120,7 @@ Follow the instructions as described in the file INSTALL.md provided
 in the root folder of that repository.
 
 
-#### Open vSwitch (OVSDB)
+### Open vSwitch (OVSDB)
 
 At first, downaload the Open vSwitch source code from:
 
@@ -157,7 +140,7 @@ To start Open vSwitch at the boot of the machine (optional):
     $ chkconfig --add openvswitch
     $ chkconfig openvswitch on
 
-#### Open vSwitch (OVSDB) with DPDK support
+### Open vSwitch (OVSDB) with DPDK support
 
 Before installing OvS with DPDK, you must download and compile the DPDK library. At first, download
 the source code from:
@@ -185,7 +168,7 @@ Instead, to compile OvS with the DPDK support in order to use `ivshmem` ports, e
 
 Details on the `user space vhost` and `ivshmem` are available on the [DPDK website](http://dpdk.org/)
 
-Now, downaload the Open vSwitch source code from:
+Now, download the Open vSwitch source code from:
 
     http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
     
@@ -198,7 +181,7 @@ Then execute the following commands:
 	$ make
 	$ sudo make install
 	
-No create the ovsbd database:	
+Now create the ovsbd database:	
 	
 	$ mkdir -p /usr/local/etc/openvswitch
 	$ mkdir -p /usr/local/var/run/openvswitch
@@ -207,34 +190,34 @@ No create the ovsbd database:
 		/usr/local/share/openvswitch/vswitch.ovsschema
 
 
-### Virtual Execution Environment for network functions
+## Virtual Execution Environment for network functions
 
 The current un-orchestrator supports different types of execution environments.
 You have to install the ones that you want to use, selecting one or more
 possibilities from the ones listed in this section.
 
-#### Docker
+### Docker
 
 In order to support the Docker execution environment, follow the instructions
 provided here:
 
 	http://docs.docker.com/installation/  
 
-#### Libvirt (and KVM)
+### Libvirt (and KVM)
 
 This is needed in order to run network functions in KVM-based virtual machines.
 To compile and install libvirt, execute the following command:
 
 	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system  
 
-#### DPDK processes
+### DPDK processes
 
 In order to run VNFs implemented as DPDK processes, no further operation is required,
 since the DPDK library have alredy been installed together with the vSwitch.
 
 **WARNING: DPDK processes are only supported when using xDPd as vSwitch**
 
-### NF-FG library
+## NF-FG library
 
 These steps are mandatory only if you plan to use the Network Functions - 
 Forwarding Graph (NF-FG) defined in WP3.
@@ -244,7 +227,7 @@ Forwarding Graph (NF-FG) defined in WP3.
 	; Copy the library in the un-orchestrator folder
 	$ cp [nffg]/virtualizer3.pyc [un-orchestrator]/orchestrator/node_resource_manager/virtualizer      
 
-### Compile the un-orchestrator
+## Compile the un-orchestrator
 
 We are now ready to compile the un-orchestrator.
 

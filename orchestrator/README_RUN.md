@@ -33,7 +33,23 @@ to configure/test the un-orchestrator.
     to a network function, and then sent our from a second physical port.
 
 
-### How to start xDPd to work with the un-orchestrator
+## How to start xDPd to work with the un-orchestrator
+
+Set up DPDK (after each reboot of the physical machine), in order to:
+
+  * Build the environment x86_64-native-linuxapp-gcc
+  * Insert IGB UIO module
+  * Insert KNI module
+  * Setup hugepage mappings for non-NUMA systems (1000 should be a reasonable
+    number)
+  * Bind Ethernet device to IGB UIO module (bind all the ethernet interfaces
+    that you want to use)
+	
+	; Launch the DPDK setup script (note that the library has been downloaded togher with xDPd, 
+	; and it is located at [xdpd]/libs/dpdk):
+	$ cd [xdpd]/libs/dpdk/tools  
+	$ sudo ./setup.sh  
+
 
 Start xDPd:
 
@@ -47,7 +63,7 @@ on flows matched, and so on. The xcli can be run by just typing:
 	$ xcli
 
 
-### How to start OvS (managed through OFCONFIG) to work with the un-orchestrator
+## How to start OvS (managed through OFCONFIG) to work with the un-orchestrator
 
 Start OVS:
 
@@ -67,7 +83,7 @@ For a the full list of the supported parameters, type:
     $ ofc-server -h
     
 
-### How to start OvS (managed through OpenOVSDB) to work with the un-orchestrator
+## How to start OvS (managed through OpenOVSDB) to work with the un-orchestrator
     
 Start OVS:
 
@@ -77,7 +93,29 @@ Start ovsdb-server
 
 	$ sudo ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6632
 	
-### How to start OvS (managed through OpenOVSDB) with DPDK support to work with the un-orchestrator
+## How to start OvS (managed through OpenOVSDB) with DPDK support to work with the un-orchestrator
+
+Configure the system (after each reboot of the physical machine):
+
+	$ sudo su
+	; Set the huge pages of 2MB; 4096 huge pages should be reasonable.
+	$ echo 4096 > /proc/sys/vm/nr_hugepages
+	
+	; Umount previous hugepages dir
+	$ umount /dev/hugepages
+	$ rm -r /dev/hugepages
+	
+	; Mount huge pages directory
+	$ mount -t hugetlbfs nodev /dev/hugepages
+	
+Set up DPDK (after each reboot of the physical machine):
+
+	$ sudo modprobe uio
+	$ sudo insmod [dpdk-folder]/kmod/igb_uio.ko
+	; Bind the physical network device to `igb_uio`. The following row
+	; shows how to bind eth1. Repeat the command for each network interface
+	; you want to bind.
+	$ [dpdk-folder]/tools/dpdk_nic_bind.py --bind=igb_uio eth1
 
 Start ovsdb-server:
 
