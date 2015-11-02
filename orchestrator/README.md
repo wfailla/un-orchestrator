@@ -95,7 +95,7 @@ The un-orchestrator supports two NF-FG versions:
     (for resources and capabilities).
 
 The former format is supported natively, while the other requires setting
-up an additional library as described in README_COMPILE.md#nf-fg-library.
+up an additional library as described in `README_COMPILE.md#nf-fg-library`.
 
 
 ### Compile and run
