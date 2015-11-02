@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
