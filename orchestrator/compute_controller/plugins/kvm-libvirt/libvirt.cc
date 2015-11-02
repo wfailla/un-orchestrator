@@ -414,7 +414,7 @@ after_parsing:
 	{	
 		//Retrieve the command line
 		
-		stringstream portname;;
+		stringstream portname;
 		portname << "dpdkr" << i;
 	
 		char cmdline[512];
