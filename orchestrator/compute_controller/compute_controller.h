@@ -165,13 +165,12 @@ public:
 	*
 	*
 	*	@param:	nf_name					Name of the network function to be started
-	*	@param: number_of_ports			Number of ports of the network function
 	*	@param: ipv4PortsRequirements	IPv4 requirements (address and netmask) of the ports of the network function
 	*	@param: ethPortsRequirements	Ethernet requirements (address) of the ports of the network function
 	*	FIXME: the requirements are ignored in case of DPDK and KVM network function. Check this earlier in the code
 	*	@param: namesOfPortsOnTheSwitch	List of names of ports on the vSwitch that are related to the network function to be started
 	*/
-	bool startNF(string nf_name, unsigned int number_of_ports, map<unsigned int,pair<string,string> > ipv4PortsRequirements,map<unsigned int,string> ethPortsRequirements, list<string> namesOfPortsOnTheSwitch);
+	bool startNF(string nf_name, map<unsigned int,pair<string,string> > ipv4PortsRequirements,map<unsigned int,string> ethPortsRequirements, list<string> namesOfPortsOnTheSwitch);
 	
 	/**
 	*	@brief: Stop all the running NFs

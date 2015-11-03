@@ -34,11 +34,6 @@ private:
 	string nf_name;
 	
 	/**
-	*	@brief: number of ports of the network function
-	*/
-	unsigned int number_of_ports; //FIXME: probably useless
-	
-	/**
 	*	@brief: list of names of ports of the vSwitch that are associated with the network function
 	*/
 	list<string> namesOfPortsOnTheSwitch;
@@ -60,8 +55,8 @@ private:
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, unsigned int number_of_ports, list<string> namesOfPortsOnTheSwitch, map<unsigned int,pair<string,string> > ipv4PortsRequirements, map<unsigned int,string> ethPortsRequirements, uint64_t coreMask = 0x0) 
-		: lsiID(lsiID), nf_name(nf_name), number_of_ports(number_of_ports), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), ipv4PortsRequirements(ipv4PortsRequirements), ethPortsRequirements(ethPortsRequirements), coreMask(coreMask)
+	StartNFIn(uint64_t lsiID, string nf_name, list<string> namesOfPortsOnTheSwitch, map<unsigned int,pair<string,string> > ipv4PortsRequirements, map<unsigned int,string> ethPortsRequirements, uint64_t coreMask = 0x0) 
+		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), ipv4PortsRequirements(ipv4PortsRequirements), ethPortsRequirements(ethPortsRequirements), coreMask(coreMask)
 	{
 	}
 	
@@ -75,11 +70,6 @@ public:
 	string getNfName()
 	{
 		return nf_name;
-	}
-	
-	unsigned int getNumberOfPorts()
-	{
-		return number_of_ports;
 	}
 	
 	list<string> getNamesOfPortsOnTheSwitch()

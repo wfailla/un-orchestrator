@@ -569,7 +569,7 @@ void *startNF(void *arguments)
     to_thread_t *args = (to_thread_t *)arguments;
     assert(args->computeController != NULL);
     
-    if(!args->computeController->startNF(args->nf_name, args->number_of_ports, args->ipv4PortsRequirements, args->ethPortsRequirements, args->namesOfPortsOnTheSwitch))
+    if(!args->computeController->startNF(args->nf_name, args->ipv4PortsRequirements, args->ethPortsRequirements, args->namesOfPortsOnTheSwitch))
     	return (void*) 0;
     else
     	return (void*) 1;
@@ -732,7 +732,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		
 		map<string,list<string> > networkFunctionsPortsNameOnSwitch = clo->getNetworkFunctionsPortsNameOnSwitch();
 		
-		//FIXME: usefull? Probably no!
 		for(map<string,list<string> >::iterator nfpnos = networkFunctionsPortsNameOnSwitch.begin(); nfpnos != networkFunctionsPortsNameOnSwitch.end(); nfpnos++)
 			lsi->setNetworkFunctionsPortsNameOnSwitch(nfpnos->first,nfpnos->second);
 		
@@ -871,7 +870,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	{
 		
 		thr[i].nf_name = nf->first;
-		thr[i].number_of_ports = nf->second.size();
 		thr[i].ipv4PortsRequirements = graph->getNetworkFunctionIPv4PortsRequirements(nf->first);
 		thr[i].ethPortsRequirements = graph->getNetworkFunctionEthernetPortsRequirements(nf->first);
 		thr[i].computeController = computeController;
@@ -1347,7 +1345,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		list<string> nfPortsNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
 	
-		if(!computeController->startNF(nf->first, nf->second.size(),newPiece->getNetworkFunctionIPv4PortsRequirements(nf->first),newPiece->getNetworkFunctionEthernetPortsRequirements(nf->first),nfPortsNameOnSwitch))
+		if(!computeController->startNF(nf->first, newPiece->getNetworkFunctionIPv4PortsRequirements(nf->first),newPiece->getNetworkFunctionEthernetPortsRequirements(nf->first),nfPortsNameOnSwitch))
 		{
 			//TODO: no idea on what I have to do at this point
 			assert(0);
