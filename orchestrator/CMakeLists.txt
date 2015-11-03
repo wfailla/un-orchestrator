@@ -96,7 +96,7 @@ ENDIF(ENABLE_DOCKER)
 OPTION(
 	ENABLE_DPDK_PROCESSES
 	"Turn on the support of NFs implemented in as DPDK processes"
-	ON
+	OFF
 )
 IF(ENABLE_DPDK_PROCESSES)
 	ADD_DEFINITIONS(-DENABLE_DPDK_PROCESSES)
@@ -438,8 +438,26 @@ IF(UNIFY_NFFG)
 	)
 ENDIF(UNIFY_NFFG)
 
+###############################################################################
+
+#Check unsupported configurations
+
 IF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
 	#This configuration (ovs-dpdk + docker) is not supported 
 	message(FATAL_ERROR "OvS-DPDK not supported with Docker")
 ENDIF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
 
+IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported 
+	message(FATAL_ERROR "OvS not supported with Dpdk processes")
+ENDIF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+
+IF((${ENABLE_KVM_INDEX} EQUAL 2) AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+	#This configuration (ovs (ofconfig/ovsdb) + kvm-ivshmem) is not supported 
+	message(FATAL_ERROR "OvS not supported with KVM-IVSHMEM")
+ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+
+IF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
+	#This configuration (xdpd + kvm-ivshmem) is not supported 
+	message(FATAL_ERROR "xDPd not supported with KVM-IVSHMEM")
+ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
