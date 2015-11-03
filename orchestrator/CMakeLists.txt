@@ -438,3 +438,8 @@ IF(UNIFY_NFFG)
 	)
 ENDIF(UNIFY_NFFG)
 
+IF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
+	#This configuration (ovs-dpdk + docker) is not supported 
+	message(FATAL_ERROR "OvS-DPDK not supported with Docker")
+ENDIF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
+
