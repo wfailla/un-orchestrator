@@ -102,7 +102,7 @@ bool Native::isSupported(Description& descr) {
 
 			if(capabilities->find(*i) == capabilities->end()){
 				//not found
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Capability %s not found", i->c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Capability %s required by native function is not supported", i->c_str());
 				return false;
 			}
 		}

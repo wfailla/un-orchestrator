@@ -2,7 +2,7 @@
 
 #Author: Sergio Nuccio
 #Date: October 31st 2015
-#Brief: dummy native network function that does nothing
+#Brief: dummy native network function that marks incoming and outgoing traffic
 
 #command line: 
 #	sudo ./nativeNF_example.sh $1 $2 $3 $4 $5

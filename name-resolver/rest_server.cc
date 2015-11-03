@@ -87,7 +87,7 @@ bool RestServer::init(string fileName)
 
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Network function: %s",attr_name);
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Number of ports: %d",nports);
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Description: %s",attr_summary);
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Summary: %s",attr_summary);
 
 			string name((const char*)attr_name);
 			string summary((const char*)attr_summary);
