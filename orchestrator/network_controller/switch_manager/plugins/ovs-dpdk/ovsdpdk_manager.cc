@@ -3,7 +3,7 @@
 /* TODO - These should come from an orchestrator config file (currently, there is only one for the UN ports) */
 static const char* OVS_BASE_SOCK_PATH = "/usr/local/var/run/openvswitch/";
 
-#ifdef ENABLE_KVM_IVSHMEM	
+#if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
 	int OVSDPDKManager::nextportname = 1;	
 #endif
 
@@ -96,7 +96,9 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			unsigned int port_id = m_NextPortId++;
 			
 			stringstream sspn;
-#ifdef ENABLE_KVM_IVSHMEM
+#if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
+			//In these cases we use the rte_rings to exchange packets with the VNFs
+
 			const char* port_type = "dpdkr";
 			sspn << "dpdkr" << nextportname;
 			nextportname++;

@@ -31,7 +31,7 @@ private:
 	unsigned int m_NextLsiId;
 	unsigned int m_NextPortId;
 	
-#ifdef ENABLE_KVM_IVSHMEM	
+#if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
 	static int nextportname;	
 #endif
 
