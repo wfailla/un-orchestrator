@@ -334,7 +334,6 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	char domain_name[64];	
 	string nf_name = sni.getNfName();
-	unsigned int n_ports = sni.getNumberOfPorts();
 	string uri_image = description->getURI();
 
 	/* Domain name */
@@ -413,15 +412,17 @@ after_parsing:
 	
 	
 	stringstream ivshmemcmdline;
-	for(unsigned int i=1; i <= n_ports; i++)
+	//for(unsigned int i=1; i <= n_ports; i++)
+	
+	
+	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	
+	for(list<string>::iterator name = namesOfPortsOnTheSwitch.begin(); name != namesOfPortsOnTheSwitch.end(); name++)
 	{	
 		//Retrieve the command line
 		
-		stringstream portname;
-		portname << "dpdkr" << i;
-	
 		char cmdline[512];
-		if(!cmdgenerator.get_cmdline(portname.str().c_str(), cmdline, 512))
+		if(!cmdgenerator.get_cmdline((*name).c_str(), cmdline, 512))
 			return false;
 			
 		ivshmemcmdline << " " << cmdline;

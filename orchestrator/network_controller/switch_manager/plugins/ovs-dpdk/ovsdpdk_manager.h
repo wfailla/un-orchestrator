@@ -41,17 +41,22 @@ public:
 	//
 	
 	CreateLsiOut *createLsi(CreateLsiIn cli);
-
-	AddNFportsOut *addNFPorts(AddNFportsIn anpi);
-
-	AddVirtualLinkOut *addVirtualLink(AddVirtualLinkIn avli);
-
+	
 	void destroyLsi(uint64_t dpid);
 
+	//TODO: not implemented yet
+	AddNFportsOut *addNFPorts(AddNFportsIn anpi);
+	
+	//TODO: not implemented yet
 	void destroyNFPorts(DestroyNFportsIn dnpi);
 
+	//TODO: not implemented yet
+	AddVirtualLinkOut *addVirtualLink(AddVirtualLinkIn avli);
+
+	//TODO: not implemented yet
 	void destroyVirtualLink(DestroyVirtualLinkIn dvli); 
 
+	//TODO: not implemented yet
 	void checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi);
 };
 

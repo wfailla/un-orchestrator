@@ -13,7 +13,6 @@ OVSDPDKManager::~OVSDPDKManager()
 
 void OVSDPDKManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 { // SwitchManager implementation
-	//logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "checkPhysicalInterfaces(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
 	
 	//TODO: not implemented yet
 }
@@ -80,6 +79,8 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 	list<pair<unsigned int, unsigned int> > out_virtual_links;
 	set<string> nfs = cli.getNetworkFunctionsName();
 	
+	map<string,list<string> > out_nf_ports_name_on_switch;
+	
 #ifdef ENABLE_KVM_IVSHMEM
 	//FIXME: Must be global
 	int counter = 1;	
@@ -89,6 +90,9 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 		nf_t nf_type = nf_types[*nf];
 		list<string> nf_ports = cli.getNetworkFunctionsPortNames(*nf);
 		PortsNameIdMap nf_ports_ids;
+		
+		list<string> port_name_on_switch;
+		
 		for(list<string>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++) {
 			unsigned int port_id = m_NextPortId++;
 			
@@ -104,6 +108,10 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			sspn << dpid << "_" << *nfp;
 #endif
 			string port_name = sspn.str();
+			
+			port_name_on_switch.push_back(port_name);
+			
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, " -------> %s", nfp->c_str());
 
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
 			stringstream cmd_add;
@@ -120,6 +128,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			nf_ports_ids.insert(PortsNameIdMap::value_type(*nfp, port_id));
 		}
 		out_nf_ports.insert(NfPortsMapMap::value_type(*nf, nf_ports_ids));
+		out_nf_ports_name_on_switch[*nf] = port_name_on_switch;
 	}
 
 	// Add Ports for Virtual Links (patch ports)
@@ -165,7 +174,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 		vlink_n++;
 	}
 
-	CreateLsiOut *clo = new CreateLsiOut(dpid, out_physical_ports, out_nf_ports, out_virtual_links);
+	CreateLsiOut *clo = new CreateLsiOut(dpid, out_physical_ports, out_nf_ports, out_nf_ports_name_on_switch, out_virtual_links);
 	return clo;
 }
 

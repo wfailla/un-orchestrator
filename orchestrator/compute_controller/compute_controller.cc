@@ -491,9 +491,12 @@ void ComputeController::setLsiID(uint64_t lsiID)
 //NF:1 and NF:2, but this could not be true.
 //Moreover, I'm creating the name in this way: lsiID:nfName:x, where x goes from 0 to
 //the number of ports.. But xDPd could give different names to the ports!
-bool ComputeController::startNF(string nf_name, unsigned int number_of_ports, map<unsigned int,pair<string,string> > ipv4PortsRequirements,map<unsigned int,string> ethPortsRequirements)
+bool ComputeController::startNF(string nf_name, unsigned int number_of_ports, map<unsigned int,pair<string,string> > ipv4PortsRequirements,map<unsigned int,string> ethPortsRequirements, list<string> namesOfPortsOnTheSwitch)
 {
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"",nf_name.c_str());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
+	for(list<string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++)
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*it).c_str());
 
 	if(nfs.count(nf_name) == 0)
 	{
@@ -505,7 +508,8 @@ bool ComputeController::startNF(string nf_name, unsigned int number_of_ports, ma
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
 	
-	StartNFIn sni(lsiID, nf_name, number_of_ports, ipv4PortsRequirements, ethPortsRequirements, calculateCoreMask(nfsManager->getCores()));
+	
+	StartNFIn sni(lsiID, nf_name, number_of_ports, namesOfPortsOnTheSwitch, ipv4PortsRequirements, ethPortsRequirements, calculateCoreMask(nfsManager->getCores()));
 
 	if(!nfsManager->startNF(sni))
 	{
