@@ -66,7 +66,7 @@ public:
 		//[+] Add here other implementations for the execution environment
 
 		assert(0);
-		return -1;
+		return 0;
 	}
 
 	static bool isValid(string type)
