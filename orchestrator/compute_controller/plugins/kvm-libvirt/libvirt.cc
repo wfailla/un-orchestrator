@@ -4,6 +4,7 @@
 #ifndef ENABLE_KVM_IVSHMEM
 	virConnectPtr Libvirt::connection = NULL;
 #else
+	pthread_mutex_t Libvirt::Libvirt_mutex = PTHREAD_MUTEX_INITIALIZER;
 	unsigned int Libvirt::next_tcp_port = FIRST_PORT_FOR_MONITOR;
 	map<string,string> Libvirt::monitor;
 #endif
@@ -430,14 +431,16 @@ after_parsing:
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command line part for ivshmem '%s'",ivshmemcmdline.str().c_str());
 	
+	pthread_mutex_lock(&Libvirt_mutex);
 	
 	stringstream command;
 	command << QEMU << " " << domain_name << " " << next_tcp_port << " " << disk_path << "'" << ivshmemcmdline.str().c_str() << "'";
 	
 	stringstream portstream;
 	portstream << next_tcp_port;
-	monitor[domain_name] = portstream.str();	//FIXME: protect with mutex?
-	next_tcp_port++; 						//FIXME: protect with mutex?
+	monitor[domain_name] = portstream.str();	
+	next_tcp_port++; 							
+	pthread_mutex_unlock(&Libvirt_mutex);
 	
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;

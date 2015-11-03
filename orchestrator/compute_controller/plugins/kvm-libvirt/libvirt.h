@@ -50,6 +50,11 @@ private:
 #else
 
 	/**
+	*	@brief: mutex to protect the selection of the TCP port for the monitor
+	*/
+	static pthread_mutex_t Libvirt_mutex;
+
+	/**
 	*	@brief: TCP port to be assigned to the VM monitor to
 	*		the next VM to be executed
 	*/
