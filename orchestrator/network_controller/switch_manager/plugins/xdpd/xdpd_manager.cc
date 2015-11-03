@@ -315,6 +315,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 	map<string,map<string, unsigned int> >  network_functions_ports;
 	list<pair<unsigned int, unsigned int> > virtual_links;
 	
+	map<string,list<string> > out_nf_ports_name_on_switch;
 	
 	list<string> ports = cli.getPhysicalPortsName();
 	bool hasWireless = false;
@@ -428,12 +429,13 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 			
 				string name;
 				map<string,unsigned int> ports;
+				list<string> port_name_on_switch;
 				
 				bool foundName = false;
 				bool foundPorts = false;
 
 				for( Object::const_iterator n = nf.begin(); n != nf.end(); ++n )
-				{
+				{				
 					const string& n_name  = n->first;
 		    		const Value&  n_value = n->second;
 		    		
@@ -476,6 +478,9 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 								throw XDPDManagerException();		    					
 	    					}
 							ports[port_name] = port_id;
+							port_name_on_switch.push_back(port_name);
+							
+							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "----------------> %s",port_name.c_str());
 						}
 						if(ports_array.size() > 0)
 			    			foundPorts = true;
@@ -484,6 +489,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 		    	if(foundName && foundPorts)
 		    	{
 		    		network_functions_ports[name] = ports;
+		    		out_nf_ports_name_on_switch[name] = port_name_on_switch;
 
 					set<string> names = cli.getNetworkFunctionsName();
 		    		if(names.count(name) == 0)
@@ -580,7 +586,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 	
 	dpdiWirelessInterfaces[dpid] = wirelessList;
 	
-	CreateLsiOut *clo = new CreateLsiOut(dpid,physical_ports,network_functions_ports, virtual_links);
+	CreateLsiOut *clo = new CreateLsiOut(dpid,physical_ports,network_functions_ports, out_nf_ports_name_on_switch, virtual_links);
 	return clo;
 }
 bool XDPDManager::findCommand(Object message, string expected)
@@ -697,6 +703,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 {
 	bool foundNFs = false;
 	map<string, unsigned int> ports;
+	list<string> ports_name_on_switch;
 	
 	for( Object::const_iterator i = message.begin(); i != message.end(); ++i )
     {
@@ -787,6 +794,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 							}
 	    					
 							ports[port_name] = port_id;
+							ports_name_on_switch.push_back(port_name);
 						}
 						if(ports_array.size() > 0)
 			    			foundPorts = true;
@@ -813,7 +821,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 		throw XDPDManagerException();
 	}
 	
-	AddNFportsOut *anpo = new AddNFportsOut(anpi.getNFname(),ports);
+	AddNFportsOut *anpo = new AddNFportsOut(anpi.getNFname(),ports,ports_name_on_switch);
 	
 	return anpo;
 }
