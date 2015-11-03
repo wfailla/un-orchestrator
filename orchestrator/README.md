@@ -83,7 +83,7 @@ are supported with the different vSwitches.
 |----------------------------|------------|-------|--------------------|----------------|
 | **xDPd**                   |    **Y**   | **Y** |          N         |      **Y**     |
 | **OvS (OVSDB / OFconfig)** |    **Y**   | **Y** |          N         |        N       |
-| **OvS-DPDK**               |    N       | **Y** |        **Y**       | N (in progress)|
+| **OvS-DPDK**               |    N       | **Y** |        **Y**       |      **Y**     |
 
 
 ### NF-FG

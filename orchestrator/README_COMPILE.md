@@ -240,8 +240,6 @@ In order to install the patched QEMU, you have to follow the steps below.
 In order to run VNFs implemented as DPDK processes, no further operation is required,
 since the DPDK library have alredy been installed together with the vSwitch.
 
-**WARNING: DPDK processes are only supported when using xDPd as vSwitch**
-
 ## NF-FG library
 
 These steps are mandatory only if you plan to use the Network Functions - 
