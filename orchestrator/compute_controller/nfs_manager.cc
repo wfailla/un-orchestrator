@@ -16,5 +16,5 @@ string NFsManager::getCores()
 }
 
 NFsManager::~NFsManager(){
-	delete description;
+
 }

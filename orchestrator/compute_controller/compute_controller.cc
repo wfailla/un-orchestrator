@@ -225,6 +225,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						{
 							foundType = true;
 							type = impl_value.getString();
+
 							if(!NFType::isValid(type))
 							{
 								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid description type \"%s\". Skip it.",type.c_str());
@@ -280,7 +281,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							return false;
 						}
 						possibleDescriptions.push_back(dynamic_cast<Description*>(new DPDKDescription(type,uri,cores,location)));
-						break;
+						continue;
 					}
 					else if(type == "native")
 					{
@@ -296,7 +297,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							dep_list->push_back(s);
 						}
 						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,location,dep_list)));
-						break;
+						continue;
 					}
 					else if(foundCores || foundLocation || foundDependencies)
 					{
@@ -305,9 +306,6 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					}
 
 					possibleDescriptions.push_back(new Description(type,uri));
-					/*
-					 * TODO: add description only for specific type of execution environment
-					 */
 				}
 		    } //end if(name == "descriptions")
 		    else
@@ -358,10 +356,200 @@ bool ComputeController::parseAnswer(string answer, string nf)
 	return true;
 }
 
+void ComputeController::checkSupportedDescriptions() {
+
+	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++){
+
+		NF *current = nf->second;
+
+		list<Description*> descriptions = current->getAvailableDescriptions();
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d descriptions available for NF \"%s\".", descriptions.size(), nf->first.c_str());
+
+		list<Description*>::iterator descr;
+		for(descr = descriptions.begin(); descr != descriptions.end(); descr++){
+
+			switch((*descr)->getType()){
+
+			#ifdef ENABLE_DOCKER
+								//Manage Docker execution environment
+							case DOCKER:{
+								NFsManager *dockerManager = new Docker();
+								if(dockerManager->isSupported(**descr)){
+									(*descr)->setSupported(true);
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is supported.",nf->first.c_str());
+								} else {
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is not supported.",nf->first.c_str());
+								}
+								delete dockerManager;
+							}
+							break;
+			#endif
+
+								//Manage DPDK execution environment
+							case DPDK:{
+								NFsManager *dpdkManager = new Dpdk();
+								if(dpdkManager->isSupported(**descr)){
+									(*descr)->setSupported(true);
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is supported.",nf->first.c_str());
+								} else {
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is not supported.",nf->first.c_str());
+								}
+								delete dpdkManager;
+							}
+							break;
+
+			#ifdef ENABLE_KVM
+								//Manage QEMU/KVM execution environment through libvirt
+							case KVM:{
+								NFsManager *libvirtManager = new Libvirt();
+								if(libvirtManager->isSupported(**descr)){
+									(*descr)->setSupported(true);
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is supported.",nf->first.c_str());
+								} else {
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is not supported.",nf->first.c_str());
+								}
+								delete libvirtManager;
+							}
+							break;
+			#endif
+
+			#ifdef ENABLE_NATIVE
+								//Manage NATIVE execution environment
+							case NATIVE:
+								NFsManager *nativeManager;
+								try{
+									nativeManager = new Native();
+									if(nativeManager->isSupported(**descr)){
+										(*descr)->setSupported(true);
+										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is supported.",nf->first.c_str());
+									} else {
+										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is not supported.",nf->first.c_str());
+									}
+									delete nativeManager;
+								} catch (exception& e) {
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
+									delete nativeManager;
+								}
+								break;
+			#endif
+								//[+] Add here other implementations for the execution environment
+
+							default:
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available execution environments for description type %s", NFType::toString((*descr)->getType()).c_str());
+							}
+
+		}
+
+	}
+
+}
+
+NFsManager* ComputeController::selectNFImplementation(list<Description*> descriptions) {
+
+	list<Description*>::iterator descr;
+
+	/*
+	 * TODO: descriptions.sort({COMPARATOR})
+	 */
+
+	bool selected = false;
+
+	for(descr = descriptions.begin(); descr != descriptions.end() && !selected; descr++) {
+
+		if((*descr)->isSupported()){
+
+			switch((*descr)->getType()){
+
+#ifdef ENABLE_DOCKER
+				//Manage Docker execution environment
+			case DOCKER:{
+
+				NFsManager *dockerManager = new Docker();
+				dockerManager->setDescription(*descr);
+
+				selected = true;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description has been selected.");
+
+				return dockerManager;
+
+			}
+			break;
+#endif
+
+				//Manage DPDK execution environment
+			case DPDK:{
+
+				NFsManager *dpdkManager = new Dpdk();
+				dpdkManager->setDescription(*descr);
+
+				selected = true;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description has been selected.");
+
+				return dpdkManager;
+
+			}
+			break;
+
+#ifdef ENABLE_KVM
+				//Manage QEMU/KVM execution environment through libvirt
+			case KVM:{
+
+				NFsManager *libvirtManager = new Libvirt();
+				libvirtManager->setDescription(*descr);
+
+				selected = true;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description has been selected.");
+
+				return libvirtManager;
+
+			}
+			break;
+#endif
+
+#ifdef ENABLE_NATIVE
+				//Manage NATIVE execution environment
+			case NATIVE:
+
+				NFsManager *nativeManager;
+				try{
+
+					nativeManager = new Native();
+					nativeManager->setDescription(*descr);
+
+					selected = true;
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description has been selected.");
+
+					return nativeManager;
+
+				} catch (exception& e) {
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
+					delete nativeManager;
+				}
+				break;
+#endif
+				//[+] Add here other implementations for the execution environment
+
+			default:
+				assert(0);
+			}
+		}
+	}
+	return NULL;
+}
+
+
 bool ComputeController::selectImplementation()
 {
-	//NFsManager *manager = NULL;
-	//Select an implementation of the NF
+	/**
+	 * set boolean `supported` in each supported network function
+	 */
+	checkSupportedDescriptions();
+
+
+	/**
+	 * Select an implementation of the NF
+	 */
 	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++){
 
 		NF *current = nf->second;
@@ -370,86 +558,19 @@ bool ComputeController::selectImplementation()
 		if(current->getSelectedDescription() == NULL){
 
 			list<Description*> descriptions = current->getAvailableDescriptions();
-			/*
-			 * TODO: descriptions.sort({COMPARATOR})
-			 */
-			list<Description*>::iterator descr;
-			bool selected = false;
-			for(descr = descriptions.begin(); descr != descriptions.end() && !selected; descr++){
 
-				switch((*descr)->getType()){
+			NFsManager *selectedImplementation = selectNFImplementation(descriptions);
 
-#ifdef ENABLE_DOCKER
-					//Manage Docker execution environment
-				case DOCKER:{
-					NFsManager *dockerManager = new Docker();
-					if(dockerManager->isSupported(**descr)){
-						dockerManager->setDescription(*descr);
-						current->setSelectedDescription(dockerManager);
-						selected = true;
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description has been selected for NF \"%s\".",nf->first.c_str());
-					} else
-						delete dockerManager;
-				}
-				break;
-#endif
+			if(selectedImplementation == NULL) {
 
-					//Manage DPDK execution environment
-				case DPDK:{
-					NFsManager *dpdkManager = new Dpdk();
-					if(dpdkManager->isSupported(**descr)){
-						dpdkManager->setDescription(*descr);
-						current->setSelectedDescription(dpdkManager);
-						selected = true;
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description has been selected for NF \"%s\".",nf->first.c_str());
-					} else
-						delete dpdkManager;
-				}
-				break;
-
-#ifdef ENABLE_KVM
-					//Manage QEMU/KVM execution environment through libvirt
-				case KVM:{
-					NFsManager *libvirtManager = new Libvirt();
-					if(libvirtManager->isSupported(**descr)){
-						libvirtManager->setDescription(*descr);
-						current->setSelectedDescription(libvirtManager);
-						selected = true;
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description has been selected for NF \"%s\".",nf->first.c_str());
-					} else
-						delete libvirtManager;
-				}
-				break;
-#endif
-
-#ifdef ENABLE_NATIVE
-					//Manage NATIVE execution environment
-				case NATIVE:
-					NFsManager *nativeManager;
-					try{
-						nativeManager = new Native();
-						if(nativeManager->isSupported(**descr)){
-							nativeManager->setDescription(*descr);
-							current->setSelectedDescription(nativeManager);
-							selected = true;
-							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description has been selected for NF \"%s\".",nf->first.c_str());
-						} else {
-							delete nativeManager;
-						}
-					} catch (exception& e) {
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
-						delete nativeManager;
-						return false;
-					}
-					break;
-#endif
-					//[+] Add here other implementations for the execution environment
-
-				default:
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available execution environments for description %s", NFType::toString((*descr)->getType()).c_str());
-				}
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available description for NF %s", nf->first.c_str());
+				return false;
 
 			}
+
+			current->setSelectedDescription(selectedImplementation);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Implementation has been selected for NF \"%s\".",nf->first.c_str());
+
 		}
 	}
 
@@ -458,7 +579,9 @@ bool ComputeController::selectImplementation()
 	}
 	
 	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported description!");
+
 	return false;
+
 }
 
 bool ComputeController::allSelected()

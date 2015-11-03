@@ -115,6 +115,13 @@ private:
 	*/
 	bool allSelected();
 
+	/**
+	 * 	@brief: Check if each description is supported or not
+	 */
+	void checkSupportedDescriptions();
+
+	NFsManager* selectNFImplementation(list<Description*> descriptions);
+
 public:
 	ComputeController();
 	~ComputeController();

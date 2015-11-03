@@ -22,6 +22,7 @@ friend NFsManager;
 private:
 	nf_t type;
 	string uri;
+	bool supported;
 	
 public:
 	Description(nf_t type, string uri);
@@ -30,6 +31,8 @@ public:
 	
 	string getURI();
 	nf_t getType();
+	void setSupported(bool supported);
+	bool isSupported();
 };
 
 #endif //DESCRIPTION_H_

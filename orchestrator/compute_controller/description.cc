@@ -1,8 +1,13 @@
 #include "description.h"
 
-Description::Description(nf_t type, string uri) : type(type), uri(uri) {}
+Description::Description(nf_t type, string uri) : type(type), uri(uri)
+{
+	supported = false;
+}
 
 Description::Description(string type, string uri) : uri(uri) {
+
+	supported = false;
 
 	if(type == "dpdk")
 	{
@@ -47,5 +52,13 @@ nf_t Description::getType()
 string Description::getURI()
 {
 	return uri;
+}
+
+bool Description::isSupported() {
+	return supported;
+}
+
+void Description::setSupported(bool supported) {
+	this->supported = supported;
 }
 
