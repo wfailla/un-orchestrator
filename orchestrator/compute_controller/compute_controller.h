@@ -98,9 +98,9 @@ private:
 	uint64_t calculateCoreMask(string coresRequired);
 	
 	/**
-	*	@brief: For all the NF without an alredy selected implementation, select 
+	*	@brief: For all the NF without an already selected implementation, select
 	*	an implementation of the desired type, if at least one implementation
-	*	of such a type is availabled
+	*	of such a type is available
 	*
 	*	@param:	desiredType	Type of the implementation to be selected
 	*/
