@@ -30,6 +30,10 @@ class OVSDPDKManager : public SwitchManager
 private:
 	unsigned int m_NextLsiId;
 	unsigned int m_NextPortId;
+	
+#ifdef ENABLE_KVM_IVSHMEM	
+	static int nextportname;	
+#endif
 
 public:
 	OVSDPDKManager();

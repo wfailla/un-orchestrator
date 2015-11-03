@@ -3,6 +3,10 @@
 /* TODO - These should come from an orchestrator config file (currently, there is only one for the UN ports) */
 static const char* OVS_BASE_SOCK_PATH = "/usr/local/var/run/openvswitch/";
 
+#ifdef ENABLE_KVM_IVSHMEM	
+	int OVSDPDKManager::nextportname = 1;	
+#endif
+
 OVSDPDKManager::OVSDPDKManager() : m_NextLsiId(0), m_NextPortId(1) /* 0 is not valid for OVS */
 {
 }
@@ -81,11 +85,6 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 	
 	map<string,list<string> > out_nf_ports_name_on_switch;
 	
-#ifdef ENABLE_KVM_IVSHMEM
-	//FIXME: Must be global
-	int counter = 1;	
-#endif
-	
 	for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++) {
 		nf_t nf_type = nf_types[*nf];
 		list<string> nf_ports = cli.getNetworkFunctionsPortNames(*nf);
@@ -99,8 +98,8 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			stringstream sspn;
 #ifdef ENABLE_KVM_IVSHMEM
 			const char* port_type = "dpdkr";
-			sspn << "dpdkr" << counter;
-			counter++;
+			sspn << "dpdkr" << nextportname;
+			nextportname++;
 #else
 			//XXX for sure this is vhost user
 			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
@@ -111,7 +110,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			
 			port_name_on_switch.push_back(port_name);
 			
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, " -------> %s", nfp->c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function port '%s' corresponds to the port '%s' on the switch", nfp->c_str(),port_name.c_str());
 
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
 			stringstream cmd_add;

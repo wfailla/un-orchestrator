@@ -722,13 +722,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		//TODO: check if the number of vnfs and ports is the same required 
 		for(map<string,map<string, unsigned int> >::iterator nfp = nfsports.begin(); nfp != nfsports.end(); nfp++)
 		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "---> network function %s",nfp->first.c_str());
-			
-			map<string, unsigned int> ports = nfp->second;
-			
-			for(map<string, unsigned int>::iterator it = ports.begin(); it != ports.end(); it++)
-				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\t---> port %s",it->first.c_str());
-		
 			if(!lsi->setNfPortsID(nfp->first,nfp->second))
 			{
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required network function port  related to the network function \"%s\" has been attached to the tenant-lsi",nfp->first.c_str());
@@ -736,7 +729,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				throw GraphManagerException();
 			}			
 		}
-				
 		
 		map<string,list<string> > networkFunctionsPortsNameOnSwitch = clo->getNetworkFunctionsPortsNameOnSwitch();
 		
