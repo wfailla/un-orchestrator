@@ -93,6 +93,16 @@ IF(ENABLE_DOCKER)
 	ADD_DEFINITIONS(-DENABLE_DOCKER)
 ENDIF(ENABLE_DOCKER)
 
+OPTION(
+	ENABLE_DPDK_PROCESSES
+	"Turn on the support of NFs implemented in as DPDK processes"
+	ON
+)
+IF(ENABLE_DPDK_PROCESSES)
+	ADD_DEFINITIONS(-DENABLE_DPDK_PROCESSES)
+ENDIF(ENABLE_DPDK_PROCESSES)
+
+
 OPTION(DEBUG_KVM 
 	"Turn on the debug of the KVM-libvirt compute plugin" 
 	OFF
@@ -217,10 +227,6 @@ SET(SOURCES
 	compute_controller/startNF_in.h
 	compute_controller/stopNF_in.h
 	
-	compute_controller/plugins/dpdk/dpdk.h
-	compute_controller/plugins/dpdk/dpdk.cc
-	compute_controller/plugins/dpdk/dpdk_constants.h
-	
 	node_resource_manager/rest_server/rest_server.h
 	node_resource_manager/rest_server/rest_server.cc
 	node_resource_manager/rest_server/match_parser.h
@@ -327,6 +333,21 @@ ELSE()
 	)
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
+
+IF(ENABLE_DPDK_PROCESSES)
+    SET(SOURCES7
+    ${SOURCES6}
+	compute_controller/plugins/dpdk/dpdk.h
+	compute_controller/plugins/dpdk/dpdk.cc
+	compute_controller/plugins/dpdk/dpdk_constants.h
+	)
+ELSE()
+     SET(SOURCES7
+         ${SOURCES6}
+    	)
+ENDIF(ENABLE_DPDK_PROCESSES)
+
+
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
@@ -349,7 +370,7 @@ ENDIF(UNIFY_NFFG)
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES6}
+	${SOURCES7}
 )
 
 LINK_DIRECTORIES(

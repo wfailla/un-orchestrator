@@ -27,7 +27,9 @@
 
 #include "nfs_manager.h"
 
-#include "plugins/dpdk/dpdk.h"
+#ifdef ENABLE_DPDK_PROCESSES
+	#include "plugins/dpdk/dpdk.h"
+#endif
 #ifdef ENABLE_DOCKER
 	#include "plugins/docker/docker.h"
 #endif

@@ -350,6 +350,7 @@ bool ComputeController::selectImplementation()
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker deamon is not running (at least, it is not running with the LXC implementation).");
 #endif
 
+#ifdef ENABLE_DPDK_PROCESSES
 	//Manage DPDK execution environment
 
 	manager = new Dpdk();
@@ -363,6 +364,7 @@ bool ComputeController::selectImplementation()
 	}
 	else
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK is not supported.");
+#endif
 
 #ifdef ENABLE_KVM
 	//Manage QEMU/KVM execution environment through libvirt
@@ -410,9 +412,11 @@ void ComputeController::selectImplementation(nf_t desiredType)
 					//Create the proper NFsManager according to the selected type
 					switch(desiredType)
 					{
+#ifdef ENABLE_DPDK_PROCESSES
 						case DPDK:
 							manager = new Dpdk();
 							break;
+#endif
 #ifdef ENABLE_DOCKER
 						case DOCKER:
 							manager = new Docker();
