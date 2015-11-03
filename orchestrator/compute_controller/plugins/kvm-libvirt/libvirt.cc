@@ -83,9 +83,10 @@ bool Libvirt::startNF(StartNFIn sni)
 	const char *xmlconfig = NULL;
 	
 	string nf_name = sni.getNfName();
-	unsigned int n_ports = sni.getNumberOfPorts();
 	map<unsigned int,string> ethPortsRequirements = sni.getEthPortsRequirements();
 	string uri_image = description->getURI();
+	
+	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 
 	/* Domain name */
 	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), nf_name.c_str());
@@ -230,10 +231,14 @@ bool Libvirt::startNF(StartNFIn sni)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-USVHOST");
 
 	/* Create NICs */
-	for(unsigned int i=1;i<=n_ports;i++) {
-		// TODO: This is OVS vhostuser specific - Should be coordinated with network plugin part...
+	
+	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++) 
+	{
+	
 		char sock_path[255];
-		sprintf(sock_path, "%s/%s_%u", OVS_BASE_SOCK_PATH, domain_name, i);
+//		sprintf(sock_path, "%s/%s_%u", OVS_BASE_SOCK_PATH, domain_name, i);
+		sprintf(sock_path, "%s/%s", OVS_BASE_SOCK_PATH, pn->c_str());
+
 		xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
 
@@ -263,17 +268,15 @@ bool Libvirt::startNF(StartNFIn sni)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is a 'standard process' in KVM");
 
 	/* Create NICs */
-	for(unsigned int i=1;i<=n_ports;i++) {
-		char port_name[64] = "";
-		
-		/*name of port --> lsiID_nfname_i*/		
-		sprintf(port_name, "%" PRIu64 "_%s_%u", sni.getLsiID(), nf_name.c_str(), i);
+	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++) 
+	{
+		string port_name = *pn;
 		
 		xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 	    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
 	    xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
-	    xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name);
+	    xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
 	    xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
 
 	    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
