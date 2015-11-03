@@ -130,7 +130,7 @@ bool RestServer::init(string fileName)
 
 					if(!strcmp((const char*)cur_descr->name, KVM_DESCRIPTION)){
 
-						nf->addImplementation(new Description(DOCKER,uri));
+						nf->addImplementation(new Description(KVM,uri));
 					} else
 
 					if(!strcmp((const char*)cur_descr->name, NATIVE_DESCRIPTION)){
