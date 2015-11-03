@@ -461,3 +461,5 @@ IF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) 
 	#This configuration (xdpd + kvm-ivshmem) is not supported 
 	message(FATAL_ERROR "xDPd not supported with KVM-IVSHMEM")
 ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
+
+#TODO: check the case in which no computing environment is enabled

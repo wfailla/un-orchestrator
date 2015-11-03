@@ -318,8 +318,6 @@ void LSI::removeVlink(uint64_t ID)
 	return;
 }
 
-#include <stdio.h>
-
 void LSI::removeNF(string nf)
 {
 	assert(network_functions.count(nf) == nf_types.count(nf));
