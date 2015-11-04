@@ -39,24 +39,14 @@ private:
 	list<string> namesOfPortsOnTheSwitch;
 		
 	/**
-	*	@brief: IPv4 parameters (address and netmask) to be associated with the ports of the network function
-	*/
-	map<unsigned int,pair<string,string> > ipv4PortsRequirements;
-	
-	/**
-	*	@brief: ethernet parameter (MAC address) to be associated with the ports of the network function
-	*/
-	map<unsigned int,string> ethPortsRequirements;
-	
-	/**
 	*	@brief: mask of the cores to be assigned to the network functon.
 	*			0x0 means that no binding has to be done
 	*/
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, list<string> namesOfPortsOnTheSwitch, map<unsigned int,pair<string,string> > ipv4PortsRequirements, map<unsigned int,string> ethPortsRequirements, uint64_t coreMask = 0x0) 
-		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), ipv4PortsRequirements(ipv4PortsRequirements), ethPortsRequirements(ethPortsRequirements), coreMask(coreMask)
+	StartNFIn(uint64_t lsiID, string nf_name, list<string> namesOfPortsOnTheSwitch, uint64_t coreMask = 0x0) 
+		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), coreMask(coreMask)
 	{
 	}
 	
@@ -77,16 +67,6 @@ public:
 		return namesOfPortsOnTheSwitch;
 	}
 	 
-	map<unsigned int,pair<string,string> > getIpv4PortsRequirements()
-	{
-		return ipv4PortsRequirements;
-	}
-	
-	map<unsigned int,string> getEthPortsRequirements()
-	{
-		return ethPortsRequirements;
-	}
-	
 	uint64_t getCoreMask()
 	{
 		return coreMask;

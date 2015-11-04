@@ -600,13 +600,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	//for each NF, contains the set of ports it requires
 	map<string,set<unsigned int> > nfs_ports_found;
 
-	//for each NF, contains a list of ports - mac addresses
-	map<string,list<pair<unsigned int,string> > > portsMacAddress;
-	//for each NF, contains a list of ports - ip addresses
-	map<string,list<pair<unsigned int,string> > > portsAddress;
-	//for each NF, contains a list of ports - netmask
-	map<string,list<pair<unsigned int,string > > > portsMask;
-
 	try
 	{
 		Object obj = value.getObject();
@@ -1014,58 +1007,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	}
 #endif	
 	
-	//Save the mac addresses
-	map<string,list<pair<unsigned int,string> > >::iterator macAddr = portsMacAddress.begin();
-	 
-	for(; macAddr != portsMacAddress.end(); macAddr++)
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" requires the following parameters:",macAddr->first.c_str());
-	
-		list<pair<unsigned int,string> > addresses = macAddr->second;
-
-		list<pair<unsigned int,string> >::iterator a = addresses.begin();
-		for(; a != addresses.end(); a++) 
-		{
-			
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tPort %d - mac address: %s",a->first,a->second.c_str());
-		
-			if(!graph.updateNetworkFunctionEthernetPortsRequirements(macAddr->first,a->first,a->second))
-				return false;
-		}
-	}
-	
-	//Save the IPv4 addresses
-	assert(portsAddress.size() == portsMask.size());
-	
-	map<string,list<pair<unsigned int,string> > >::iterator addr = portsAddress.begin();
-	map<string,list<pair<unsigned int,string > > >::iterator mask = portsMask.begin();
-	 
-	for(; addr != portsAddress.end(); addr++, mask++)
-	{
-		assert(addr->first == mask->first);
-	
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" requires the following parameters for ports:",addr->first.c_str());
-	
-		list<pair<unsigned int,string> > addresses = addr->second;
-		list<pair<unsigned int,string> > netmasks = mask->second;
-
-		assert((addresses.size() != 0) && (addresses.size() == netmasks.size()));
-		
-		list<pair<unsigned int,string> >::iterator a = addresses.begin();
-		list<pair<unsigned int,string> >::iterator m = netmasks.begin();
-
-		for(; a != addresses.end(); a++, m++) 
-		{
-			assert(a->first == m->first);
-			
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tPort %d - address: %s - netmask: %s",a->first,a->second.c_str(),m->second.c_str());
-		
-			if(!graph.updateNetworkFunctionIPv4PortsRequirements(addr->first,a->first,a->second,m->second))
-				return false;
-		}
-	}
-	
-    return true;
+	return true;
 }
 
 int RestServer::doGet(struct MHD_Connection *connection, const char *url)

@@ -492,7 +492,7 @@ void ComputeController::setLsiID(uint64_t lsiID)
 
 //FIXME: I'm assuming that the first element of namesOfPortsOnTheSwitch corresponds to the first port of the network function,
 //the second element corresponds to the second port of the network function, and so on...
-bool ComputeController::startNF(string nf_name, map<unsigned int,pair<string,string> > ipv4PortsRequirements,map<unsigned int,string> ethPortsRequirements, list<string> namesOfPortsOnTheSwitch)
+bool ComputeController::startNF(string nf_name, list<string> namesOfPortsOnTheSwitch)
 {
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"",nf_name.c_str());
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
@@ -510,7 +510,7 @@ bool ComputeController::startNF(string nf_name, map<unsigned int,pair<string,str
 	NFsManager *nfsManager = nf->getSelectedDescription();
 	
 	
-	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, ipv4PortsRequirements, ethPortsRequirements, calculateCoreMask(nfsManager->getCores()));
+	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, calculateCoreMask(nfsManager->getCores()));
 
 	if(!nfsManager->startNF(sni))
 	{
