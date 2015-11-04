@@ -134,12 +134,6 @@ Then execute the following commands:
     $ make
     $ sudo make install
 
-To start Open vSwitch at the boot of the machine (optional):
-
-    $ sed 's,/usr/share/,/usr/local/share/,' rhel/etc_init.d_openvswitch > /etc/init.d/openvswitch
-    $ chkconfig --add openvswitch
-    $ chkconfig openvswitch on
-
 ### Open vSwitch (OVSDB) with DPDK support
 
 Before installing OvS with DPDK, you must download and compile the DPDK library. At first, download
