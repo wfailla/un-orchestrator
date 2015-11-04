@@ -485,8 +485,6 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 							stringstream pnos;
 							pnos << dpid << "_" << port_name;
 							port_name_on_switch.push_back(pnos.str());
-							
-							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "----------------> %s",pnos.str().c_str());
 						}
 						if(ports_array.size() > 0)
 			    			foundPorts = true;
@@ -800,7 +798,10 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 							}
 	    					
 							ports[port_name] = port_id;
-							ports_name_on_switch.push_back(port_name);
+							
+							stringstream pnos;
+							pnos << anpi.getDpid() << "_" << port_name;
+							ports_name_on_switch.push_back(pnos.str());
 						}
 						if(ports_array.size() > 0)
 			    			foundPorts = true;
