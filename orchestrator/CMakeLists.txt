@@ -462,9 +462,13 @@ IF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) 
 	message(FATAL_ERROR "xDPd not supported with KVM-IVSHMEM")
 ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
 
+IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
+	#In case of ovs-dpdk, dpdk processes and kvm (usvhost cannot be supported at the same time)
+	message(FATAL_ERROR "OvS-DPDK does not support DPDK processes and KVM at the same time")
+ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
+
 IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (${ENABLE_KVM_INDEX} EQUAL 0) )
 	#No execution environment is selected
 	message(FATAL_ERROR "At least one execution environmnet must be enabled")
 ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (${ENABLE_KVM_INDEX} EQUAL 0) )
 
-#TODO: check the case in which no computing environment is enabled
