@@ -478,9 +478,15 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 								throw XDPDManagerException();		    					
 	    					}
 							ports[port_name] = port_id;
-							port_name_on_switch.push_back(port_name);
 							
-							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "----------------> %s",port_name.c_str());
+							//XXX The name of the port created on xDPd is in the form "lsiid_portname". Note that, if the plugin on xDPd is changed, this part of code must be
+							//changed accordingly
+							assert(dpid != 0);
+							stringstream pnos;
+							pnos << dpid << "_" << port_name;
+							port_name_on_switch.push_back(pnos.str());
+							
+							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "----------------> %s",pnos.str().c_str());
 						}
 						if(ports_array.size() > 0)
 			    			foundPorts = true;
