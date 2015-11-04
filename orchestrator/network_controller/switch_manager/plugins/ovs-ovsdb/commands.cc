@@ -1072,8 +1072,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 					temp[j] = 'p';
 			}
 				
-			sprintf(temp, "%d", rnumber);
-			strcat(ifac, temp);
+//			sprintf(temp, "%d", rnumber);
+//			strcat(ifac, temp);
 		
 			first_obj["op"] = "insert";
 			first_obj["table"] = "Interface";
@@ -1493,6 +1493,7 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 	
 	strcpy(vrt, "vport");
 	char ifac[64] = "iface";
+	strcpy(trv, "vport");
 	    	
 	/*create virtual link*/
 	sprintf(temp, "%d", pnumber);
@@ -1520,17 +1521,17 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 	cmd_add_virtual_link(trv, vrt, ifac, avli.getDpidB(), s);
 
 	/*store the information [bridge name, list of peer port]*/
-	virtual_link_id[switch_id[avli.getDpidA()]].push_back(rnumber-1);
+	virtual_link_id[switch_id[avli.getDpidA()]].push_back(rnumber-2);
 	
 	/*store the information [bridge name, list of peer port]*/
-	virtual_link_id[switch_id[avli.getDpidB()]].push_back(rnumber);
+	virtual_link_id[switch_id[avli.getDpidB()]].push_back(rnumber-1);
 
-	port_id[rnumber-1] = vrt;
-	port_id[rnumber] = trv;
+	port_id[rnumber-2] = vrt;
+	port_id[rnumber-1] = trv;
 
 	/*store the information [switch_id, port_id]*/
-	vl_id[rnumber-1] = avli.getDpidA();
-	vl_id[rnumber] = avli.getDpidB();
+	vl_id[rnumber-2] = avli.getDpidA();
+	vl_id[rnumber-1] = avli.getDpidB();
 	
 	//insert this port name into port_n
 	vport_l[avli.getDpidA()].push_back(vrt);
@@ -1543,7 +1544,7 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 	/*peer name of the bridge name trv is vrt*/
 	peer_n[vrt] = trv;
 
-	avlo = new AddVirtualLinkOut(rnumber-1, rnumber);
+	avlo = new AddVirtualLinkOut(rnumber-2, rnumber-1);
 
 	return avlo;
 }
