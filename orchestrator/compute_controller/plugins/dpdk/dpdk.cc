@@ -2,6 +2,8 @@
 
 bool Dpdk::isSupported()
 {
+	//TODO: we are assuming that, if dpdk is enabled by compilation,
+	//it is supported
 	return true;
 }
 
@@ -59,10 +61,3 @@ bool Dpdk::stopNF(StopNFIn sni)
 
 }
 
-bool Dpdk::interact(string name, string command)
-{
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Function not implemented in the DPDK plugin");
-
-	assert("0");
-	return true;
-}

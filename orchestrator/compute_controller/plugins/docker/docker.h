@@ -28,8 +28,6 @@ public:
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
-	
-	bool interact(string name, string command);
 };
 
 #endif //DOCKER_H_

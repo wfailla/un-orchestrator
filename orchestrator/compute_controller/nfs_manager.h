@@ -47,15 +47,7 @@ public:
 	*	@param: cli	Description of the network function to be stopped
 	*/
 	virtual bool stopNF(StopNFIn sni) = 0;
-	
-	/**
-	*	@brief: send a command to a network function
-	*
-	*	@param: ID			name of the NF image to interact with
-	*	@param: command		command to be sent to the network function
-	*/
-	virtual bool interact(string name, string command) = 0;
-	
+		
 	/**
 	*	@brief: set the description of the network function to be handled by the manager
 	*/
