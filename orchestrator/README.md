@@ -82,7 +82,7 @@ are supported with the different vSwitches.
 |                            | Docker     |  KVM  | KVM-DPDK (ivshmem) | DPDK processes |
 |----------------------------|------------|-------|--------------------|----------------|
 | **xDPd**                   |    **Y**   | **Y** |          N         |      **Y**     |
-| **OvS (OVSDB / OFconfig)** |    **Y**   | **Y** |          N         |        N       |
+| **OvS (OVSDB / OFconfig)** |    **Y**   | **Y** |    not possible    |  not possible  |
 | **OvS-DPDK**               |    N       | **Y** |        **Y**       |      **Y**     |
 
 
