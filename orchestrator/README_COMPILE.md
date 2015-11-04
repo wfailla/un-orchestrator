@@ -219,12 +219,7 @@ following command:
 #### QEMU with IVSHMEM support
 
 To compile and install the QEMU/KVM execution environment with the support to `ivshmem`,
-first execute the following command:
-
-	sudo apt-get install libudev-dev libvirt-dev libvirt-bin bridge-utils  
-
-Then, it is necessary to install a patched version of QEMU.
-In order to install the patched QEMU, you have to follow the steps below.
+further steps are required:
 
 	$ git clone https://github.com/01org/dpdk-ovs
 	$ cd dpdk-ovs/qemu
