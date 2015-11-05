@@ -29,8 +29,8 @@ tmp_file="$1_$2_tmp"
 
 echo "" > $tmp_file
 
-#Retrieve the script, and rename it
-script_name=`echo $1"_"$tmp_file"_"$2`
+#Retrieve the archive, and rename it
+archive_file=`echo $1"_"$tmp_file"_"$2.tar.gz`
 
 tmp=$3
 
@@ -43,11 +43,11 @@ then
 	#The NF is in the local file system
 	path=${tmp:7:${#tmp}}
 	
-	cp $path $script_name
+	cp $path $archive_file
 else
-	#The NF must be retrieved from a remote url
+	#The NF must be retrieved from a remote URL
 	remote=true
-	sudo wget -O $script_name $3
+	sudo wget -O $archive_file $3
 	#wget returns 0 in case of success
 fi
 
@@ -57,14 +57,51 @@ if [ $ret -eq 0 ]
 then
 	echo "[pullAndRunNativeNF] Function '"$3"' retrieved"
 else
-	echo "[pullAndRunNativeNF] Impossible to retrieve function '"$3"'"
+	echo "[pullAndRunNativeNF] Unable to retrieve function '"$3"'"
 	rm $tmp_file
 	if [ $remote == true ]
 	then
-		rm $script_name
+		rm $archive_file
 	fi
 	exit 0
 fi
+
+#extract the archive in a temporary directory
+
+temp_dir=`echo $1"_"$tmp_file"_"$2`
+
+mkdir $temp_dir
+
+tar -xzf $archive_file -C $temp_dir
+
+ret=`echo $?`
+
+if [ $ret -eq 0 ]
+then
+
+	echo "[pullAndRunNativeNF] Successful extracted from archive"
+
+else
+
+	echo "[pullAndRunNativeNF] Unable to extract native function '"$2"' from the archive"
+	
+	rm $tmp_file
+	rm $archive_file
+	
+	exit 0
+	
+fi
+
+#check if the start script/executable exists
+
+start="$temp_dir/start"
+
+if [ ! -f $start ]
+then
+	echo "[pullAndRunNativeNF] Start script for native function '"$2"' not found!"
+	exit 0
+fi	
+
 
 #configure network for native network function
 current=5
@@ -101,9 +138,9 @@ done
 
 #prepare the command
 
-sudo chmod +x $script_name
+sudo chmod +x $start
 
-echo -ne sudo ./$script_name $1 $2 $4 > $tmp_file
+echo -ne sudo ./$start $1 $2 $4 > $tmp_file
 
 #passing port names to the script
 current=5
@@ -120,6 +157,29 @@ echo [`date`]"[pullAndRunNativeNF] Executing command: '"`cat $tmp_file`"'"
 bash $tmp_file
 
 rm $tmp_file
-rm $script_name
+rm $archive_file
+
+#check if stop file exists
+
+stop="$temp_dir/stop"
+
+if [ -f $stop ]
+then
+	#write a file that specifies the command to invoke the stop file
+	stop_command="$temp_dir/$1_$2_stop"
+	
+	echo -ne sudo ./$stop $1 $2 $4 > $stop_command
+	
+	#passing port names to the stop script
+	current=5
+	
+	for((c=0; c<$4; c++))
+	do
+		echo -ne " " ${!current} >> $stop_command
+		current=`expr $current + 1`
+	done
+	
+	chmod +x $stop_command
+fi	
 
 exit 1

@@ -19,31 +19,30 @@ then
     exit 0
 fi
 
-#open file that eventually specifies other actions to do in order to stop the NF and clean the system (if it exists)
-file="$1_$2_stop"
+tmp_dir=$1_$1_$2_tmp_$2
 
-if [ -e $file ]
+#open file that specifies the command that runs the stop script (if it exists)
+file="$tmp_dir/$1_$2_stop"
+
+if [ -f $file ]
 then
-	tmp_file="$1_$2_tmp"
-	echo "" > $tmp_file
-	echo -ne sudo ./$file $1 $2 > $tmp_file
-	#port=4
-	#for((c=0; c<$3; c++))
-	#do
-	#	echo -ne " " ${!port} >> $tmp_file
-	#	port=`expr $port + 1`
-	#done
-	
 	sudo chmod +x $file
 	
-	echo [`date`]"[stopNativeNF] Executing command: '"`cat $tmp_file`"'"
+	echo [`date`]"[stopNativeNF] Executing command: '"`cat $file`"'"
 	
 	#command:= <script_name> <LSI_ID> <NF_NAME> <#PORTS> <PORT_NAMES ...>
-	bash $tmp_file
+	bash $file
 	
 	# remove files after the execution
+	#rm $file
 	rm $file
-	rm $tmp_file
+fi
+
+#remove temporary directory
+#actually it must exists
+if [ -f $tmp_dir ]
+then
+	rm -r $tmp_dir
 fi
 
 #delete virtual interfaces related to the NF => not needed anymore

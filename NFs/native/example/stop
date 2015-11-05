@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#Author: Sergio Nuccio
+#Date: October 31st 2015
+#Brief: stop script for a dummy native network function that marks incoming and outgoing traffic
+
+#command line: 
+#	sudo ./stop $1 $2 $3 $4 $5
+
+#dependencies: iptables, ebtables
+
+#$1 LSI ID								(e.g., 2)
+#$2 NF name								(e.g., firewall)
+#$3 number_of_ports							(it is supposed to be 2 for this NF)
+#$4 and $5 names of port1 and port2 respectively			(e.g., vEth0 vEth1)
+
+if (( $EUID != 0 )) 
+then
+    echo "[nativeNF_example_stop] This script must be executed with ROOT privileges"
+    exit 0
+fi
+
+current=4
+for (( c=0; c < $3; c++))
+do
+	ebtables -D FORWARD -i ${!current} -j mark --set-mark 0x$(echo "obase=16; $1" | bc)cade$(echo "obase=16; $((c+1))" | bc) --mark-target CONTINUE >> $stop_file
+	current=`expr $current + 1`
+done
+
+echo "[nativeNF_example_stop] script executed"
+
+exit 1
