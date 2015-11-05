@@ -43,8 +43,6 @@ done
 
 ifconfig $br_name up
 
-brctl show $br_name
-
 #write file that specifies actions to do in order to stop the NF and clean the system
 stop_file="$1_$2_stop"
 
