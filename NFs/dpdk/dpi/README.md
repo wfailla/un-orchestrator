@@ -22,8 +22,19 @@ The pcre library can be installed with the command:
 
 	$ sudo apt-get install libpcre3 libpcre3-dev
 
-To compile the DPI, run the following commands:
+To compile the DPI to be used with xDPd, run the following commands:
 
 	$ export RTE_SDK=absolute_path_dpdk  
 	; e.g., export RTE_SDK=~/Desktop/dpdk-dev
+	$ RTE_TARGET=x86_64-native-linuxapp-gcc
 	$ make
+	
+To compile the DPI to be used with OvS-DPDK, run the following commands:
+
+	$ export RTE_SDK=absolute_path_dpdk  
+	; e.g., export RTE_SDK=~/Desktop/dpdk-dev
+	$ RTE_TARGET=x86_64-ivshmem-linuxapp-gcc
+	$ make
+
+**Note:** the network function has been written to work with xDPd. If you want to use it with
+OvS-DPDK, please change the name of the rte_rings before compiling, as detailed in `../README.md`.

@@ -51,6 +51,8 @@ typedef struct
 		map<unsigned int,pair<string,string> > ipv4PortsRequirements;
 		map<unsigned int,string> ethPortsRequirements;
 		ComputeController *computeController;
+		
+		list<string> namesOfPortsOnTheSwitch;
 	}to_thread_t;
 
 class GraphManager

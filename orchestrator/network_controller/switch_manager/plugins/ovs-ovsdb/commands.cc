@@ -127,7 +127,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	const char *peer_name = "";
 
 	char sw[64] = "Bridge", tcp_s[64] = "tcp:", ctr[64] = "ctrl", vrt[64] = "VirtualPort", trv[64] = "vport";
-
 	char temp[64] = "", tmp[64] = "", of_version[64] = "";
     
     /*force to use OpenFlow12*/
@@ -214,7 +213,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     ctrl.push_back("set");
 
 	Array ctrl1;
-	
 	Array ctrl2;
 
 	//create the current name of a controller
@@ -303,7 +301,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     params.push_back(second_obj);
     
     root["params"] = params;
-
 	root["id"] = id;
 
 	w_array.clear();
@@ -335,11 +332,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 
  	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-    
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-    
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-    
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	//parse json response
@@ -379,7 +373,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	//store the switch-uuid
     switch_uuid[dnumber] = strr[i-2];
 
-	/*create ports*/
+	/*create physical ports ports*/
 	if(ports.size() !=0){
 		for(list<string>::iterator p = ports.begin(); p != ports.end(); p++)
 		{
@@ -391,12 +385,15 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 	
 	/*Create interfaces related by the nf ports*/
+	map<string,list<string> > out_nf_ports_name_on_switch;
     if(nfs.size() != 0){
         		
 		/*for each network function port in the list of nfs*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 		{
 			list<string> nfs_ports = cli.getNetworkFunctionsPortNames(*nf);
+			
+			list<string> port_name_on_switch;
 			
 			map<string,unsigned int> n_ports_1;
 			
@@ -427,10 +424,16 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 				
 				/*fill the map ports*/
 				n_ports_1[(*nfp)] = rnumber-1;
+				
+				stringstream pnos;
+				pnos << dnumber << "_" << *nfp;
+				port_name_on_switch.push_back(pnos.str());
+				
 			}
 			
 			/*fill the network_functions_ports*/
 			network_functions_ports[(*nf)] = n_ports_1;
+			out_nf_ports_name_on_switch[*nf] = port_name_on_switch;
 		}
 	}
 	
@@ -517,7 +520,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			s = cmd_connect();
 		
 			root["method"] = "transact";
-
 			params.push_back("Open_vSwitch");
 		
 			pi = (*nf);
@@ -556,7 +558,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		}
 	}
   
-    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, virtual_links);
+    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, out_nf_ports_name_on_switch, virtual_links);
     	
 	return clo;
 }
@@ -1020,6 +1022,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 	locale loc;	
 	
 	map<string, unsigned int> ports;
+	list<string> ports_name_on_switch;
 
 	list<string> nfp = anpi.getNetworkFunctionsPorts();
 	
@@ -1069,8 +1072,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 					temp[j] = 'p';
 			}
 				
-			sprintf(temp, "%d", rnumber);
-			strcat(ifac, temp);
+//			sprintf(temp, "%d", rnumber);
+//			strcat(ifac, temp);
 		
 			first_obj["op"] = "insert";
 			first_obj["table"] = "Interface";
@@ -1124,7 +1127,11 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			port_l[anpi.getDpid()].push_back(temp);
 				
 			ports[(*nf)] = rnumber;	
-				
+			
+			stringstream pnos;
+			pnos << anpi.getDpid() << "_" << *nf;
+			ports_name_on_switch.push_back(pnos.str());
+			
 			rnumber++;
 		}
 		
@@ -1147,25 +1154,20 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 		for(list<string>::iterator u = port_uuid[anpi.getDpid()].begin(); u != port_uuid[anpi.getDpid()].end(); u++)
 		{
 			port2.push_back("uuid");
-				
 			port2.push_back((*u));
-	
 			port1.push_back(port2);
-	
 			port2.clear();
 		}
 		
 		for(list<string>::iterator u = vport_uuid[anpi.getDpid()].begin(); u != vport_uuid[anpi.getDpid()].end(); u++)
 		{
-			port2.push_back("uuid");
-			
+			port2.push_back("uuid");		
 			port2.push_back((*u));
-	
 			port1.push_back(port2);
-	
 			port2.clear();
 		}
-	
+
+		list<string> ports_name_on_switch;
 		for(list<string>::iterator nff = nfp.begin(); nff != nfp.end(); nff++)
 		{
 			string str = (*nff);
@@ -1187,21 +1189,15 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 		
 			port2.push_back("named-uuid");
 			port2.push_back(temp);
-	
 			port1.push_back(port2);
-	
 			port2.clear();
 		}
 		
 		/*Array with two elements*/
-		i_array.push_back("set");
-		   
+		i_array.push_back("set");		   
 		i_array.push_back(port1);
-		
 		row["ports"] = i_array;
-		
 		first_obj["row"] = row;
-		
 		params.push_back(first_obj);
 		
 		second_obj.clear();
@@ -1260,11 +1256,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 		}
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 		
 		Value value;
@@ -1314,7 +1307,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 	//disconnect socket
     cmd_disconnect(s);
 
-    anf = new AddNFportsOut(anpi.getNFname(), ports);
+    anf = new AddNFportsOut(anpi.getNFname(), ports, ports_name_on_switch);
 
 	return anf;
 }
@@ -1500,6 +1493,7 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 	
 	strcpy(vrt, "vport");
 	char ifac[64] = "iface";
+	strcpy(trv, "vport");
 	    	
 	/*create virtual link*/
 	sprintf(temp, "%d", pnumber);
@@ -1527,17 +1521,17 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 	cmd_add_virtual_link(trv, vrt, ifac, avli.getDpidB(), s);
 
 	/*store the information [bridge name, list of peer port]*/
-	virtual_link_id[switch_id[avli.getDpidA()]].push_back(rnumber-1);
+	virtual_link_id[switch_id[avli.getDpidA()]].push_back(rnumber-2);
 	
 	/*store the information [bridge name, list of peer port]*/
-	virtual_link_id[switch_id[avli.getDpidB()]].push_back(rnumber);
+	virtual_link_id[switch_id[avli.getDpidB()]].push_back(rnumber-1);
 
-	port_id[rnumber-1] = vrt;
-	port_id[rnumber] = trv;
+	port_id[rnumber-2] = vrt;
+	port_id[rnumber-1] = trv;
 
 	/*store the information [switch_id, port_id]*/
-	vl_id[rnumber-1] = avli.getDpidA();
-	vl_id[rnumber] = avli.getDpidB();
+	vl_id[rnumber-2] = avli.getDpidA();
+	vl_id[rnumber-1] = avli.getDpidB();
 	
 	//insert this port name into port_n
 	vport_l[avli.getDpidA()].push_back(vrt);
@@ -1550,7 +1544,7 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 	/*peer name of the bridge name trv is vrt*/
 	peer_n[vrt] = trv;
 
-	avlo = new AddVirtualLinkOut(rnumber-1, rnumber);
+	avlo = new AddVirtualLinkOut(rnumber-2, rnumber-1);
 
 	return avlo;
 }

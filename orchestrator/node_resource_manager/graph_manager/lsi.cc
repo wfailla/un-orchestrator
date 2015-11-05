@@ -128,6 +128,12 @@ bool LSI::setNfPortsID(string nf, map<string, unsigned int> translation)
 	return true;
 }
 
+void LSI::setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names)
+{
+	//TODO: implement checks!!!!
+	networkFunctionsPortsNameOnSwitch[nf] = names;
+}
+
 void LSI::setVLinkIDs(unsigned int position, unsigned int localID, unsigned int remoteID)
 {
 	virtual_links[position].local_id = localID;
@@ -152,6 +158,14 @@ map<string,string> LSI::getPortsType()
 map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
 {
 	map<string, unsigned int> ports = network_functions[nf];
+	return ports;
+}
+
+list<string> LSI::getNetworkFunctionsPortsNameOnSwitch(string nf)
+{
+	assert(networkFunctionsPortsNameOnSwitch.count(nf) != 0);
+
+	list<string> ports = networkFunctionsPortsNameOnSwitch[nf];
 	return ports;
 }
 
@@ -303,8 +317,6 @@ void LSI::removeVlink(uint64_t ID)
 	assert(0);
 	return;
 }
-
-#include <stdio.h>
 
 void LSI::removeNF(string nf)
 {

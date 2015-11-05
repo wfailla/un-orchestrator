@@ -51,11 +51,11 @@ It consists of two parts:
 Currently, it supports Open vSwitch (OvS) and the extensible DataPath daemon
 (xDPd) as vSwitches.
 If you are interested to add the support for a new virtual switch, please 
-check the file `network_controller/switch_manager/README`.
+check the file [network_controller/switch_manager/README.md](network_controller/switch_manager/README.md).
 
 Note that, according to the picture above, the network controller creates a first
 LSI (called LSI-0) that is connected to the physical interfaces and to several other
-LSIs. Each one of these further LSIs corresponds to a different NF-FG; hence, it is
+LSIs. Each one of these additional LSIs corresponds to a different NF-FG; hence, it is
 connected to the VNFs of such a NF-FG, and takes care of steering the traffic among
 them as required by the graph description. Instead the LSI-0, being the only one connected
 to the physical interafces of the UN and to all the other graphs, dispatches the
@@ -71,18 +71,20 @@ those ports to the running vSwitch.
 
 Currently it supports network functions as (KVM) VMs, Docker and DPDK 
 processes, although only a subset of them can be available depending on 
-the chosen vSwitch. The following table shows which execution environments
+the chosen vSwitch. If you are interested to add the support for a new 
+hypervisor, please check the file [compute_controller/README.md](compute_controller/README.md).
+
+### Compute and network controllers: supported combinations
+
+The following table shows which execution environments
 are supported with the different vSwitches.
 
-|                            | Docker     | KVM    | DPDK  | KVM-DPDK (usvhost) |  KVM-DPDK (dpdkr)       |
-|----------------------------|------------|--------|-------|--------------------|-------------------------|
-| **xDPd**                   |    **Y**   | **Y**  | **Y** |        N           |          N              |
-| **OvS (OVSDB / OFconfig)** |    **Y**   |  **Y** |  N    |        N           |          N              |
-| **OvS-DPDK**               |    N       |  N     |   N   |       **Y**        |  *Under implementation* |
+|                            | Docker     |  KVM  | KVM-DPDK (ivshmem) | DPDK processes |
+|----------------------------|------------|-------|--------------------|----------------|
+| **xDPd**                   |    **Y**   | **Y** |          N         |      **Y**     |
+| **OvS (OVSDB / OFconfig)** |    **Y**   | **Y** |    not possible    |  not possible  |
+| **OvS-DPDK**               |    N       | **Y** |        **Y**       |      **Y**     |
 
-
-If you are interested to add the support for a new hypervisor, please 
-check the file `compute_controller/README`.
 
 ### NF-FG
 
@@ -95,14 +97,14 @@ The un-orchestrator supports two NF-FG versions:
     (for resources and capabilities).
 
 The former format is supported natively, while the other requires setting
-up an additional library as described in `README_COMPILE.md#nf-fg-library`.
+up an additional library as described in [README_COMPILE.md#nf-fg-library](README_COMPILE.md#nf-fg-library).
 
 
 ### Compile and run
 
 Some additional files are provided to compile and use the un-orchestrator:
 
-  * `README_COMPILE.md`: to compile the un-orchestrator
-  * `README_RUN.md`: to start the un-orchestrator
-  * `README_RESTAPI.md`: some usage examples about the REST interface of
+  * [README_COMPILE.md](README_COMPILE.md): to compile the un-orchestrator
+  * [README_RUN.md](README_RUN.md): to start the un-orchestrator
+  * [README_RESTAPI.md](README_RESTAPI.md): some usage examples about the REST interface of
     the un-orchestrator

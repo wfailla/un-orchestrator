@@ -23,21 +23,19 @@ bool Docker::startNF(StartNFIn sni)
 {
 	uint64_t lsiID = sni.getLsiID();
 	string nf_name = sni.getNfName();
-	unsigned int n_ports = sni.getNumberOfPorts();
 	map<unsigned int,pair<string,string> > ipv4PortsRequirements = sni.getIpv4PortsRequirements();
 	map<unsigned int,string> ethPortsRequirements = sni.getEthPortsRequirements();
 	
 	string uri_image = description->getURI();
 	
+	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
+	
 	stringstream command;
 	command << PULL_AND_RUN_DOCKER_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
-	
-	//create the names of the ports
-	for(unsigned int i = 1; i <= n_ports; i++)
-	{
-		//TODO: the name of the port should be created outside of the network controller
-		command << " " << lsiID << "_" << nf_name << "_" << i;	
-	}
+		
+	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
+		command << " "  << *pn;
 		
 	//specify the IPv4 requirements for the ports
 	for(unsigned int i = 1; i <= n_ports; i++)
@@ -106,4 +104,3 @@ unsigned int Docker::convertNetmask(string netmask)
 	
 	return slash;
 }
-

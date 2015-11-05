@@ -16,9 +16,8 @@ class Dpdk : public NFsManager
 {
 public:
 	
-	//TODO: currently we are assuming that DPDK is always supported. Not
-	//sure that this assumption is correct.
 	bool isSupported(Description&);
+
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);

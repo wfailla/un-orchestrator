@@ -58,7 +58,22 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
 ENDIF()
 
-# End of the rather complicated CMake code for setting the Openflow version
+
+# Rather complicated CMake code for selecting the type of virtual machines supported by the UN
+SET(ENABLE_KVM "NONE" CACHE STRING "KVM-based VMs supported: NONE, KVM, KVM-IVSHMEM")
+SET(ENABLE_KVM_VALUES "NONE" "KVM" "KVM-IVSHMEM") #Add here other implementations
+SET_PROPERTY(CACHE ENABLE_KVM PROPERTY STRINGS ${ENABLE_KVM_VALUES})
+LIST(FIND ENABLE_KVM_VALUES ${ENABLE_KVM} ENABLE_KVM_INDEX)
+
+IF(${ENABLE_KVM_INDEX} EQUAL -1)
+	message(FATAL_ERROR "Option ${ENABLE_KVM} not supported, valid entries are ${ENABLE_KVM_VALUES}")
+ENDIF()
+IF(${ENABLE_KVM_INDEX} EQUAL 1)
+	ADD_DEFINITIONS(-DENABLE_KVM)
+ENDIF()
+IF(${ENABLE_KVM_INDEX} EQUAL 2)
+	ADD_DEFINITIONS(-DENABLE_KVM_IVSHMEM -DENABLE_KVM)
+ENDIF()
 
 OPTION(
 	RUN_NFS
@@ -88,23 +103,13 @@ IF(ENABLE_NATIVE)
 ENDIF(ENABLE_NATIVE)
 
 
-OPTION(ENABLE_KVM 
-	"Turn on the support of NFs implemented in KVM virtual machines" 
+OPTION(ENABLE_DPDK_PROCESSES
+	"Turn on the support of NFs implemented in as DPDK processes"
 	OFF
 )
-
-IF(ENABLE_KVM)
-	ADD_DEFINITIONS(-DENABLE_KVM)
-ENDIF(ENABLE_KVM)
-
-OPTION(ENABLE_KVM_DPDK_USVHOST
-	"Turn on the support of NFs implemented as DPDK processes in KVM virtual machines. User space VHOST is used for networking" 
-	OFF
-)
-
-IF(ENABLE_KVM_DPDK_USVHOST)
-	ADD_DEFINITIONS(-DENABLE_KVM_DPDK_USVHOST -DENABLE_KVM)
-ENDIF(ENABLE_KVM_DPDK_USVHOST)
+IF(ENABLE_DPDK_PROCESSES)
+	ADD_DEFINITIONS(-DENABLE_DPDK_PROCESSES)
+ENDIF(ENABLE_DPDK_PROCESSES)
 
 
 OPTION(DEBUG_KVM 
@@ -154,7 +159,7 @@ IF(UNIFY_NFFG)
 ENDIF(UNIFY_NFFG)
 
 MARK_AS_ADVANCED(
-	DEBUG_KVM DEBUG_OPENFLOW
+	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS
 )
 
 # Set source files
@@ -231,12 +236,6 @@ SET(SOURCES
 	compute_controller/startNF_in.h
 	compute_controller/stopNF_in.h
 	
-	compute_controller/plugins/dpdk/dpdk.h
-	compute_controller/plugins/dpdk/dpdk.cc
-	compute_controller/plugins/dpdk/dpdk_constants.h
-	compute_controller/plugins/dpdk/dpdk_description.h
-	compute_controller/plugins/dpdk/dpdk_description.cc
-	
 	node_resource_manager/rest_server/rest_server.h
 	node_resource_manager/rest_server/rest_server.cc
 	node_resource_manager/rest_server/match_parser.h
@@ -289,8 +288,7 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 
-
-IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+IF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
     SET(SOURCES3
     ${SOURCES2}
 	compute_controller/plugins/kvm-libvirt/libvirt.cc
@@ -300,7 +298,7 @@ ELSE()
      SET(SOURCES3
          ${SOURCES2}
     	)
-ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+ENDIF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
 
 IF(ENABLE_DOCKER)
     SET(SOURCES4
@@ -328,9 +326,39 @@ ELSE()
 	)
 ENDIF(UNIFY_NFFG)
 
+IF(${ENABLE_KVM_INDEX} EQUAL 2)
+	SET(SOURCES6
+	${SOURCES5}
+	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
+	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
+	)
+	
+	IF(NOT DEFINED ENV{DPDK_PATH})
+		message(FATAL_ERROR "Could not find DPDK_PATH environment variable. Please set it to [dpdk-folder]/x86_64-ivshmem-linuxapp-gcc/")
+	ENDIF(NOT DEFINED ENV{DPDK_PATH}) 
+ELSE()
+	SET(SOURCES6
+	${SOURCES5}
+	)
+ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
+
+
+IF(ENABLE_DPDK_PROCESSES)
+    SET(SOURCES7
+    ${SOURCES6}
+	compute_controller/plugins/dpdk/dpdk.h
+	compute_controller/plugins/dpdk/dpdk.cc
+	compute_controller/plugins/dpdk/dpdk_constants.h
+	)
+ELSE()
+     SET(SOURCES7
+         ${SOURCES6}
+    	)
+ENDIF(ENABLE_DPDK_PROCESSES)
+
 IF(ENABLE_NATIVE)
-    SET(SOURCES6
-    ${SOURCES5}
+    SET(SOURCES8
+    ${SOURCES7}
 	compute_controller/plugins/native/native.cc
 	compute_controller/plugins/native/native.h
 	compute_controller/plugins/native/native_constants.h
@@ -340,17 +368,22 @@ IF(ENABLE_NATIVE)
 	compute_controller/plugins/native/native_description.cc
 	)
 ELSE()
-     SET(SOURCES6
-         ${SOURCES5}
+     SET(SOURCES8
+         ${SOURCES7}
     	)
 ENDIF(ENABLE_NATIVE)
-
 
 
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
 )
+
+IF(${ENABLE_KVM_INDEX} EQUAL 2)
+	INCLUDE_DIRECTORIES (
+		$ENV{DPDK_PATH}/include
+)
+ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
 #Include specific for the NF-FG library defined in the Unify project
 IF(UNIFY_NFFG)
@@ -363,7 +396,7 @@ ENDIF(UNIFY_NFFG)
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES6}
+	${SOURCES8}
 )
 
 LINK_DIRECTORIES(
@@ -371,8 +404,15 @@ LINK_DIRECTORIES(
 	/usr/local/lib/
 	/usr/x86_64-linux-gnu/
 	/usr/lib/x86_64-linux-gnu/
-	/usr/lib/python2.7/config-x86_64-linux-gnu/
+	/usr/lib/python2.7/config-x86_64-linux-gnu/	
 )
+
+IF(${ENABLE_KVM_INDEX} EQUAL 2)
+	LINK_DIRECTORIES(
+		$ENV{DPDK_PATH}/lib
+	)
+ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
+
 
 
 TARGET_LINK_LIBRARIES( node-orchestrator
@@ -392,18 +432,69 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 	)
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
-#Links specific for libvirt (KVM)
-IF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+#Links specific for KVM
+IF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
 	TARGET_LINK_LIBRARIES( node-orchestrator
 		libvirt.so
 	)
-ENDIF(ENABLE_KVM OR ENABLE_KVM_DPDK_USVHOST)
+ENDIF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
 
-#Links specific for the NF-FG library defined in the Unify project
+#Links specific for KVM when used with ivshmem
+IF(${ENABLE_KVM_INDEX} EQUAL 2)
+    TARGET_LINK_LIBRARIES( node-orchestrator
+			$ENV{DPDK_PATH}/lib/libdpdk.a 
+			-ldl 
+			-latomic
+			-lpthread
+			-lm
+			-ludev
+	)
+ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
+
+#Enable c++11 in order to compile with new dpdk releases
+IF(${ENABLE_KVM_INDEX} EQUAL 2)
+	set_source_files_properties (SOURCE compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc APPEND_STRING PROPERTY COMPILE_FLAGS " -std=c++11")
+ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
+
+#Links specific for the NF-FG library defined in WP3
 IF(UNIFY_NFFG)
     TARGET_LINK_LIBRARIES( node-orchestrator
 		libpython2.7.so
 		${PYTHON_LIBRARIES}
 	)
 ENDIF(UNIFY_NFFG)
+
+###############################################################################
+
+#Check unsupported configurations
+
+IF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
+	#This configuration (ovs-dpdk + docker) is not supported 
+	message(FATAL_ERROR "OvS-DPDK not supported with Docker")
+ENDIF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
+
+IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported 
+	message(FATAL_ERROR "OvS not supported with Dpdk processes")
+ENDIF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+
+IF((${ENABLE_KVM_INDEX} EQUAL 2) AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+	#This configuration (ovs (ofconfig/ovsdb) + kvm-ivshmem) is not supported 
+	message(FATAL_ERROR "OvS not supported with KVM-IVSHMEM")
+ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+
+IF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
+	#This configuration (xdpd + kvm-ivshmem) is not supported 
+	message(FATAL_ERROR "xDPd not supported with KVM-IVSHMEM")
+ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
+
+IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
+	#In case of ovs-dpdk, dpdk processes and kvm (usvhost cannot be supported at the same time)
+	message(FATAL_ERROR "OvS-DPDK does not support DPDK processes and KVM at the same time")
+ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
+
+IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (${ENABLE_KVM_INDEX} EQUAL 0) )
+	#No execution environment is selected
+	message(FATAL_ERROR "At least one execution environmnet must be enabled")
+ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (${ENABLE_KVM_INDEX} EQUAL 0) )
 
