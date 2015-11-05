@@ -36,7 +36,7 @@
 
 	<network-function name="example" num-ports="2" summary="Example VNF with several implementations">
 		<!-- Several implementations are available for this network function -->
-		<native uri="../NFs/native/example/nativeNF_example.sh" dependencies="iptables ebtables" location="local"/>
+		<native uri="../NFs/native/example/nativeNF_example.tar.gz" dependencies="iptables ebtables" location="local"/>
 		<docker uri="example"/>
 		<dpdk uri="https://nf_repository.com/example" cores="1" location="remote"/>
 		<dpdk uri="../NFs/dpdk/example/build/example" cores="1" location="local"/>
