@@ -165,6 +165,9 @@ stop="$temp_dir/stop"
 
 if [ -f $stop ]
 then
+
+	chmod +x $stop
+	
 	#write a file that specifies the command to invoke the stop file
 	stop_command="$temp_dir/$1_$2_stop"
 	

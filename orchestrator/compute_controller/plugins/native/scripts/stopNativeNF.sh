@@ -19,7 +19,7 @@ then
     exit 0
 fi
 
-tmp_dir=$1_$1_$2_tmp_$2
+tmp_dir=`echo $1"_"$1"_"$2"_tmp_"$2`
 
 #open file that specifies the command that runs the stop script (if it exists)
 file="$tmp_dir/$1_$2_stop"
@@ -40,7 +40,7 @@ fi
 
 #remove temporary directory
 #actually it must exists
-if [ -f $tmp_dir ]
+if [ -e $tmp_dir ]
 then
 	rm -r $tmp_dir
 fi
