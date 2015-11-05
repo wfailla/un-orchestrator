@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <inttypes.h>
+#include <list>
 
 /**
 * @file StartNFIn_in.h
@@ -33,9 +34,9 @@ private:
 	string nf_name;
 	
 	/**
-	*	@brief: number of ports of the network function
+	*	@brief: list of names of ports of the vSwitch that are associated with the network function
 	*/
-	unsigned int number_of_ports;
+	list<string> namesOfPortsOnTheSwitch;
 		
 	/**
 	*	@brief: IPv4 parameters (address and netmask) to be associated with the ports of the network function
@@ -54,8 +55,8 @@ private:
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, unsigned int number_of_ports, map<unsigned int,pair<string,string> > ipv4PortsRequirements, map<unsigned int,string> ethPortsRequirements, uint64_t coreMask = 0x0) 
-		: lsiID(lsiID), nf_name(nf_name), number_of_ports(number_of_ports), ipv4PortsRequirements(ipv4PortsRequirements), ethPortsRequirements(ethPortsRequirements), coreMask(coreMask)
+	StartNFIn(uint64_t lsiID, string nf_name, list<string> namesOfPortsOnTheSwitch, map<unsigned int,pair<string,string> > ipv4PortsRequirements, map<unsigned int,string> ethPortsRequirements, uint64_t coreMask = 0x0) 
+		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), ipv4PortsRequirements(ipv4PortsRequirements), ethPortsRequirements(ethPortsRequirements), coreMask(coreMask)
 	{
 	}
 	
@@ -71,9 +72,9 @@ public:
 		return nf_name;
 	}
 	
-	unsigned int getNumberOfPorts()
+	list<string> getNamesOfPortsOnTheSwitch()
 	{
-		return number_of_ports;
+		return namesOfPortsOnTheSwitch;
 	}
 	 
 	map<unsigned int,pair<string,string> > getIpv4PortsRequirements()

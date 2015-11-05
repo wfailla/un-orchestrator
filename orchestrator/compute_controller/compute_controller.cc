@@ -211,7 +211,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					bool foundDependencies = false;
 
 					string type;
-			    	string uri;
+			    		string uri;
 					string cores;
 					string location;
 					string dependencies;
@@ -275,16 +275,20 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					}
 					if(type == "dpdk")
 					{
+#ifdef ENABLE_DPDK_PROCESSES
 						if(!foundCores || !foundLocation)
 						{
 							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"cores\" attribute, \"location\" attribute, or both",type.c_str());
 							return false;
 						}
+
 						possibleDescriptions.push_back(dynamic_cast<Description*>(new DPDKDescription(type,uri,cores,location)));
+#endif
 						continue;
 					}
 					else if(type == "native")
 					{
+#ifdef ENABLE_NATIVE
 						if(!foundLocation || !foundDependencies)
 						{
 							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"dependencies\" attribute, \"location\" attribute, or both",type.c_str());
@@ -297,6 +301,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							dep_list->push_back(s);
 						}
 						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,location,dep_list)));
+#endif
 						continue;
 					}
 					else if(foundCores || foundLocation || foundDependencies)
@@ -371,73 +376,75 @@ void ComputeController::checkSupportedDescriptions() {
 
 			switch((*descr)->getType()){
 
-			#ifdef ENABLE_DOCKER
-								//Manage Docker execution environment
-							case DOCKER:{
-								NFsManager *dockerManager = new Docker();
-								if(dockerManager->isSupported(**descr)){
-									(*descr)->setSupported(true);
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is supported.",nf->first.c_str());
-								} else {
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is not supported.",nf->first.c_str());
-								}
-								delete dockerManager;
-							}
-							break;
-			#endif
+#ifdef ENABLE_DOCKER
+					//Manage Docker execution environment
+				case DOCKER:{
+					NFsManager *dockerManager = new Docker();
+					if(dockerManager->isSupported(**descr)){
+						(*descr)->setSupported(true);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is supported.",nf->first.c_str());
+					} else {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is not supported.",nf->first.c_str());
+					}
+					delete dockerManager;
+				}
+				break;
+#endif
 
-								//Manage DPDK execution environment
-							case DPDK:{
-								NFsManager *dpdkManager = new Dpdk();
-								if(dpdkManager->isSupported(**descr)){
-									(*descr)->setSupported(true);
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is supported.",nf->first.c_str());
-								} else {
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is not supported.",nf->first.c_str());
-								}
-								delete dpdkManager;
-							}
-							break;
+#ifdef ENABLE_DPDK_PROCESSES
+					//Manage DPDK execution environment
+				case DPDK:{
+					NFsManager *dpdkManager = new Dpdk();
+					if(dpdkManager->isSupported(**descr)){
+						(*descr)->setSupported(true);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is supported.",nf->first.c_str());
+					} else {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is not supported.",nf->first.c_str());
+					}
+					delete dpdkManager;
+				}
+				break;
+#endif
 
-			#ifdef ENABLE_KVM
-								//Manage QEMU/KVM execution environment through libvirt
-							case KVM:{
-								NFsManager *libvirtManager = new Libvirt();
-								if(libvirtManager->isSupported(**descr)){
-									(*descr)->setSupported(true);
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is supported.",nf->first.c_str());
-								} else {
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is not supported.",nf->first.c_str());
-								}
-								delete libvirtManager;
-							}
-							break;
-			#endif
+#ifdef ENABLE_KVM
+					//Manage QEMU/KVM execution environment through libvirt
+				case KVM:{
+					NFsManager *libvirtManager = new Libvirt();
+					if(libvirtManager->isSupported(**descr)){
+						(*descr)->setSupported(true);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is supported.",nf->first.c_str());
+					} else {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is not supported.",nf->first.c_str());
+					}
+					delete libvirtManager;
+				}
+				break;
+#endif
 
-			#ifdef ENABLE_NATIVE
-								//Manage NATIVE execution environment
-							case NATIVE:
-								NFsManager *nativeManager;
-								try{
-									nativeManager = new Native();
-									if(nativeManager->isSupported(**descr)){
-										(*descr)->setSupported(true);
-										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is supported.",nf->first.c_str());
-									} else {
-										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is not supported.",nf->first.c_str());
-									}
-									delete nativeManager;
-								} catch (exception& e) {
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
-									delete nativeManager;
-								}
-								break;
-			#endif
-								//[+] Add here other implementations for the execution environment
+#ifdef ENABLE_NATIVE
+					//Manage NATIVE execution environment
+				case NATIVE:
+					NFsManager *nativeManager;
+					try{
+						nativeManager = new Native();
+						if(nativeManager->isSupported(**descr)){
+							(*descr)->setSupported(true);
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is supported.",nf->first.c_str());
+						} else {
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is not supported.",nf->first.c_str());
+						}
+						delete nativeManager;
+					} catch (exception& e) {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
+						delete nativeManager;
+					}
+					break;
+#endif
+					//[+] Add here other implementations for the execution environment
 
-							default:
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available execution environments for description type %s", NFType::toString((*descr)->getType()).c_str());
-							}
+				default:
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available execution environments for description type %s", NFType::toString((*descr)->getType()).c_str());
+			}
 
 		}
 
@@ -477,6 +484,9 @@ NFsManager* ComputeController::selectNFImplementation(list<Description*> descrip
 			break;
 #endif
 
+
+//TODO: add ifdef also in the other functions
+#ifdef ENABLE_DPDK_PROCESSES
 				//Manage DPDK execution environment
 			case DPDK:{
 
@@ -490,6 +500,8 @@ NFsManager* ComputeController::selectNFImplementation(list<Description*> descrip
 
 			}
 			break;
+#endif
+
 
 #ifdef ENABLE_KVM
 				//Manage QEMU/KVM execution environment through libvirt
@@ -565,7 +577,7 @@ bool ComputeController::selectImplementation()
 
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available description for NF %s", nf->first.c_str());
 				return false;
-
+				
 			}
 
 			current->setSelectedDescription(selectedImplementation);
@@ -631,14 +643,14 @@ void ComputeController::setLsiID(uint64_t lsiID)
 	this->lsiID = lsiID;
 }
 
-//TODO: the number of ports is bad. I should pass the name of the ports!
-//Now I'm assuming that, if the functions NF requires two ports, they are identified with
-//NF:1 and NF:2, but this could not be true.
-//Moreover, I'm creating the name in this way: lsiID:nfName:x, where x goes from 0 to
-//the number of ports.. But xDPd could give different names to the ports!
-bool ComputeController::startNF(string nf_name, unsigned int number_of_ports, map<unsigned int,pair<string,string> > ipv4PortsRequirements,map<unsigned int,string> ethPortsRequirements)
+//FIXME: I'm assuming that the first element of namesOfPortsOnTheSwitch corresponds to the first port of the network function,
+//the second element corresponds to the second port of the network function, and so on...
+bool ComputeController::startNF(string nf_name, map<unsigned int,pair<string,string> > ipv4PortsRequirements,map<unsigned int,string> ethPortsRequirements, list<string> namesOfPortsOnTheSwitch)
 {
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"",nf_name.c_str());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
+	for(list<string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++)
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*it).c_str());
 
 	if(nfs.count(nf_name) == 0)
 	{
@@ -650,7 +662,8 @@ bool ComputeController::startNF(string nf_name, unsigned int number_of_ports, ma
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
 	
-	StartNFIn sni(lsiID, nf_name, number_of_ports, ipv4PortsRequirements, ethPortsRequirements, calculateCoreMask(nfsManager->getCores()));
+	
+	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, ipv4PortsRequirements, ethPortsRequirements, calculateCoreMask(nfsManager->getCores()));
 
 	if(!nfsManager->startNF(sni))
 	{

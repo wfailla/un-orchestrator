@@ -6,6 +6,8 @@
 
 using namespace std;
 
+//TODO: DPDK should be put optional also in this file
+
 typedef enum{
 	DPDK
 #if defined(ENABLE_DOCKER) || defined(VSWITCH_IMPLEMENTATION_XDPD)

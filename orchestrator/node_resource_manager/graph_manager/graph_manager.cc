@@ -569,7 +569,7 @@ void *startNF(void *arguments)
     to_thread_t *args = (to_thread_t *)arguments;
     assert(args->computeController != NULL);
     
-    if(!args->computeController->startNF(args->nf_name, args->number_of_ports, args->ipv4PortsRequirements, args->ethPortsRequirements))
+    if(!args->computeController->startNF(args->nf_name, args->ipv4PortsRequirements, args->ethPortsRequirements, args->namesOfPortsOnTheSwitch))
     	return (void*) 0;
     else
     	return (void*) 1;
@@ -727,9 +727,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required network function port  related to the network function \"%s\" has been attached to the tenant-lsi",nfp->first.c_str());
 				delete(clo);
 				throw GraphManagerException();
-			}
+			}			
 		}
-				
+		
+		map<string,list<string> > networkFunctionsPortsNameOnSwitch = clo->getNetworkFunctionsPortsNameOnSwitch();
+		
+		for(map<string,list<string> >::iterator nfpnos = networkFunctionsPortsNameOnSwitch.begin(); nfpnos != networkFunctionsPortsNameOnSwitch.end(); nfpnos++)
+			lsi->setNetworkFunctionsPortsNameOnSwitch(nfpnos->first,nfpnos->second);
+		
 		list<pair<unsigned int, unsigned int> > vl = clo->getVirtualLinks();
 		//TODO: check if the number of vlinks is the same required 
 		unsigned int currentTranslation = 0;
@@ -860,15 +865,16 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	pthread_t some_thread[network_functions.size()];
 	to_thread_t thr[network_functions.size()];
 	int i = 0;
+		
 	for(map<string, list<unsigned int> >::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		
 		thr[i].nf_name = nf->first;
-		thr[i].number_of_ports = nf->second.size();
 		thr[i].ipv4PortsRequirements = graph->getNetworkFunctionIPv4PortsRequirements(nf->first);
 		thr[i].ethPortsRequirements = graph->getNetworkFunctionEthernetPortsRequirements(nf->first);
 		thr[i].computeController = computeController;
-		
+		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
+			
 		if (pthread_create(&some_thread[i], NULL, &startNF, (void *)&thr[i]) != 0)
 		{
 			assert(0);
@@ -1311,6 +1317,9 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 				throw GraphManagerException();
 			}
 			
+			//FIXME: usefull? Probably no!
+			lsi->setNetworkFunctionsPortsNameOnSwitch(anpo->getNFname(),anpo->getPortsNameOnSwitch());
+			
 			delete(anpo);
 		}catch(SwitchManagerException e)
 		{
@@ -1334,7 +1343,9 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	
 	for(map<string, list<unsigned int> >::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		if(!computeController->startNF(nf->first, nf->second.size(),newPiece->getNetworkFunctionIPv4PortsRequirements(nf->first),newPiece->getNetworkFunctionEthernetPortsRequirements(nf->first)))
+		list<string> nfPortsNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
+	
+		if(!computeController->startNF(nf->first, newPiece->getNetworkFunctionIPv4PortsRequirements(nf->first),newPiece->getNetworkFunctionEthernetPortsRequirements(nf->first),nfPortsNameOnSwitch))
 		{
 			//TODO: no idea on what I have to do at this point
 			assert(0);

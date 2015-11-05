@@ -117,7 +117,8 @@ bool Native::startNF(StartNFIn sni) {
 
 	uint64_t lsiID = sni.getLsiID();
 	std::string nf_name = sni.getNfName();
-	unsigned int n_ports = sni.getNumberOfPorts();
+	std::list<std::string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	std::map<unsigned int, pair<std::string, std::string> > ipv4PortsRequirements = sni.getIpv4PortsRequirements();
 	std::map<unsigned int, std::string> ethPortsRequirements = sni.getEthPortsRequirements();
 	
@@ -139,8 +140,8 @@ bool Native::startNF(StartNFIn sni) {
 	command << PULL_AND_RUN_NATIVE_NF << " " << lsiID << " " << nf_name << " " << uri.str() << " " << n_ports;
 	
 	//create the names of the ports
-	for(unsigned int i = 1; i <= n_ports; i++)
-		command << " " << lsiID << "_" << nf_name << "_" << i;
+	for(std::list<std::string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
+		command << " " << *pn;
 		
 	//specify the IPv4 requirements for the ports
 	for(unsigned int i = 1; i <= n_ports; i++)
