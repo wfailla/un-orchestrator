@@ -12,10 +12,6 @@
 #$3 registry/nf[:tag] 									(e.g., localhost:5000/pcap:latest)
 #$4 number_of_ports									(e.g., 2)
 #The next $4 parameters are the names of the port of the NF				(e.g., vEth0 vEth1)
-#The next $4 parameters are IPv4 addresses / network to be associated with that ports 	(e.g., 10.0.0.1/24)
-#	0 if no IPv4 address must be associated
-#The next $4 parameters are Eth addresses to be associated with that ports 		(e.g., aa:aa:aa:aa:aa:aa)
-#	0 if no Ethernet address must be associated
 
 if (( $EUID != 0 )) 
 then
@@ -105,8 +101,6 @@ fi
 
 #configure network for native network function
 current=5
-currentIp=`expr $current + $4`
-currentEthernet=`expr $currentIp + $4`
 for (( c=0; c<$4; c++ ))
 do
 
@@ -114,17 +108,6 @@ do
 	#name of the ovs port on the switch: <lsi_id>_<nf_name>_<i> => ${1}_${2}_$((c+1))
 	#!not needed anymore
  	#ip link add link ${1}_${2}_$((c+1)) name ${!current} type macvtap
-
- 	if [ ${!currentEthernet} != 0 ]
- 	then
- 		ip link set ${!current} address ${!currentEthernet}
- 	fi
- 	
- 	if [ ${!currentIp} != 0 ]
- 	then
-		#configure ip address for the interface???
-		ifconfig ${!current} ${!currentIp} up
-	fi
 	
 	ip link set ${!current} up
 	ip link set ${!current} promisc on
@@ -132,8 +115,6 @@ do
 	
 	
 	current=`expr $current + 1`
-	currentIp=`expr $currentIp + 1`
-	currentEthernet=`expr $currentEthernet + 1`
 done 
 
 #prepare the command

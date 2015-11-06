@@ -119,8 +119,6 @@ bool Native::startNF(StartNFIn sni) {
 	std::string nf_name = sni.getNfName();
 	std::list<std::string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
-	std::map<unsigned int, pair<std::string, std::string> > ipv4PortsRequirements = sni.getIpv4PortsRequirements();
-	std::map<unsigned int, std::string> ethPortsRequirements = sni.getEthPortsRequirements();
 	
 	std::stringstream uri;
 
@@ -142,26 +140,6 @@ bool Native::startNF(StartNFIn sni) {
 	//create the names of the ports
 	for(std::list<std::string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 		command << " " << *pn;
-		
-	//specify the IPv4 requirements for the ports
-	for(unsigned int i = 1; i <= n_ports; i++)
-	{
-		if(ipv4PortsRequirements.count(i) == 0)
-			command << " " << 0;
-		else
-		{
-			pair<string, string> req = (ipv4PortsRequirements.find(i))->second;
-			command << " " << req.first <<"/" << convertNetmask(req.second);
-		}
-	}
-	//specify the ethernet requirements for the ports
-	for(unsigned int i = 1; i <= n_ports; i++)
-	{
-		if(ethPortsRequirements.count(i) == 0)
-			command << " " << 0;
-		else
-			command << " " << (ethPortsRequirements.find(i))->second;
-	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 
