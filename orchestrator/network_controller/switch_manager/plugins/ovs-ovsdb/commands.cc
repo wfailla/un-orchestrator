@@ -1785,7 +1785,7 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 						const Array &stuff1 = node1.getArray();
 									
 						if(i==1){
-							port_uuid[dpi].push_back(stuff1[i].getString());
+							vport_uuid[dpi].push_back(stuff1[i].getString());
 						}
 					} else if(name1 == "details"){
 						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
