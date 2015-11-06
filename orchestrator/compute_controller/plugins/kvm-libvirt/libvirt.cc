@@ -83,7 +83,6 @@ bool Libvirt::startNF(StartNFIn sni)
 	const char *xmlconfig = NULL;
 	
 	string nf_name = sni.getNfName();
-	map<unsigned int,string> ethPortsRequirements = sni.getEthPortsRequirements();
 	string uri_image = description->getURI();
 	
 	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
@@ -249,11 +248,6 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
 	    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
-
-		if(ethPortsRequirements.count(i) > 0) {
-    	    xmlNodePtr macn = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
-    	    xmlNewProp(macn, BAD_CAST "address", BAD_CAST (ethPortsRequirements.find(i)->second.c_str()));
-		}
 
 	    xmlNodePtr drvn = xmlNewChild(ifn, NULL, BAD_CAST "driver", NULL);
 	    xmlNodePtr drv_hostn = xmlNewChild(drvn, NULL, BAD_CAST "host", NULL);

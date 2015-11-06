@@ -210,10 +210,6 @@ Example implementing the following graph:
 It is worth noting that only the packets to/from a specific MAC address can
 enter into the bridge, while packets with other MAC addresses are not considered
 by this graph.
-Moreover, the bridge has a third interface (bridge:3) having an IPv4 address,
-and the graph specifies a proper path for the packets to/from this address,
-in order, for instance, to allow the client to contact the network function
-through SSH.
 
 PUT /graph/myGraph HTTP/1.1   
 Content-Type : application/json 
@@ -223,17 +219,7 @@ Content-Type : application/json
         {   
             "VNFs":[   
              {    
-                "id":"bridge",  
-                "ports_with_requirements":[    
-                {    
-                    "name":"bridge:3",  
-                    "ipv4":
-                    {    
-                        "address":"130.192.225.176",  
-                        "netmask":"255.255.255.128"  
-                    }  
-                }  
-                ]  
+                "id":"bridge"
              }  
             ],  
             "flow-rules":[   
