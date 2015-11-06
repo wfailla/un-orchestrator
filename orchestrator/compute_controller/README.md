@@ -13,7 +13,7 @@ Each plugin is required to define a class implementing the interface
 * `orchestrator/CMakeLists.txt`
 * `orchestrator/compute_controller/compute_controller.h`
 * `orchestrator/compute_controller/compute_controller.cc`
-* `orchestrator/compute_controller/implementation.cc`
+* `orchestrator/compute_controller/description.cc`
 * `orchestrator/compute_controller/nf_type.h`
 must be properly updated so that the new plugin is recognized by the system.
 	

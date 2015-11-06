@@ -3,8 +3,8 @@
 The Universal Node orchestrator (un-orchestrator) is the main component of the 
 Universal Node (UN). It handles the orchestration of compute and network
 resources within a UN, hence managing the complete lifecycle of computing
-containers (e.g., VMs, Docker, DPDK processes) and networking primitives 
-(e.g., OpenFlow rules, logical switching instances, etc).
+containers (e.g., VMs, Docker, DPDK processes, native environment) and
+networking primitives (e.g., OpenFlow rules, logical switching instances, etc).
 It receives commands through a REST API according to the Network Functions 
 Forwarding Graph (NF-FG) formalism, and takes care of implementing them on 
 the physical node. 
@@ -69,8 +69,8 @@ and handles the lifecycle of a virtual network function (i.e., creating,
 updating, destroying a VNF), including the operations needed to attach
 those ports to the running vSwitch.
 
-Currently it supports network functions as (KVM) VMs, Docker and DPDK 
-processes, although only a subset of them can be available depending on 
+Currently it supports network functions as (KVM) VMs, Docker, DPDK processes and
+native functions, although only a subset of them can be available depending on 
 the chosen vSwitch. If you are interested to add the support for a new 
 hypervisor, please check the file [compute_controller/README.md](compute_controller/README.md).
 
@@ -79,11 +79,11 @@ hypervisor, please check the file [compute_controller/README.md](compute_control
 The following table shows which execution environments
 are supported with the different vSwitches.
 
-|                            | Docker     |  KVM  | KVM-DPDK (ivshmem) | DPDK processes |
-|----------------------------|------------|-------|--------------------|----------------|
-| **xDPd**                   |    **Y**   | **Y** |          N         |      **Y**     |
-| **OvS (OVSDB / OFconfig)** |    **Y**   | **Y** |    not possible    |  not possible  |
-| **OvS-DPDK**               |    N       | **Y** |        **Y**       |      **Y**     |
+|                            | Docker     |  KVM  | KVM-DPDK (ivshmem) | DPDK processes | Native |
+|----------------------------|------------|-------|--------------------|----------------|--------|
+| **xDPd**                   |    **Y**   | **Y** |          N         |      **Y**     | **Y**  |
+| **OvS (OVSDB / OFconfig)** |    **Y**   | **Y** |    not possible    |  not possible  | **Y**  |
+| **OvS-DPDK**               |    N       | **Y** |        **Y**       |      **Y**     | **Y**  |
 
 
 ### NF-FG
