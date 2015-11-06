@@ -81,7 +81,7 @@ For a the full list of the supported parameters, type:
     $ ofc-server -h
     
 
-## How to start OvS (managed through OpenOVSDB) to work with the un-orchestrator
+## How to start OvS (managed through OVSDB) to work with the un-orchestrator
     
 Start OVS:
 
@@ -91,7 +91,7 @@ Start ovsdb-server:
 
     $ sudo ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6632
 	
-## How to start OvS (managed through OpenOVSDB) with DPDK support to work with the un-orchestrator
+## How to start OvS (managed through OVSDB) with DPDK support to work with the un-orchestrator
 
 Configure the system (after each reboot of the physical machine):
 

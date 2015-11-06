@@ -569,7 +569,7 @@ void *startNF(void *arguments)
     to_thread_t *args = (to_thread_t *)arguments;
     assert(args->computeController != NULL);
     
-    if(!args->computeController->startNF(args->nf_name, args->ipv4PortsRequirements, args->ethPortsRequirements, args->namesOfPortsOnTheSwitch))
+    if(!args->computeController->startNF(args->nf_name, args->namesOfPortsOnTheSwitch))
     	return (void*) 0;
     else
     	return (void*) 1;
@@ -870,8 +870,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	{
 		
 		thr[i].nf_name = nf->first;
-		thr[i].ipv4PortsRequirements = graph->getNetworkFunctionIPv4PortsRequirements(nf->first);
-		thr[i].ethPortsRequirements = graph->getNetworkFunctionEthernetPortsRequirements(nf->first);
 		thr[i].computeController = computeController;
 		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
 			
@@ -1345,7 +1343,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		list<string> nfPortsNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
 	
-		if(!computeController->startNF(nf->first, newPiece->getNetworkFunctionIPv4PortsRequirements(nf->first),newPiece->getNetworkFunctionEthernetPortsRequirements(nf->first),nfPortsNameOnSwitch))
+		if(!computeController->startNF(nf->first, nfPortsNameOnSwitch))
 		{
 			//TODO: no idea on what I have to do at this point
 			assert(0);

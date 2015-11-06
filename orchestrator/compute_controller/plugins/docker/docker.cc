@@ -23,8 +23,6 @@ bool Docker::startNF(StartNFIn sni)
 {
 	uint64_t lsiID = sni.getLsiID();
 	string nf_name = sni.getNfName();
-	map<unsigned int,pair<string,string> > ipv4PortsRequirements = sni.getIpv4PortsRequirements();
-	map<unsigned int,string> ethPortsRequirements = sni.getEthPortsRequirements();
 	
 	string uri_image = description->getURI();
 	
@@ -36,26 +34,6 @@ bool Docker::startNF(StartNFIn sni)
 		
 	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 		command << " "  << *pn;
-		
-	//specify the IPv4 requirements for the ports
-	for(unsigned int i = 1; i <= n_ports; i++)
-	{
-		if(ipv4PortsRequirements.count(i) == 0)
-			command << " " << 0;
-		else
-		{
-			pair<string, string> req = (ipv4PortsRequirements.find(i))->second;
-			command << " " << req.first <<"/" << convertNetmask(req.second);
-		}
-	}
-	//specify the ethernet requirements for the ports
-	for(unsigned int i = 1; i <= n_ports; i++)
-	{
-		if(ethPortsRequirements.count(i) == 0)
-			command << " " << 0;
-		else
-			command << " " << (ethPortsRequirements.find(i))->second;
-	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 

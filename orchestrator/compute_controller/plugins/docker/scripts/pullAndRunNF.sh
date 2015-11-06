@@ -11,10 +11,6 @@
 #$3 registry/nf[:tag] 	(e.g., localhost:5000/pcap:latest)
 #$4 number_of_ports		(e.g., 2)
 #The next $4 parameters are port names to be provided to the container (e.g., vEth0 vEth1)
-#The next $4 parameters are IPv4 addresses / network to be associated with that ports (e.g., 10.0.0.1/24)
-#	0 if no IPv4 address must be associated
-#The next $4 parameters are Eth addresses to be associated with that ports (e.g., aa:aa:aa:aa:aa:aa)
-#	0 if no Ethernet address must be associated
 
 tmp_file="$1_$2_tmp"
 
@@ -60,29 +56,15 @@ sudo mkdir -p /var/run/netns
 sudo ln -s /proc/$PID/ns/net /var/run/netns/$PID
 	
 current=5
-currentIp=`expr $current + $4`
-currentEthernet=`expr $currentIp + $4`
 
 for (( c=0; c<$4; c++ ))
 do	
 	ip link set ${!current} netns $PID
 	ip netns exec $PID ip link set dev ${!current} name eth$c
-			
-	if [ ${!currentEthernet} != 0 ]
- 	then
- 		ip netns exec $PID ip link set eth$c address ${!currentEthernet}
- 	fi
- 	
- 	if [ ${!currentIp} != 0 ]
- 	then
- 		sudo ip netns exec $PID ip addr add ${!currentIp} dev eth$c
- 	fi
- 	
+				
  	ip netns exec $PID ip link set eth$c up
 	
 	current=`expr $current + 1`
-	currentIp=`expr $currentIp + 1`
-	currentEthernet=`expr $currentEthernet + 1`
 done
 
 exit 1

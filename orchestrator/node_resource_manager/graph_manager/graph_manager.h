@@ -48,8 +48,6 @@ typedef struct
 	{
 		string nf_name;
 		unsigned int number_of_ports;
-		map<unsigned int,pair<string,string> > ipv4PortsRequirements;
-		map<unsigned int,string> ethPortsRequirements;
 		ComputeController *computeController;
 		
 		list<string> namesOfPortsOnTheSwitch;
