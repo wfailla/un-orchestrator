@@ -7,6 +7,7 @@
 	<tns:capability tns:name="ebtables" location="./" tns:type="executable"/>
 	<tns:capability tns:name="iproute2" location="./" tns:type="executable"/>
 	<tns:capability tns:name="ipsec-tools" location="./" tns:type="executable"/>
+	<tns:capability tns:name="openvswitch" location="./" tns:type="executable" />
 	<tns:capability tns:name="hw_accelerated_ipsec" 
 		location="/usr/bin/run_freescale_ipsec_encryption.sh"
 		tns:type="script"/>

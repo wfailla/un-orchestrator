@@ -59,4 +59,9 @@
 		<dpdk uri="../NFs/dpdk/dpi/build/dpi" cores="1" location="local"/>
 	</network-function>
 	
+	<network-function name="openflow_bridge" summary="OpenFlow bridge that receives rules from a controller that is in the network">
+		<!-- Only a native implementation is available for this network function -->
+		<native uri="../NFs/native/openflow-bridge/openflow_bridge.tar.gz" dependencies="openvswitch" location="local"/>
+	</network-function>
+	
 </network-functions>
