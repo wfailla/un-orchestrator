@@ -122,7 +122,7 @@ in the root folder of that repository.
 
 ### Open vSwitch (OVSDB)
 
-At first, downaload the Open vSwitch source code from:
+At first, download the Open vSwitch source code from:
 
     http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
 
