@@ -79,7 +79,7 @@ In any case, the compilation instruction for setting up Open vSwitch with
 OF-CONFIG are the following (not guaranteed that those are 100% accurate,
 as the OF-CONFIG support in Open vSwitch is rather primitive).
 
-The list of OF-CONFIG dependencies:
+OvS with the OFCONFIG support can be installed as follows:
 
 	$ sudo apt-get install autoconf automake gcc libtool libxml2 libxml2-dev m4 make openssl dbus
 	
@@ -104,8 +104,6 @@ The list of OF-CONFIG dependencies:
     $ make
     $ sudo make install
 	
-You can now install OF-CONFIG:
-
 	; Clone the openvswitch repository
 	$ git clone https://github.com/openvswitch/of-config    
 
