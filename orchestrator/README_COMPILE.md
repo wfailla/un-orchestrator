@@ -220,7 +220,7 @@ further steps are required:
 ### DPDK processes
 
 In order to run VNFs implemented as DPDK processes, no further operation is required,
-since the DPDK library have alredy been installed together with the vSwitch.
+since the DPDK library have already been installed together with the vSwitch.
 
 ## NF-FG library
 
