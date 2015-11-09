@@ -62,7 +62,7 @@ In order to install xDPd, you have to follow the steps below.
 
 ### Open vSwitch (of-config) [DEPRECATED]
 
-OpenvSwitch can be installed with either the OVSDB or OF-CONFIG plugins.
+Open vSwitch can be installed with either the OVSDB or OF-CONFIG plugins.
 Although both protocols allow to control the switch (e.g., create/delete
 new bridging instances, create/delete ports, etc), we found out
 that OF-CONFIG is rather limited in terms of capabilities. For instance,
