@@ -33,13 +33,13 @@ for (( c=1; c < $3; c++ ))
 do
 	
 	#create peer port on this bridge (type patch)
-	ovs-vsctl del-port $br_name ${!current}_peer
+	ovs-vsctl del-port $br_name ${!current}_p
 	
 	#change type of the port on the LSI
 	ovs-vsctl set Interface ${!current} type=internal
 	
 	#remove option for virtual link on the port on the LSI
-	ovs-vsctl remove Interface ${!current} options peer=${!current}_peer
+	ovs-vsctl remove Interface ${!current} options peer=${!current}_p
 
 	current=`expr $current + 1`
 

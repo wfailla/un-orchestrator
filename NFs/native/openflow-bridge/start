@@ -45,11 +45,11 @@ do
 	ovs-vsctl set Interface ${!current} type=patch
 	
 	#create peer port on this bridge (type patch)
-	ovs-vsctl add-port $br_name ${!current}_peer -- set Interface ${!current}_peer type=patch
+	ovs-vsctl add-port $br_name ${!current}_p -- set Interface ${!current}_p type=patch
 	
 	#create the virtual link
-	sudo ovs-vsctl set interface ${!current} options:peer=${!current}_peer
-	sudo ovs-vsctl set interface ${!current}_peer options:peer=${!current}
+	sudo ovs-vsctl set interface ${!current} options:peer=${!current}_p
+	sudo ovs-vsctl set interface ${!current}_p options:peer=${!current}
 
 	current=`expr $current + 1`
 
