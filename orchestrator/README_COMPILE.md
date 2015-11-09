@@ -227,6 +227,9 @@ Forwarding Graph (NF-FG) defined in WP3.
 	; Copy the library in the un-orchestrator folder
 	$ cp [nffg]/virtualizer3.pyc [un-orchestrator]/orchestrator/node_resource_manager/virtualizer      
 
+Finally, remember to select the proper `cmake` option when compiling the `un-orchestrator`.
+
+
 ## Compile the un-orchestrator
 
 We are now ready to compile the un-orchestrator.
@@ -238,7 +241,8 @@ We are now ready to compile the un-orchestrator.
 
 The previous command allows you to select some configuration parameters for the
 un-orchestrator, such as the virtual switch used, which kind of execution environment
-you want to enable, the NF-FG description, etc. When you're finished, exit from
+you want to enable, the NF-FG format to use (the default WP5 one or the one defined
+in WP3), etc. When you're finished, exit from
 the 'ccmake' interface by *generating the configuration files* (press 'c' and 'g')
 and type the following commands:
 
