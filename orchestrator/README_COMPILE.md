@@ -88,7 +88,6 @@ The list of OF-CONFIG dependencies:
 	  following the INSTALL file present in the root directory
 
 	Compile and install LIBNETCONF as described here, including headers from the devel package:
-
 	; Clone the libnetconf repository
 	$ git clone https://github.com/cesnet/libnetconf
     $ cd libnetconf/
