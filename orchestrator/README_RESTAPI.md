@@ -73,7 +73,7 @@ example:
 
 This example is more complex, and it includes a network function called "bridge".
 Packets coming from the interface ge0 are sent to the first port of the network
-function (bridge:1), while packes coming from the second port of the network
+function (bridge:1), while packets coming from the second port of the network
 function (bridge:2) are sent on the network interface ge1
   
 PUT /graph/myGraph HTTP/1.1   
