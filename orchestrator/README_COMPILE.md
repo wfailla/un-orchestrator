@@ -56,7 +56,7 @@ In order to install xDPd, you have to follow the steps below.
 	$ cd build  
 	$ ../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"   
 	$ make
-	$sudo make install
+	$ sudo make install
 
 **WARNING: Currently, xDPd is not compiling on Linux kernels newer than 3.16.0-30.**
 
