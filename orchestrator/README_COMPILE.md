@@ -82,11 +82,11 @@ The list of OF-CONFIG dependencies:
 
 	$ sudo apt-get install autoconf automake gcc libtool libxml2 libxml2-dev m4 make openssl dbus
 	
-	; Install LIBSSH
+	Install LIBSSH
 	; download it from https://red.libssh.org/projects/libssh/files and for install it 
 	  following the INSTALL file present in the root directory
 
-	; Compile and install LIBNETCONF as described here, including headers from the devel package:
+	Compile and install LIBNETCONF as described here, including headers from the devel package:
 
 	; Clone the libnetconf repository
 	$ git clone https://github.com/cesnet/libnetconf
@@ -96,17 +96,15 @@ The list of OF-CONFIG dependencies:
 	; Install the libnetconf library by following the instructions in the
     ; INSTALL file contained in the root folder of this library.
 
-	; Compile and install OPENVSWITCH
-	; At first, download the Open vSwitch source code from:
-    ; http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
-	; Then execute the following commands:
+	Compile and install OPENVSWITCH
+    ; download it from http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
     $ tar -xf openvswitch-2.4.0.tar.gz
     $ cd openvswitch-2.4.0
     $ ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
     $ make
     $ sudo make install
 	
-	; You can now install OF-CONFIG:
+You can now install OF-CONFIG:
 
 	; Clone the openvswitch repository
 	$ git clone https://github.com/openvswitch/of-config    
