@@ -74,9 +74,9 @@ For this reason we suggest to install Open vSwitch with its native OSVDB
 support (next section); although OVSDB is not standard, it seems that it
 does its job better than OF-CONFIG.
 
-In any case, the compilation instruction for setting up OpenvSwitch with 
+In any case, the compilation instruction for setting up Open vSwitch with 
 OF-CONFIG are the following (not guaranteed that those are 100% accurate,
-as the OF-CONFIG support in OpenvSwitch is rather primitive).
+as the OF-CONFIG support in Open vSwitch is rather primitive).
 
 The list of OF-CONFIG dependencies:
 
