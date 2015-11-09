@@ -411,7 +411,7 @@ Content-Type : application/json
 ===============================================================================
 
 Within the "match" element, the following fields are allowed (all the values
-must be spicified as strings):
+must be specified as strings):
 
 	"port"         //only if "VNF_id" and "endpoint_id" are not specified
 	"VNF_id"       //only if "port" and "endpoint_id" are not specified
