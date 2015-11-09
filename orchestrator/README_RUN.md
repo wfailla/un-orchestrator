@@ -22,7 +22,7 @@ Folder `config` contains some configuration file examples that can be used
 to configure/test the un-orchestrator.
 
   * `config/universal-node-example.xml`: configuration file describing
-    the physical ports to be handeld by the un-orchestrator, as well as
+    the physical ports to be handled by the un-orchestrator, as well as
     the amount of CPU, memory and storage provided to the universal node.
   * `config/simple_passthrough_nffg.json`: simple graph that implements
     a simple passthrough function, i.e., traffic is received from a first
