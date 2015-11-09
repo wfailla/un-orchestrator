@@ -80,6 +80,11 @@ public:
 	*/
 	virtual void checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi) = 0;
 	
+	/**
+	 * virtual destructor is needed
+	 */
+	virtual ~SwitchManager();
+
 };
 
 class SwitchManagerException: public exception
