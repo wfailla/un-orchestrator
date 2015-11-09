@@ -70,7 +70,7 @@ it cannot set the type of port configured on the switch (e.g., virtio
 or IVSHMEM), requiring the orchestrator to rely on a combination of
 OF-CONFIG commands and bash scripts to perform its job.
 
-For this reason we suggest to install OpenvSwitch with its native OSVDB 
+For this reason we suggest to install Open vSwitch with its native OSVDB 
 support (next section); although OVSDB is not standard, it seems that it
 does its job better than OF-CONFIG.
 
