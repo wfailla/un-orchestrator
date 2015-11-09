@@ -80,45 +80,38 @@ as the OF-CONFIG support in Open vSwitch is rather primitive).
 
 The list of OF-CONFIG dependencies:
 
-- libnetconf 0.9.x, not higher
-- compiler (gcc, clang,...) and standard headers
-- pkg-config
-- libpthreads
-- libxml2 (including headers from the devel package)
-- libssh >= 0.6.4 (including headers)
-	- download it from https://red.libssh.org/projects/libssh/files and for install it 
+	$ sudo apt-get install autoconf automake gcc libtool libxml2 libxml2-dev m4 make openssl dbus
+	
+	; Install LIBSSH
+	; download it from https://red.libssh.org/projects/libssh/files and for install it 
 	  following the INSTALL file present in the root directory
-	- this step can be skipped if using --disable-ssh
-- openvswitch 2.4.0
-- pyang >= 1.5.0
-- python 2.6 or higher with the following modules:
- - os, copy, string, re, argparse, subprocess, inspect, curses, xml, libxml2
- - only with TLS enabled: M2Crypto
-- only with TLS enabled by using the --enable-tls option
- - OpenSSL (libssl, libcrypto, including headers from the devel package)
-- roff2html
- - optional, used for building HTML version of man pages (make doc)
-- rpmbuild
- - optional, used for building RPM package (make rpm).
 
-Compile and install libnetconf as described here, including headers from the devel package:
+	; Compile and install LIBNETCONF as described here, including headers from the devel package:
 
 	; Clone the libnetconf repository
 	$ git clone https://github.com/cesnet/libnetconf
     $ cd libnetconf/
     $ git checkout -b 0.9.x origin/0.9.x
 
-Install the libnetconf library by following the instructions in the
-INSTALL file contained in the root folder of this library.
+	; Install the libnetconf library by following the instructions in the
+    ; INSTALL file contained in the root folder of this library.
 
-You can now install of-config:
+	; Compile and install OPENVSWITCH
+	; At first, download the Open vSwitch source code from:
+    ; http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
+	; Then execute the following commands:
+    $ tar -xf openvswitch-2.4.0.tar.gz
+    $ cd openvswitch-2.4.0
+    $ ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
+    $ make
+    $ sudo make install
+	
+	; You can now install OF-CONFIG:
 
 	; Clone the openvswitch repository
 	$ git clone https://github.com/openvswitch/of-config    
 
-Follow the instructions as described in the file INSTALL.md provided
-in the root folder of that repository.
-
+	; Follow the instructions as described in the file INSTALL.md provided in the root folder of that repository.
 
 ### Open vSwitch (OVSDB)
 
