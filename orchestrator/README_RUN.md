@@ -42,7 +42,7 @@ Set up DPDK (after each reboot of the physical machine), in order to:
   * Insert KNI module
   * Setup hugepage mappings for non-NUMA systems (1000 should be a reasonable
     number)
-  * Bind Ethernet device to IGB UIO module (bind all the ethernet interfaces
+  * Bind Ethernet devices to IGB UIO module (bind all the ethernet interfaces
     that you want to use)
 
 	$ cd [xdpd]/libs/dpdk/tools  
