@@ -166,6 +166,22 @@ Now create the ovsbd database:
 	$ sudo ovsdb-tool create /usr/local/etc/openvswitch/conf.db  \
 		/usr/local/share/openvswitch/vswitch.ovsschema
 
+If you intend to use DPDK user-space vhost ports, a recent version of Libvirt must be used that supports configuration of this type of ports. You can build it from sources using the following commands:
+
+	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev
+	$ git clone git://libvirt.org/libvirt.git
+	$ git checkout f57842ecfda1ece8c59718e62464e17f75a27062          # This commit is know to work and have the necessary support.
+	$ cd libvirt
+	$ ./autogen.sh
+	$ make
+	$ sudo make install
+
+In case you already had libvirt installed on the system, this will install an alternative version which must then be used instead of the default one:
+Stop any running Libvirtd instance and run the alternative version installed in the steps above:
+	$ sudo service libvirt-bin stop
+	$ sudo /usr/local/sbin/libvirtd --daemon
+
+Similarly, if you use virsh, you'd have to use the version from /usr/local/bin.
 
 ## Virtual Execution Environment for network functions
 
