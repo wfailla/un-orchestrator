@@ -70,7 +70,7 @@ updating, destroying a VNF), including the operations needed to attach
 those ports to the running vSwitch. Each execution environment may require a different 
 implementation for the compute controller, according to the commands supported by the hypervisor itself.
 
-Currently it supports network functions as (KVM) VMs, Docker and DPDK 
+Currently the prototype supports virtual network functions as (KVM) VMs, Docker and DPDK 
 processes, although only a subset of them can be available depending on 
 the chosen vSwitch. If you are interested to add the support for a new 
 hypervisor, please check the file [compute_controller/README.md](compute_controller/README.md).
