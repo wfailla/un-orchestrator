@@ -100,7 +100,7 @@ At this point, prepare a NF-FG and pass it to the un-orchestator, which will tak
         }  
     }  
     
-This json can be stored in a file (e.g., nffg.json) and provided to the un-orchestrar either through the command line at the boot of the un-orchestrator, or through its REST API. In the latter case, the command to be used is the following:
+This json can be stored in a file (e.g., nffg.json) and provided to the un-orchestrator either through the command line at the boot of the un-orchestrator, or through its REST API. In the latter case, the command to be used is the following:
 
       curl -i -H "Content-Type: application/json" -d "@nffg.json" -X PUT  http://un-orchestrator-address:port/graph/graphid
 
