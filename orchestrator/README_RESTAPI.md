@@ -67,7 +67,7 @@ REST tool (e.g., some nice plugins for Mozilla Firefox). Just in case,
 you can also use the cURL command line tool, such as in the following
 example:
 
-    curl -i -H "Content-Type: application/json" -d "@myGraph.json" -X PUT  http://un-orchestrator-address:port
+    curl -i -H "Content-Type: application/json" -d "@myGraph.json" -X PUT  http://un-orchestrator-address:port/graph/myGraph
 
 ===============================================================================
 
