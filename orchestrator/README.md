@@ -67,7 +67,8 @@ already processed in a graph.
 The compute controller is the sub-module that interacts with the hypervisor
 and handles the lifecycle of a virtual network function (i.e., creating,
 updating, destroying a VNF), including the operations needed to attach
-those ports to the running vSwitch.
+those ports to the running vSwitch. Each execution environment may require a different 
+implementation for the compute controller, according to the commands supported by the hypervisor itself.
 
 Currently it supports network functions as (KVM) VMs, Docker and DPDK 
 processes, although only a subset of them can be available depending on 
