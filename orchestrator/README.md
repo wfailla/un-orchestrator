@@ -48,7 +48,7 @@ It consists of two parts:
     implementation for the switch manager, according to the commands
     supported by the vSwitch itself.
 
-Currently, it supports Open vSwitch (OvS) and the extensible DataPath daemon
+Currently, the un-orchestrator supports Open vSwitch (OvS) and the extensible DataPath daemon
 (xDPd) as vSwitches.
 If you are interested to add the support for a new virtual switch, please 
 check the file [network_controller/switch_manager/README.md](network_controller/switch_manager/README.md).
