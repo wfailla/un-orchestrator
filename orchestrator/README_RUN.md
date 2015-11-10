@@ -76,7 +76,7 @@ OF-CONFIG server can be started by:
 
 By default, `ofc-server` starts in daemon mode. To avoid daemon mode, use the
 `-f` parameter.
-For a the full list of the supported parameters, type:
+For the full list of the supported parameters, type:
 
     $ ofc-server -h
     
