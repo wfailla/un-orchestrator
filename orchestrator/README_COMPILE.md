@@ -103,7 +103,7 @@ OvS with the OFCONFIG support can be installed as follows:
     $ make
     $ sudo make install
 	
-	; Clone the openvswitch repository
+	; Clone the of-config repository
 	$ git clone https://github.com/openvswitch/of-config    
 
 	; Follow the instructions as described in the file INSTALL.md provided in the root folder of that repository.
