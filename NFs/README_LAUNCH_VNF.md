@@ -11,7 +11,7 @@ In order to create your own VNF image, please check individual README's in each 
 
 ### Register the VNF in the name-resolver
 Once the VNF image is created, such a VNF must be registered in the name-resolver database (to install the name-resolver, please check `../name-resolver/README.md`).  
-This operation requires to edit the configuration file of the name-reselver and reboot the name-resolver itself; an example of such a file is available at `../name-resolver/config/example.xml`.
+This operation requires to edit the configuration file of the name-resolver and reboot the name-resolver itself; an example of such a file is available at `../name-resolver/config/example.xml`.
 
 ### Provide the graph description to the un-orchestrator
 In order to deploy your VNF on the UN, you must provide to the un-orchestration a NF-FG including such a VNF (to compile and then execute the un-orchestrator, please check the files `../orchestrator/README_COMPILE.md` and `../orchestrator/README_RUN.md`).
@@ -114,4 +114,4 @@ The following picture shows how the NF-FG of the example is actually implemented
 
 ![deployment](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/deployment.png)
 
-To conclude, the deployment of a second graph will trigger the creation of a new LSI, again connected with the LSI-0; the LSI-0 will then be instructed to properly dispacth the traffic coming from the physical ports among the deployed NF-FGs, according the the NF-FGs themselves.
+To conclude, the deployment of a second graph will trigger the creation of a new LSI, again connected with the LSI-0; the LSI-0 will then be instructed to properly dispatch the traffic coming from the physical ports among the deployed NF-FGs, according the the NF-FGs themselves.
