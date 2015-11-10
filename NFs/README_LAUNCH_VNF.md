@@ -114,4 +114,4 @@ The following picture shows how the NF-FG of the example is actually implemented
 
 ![deployment](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/deployment.png)
 
-To conclude, the deployment of a second graph will trigger the creation of a new LSI, again connected with the LSI-0; the LSI-0 will then be instructed to properly dispacth the traffic coming from the physical ports among the deployed NF-FGs, according the the NF-FGs themselves.
+To conclude, the deployment of a second graph will trigger the creation of a new LSI, again connected with the LSI-0; the LSI-0 will then be instructed to properly dispatch the traffic coming from the physical ports among the deployed NF-FGs, according the the NF-FGs themselves.
