@@ -237,7 +237,7 @@ We are now ready to compile the un-orchestrator.
 	$ ccmake .  
 
 The previous command allows you to select some configuration parameters for the
-un-orchestrator, such as the virtual switch used, which kind of execution environment
+un-orchestrator, such as the virtual switch used, which kind of execution environment(s)
 you want to enable, the NF-FG format to use (the default WP5 one or the one defined
 in WP3), etc. When you're finished, exit from
 the 'ccmake' interface by *generating the configuration files* (press 'c' and 'g')
