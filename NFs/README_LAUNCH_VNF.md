@@ -41,7 +41,7 @@ Then, register the new VNF in the name-resolver by adding the following piece of
 		<implementation type="docker" uri="dummy"/>
 	</network-function>
 
-At this point, prepare a NF-FG and pass it to the un-orchestator, which will take care of executing all the operation required to implement the graph. The graph shown in the picture above can be described in the JSON syntax defined in WP5 as follow:
+At this point, prepare a NF-FG and pass it to the un-orchestator, which will take care of executing all the operations required to implement the graph. The graph shown in the picture above can be described in the JSON syntax defined in WP5 as follow:
 
   
     {
