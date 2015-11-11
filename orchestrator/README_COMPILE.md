@@ -218,7 +218,7 @@ alternative version which must then be used instead of the default one:
 
 Similarly, if you use virsh, you'd have to use the version from `/usr/local/bin`.
 
-#### QEMU with IVSHMEM support
+#### QEMU with `ivshmem` support
 
 To compile and install the QEMU/KVM execution environment with the support to `ivshmem`,
 further steps are required:
