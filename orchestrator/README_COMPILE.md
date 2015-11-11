@@ -201,7 +201,7 @@ provided here:
 This is needed in order to run network functions in KVM-based virtual machines.
 Two flavors of virtual machines are supported:
 
-  * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes vithin the virtual machines;
+  * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes within the virtual machines;
   * virtual machines that exchange packets with the vSwitch through shared memory (`ivshmem`). This configuration is oriented to performance, and only supports DPDK-based processes within the virtual machine.
 	  
 #### Standard QEMU/KVM
