@@ -83,7 +83,7 @@ public:
 	/**
 	 * virtual destructor is needed
 	 */
-	virtual ~SwitchManager();
+	virtual ~SwitchManager(){};
 
 };
 
