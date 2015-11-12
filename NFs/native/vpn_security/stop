@@ -1,0 +1,50 @@
+#!/bin/bash
+
+#Author: Sergio Nuccio
+#Date: November 12th 2015
+#Brief: stop script for a VPN network function that creates an IPsec tunnel
+
+#command line: 
+#	sudo ./stop $1 $2 $3 $4 $5
+
+#dependencies: ipsec-tools, iptables
+
+#$1 LSI ID								(e.g., 2)
+#$2 NF name								(e.g., firewall)
+#$3 number_of_ports							(it is supposed to be 2 for this NF)
+#$4 and $5 names of port1 and port2 respectively			(e.g., vEth0 vEth1)
+
+
+if (( $EUID != 0 )) 
+then
+    echo "[nativeNF_vpnsec_stop] This script must be executed with ROOT privileges"
+    exit 0
+fi
+
+table=t_$1_$2
+
+#flush SAD
+setkey -D
+
+#flush SPD
+setkey -DP
+
+
+#remove policy-based routing
+ip route del default via 130.192.225.254 dev $5 table $table
+ip route del from 10.10.10.0/24 via 130.192.225.181 dev $4 table $table
+
+
+ip rule del fwmark 0x$(echo "obase=16; $1" | bc)ecec table $table
+ip rule del from 10.10.10.0/24 to 130.192.225.181 table $table
+
+#remove table entry from /etc/iproute2/rt_tables
+ret=$(grep "$table" /etc/iproute2/rt_tables)
+if[ -n "$ret" ]
+then
+	sed -i~ -e s/"$table".*$// /etc/iproute2/rt_tables
+fi
+
+echo "[nativeNF_vpnsec_start] script executed"
+
+exit 0
