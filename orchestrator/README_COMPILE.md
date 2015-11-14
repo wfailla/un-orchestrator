@@ -77,7 +77,7 @@ does its job better than OF-CONFIG.
 
 In any case, the compilation instruction for setting up OpenvSwitch with 
 OF-CONFIG are the following (not guaranteed that those are 100% accurate,
-as the OF-CONFIG support in Open vSwitch is rather primitive).
+as the OF-CONFIG support in OpenvSwitch is rather primitive).
 
 OvS with the OFCONFIG support can be installed as follows:
 
@@ -95,7 +95,7 @@ OvS with the OFCONFIG support can be installed as follows:
 	; Install the libnetconf library by following the instructions in the
     ; INSTALL file contained in the root folder of this library.
 
-    ; Download Open vSwitch from
+    ; Download OpenvSwitch from
     ;      from http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
     $ tar -xf openvswitch-2.4.0.tar.gz
     $ cd openvswitch-2.4.0
