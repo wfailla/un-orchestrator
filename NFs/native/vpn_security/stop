@@ -22,12 +22,13 @@ then
 fi
 
 table=t_$1_$2
+table_entry= echo -e $1 "\t" $table
 
 #flush SAD
-setkey -D
+setkey -F
 
 #flush SPD
-setkey -DP
+setkey -FP
 
 
 #remove policy-based routing
@@ -39,10 +40,10 @@ ip rule del fwmark 0x$(echo "obase=16; $1" | bc)ecec table $table
 ip rule del from 10.10.10.0/24 to 130.192.225.181 table $table
 
 #remove table entry from /etc/iproute2/rt_tables
-ret=$(grep "$table" /etc/iproute2/rt_tables)
-if[ -n "$ret" ]
+ret=$(grep "$table_entry" /etc/iproute2/rt_tables)
+if [ -n "$ret" ]
 then
-	sed -i~ -e s/"$table".*$// /etc/iproute2/rt_tables
+	sed -i~ -e s/"$table_entry".*$// /etc/iproute2/rt_tables
 fi
 
 echo "[nativeNF_vpnsec_start] script executed"
