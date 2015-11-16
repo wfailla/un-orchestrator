@@ -81,10 +81,12 @@ TCP port. Packets directed to the TCP port 80 is provided to the web cache then 
 while all the other traffic is directly provided to the NAT. Finally, packets from `NAT:2` leaves the
 graph through the port `eth2`.
 
-Example implementing the following graph:
+This graph can be graphically represented as follows:
 
     eth0 -> firewall -> if (tcp_dst == 80) -> web cache  -> nat  -> eth1  
-                        else \--------------------------/ 
+                        else \--------------------------/   
+
+Json description of the graph:
                
     { 
     	"flow-graph":   
