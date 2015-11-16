@@ -42,7 +42,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The REST server is properly started!");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Waiting for commands on TCP port \"%s\"",REST_PORT);
+
 	getchar ();
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Terminating...");
 	MHD_stop_daemon (daemon);
 	return 0;
 }
