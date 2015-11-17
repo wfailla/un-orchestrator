@@ -115,8 +115,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The '%s' is started!",MODULE_NAME);
 	signal(SIGINT,singint_handler);
+	
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The '%s' is started!",MODULE_NAME);
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Waiting for commands on TCP port \"%d\"",rest_port);
+	
 	rofl::cioloop::get_loop().run();
 	
 	return 0;
