@@ -33,7 +33,7 @@ setkey -FP
 
 #remove policy-based routing
 ip route del default via 130.192.225.254 dev $5 #table $table
-ip route del from 10.10.10.0/24 via 130.192.225.181 dev $4 table $table
+ip route del from 10.10.10.0/24 via 130.192.225.181 dev $4 #table $table
 
 #note that policy-based routing is not needed working with namespaces
 
