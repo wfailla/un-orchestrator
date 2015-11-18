@@ -2,8 +2,10 @@
 
 This file contains the instructions to build an example of native network function that marks traffic exploiting ebtables.
 
+
 This function works as follows: when a packet is received on the interface, it 
 is marked with a specific value and then it is forwarded to the other interface.
+
 
 The mark value is an hexadecimal value built as follows:
 
