@@ -9,10 +9,10 @@ The mark value is an hexadecimal value built as follows:
 
 	0x<lsi_id>cade<port_n>
 	
-where:
-	* `lsi_id`	is the id of the LSI of the graph in hexadecimal format
+where:  
+	* `lsi_id`	is the id of the LSI of the graph in hexadecimal format  
 	* `cade`	is a fixed 2 bytes value specific for this network function
-			other network functions can specify different values
+			other network functions can specify different values  
 	* `port_n`	is the number of the port from which the packet is received
 	
 
