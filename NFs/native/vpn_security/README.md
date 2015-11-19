@@ -18,8 +18,9 @@ This native network function requires the following packages:
 
   * `ipsec-tools`  
   
-  ;Install ipsec-tools
-  $ sudo apt-get install ipsec-tools
+It can be installed with the command:
+
+	$ sudo apt-get install ipsec-tools
 
 ## Configuration of IPsec
 
