@@ -14,9 +14,9 @@ Once you have that archive, you can pass the link to the UN (by writing the
 appropriate entry in the name resolver configuration file) in order to
 instantiate the native function in your running environment.
 
-Each native NF will use different capabilities (e.g. iptables, ebtables,
-specific hw accelerator, other scripts or executables...) that must be specified
-in the `dependencies` attribute of the appropriate entry of the name resolver
+Each native NF will use different capabilities (e.g., `iptables`, `ebtables`,
+specific hw accelerator, other scripts or executables, etc.) that must be specified
+in the `dependencies` attribute of the appropriate entry in the name resolver
 configuration file.
 
 In order to execute a native network function, all of its dependencies must be
