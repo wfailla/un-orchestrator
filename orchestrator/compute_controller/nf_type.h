@@ -6,19 +6,11 @@
 
 using namespace std;
 
-//TODO: DPDK should be put optional also in this file
-
 typedef enum{
-	DPDK
-#if defined(ENABLE_DOCKER) || defined(VSWITCH_IMPLEMENTATION_XDPD)
-	,DOCKER
-#endif
-#ifdef ENABLE_KVM
-	,KVM
-#endif
-#ifdef ENABLE_NATIVE
-	,NATIVE
-#endif
+	DPDK,
+	DOCKER,
+	KVM,
+	NATIVE
 	//[+] Add here other implementations for the execution environment
 	}nf_t;
 
@@ -27,18 +19,20 @@ class NFType
 public:
 	static string toString(nf_t type)
 	{
+#ifdef ENABLE_DPDK_PROCESSES
 		if(type == DPDK)
 			return string("dpdk");
+#endif
 #if defined(ENABLE_DOCKER) || defined(VSWITCH_IMPLEMENTATION_XDPD)
-		else if(type == DOCKER)
+		if(type == DOCKER)
 			return string("docker");
 #endif
 #ifdef ENABLE_KVM
-		else if(type == KVM)
+		if(type == KVM)
 			return string("kvm");
 #endif
 #ifdef ENABLE_NATIVE
-		else if(type == NATIVE)
+		if(type == NATIVE)
 			return string("native");
 #endif		
 
@@ -50,14 +44,17 @@ public:
 	
 	static unsigned int toID(nf_t type)
 	{
+
+#ifdef ENABLE_DPDK_PROCESSES
 		if(type == DPDK)
 			return 0;
+#endif
 #ifdef ENABLE_DOCKER
-		else if(type == DOCKER)
+		if(type == DOCKER)
 			return 1;
 #endif
 #ifdef ENABLE_KVM
-		else if(type == KVM)
+		if(type == KVM)
 			return 2;
 #endif
 #ifdef ENABLE_NATIVE
@@ -73,18 +70,22 @@ public:
 
 	static bool isValid(string type)
 	{
-		if(type == "dpdk"
+#ifdef ENABLE_DPDK_PROCESSES
+		if(type == "dpdk")
+			return true;
+#endif
 #ifdef ENABLE_DOCKER		
-		|| type == "docker"
+		if(type == "docker")
+			return true;
 #endif		
 #ifdef ENABLE_KVM
-		|| type == "kvm"
+		if(type == "kvm")
+			return true;
 #endif
 #ifdef ENABLE_NATIVE
-		|| type == "native"
-#endif
-		)
+		if(type == "native")
 			return true;
+#endif
 	
 		//[+] Add here other implementations for the execution environment
 	
