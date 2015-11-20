@@ -42,12 +42,12 @@ ip link set $4 promisc on
 ip link set $4 arp on
 
 #set ip address of the ipsec end point
-ifconfig $5 130.192.225.181 up
+ifconfig $5 x.x.x.x up
 ip link set $4 promisc on
 ip link set $4 arp on
 
 #set default gateway for outgoing traffic
-ip route add default via 130.192.225.254 dev $5 #table $table
+ip route add default via z.z.z.z dev $5 #table $table
 
 #from the VPN network to the local host
 #ip route add 10.0.2.0/24 via 10.0.1.1 dev $4 table $table
