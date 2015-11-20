@@ -30,6 +30,12 @@
 		<port name="PCI:83:00.1" type="ethernet" side="edge">
 			<virtualized as="ERFS external port 4" port-type="port-sap"/>
 		</port>
+		<port name="PCI:87:00.0" type="ethernet" side="edge">
+			<virtualized as="ERFS external port 3" port-type="port-sap"/>
+		</port>
+		<port name="PCI:87:00.1" type="ethernet" side="edge">
+			<virtualized as="ERFS external port 4" port-type="port-sap"/>
+		</port>
 
 <!--
 example:
