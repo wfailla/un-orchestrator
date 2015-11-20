@@ -62,7 +62,7 @@ public:
 
 	static bool isValid(string type)
 	{
-		if(type == "dpdk" 
+		if(type == "dpdk"
 #ifdef ENABLE_DOCKER		
 		|| type == "docker"
 #endif		
