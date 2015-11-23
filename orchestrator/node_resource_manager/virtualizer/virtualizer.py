@@ -50,7 +50,7 @@ def init():
 	LOG.debug("Initializing the virtualizer...")
 	
 	v = Virtualizer(id=constants.INFRASTRUCTURE_ID, name=constants.INFRASTRUCTURE_NAME)
-			
+				
 	v.nodes.add(
 		Infra_node(
 			id=constants.NODE_ID,
