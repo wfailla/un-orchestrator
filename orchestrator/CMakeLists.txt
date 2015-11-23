@@ -452,11 +452,6 @@ ENDIF(UNIFY_NFFG)
 
 #Check unsupported configurations
 
-IF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
-	#This configuration (ovs-dpdk + docker) is not supported 
-	message(FATAL_ERROR "OvS-DPDK not supported with Docker")
-ENDIF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
-
 IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
 	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported 
 	message(FATAL_ERROR "OvS not supported with Dpdk processes")
