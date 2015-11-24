@@ -114,6 +114,9 @@ AddNFportsOut *ERFSManager::addNFPorts(AddNFportsIn anpi)
         }
         // TODO - Really check result!
         nf_ports_ids.insert(PortsNameIdMap::value_type(*nfp, port_id));
+        stringstream pid;
+        pid << port_id;
+        port_name_on_switch.push_back(pid.str());
 //        port_name_on_switch.push_back();
     }
     anpo = new AddNFportsOut(anpi.getNFname(), nf_ports_ids, port_name_on_switch);

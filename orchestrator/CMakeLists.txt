@@ -345,9 +345,9 @@ IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
 	)
 
-	IF(NOT DEFINED ENV{DPDK_PATH})
-		message(FATAL_ERROR "Could not find DPDK_PATH environment variable. Please set it to [dpdk-folder]/x86_64-ivshmem-linuxapp-gcc/")
-	ENDIF(NOT DEFINED ENV{DPDK_PATH})
+	IF(NOT DEFINED ENV{RTE_SDK})
+		message(FATAL_ERROR "Could not find RTE_SDK environment variable. Please set it to [dpdk-folder]. Also make sure target x86_64-ivshmem-linuxapp-gcc exists")
+	ENDIF(NOT DEFINED ENV{RTE_SDK})
 ELSE()
 	SET(SOURCES6
 	${SOURCES5}
@@ -376,7 +376,7 @@ INCLUDE_DIRECTORIES (
 
 IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	INCLUDE_DIRECTORIES (
-		$ENV{DPDK_PATH}/include
+		$ENV{RTE_SDK}/x86_64-ivshmem-linuxapp-gcc/include
 )
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
@@ -404,7 +404,7 @@ LINK_DIRECTORIES(
 
 IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	LINK_DIRECTORIES(
-		$ENV{DPDK_PATH}/lib
+		$ENV{RTE_SDK}/x86_64-ivshmem-linuxapp-gcc/lib
 	)
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
@@ -437,7 +437,7 @@ ENDIF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
 #Links specific for KVM when used with ivshmem
 IF(${ENABLE_KVM_INDEX} EQUAL 2)
     TARGET_LINK_LIBRARIES( node-orchestrator
-			$ENV{DPDK_PATH}/lib/libdpdk.a
+			$ENV{RTE_SDK}/x86_64-ivshmem-linuxapp-gcc/lib/libdpdk.a
 			-ldl
 			-latomic
 			-lpthread

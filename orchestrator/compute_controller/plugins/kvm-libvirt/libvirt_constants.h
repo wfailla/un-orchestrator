@@ -12,7 +12,8 @@
 
 #ifdef ENABLE_KVM_IVSHMEM
 	#define QEMU					"./compute_controller/plugins/kvm-libvirt/scripts/qemu_run.sh"
-	
+        #define QEMU_ERFS "./compute_controller/plugins/kvm-libvirt/scripts/qemu-run-ivshmem-erfs.sh"
+
 	#define	FIRST_PORT_FOR_MONITOR	4000
 	#define QUIT_COMMAND			"quit\n\r"
 #endif

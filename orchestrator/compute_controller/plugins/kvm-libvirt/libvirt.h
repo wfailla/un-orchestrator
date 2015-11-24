@@ -42,7 +42,7 @@ class Libvirt : public NFsManager
 private:
 
 #ifndef ENABLE_KVM_IVSHMEM
-	
+
 	/**
 	*	@bfief: Connection towards Libvirt
 	*/
@@ -59,7 +59,7 @@ private:
 	*		the next VM to be executed
 	*/
 	static unsigned int next_tcp_port;
-	
+
 	/**
 	*	@brief: The map associates each VNF with the TCP port to
 	*		be used to connect to it
@@ -68,17 +68,17 @@ private:
 #endif
 
 
-#ifndef ENABLE_KVM_IVSHMEM	
+#ifndef ENABLE_KVM_IVSHMEM
 	/**
 	*	@brief:	Open a connection with QEMU/KVM
 	*/
 	void connect();
-	
+
 	/**
 	*	@brief: Disconnect from QEMU/KVM
 	*/
 	void disconnect();
-	
+
 	/**
 	*	@brief: Custom error handler
 	*/
@@ -89,9 +89,9 @@ public:
 
 	Libvirt();
 	~Libvirt();
-	
+
 	bool isSupported();
-	
+
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
 };
