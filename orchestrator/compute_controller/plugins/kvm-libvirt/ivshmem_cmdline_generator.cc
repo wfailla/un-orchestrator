@@ -91,7 +91,7 @@ bool IvshmemCmdLineGenerator::get_mempool_cmdline(char * cmdline, int size)
 	struct rte_mempool * packets_pool;
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
-			"Genering command line for memory pool");
+			"Generating command line for memory pool");
 
 	/*lazy dpdk initialization */
 	if(!init)
