@@ -441,6 +441,11 @@ after_parsing:
 	stringstream ivshmemcmdline;
 	//for(unsigned int i=1; i <= n_ports; i++)
 
+	char cmdline[512];
+	if(!cmdgenerator.get_mempool_cmdline(cmdline, sizeof(cmdline)))
+		return false;
+
+	ivshmemcmdline << " " << cmdline;
 
 	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 
@@ -448,8 +453,7 @@ after_parsing:
 	{
 		//Retrieve the command line
 
-		char cmdline[512];
-		if(!cmdgenerator.get_cmdline((*name).c_str(), cmdline, 512))
+		if(!cmdgenerator.get_port_cmdline((*name).c_str(), cmdline, sizeof(cmdline)))
 			return false;
 
 		ivshmemcmdline << " " << cmdline;

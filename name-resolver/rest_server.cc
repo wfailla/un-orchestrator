@@ -272,7 +272,11 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 	try
 	{
 		Object json ;
+<<<<<<< HEAD
 
+=======
+		
+>>>>>>> master
 		//Create the json according to the request
 		if(i == 1)
 		{
