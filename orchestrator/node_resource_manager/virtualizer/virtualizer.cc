@@ -300,6 +300,8 @@ bool Virtualizer::EditPortID(string physicalPortName, unsigned int ID)
 
 bool Virtualizer::addSupportedVNFs(set<NF*> nfs)
 {
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding supported VNFs to the virtualizer...");
+
 	PyObject *pythonFileName = PyString_FromString(PYTHON_MAIN_FILE);
 	PyObject *pythonFile = PyImport_Import(pythonFileName);
 	Py_DECREF(pythonFileName);
@@ -351,6 +353,7 @@ bool Virtualizer::addSupportedVNFs(set<NF*> nfs)
 			
 				if(!retVal)
 				{
+					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Something went wrong while adding VNF %s",(nf->getName()).c_str());
 					Py_XDECREF(pythonFunction);
 					Py_DECREF(pythonFile);
 					return false;
@@ -378,11 +381,15 @@ bool Virtualizer::addSupportedVNFs(set<NF*> nfs)
 	   	return false;
 	}
 
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "VNFs properly added to the virtualizer!");
+
 	return true;
 }
 
 handleRequest_status_t Virtualizer::handleRestRequest(char *message, char **answer, const char *url, const char *method)
 {
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Handling a REST request in the virtualizer...");
+
 	//In this case, the request in handled by the Python code
 	PyObject *pythonFileName = PyString_FromString(PYTHON_MAIN_FILE);
 	PyObject *pythonFile = PyImport_Import(pythonFileName);
