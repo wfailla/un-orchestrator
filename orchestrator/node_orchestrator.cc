@@ -7,6 +7,9 @@
 #include "utils/logger.h"
 #include "node_resource_manager/rest_server/rest_server.h"
 
+#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h"
+#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h"
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,6 +94,14 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 #endif
+
+	DDClientManager *client = new DDClientManager();
+	
+	if(!client->exportDomainInformation("public", "client", "tcp://127.0.0.1:5555"))
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
+		exit(EXIT_FAILURE);	
+	}
 
 	if(!RestServer::init(nffg_file_name,core_mask,ports_file_name))
 	{

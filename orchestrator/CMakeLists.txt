@@ -3,10 +3,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings )
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security)
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings )
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security)
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 
@@ -149,16 +149,6 @@ IF(UNIFY_NFFG)
 	ADD_DEFINITIONS(-DUNIFY_NFFG)
 ENDIF(UNIFY_NFFG)
 
-OPTION(
-	LOG_ON_FILE
-	"Turn on to print log messages on the file 'node-orchestrator.log'. If disabled, stdout is used for the log."
-	OFF
-)
-IF(LOG_ON_FILE)
-	ADD_DEFINITIONS(-DLOG_ON_FILE)
-ENDIF(LOG_ON_FILE)
-
-
 MARK_AS_ADVANCED(
 	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS
 )
@@ -241,7 +231,24 @@ SET(SOURCES
 	node_resource_manager/rest_server/rest_server.cc
 	node_resource_manager/rest_server/match_parser.h
 	node_resource_manager/rest_server/match_parser.cc
-
+	
+	node_resource_manager/pub_sub_client_manager/PubSubClientManager.h
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.cc
+                  
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_fsm.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_io_unix.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_line.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token_tbl.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/keys.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/b64/cdecode.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/protocol.c
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.h
+	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.c
+	
 	utils/logger.h
 	utils/logger.c
 	utils/constants.h
@@ -388,7 +395,7 @@ LINK_DIRECTORIES(
 	/usr/local/lib/
 	/usr/x86_64-linux-gnu/
 	/usr/lib/x86_64-linux-gnu/
-	/usr/lib/python2.7/config-x86_64-linux-gnu/	
+	/usr/lib/python2.7/config-x86_64-linux-gnu/
 )
 
 IF(${ENABLE_KVM_INDEX} EQUAL 2)
@@ -397,15 +404,18 @@ IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	)
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
-
-
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
-	/usr/local/lib/librofl_common.so
+	librofl_common.so
 	libjson_spirit.so
 	libmicrohttpd.so
 	libboost_system.so
 	libxml2.so
+	liburcu.so
+	libzmq.so
+	libczmq.so
+	libsodium.so
+	libjson.so
 	-lrt
 )
 
@@ -473,7 +483,7 @@ IF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) 
 ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
 
 IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
-	#In case of ovs-dpdk, dpdk processes and kvm (usvhost) cannot be supported at the same time
+	#In case of ovs-dpdk, dpdk processes and kvm (usvhost cannot be supported at the same time)
 	message(FATAL_ERROR "OvS-DPDK does not support DPDK processes and KVM at the same time")
 ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
 
