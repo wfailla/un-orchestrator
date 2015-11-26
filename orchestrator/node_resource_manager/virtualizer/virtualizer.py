@@ -550,9 +550,7 @@ def extractRules(content):
 		portPath = flowentry.port.get_target().get_path()
 		port = flowentry.port.get_target()	
 		tokens = portPath.split('/');
-		
-		print "222222"
-				
+						
 		if len(tokens) is not 6 and len(tokens) is not 8:
 			LOG.error("Invalid port '%s' defined in a flowentry (len(tokens) returned %d)",portPath,len(tokens))
 			error = True
@@ -925,20 +923,20 @@ def isCorrect(newContent):
 	newInfrastructure = Virtualizer.parse(root=newTree.getroot())
 	newFlowtable = newInfrastructure.nodes.node[constants.NODE_ID].flowtable
 	newNfInstances = newInfrastructure.nodes.node[constants.NODE_ID].NF_instances
-				
+							
 	#Update the NF instances with the new NFs
 	for instance in newNfInstances:
 		if instance.get_operation() == 'delete':
 			nfInstances.delete(instance)
 		else:
 			nfInstances.add(instance)
-	
+			
 	#Update the flowtable with the new flowentries
 	for flowentry in newFlowtable:
 		if flowentry.get_operation() == 'delete':
 			flowtable.delete(flowentry)
 		else:
-			flowtable.add(flowentry)
+			flowtable.add(flowentry) 
 
 	#Here, infrastructure contains the new configuration of the node
 	#Then, we execute the checks on it!
