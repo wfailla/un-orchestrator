@@ -513,11 +513,11 @@ def extractRules(content):
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
 	flowtable = universal_node.flowtable
-	
+		
 	rules = []
 	for flowentry in flowtable:
 	
-		if flowentry.operation == 'delete':
+		if flowentry.get_operation() == 'delete':
 			#This rule has to be removed from the universal node
 			continue
 	
@@ -547,15 +547,17 @@ def extractRules(content):
 		portPath = flowentry.port.get_target().get_path()
 		port = flowentry.port.get_target()	
 		tokens = portPath.split('/');
-		if len(tokens) is not 5 and len(tokens) is not 7:
-			LOG.error("Invalid port '%s' defined in a flowentry",portPath)
+				
+		#FIXME check this!
+		if len(tokens) is not 6 and len(tokens) is not 8:
+			LOG.error("Invalid port '%s' defined in a flowentry (len(tokens) returned %d)",portPath,len(tokens))
 			error = True
 			return
 						
-		if tokens[3] == 'ports':
+		if tokens[4] == 'ports':
 			#This is a port of the universal node. We have to extract the virtualized port name
 			match['port'] = port.name.get_value()			
-		elif tokens[3] == 'NF_instances':
+		elif tokens[4] == 'NF_instances':
 			#This is a port of the NF. I have to extract the port ID and the type of the NF.
 			#XXX I'm using the port ID as name of the port
 			vnf = port.get_parent().get_parent()
@@ -587,17 +589,17 @@ def extractRules(content):
 		portPath = flowentry.out.get_target().get_path()
 		port = flowentry.out.get_target()	
 		tokens = portPath.split('/');
-		if len(tokens) is not 5 and len(tokens) is not 7:
+		if len(tokens) is not 6 and len(tokens) is not 8:
 			LOG.error("Invalid port '%s' defined in a flowentry",portPath)
 			error = True
 			return
 						
-		if tokens[3] == 'ports':
+		if tokens[4] == 'ports':
 			#This is a port of the universal node. We have to extract the ID
 			#Then, I have to retrieve the virtualized port name, and from there
 			#the real name of the port on the universal node
 			action['port'] = port.name.get_value()			
-		elif tokens[3] == 'NF_instances':
+		elif tokens[4] == 'NF_instances':
 			#This is a port of the NF. I have to extract the port ID and the type of the NF.
 			#XXX I'm using the port ID as name of the port
 			vnf = port.get_parent().get_parent()
@@ -662,7 +664,7 @@ def extractToBeRemovedRules(content):
 	
 	ids = []
 	for flowentry in flowtable:
-		if flowentry.operation == 'delete':
+		if flowentry.get_operation() == 'delete':
 			f_id = flowentry.id.get_value()
 			if f_id not in rulesDeployed:
 				LOG.warning("Rule with ID '%d' is not deployed in the UN!",int(f_id))
@@ -914,11 +916,11 @@ def isCorrect(newContent):
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		return False
-			
+						
 	newInfrastructure = Virtualizer.parse(root=newTree.getroot())
 	newFlowtable = newInfrastructure.nodes.node[constants.NODE_ID].flowtable
 	newNfInstances = newInfrastructure.nodes.node[constants.NODE_ID].NF_instances
-			
+				
 	#Update the NF instances with the new NFs
 	for instance in newNfInstances:
 		if instance.operation == 'delete':
@@ -928,7 +930,7 @@ def isCorrect(newContent):
 	
 	#Update the flowtable with the new flowentries
 	for flowentry in newFlowtable:
-		if flowentry.operation == 'delete':
+		if flowentry.get_operation() == 'delete':
 			flowtable.delete(flowentry)
 		else:
 			flowtable.add(flowentry)
@@ -937,6 +939,8 @@ def isCorrect(newContent):
 	#Then, we execute the checks on it!
 	
 	#TODO
+
+	LOG.debug("The new configuration of the universal node is correct!")
 		
 	return True
 
@@ -1075,14 +1079,14 @@ def updateUniversalNodeConfig(newContent):
 			
 	#Update the NF instances with the new NFs
 	for instance in newNfInstances:
-		if instance.operation == 'delete':
+		if instance.get_operation() == 'delete':
 			nfInstances.delete(instance)
 		else:
 			nfInstances.add(instance)
 	
 	#Update the flowtable with the new flowentries
 	for flowentry in newFlowtable:
-		if flowentry.operation == 'delete':
+		if flowentry.get_operation() == 'delete':
 			flowtable.delete(flowentry)
 		else:
 			flowtable.add(flowentry)
