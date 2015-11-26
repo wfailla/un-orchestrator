@@ -303,7 +303,7 @@ def handle_request(method, url, content = None):
 			j = 'capabilities are not supported.\n'
 			k = 'actions are not supported.\n'
 			
-			answer = a + b + c + d + e + f + g + h + i + j + j
+			answer = a + b + c + d + e + f + g + h + i + j + k
 			
 			LOG.debug("Returning: ")
 			LOG.debug("%s",answer)
