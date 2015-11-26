@@ -468,7 +468,7 @@ def extractVNFsInstantiated(content):
 	
 	for instance in instances:
 		vnf = {}
-		if instance.operation == 'delete':
+		if instance.get_operation() == 'delete':
 			#This network function has to be removed from the universal node
 			continue
 			
@@ -517,6 +517,8 @@ def extractRules(content):
 	rules = []
 	for flowentry in flowtable:
 	
+		print "000000000000"
+	
 		if flowentry.get_operation() == 'delete':
 			#This rule has to be removed from the universal node
 			continue
@@ -544,11 +546,13 @@ def extractRules(content):
 					
 		#The content of <port> must be added to the match
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
+		
 		portPath = flowentry.port.get_target().get_path()
 		port = flowentry.port.get_target()	
 		tokens = portPath.split('/');
+		
+		print "222222"
 				
-		#FIXME check this!
 		if len(tokens) is not 6 and len(tokens) is not 8:
 			LOG.error("Invalid port '%s' defined in a flowentry (len(tokens) returned %d)",portPath,len(tokens))
 			error = True
@@ -582,10 +586,11 @@ def extractRules(content):
 						error = True
 						return
 					#At this point, we have to go more in deep with the analysis					
-					action[node.tag] = handleSpecificAction(node.tag,node)
+					action[node.tag] = handleSpecificAction(node.tag,node)					
 							
 		#The content of <out> must be added to the action
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
+		
 		portPath = flowentry.out.get_target().get_path()
 		port = flowentry.out.get_target()	
 		tokens = portPath.split('/');
@@ -593,7 +598,7 @@ def extractRules(content):
 			LOG.error("Invalid port '%s' defined in a flowentry",portPath)
 			error = True
 			return
-						
+					
 		if tokens[4] == 'ports':
 			#This is a port of the universal node. We have to extract the ID
 			#Then, I have to retrieve the virtualized port name, and from there
@@ -601,7 +606,7 @@ def extractRules(content):
 			action['port'] = port.name.get_value()			
 		elif tokens[4] == 'NF_instances':
 			#This is a port of the NF. I have to extract the port ID and the type of the NF.
-			#XXX I'm using the port ID as name of the port
+			#XXX I'm using the port ID as name of the port			
 			vnf = port.get_parent().get_parent()
 			vnfType = vnf.type.get_value()
 			portID = port.id.get_value()
@@ -619,7 +624,7 @@ def extractRules(content):
 		rule['action'] = action
 				
 		rules.append(rule)
-	
+			
 	LOG.debug("Rules extracted:")
 	LOG.debug(json.dumps(rules))
 	
@@ -717,7 +722,7 @@ def	extractToBeRemovedVNFs(content):
 	
 	nfinstances = []
 	for instance in instances:
-		if instance.operation == 'delete':
+		if instance.get_operation() == 'delete':
 			vnfType = instance.type.get_value()
 			if vnfType not in vnfsDeployed:
 				LOG.warning("Network function with type '%s' is not deployed in the UN!",vnfType)
@@ -923,7 +928,7 @@ def isCorrect(newContent):
 				
 	#Update the NF instances with the new NFs
 	for instance in newNfInstances:
-		if instance.operation == 'delete':
+		if instance.get_operation() == 'delete':
 			nfInstances.delete(instance)
 		else:
 			nfInstances.add(instance)
@@ -1112,62 +1117,3 @@ def inconsistentStateMessage():
 	Log.warning("The internal status of the universal node could not be coherent. Please reboot the universal node.")
 	return False
 	
-################################
-
-def main():
-	'''
-	Only used for debug purposes
-	'''
-
-	ids = []
-	ids.append(1)
-	ids.append(2)
-	ids.append(3)
-	ids.append(4)
-
-
-#	tmpFile = open("debug.json","r")
-#	json_file = tmpFile.read()
-#	tmpFile.close()
-	
-#	whole = json.loads(json_file)
-	
-	
-#	flowgraph = whole['flow-graph']
-#	flowrules = flowgraph['flow-rules']
-
-#	LOG.debug("%s",json.dumps(flowrules));
-		
-#	edit_config(flowrules)
-	
-
-#
-#	LOG.info("Initializing the virtualizer...")
-#	init()
-#	
-#	LOG.info("Adding resources...")
-#	addResources(10,31,"GB",5,"TB")
-#
-#	LOG.info("Adding a port...")
-#	addNodePort("OVS-north external port","port-abstract")
-#	LOG.info("Adding a port...")
-#	addNodePort("OVS-south external port","port-abstract")
-#
-#	LOG.info("Adding a VNF...")	
-#	addSupportedVNFs("A", "myVNF", 0, 2)	
-#	LOG.info("Adding a VNF...")	
-#	addSupportedVNFs("B", "myVNF", 0, 3)
-#
-#	print "Terminating the virtualizer..."
-#	terminate()
-	
-	LOG.info("Bye :D")
-	
-	
-if __name__ == '__main__':
-	'''
-	Only used for debug purposes
-	'''
-	main()
-
-
