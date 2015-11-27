@@ -85,7 +85,7 @@ are supported with the different vSwitches.
 
 |                            |   Docker      |    KVM   |   KVM-DPDK (ivshmem)   |     DPDK processes     |
 |----------------------------|---------------|----------|------------------------|------------------------|
-| **xDPd-DPDK**                   |    **Yes***   | **Yes*** |          No            |         **Yes**        |
+| **xDPd-DPDK**              |    **Yes***   | **Yes*** |          No            |         **Yes**        |
 | **OvS (OVSDB / OFconfig)** |    **Yes**    | **Yes**  | No (requires OvS-DPDK) | No (requires OvS-DPDK) |
 | **OvS-DPDK**               |    **Yes***   | **Yes**  |        **Yes**         |         **Yes**        |
 
