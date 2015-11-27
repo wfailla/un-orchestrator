@@ -516,9 +516,7 @@ def extractRules(content):
 		
 	rules = []
 	for flowentry in flowtable:
-	
-		print "000000000000"
-	
+		
 		if flowentry.get_operation() == 'delete':
 			#This rule has to be removed from the universal node
 			continue
