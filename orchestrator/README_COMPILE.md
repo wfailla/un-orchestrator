@@ -241,7 +241,7 @@ since the DPDK library has already been installed together with the vSwitch.
 ## NF-FG library
 
 These steps are mandatory only if you plan to use the Network Functions -
-Forwarding Graph (NF-FG) defined in WP3.
+Forwarding Graph (NF-FG) defined in WP3, which is based on the concept of *virtualizer*.
 
 	; Retrieve the NF-FG library.
 	$ cd [un-orchestrator]
