@@ -24,12 +24,12 @@ to configure/test the un-orchestrator.
   * [config/universal-node-example.xml](config/universal-node-example.xml): 
     configuration file describing the physical ports to be handled by the 
     un-orchestrator, as well as the amount of CPU, memory and storage provided 
-    to the Universal Node.
+    to the Universal Node;
   * [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json): 
     simple graph that implements a simple passthrough function, i.e., traffic is 
     received from a first physical port and sent out from a second physical port, 
     after having been handled to the vswitch. This graph is written according to 
-    the original NF-FG definition (WP5-based).
+    the original NF-FG definition (WP5-based);
   * [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json): 
     graph that includes a VNF. Traffic is received from a first physical port, provided
     to a network function, and then sent out from a second physical port. This graph 
