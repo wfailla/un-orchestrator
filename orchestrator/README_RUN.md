@@ -38,7 +38,7 @@ to configure/test the un-orchestrator.
 Note that [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json) 
 and [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json) contain
 NF-FGs described using the WP5 formalism. The same graphs are described through the 
-WP3 formalisms based on the *virtualizer* in files [https://github.com/netgroup-polito/un-orchestrator/blob/master/orchestrator/config/virtualizer/simple_passthrough_nffg.xml](https://github.com/netgroup-polito/un-orchestrator/blob/master/orchestrator/config/virtualizer/simple_passthrough_nffg.xml) and [config/virtualizer/passthrough_with_vnf_nffg.xml](config/virtualizer/passthrough_with_vnf_nffg.xml).
+WP3 formalisms based on the *virtualizer* in files [config/virtualizer/simple_passthrough_nffg.xml](config/virtualizer/simple_passthrough_nffg.xml) and [config/virtualizer/passthrough_with_vnf_nffg.xml](config/virtualizer/passthrough_with_vnf_nffg.xml).
 
 ## How to start xDPd with DPDK support to work with the un-orchestrator
 
