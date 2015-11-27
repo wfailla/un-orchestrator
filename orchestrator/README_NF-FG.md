@@ -341,6 +341,7 @@ The syntax to be used for these operations is the following:
 
 As an example, the following NF-FG tags all the packets coming from interface `eth0` and forwards them on interface `eth1`.
 
+    {
         "flow-graph":
         {
 			"flow-rules": [
