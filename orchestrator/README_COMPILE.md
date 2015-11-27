@@ -204,8 +204,8 @@ sources using the following commands:
 	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev
 	$ git clone git://libvirt.org/libvirt.git
 	; select the commit that is known to work and have the necessary support
-	$ git checkout f57842ecfda1ece8c59718e62464e17f75a27062
 	$ cd libvirt
+	$ git checkout f57842ecfda1ece8c59718e62464e17f75a27062
 	$ ./autogen.sh
 	$ make
 	$ sudo make install
