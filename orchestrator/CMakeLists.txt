@@ -141,13 +141,13 @@ ENDIF(DEBUG_OPENFLOW)
 
 
 OPTION(
-	UNIFY_NFFG
-	"Turn on to support the NF-FG defined in the Unify project"
+	VIRTUALIZER_NFFG
+	"Turn on to support the virtualizer NF-FG model defined in WP3"
 	OFF
 )
-IF(UNIFY_NFFG)
+IF(VIRTUALIZER_NFFG)
 	ADD_DEFINITIONS(-DUNIFY_NFFG)
-ENDIF(UNIFY_NFFG)
+ENDIF(VIRTUALIZER_NFFG)
 
 MARK_AS_ADVANCED(
 	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS
@@ -322,7 +322,7 @@ ELSE()
 ENDIF(ENABLE_DOCKER)
 
 
-IF(UNIFY_NFFG)
+IF(VIRTUALIZER_NFFG)
 	SET(SOURCES5
     ${SOURCES4}
     node_resource_manager/virtualizer/virtualizer.cc
@@ -332,7 +332,7 @@ ELSE()
 	SET(SOURCES5
     	${SOURCES4}
 	)
-ENDIF(UNIFY_NFFG)
+ENDIF(VIRTUALIZER_NFFG)
 
 IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	SET(SOURCES6
@@ -376,13 +376,13 @@ IF(${ENABLE_KVM_INDEX} EQUAL 2)
 )
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
-#Include specific for the NF-FG library defined in the Unify project
-IF(UNIFY_NFFG)
+#Include specific for the virtualizer NF-FG model defined in WP3
+IF(VIRTUALIZER_NFFG)
 	find_package(PythonLibs REQUIRED)
 	INCLUDE_DIRECTORIES (
 		${PYTHON_INCLUDE_DIRS}
 	)
-ENDIF(UNIFY_NFFG)
+ENDIF(VIRTUALIZER_NFFG)
 
 # Create the executable
 ADD_EXECUTABLE(
@@ -450,22 +450,17 @@ IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	set_source_files_properties (SOURCE compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc APPEND_STRING PROPERTY COMPILE_FLAGS " -std=c++11")
 ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
-#Links specific for the NF-FG library defined in WP3
-IF(UNIFY_NFFG)
+#Links specific for the virtualizer NF-FG model defined in WP3
+IF(VIRTUALIZER_NFFG)
     TARGET_LINK_LIBRARIES( node-orchestrator
 		libpython2.7.so
 		${PYTHON_LIBRARIES}
 	)
-ENDIF(UNIFY_NFFG)
+ENDIF(VIRTUALIZER_NFFG)
 
 ###############################################################################
 
 #Check unsupported configurations
-
-IF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
-	#This configuration (ovs-dpdk + docker) is not supported 
-	message(FATAL_ERROR "OvS-DPDK not supported with Docker")
-ENDIF(ENABLE_DOCKER AND (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) )
 
 IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
 	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported 
@@ -486,6 +481,11 @@ IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) 
 	#In case of ovs-dpdk, dpdk processes and kvm (usvhost cannot be supported at the same time)
 	message(FATAL_ERROR "OvS-DPDK does not support DPDK processes and KVM at the same time")
 ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
+
+IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND ENABLE_DOCKER AND ((${ENABLE_KVM_INDEX} EQUAL 2) OR (ENABLE_DPDK_PROCESSES) ) )
+	#In case of ovs-dpdk, dpdk processes and/or ivshmem cannot be supported with Docker containers
+	message(FATAL_ERROR "OvS-DPDK does not support Docker containers together with DPDK processes and/or KVM-IVSHMEM")
+ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND ENABLE_DOCKER AND ((${ENABLE_KVM_INDEX} EQUAL 2) OR (ENABLE_DPDK_PROCESSES) ) )
 
 IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (${ENABLE_KVM_INDEX} EQUAL 0) )
 	#No execution environment is selected
