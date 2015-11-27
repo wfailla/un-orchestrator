@@ -925,14 +925,14 @@ def isCorrect(newContent):
 	#Update the NF instances with the new NFs
 	for instance in newNfInstances:
 		if instance.get_operation() == 'delete':
-			nfInstances.delete(instance)
+			nfInstances[instance.id.get_value()].delete()
 		else:
 			nfInstances.add(instance)
 			
 	#Update the flowtable with the new flowentries
 	for flowentry in newFlowtable:
 		if flowentry.get_operation() == 'delete':
-			flowtable.delete(flowentry)
+			flowtable[flowentry.id.get_value()].delete()
 		else:
 			flowtable.add(flowentry) 
 
@@ -1081,14 +1081,14 @@ def updateUniversalNodeConfig(newContent):
 	#Update the NF instances with the new NFs
 	for instance in newNfInstances:
 		if instance.get_operation() == 'delete':
-			nfInstances.delete(instance)
+			nfInstances[instance.id.get_value()].delete()
 		else:
 			nfInstances.add(instance)
 	
 	#Update the flowtable with the new flowentries
 	for flowentry in newFlowtable:
 		if flowentry.get_operation() == 'delete':
-			flowtable.delete(flowentry)
+			flowtable[flowentry.id.get_value()].delete()
 		else:
 			flowtable.add(flowentry)
 	#It is not necessary to remove conflicts, since they are already handled by the library,
