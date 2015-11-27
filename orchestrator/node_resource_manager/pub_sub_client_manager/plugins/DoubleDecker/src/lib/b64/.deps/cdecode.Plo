@@ -1,6 +1,0 @@
-lib/b64/cdecode.lo: lib/b64/cdecode.c /usr/include/stdc-predef.h \
- ../include/cdecode.h
-
-/usr/include/stdc-predef.h:
-
-../include/cdecode.h:
