@@ -35,7 +35,7 @@ to configure/test the un-orchestrator.
     This graph is written according to the original NF-FG definition (WP5-based).
 
 
-## How to start xDPd to work with the un-orchestrator
+## How to start xDPd with DPDK support to work with the un-orchestrator
 
 Set up DPDK (after each reboot of the physical machine), in order to:
 
