@@ -45,7 +45,7 @@ It consists of two parts:
     and more. In practice, it allows the un-orchestrator to
     interact with the vSwitch in order to perform management operations. Each
     virtual switch implementation (e.g., xDPd, OvS) may require a different
-    implementation for the switch manager, according to the API supported by 
+    implementation for the switch manager, according to the API exported by 
     the vSwitch itself.
 
 Currently, the un-orchestrator supports OpenvSwitch (OvS) and the extensible DataPath daemon
