@@ -326,6 +326,7 @@ int publish(char *topic, char *message, int mlen, ddclient_t *dd) {
 	int dstpublic = 0;
 	int retval;
 
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "dd->publish called t: %s m: %s l: %d\n", topic, message, mlen);
 	// dd_info ("dd->publish called t: %s m: %s l: %d\n", topic, message,
 	// mlen);
 
@@ -474,6 +475,7 @@ int ddclient_shutdown(ddclient_t *dd) {
   if (dd->state == DD_STATE_REGISTERED)
     zsock_send(dd->socket, "bbb", &dd_version, 4, &dd_cmd_ping, 4,
                &dd->cookie, sizeof(dd->cookie));
+  logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "PING.");
 }
 
  int s_heartbeat(zloop_t *loop, int timerid, void *args) {
@@ -498,14 +500,14 @@ int s_ask_registration(zloop_t *loop, int timerid, void *args) {
     	zsock_destroy((zsock_t **)&dd->socket);
     	dd->socket = zsock_new_dealer(NULL);
     	if (!dd->socket) {
-    		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "DD: Error in zsock_new_dealer: %s\n", zmq_strerror(errno));
+    		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "DD: Error in zsock_new_dealer: %s", zmq_strerror(errno));
       	free(dd);
       	return -1;
     }
     //      zsock_set_identity (dd->socket, dd->client_name);
     int rc = zsock_connect(dd->socket, dd->endpoint);
     if (rc != 0) {
-    	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "DD: Error in zmq_connect: %s\n",
+    	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "DD: Error in zmq_connect: %s",
               zmq_strerror(errno));
     	free(dd);
     	return -1;
@@ -574,8 +576,7 @@ void cmd_cb_regok(zmsg_t *msg, ddclient_t *dd, zloop_t *loop) {
   
 	mesg[i-1] = '\0';
   
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Publish node configuration:");
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s", mesg);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Publish node configuration.");
   
 	fclose(fp);
   
@@ -584,7 +585,7 @@ void cmd_cb_regok(zmsg_t *msg, ddclient_t *dd, zloop_t *loop) {
     
 	free(mesg);
     
-	dd->shutdown(dd);
+	//dd->shutdown(dd);
     
 	// TODO call library registered on_reg() callback here
 }
@@ -936,8 +937,8 @@ ddclient_t *start(int verbose, char *client_name, char *customer,
 	dd->shutdown = (void *)ddclient_shutdown;
   
 	//FIXED
-	//zthread_new(ddclient, dd);
-	ddclient(dd);
+	zthread_new(ddclient, dd);
+	//ddclient(dd);
 	return dd;
 }
 
@@ -951,12 +952,12 @@ void print_ddkeystate(ddkeystate_t *keys) {
 	free(hex);
 }
 
-int init (char *client_name, char *customer, char *keyfile, char *connect_to)
+ddclient_t *init (char *client_name, char *customer, char *keyfile, char *connect_to)
 {
 	if (client_name == NULL || customer == NULL || keyfile == NULL || connect_to == NULL)
    	{
     	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "usage: client -c <customer> -k <keyfile> -n <name> -d <tcp/ipc url>\n");
-    	return 1;
+    	return NULL;
     }
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting DoubleDecker client");
@@ -964,5 +965,9 @@ int init (char *client_name, char *customer, char *keyfile, char *connect_to)
 	client = start(1, client_name, customer,
                            connect_to, keyfile, on_reg,
                            on_discon, on_data, on_pub,
-                           on_nodst);                                                 
+                           on_nodst);
+    
+    return client;
 }
+
+

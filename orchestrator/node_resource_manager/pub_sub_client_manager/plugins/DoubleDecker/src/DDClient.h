@@ -52,4 +52,5 @@ void on_nodst (char *, void *);
 void *ddclient(void *);
 ddclient_t *start(int, char *, char *, char *, char *, dd_con, dd_discon, dd_data, dd_pub, dd_nodst);
 void print_ddkeystate(ddkeystate_t *);
-int init (char *, char *, char *, char *);
+int publish(char *, char *, int, ddclient_t *);
+ddclient_t *init (char *, char *, char *, char *);
