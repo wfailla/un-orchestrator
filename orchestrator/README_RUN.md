@@ -35,10 +35,9 @@ to configure/test the un-orchestrator.
     to a network function, and then sent out from a second physical port. This graph 
     is written according to the original NF-FG definition (WP5-based).
 
-Note that [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json) 
-and [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json) contain
-NF-FGs described using the WP5 formalism. The same graphs are described through the 
-WP3 formalisms based on the *virtualizer* in files [config/virtualizer/simple_passthrough_nffg.xml](config/virtualizer/simple_passthrough_nffg.xml) and [config/virtualizer/passthrough_with_vnf_nffg.xml](config/virtualizer/passthrough_with_vnf_nffg.xml).
+The same graphs of [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json) 
+and [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json) are described 
+through the WP3 definition based on the *virtualizer* in files [config/virtualizer/simple_passthrough_nffg.xml](config/virtualizer/simple_passthrough_nffg.xml) and [config/virtualizer/passthrough_with_vnf_nffg.xml](config/virtualizer/passthrough_with_vnf_nffg.xml).
 
 ## How to start xDPd with DPDK support to work with the un-orchestrator
 
