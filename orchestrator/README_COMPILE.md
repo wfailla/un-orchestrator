@@ -46,9 +46,9 @@ You have to install the one that you want to use, choosing from the
 possibilities listed in this section.
 
 
-### xDPd
+### xDPd with DPDK support
 
-In order to install xDPd, you have to follow the steps below.
+In order to install xDPd with DPDK support, you have to follow the steps below.
 
 	$ git clone https://github.com/bisdn/xdpd
 	$ cd xdpd/
