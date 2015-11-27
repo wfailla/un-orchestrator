@@ -10,6 +10,7 @@ IF(CMAKE_COMPILER_IS_GNUCC)
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 
+
 # Rather complicated CMake code for setting the logging level
 SET(LOGGING_LEVEL "ORCH_WARNING" CACHE STRING "Orchestrator logging levels: ORCH_DEBUG, ORCH_DEBUG_INFO, ORCH_WARNING, ORCH_ERROR, ORCH_INFO")
 SET(LOGGING_LEVEL_VALUES "ORCH_DEBUG" "ORCH_DEBUG_INFO" "ORCH_WARNING" "ORCH_ERROR" "ORCH_INFO")
@@ -73,6 +74,19 @@ IF(${ENABLE_KVM_INDEX} EQUAL 1)
 ENDIF()
 IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	ADD_DEFINITIONS(-DENABLE_KVM_IVSHMEM -DENABLE_KVM)
+ENDIF()
+
+# Rather complicated CMake code for selecting the PubSub implementation
+SET(ENABLE_PUBSUB "NONE" CACHE STRING "PubSub implementation: NONE, DD")
+SET(ENABLE_PUBSUB_VALUES "NONE" "DD") #Add here other implementations
+SET_PROPERTY(CACHE ENABLE_PUBSUB PROPERTY STRINGS ${ENABLE_PUBSUB_VALUES})
+LIST(FIND ENABLE_PUBSUB_VALUES ${ENABLE_PUBSUB} ENABLE_PUBSUB_INDEX)
+
+IF(${ENABLE_PUBSUB_INDEX} EQUAL -1)
+	message(FATAL_ERROR "Option ${ENABLE_PUBSUB} not supported, valid entries are ${ENABLE_PUBSUB_VALUES}")
+ENDIF()
+IF(${ENABLE_PUBSUB_INDEX} EQUAL 1)
+	ADD_DEFINITIONS(-DENABLE_PUBSUB)
 ENDIF()
 
 OPTION(
@@ -148,6 +162,16 @@ OPTION(
 IF(VIRTUALIZER_NFFG)
 	ADD_DEFINITIONS(-DUNIFY_NFFG)
 ENDIF(VIRTUALIZER_NFFG)
+
+OPTION(
+	LOG_ON_FILE
+	"Turn on to print log messages on the file 'node-orchestrator.log'. If disabled, stdout is used for the log."
+	OFF
+)
+IF(LOG_ON_FILE)
+	ADD_DEFINITIONS(-DLOG_ON_FILE)
+ENDIF(LOG_ON_FILE)
+
 
 MARK_AS_ADVANCED(
 	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS
@@ -231,24 +255,7 @@ SET(SOURCES
 	node_resource_manager/rest_server/rest_server.cc
 	node_resource_manager/rest_server/match_parser.h
 	node_resource_manager/rest_server/match_parser.cc
-	
-	node_resource_manager/pub_sub_client_manager/PubSubClientManager.h
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.cc
-                  
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_fsm.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_io_unix.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_line.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token_tbl.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/keys.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/b64/cdecode.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/protocol.c
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.h
-	node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.c
-	
+
 	utils/logger.h
 	utils/logger.c
 	utils/constants.h
@@ -256,9 +263,31 @@ SET(SOURCES
 	utils/sockutils.c
 )
 
+IF(ENABLE_PUBSUB_INDEX EQUAL 1)
+    SET(SOURCES1
+    ${SOURCES}
+		node_resource_manager/pub_sub_client_manager/PubSubClientManager.h
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.cc
+		              
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_fsm.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_io_unix.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_line.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token_tbl.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/keys.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/b64/cdecode.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/protocol.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.h
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.c
+    )
+ENDIF(ENABLE_PUBSUB_INDEX EQUAL 1)
+
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/xdpd/xdpd_manager.h
 	network_controller/switch_manager/plugins/xdpd/xdpd_manager.cc
 	network_controller/switch_manager/plugins/xdpd/xdpd_constants.h
@@ -267,7 +296,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ofconfig/commands.h
 	network_controller/switch_manager/plugins/ovs-ofconfig/commands.cc
 	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_constants.h
@@ -278,7 +307,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.h
 	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.cc
 	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_constants.h
@@ -287,7 +316,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_constants.h
@@ -395,7 +424,7 @@ LINK_DIRECTORIES(
 	/usr/local/lib/
 	/usr/x86_64-linux-gnu/
 	/usr/lib/x86_64-linux-gnu/
-	/usr/lib/python2.7/config-x86_64-linux-gnu/
+	/usr/lib/python2.7/config-x86_64-linux-gnu/	
 )
 
 IF(${ENABLE_KVM_INDEX} EQUAL 2)
@@ -406,7 +435,7 @@ ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
-	librofl_common.so
+	/usr/local/lib/librofl_common.so
 	libjson_spirit.so
 	libmicrohttpd.so
 	libboost_system.so
@@ -478,7 +507,7 @@ IF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) 
 ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
 
 IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
-	#In case of ovs-dpdk, dpdk processes and kvm (usvhost cannot be supported at the same time)
+	#In case of ovs-dpdk, dpdk processes and kvm (usvhost) cannot be supported at the same time
 	message(FATAL_ERROR "OvS-DPDK does not support DPDK processes and KVM at the same time")
 ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
 
