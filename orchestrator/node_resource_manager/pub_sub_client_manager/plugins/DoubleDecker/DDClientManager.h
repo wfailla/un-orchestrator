@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-#include "src/ddcli.h"
+#include "src/DDClient.h"
 
 #ifdef __cplusplus
 }

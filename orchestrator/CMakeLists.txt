@@ -280,8 +280,8 @@ IF(ENABLE_PUBSUB_INDEX EQUAL 1)
 		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/keys.c
 		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/b64/cdecode.c
 		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/protocol.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.h
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/ddcli.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/DDClient.h
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/DDClient.c
     )
 ENDIF(ENABLE_PUBSUB_INDEX EQUAL 1)
 
