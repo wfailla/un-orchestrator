@@ -318,22 +318,21 @@ Other actions can be specified together with the previous ones:
 
 * vlan push
  
-    "action":   
-    {  
-        "vlan":  
-        {  
-           "operation":"push",  
-           "vlan_id":"25"  
-       }  
-    }  
+    "action":
+    {
+        "vlan":
+        {
+           "operation":"push",
+           "vlan_id":"25"
+       }
+    }
   
 * vlan pop:
 
-    "action":   
-    {  
-        "vlan":  
-        {  
-           "operation":"pop"  
-       }  
-    }  
-	
+    "action":
+    {
+        "vlan":
+        {
+           "operation":"pop"
+        }
+    }
