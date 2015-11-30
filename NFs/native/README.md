@@ -32,7 +32,7 @@ through the un-orchestrator, must be the following:
 where:
 	
   * `$lsi_id`	indicates the id of the LSI related to the graph
-  * `$nf_name`	indicated the name of the network function
+  * `$nf_name`	indicates the name of the network function
   * `$n_ports`	specifies the number of ports of the network function
   * `$port_name1 ... $port_nameN`	are the names of the ports assigned to
 			the network function and connected to the LSI
