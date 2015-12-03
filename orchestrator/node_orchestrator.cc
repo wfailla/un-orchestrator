@@ -7,8 +7,10 @@
 #include "utils/logger.h"
 #include "node_resource_manager/rest_server/rest_server.h"
 
-#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h"
-#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h"
+#ifdef ENABLE_DOUBLE_DECKER
+	#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h"
+	#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h"
+#endif
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -23,6 +25,10 @@ ofp_version_t OFP_VERSION;
 *	Private variables
 */
 struct MHD_Daemon *http_daemon = NULL;
+
+#ifdef ENABLE_DOUBLE_DECKER
+	DDClientManager *client = new DDClientManager();
+#endif
 
 /**
 *	Private prototypes
@@ -50,6 +56,10 @@ void singint_handler(int sig)
 	terminateVirtualizer();
 #endif
 	
+#ifdef ENABLE_DOUBLE_DECKER
+	client->terminateClient();
+#endif	
+
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Bye :D");
 	exit(EXIT_SUCCESS);
 }
@@ -95,13 +105,17 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	DDClientManager *client = new DDClientManager();
-	
-	if(!client->exportDomainInformation("public", "client", "tcp://127.0.0.1:5555"))
+#ifdef ENABLE_DOUBLE_DECKER
+	/*Client pub/sub*/
+	if(!client->publishDomainInformation())
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the DD client. The %s cannot be run.",MODULE_NAME);
+		
+		client->terminateClient();
+		
 		exit(EXIT_FAILURE);	
 	}
+#endif
 
 	if(!RestServer::init(nffg_file_name,core_mask,ports_file_name))
 	{

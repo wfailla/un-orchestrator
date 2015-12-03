@@ -12,7 +12,9 @@ class PubSubClientManager
 {
 public:
 	
-	virtual bool exportDomainInformation(char *, char *, char *) = 0;
+	virtual bool publishDomainInformation() = 0;
+	
+	virtual void terminateClient() = 0;
 };
 
 class PubSubClientManagerException: public exception

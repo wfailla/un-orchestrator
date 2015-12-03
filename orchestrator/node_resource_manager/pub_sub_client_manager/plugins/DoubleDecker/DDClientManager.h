@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-#include "src/DDClient.h"
+#include "include/DDClient.h"
 
 #ifdef __cplusplus
 }
@@ -25,13 +25,16 @@ using namespace std;
 class DDClientManager : public PubSubClientManager
 {
 private:
-
+	ddclient_t *client;
+	
 public:
 	DDClientManager();
 	
 	~DDClientManager();
 	
-	bool exportDomainInformation(char *, char *, char *);
+	bool publishDomainInformation();
+	
+	void terminateClient();
 };
 
 class DDClientManagerException : public PubSubClientManagerException

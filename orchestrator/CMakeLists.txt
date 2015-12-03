@@ -3,10 +3,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security)
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security)
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 
@@ -77,16 +77,16 @@ IF(${ENABLE_KVM_INDEX} EQUAL 2)
 ENDIF()
 
 # Rather complicated CMake code for selecting the PubSub implementation
-SET(ENABLE_PUBSUB "NONE" CACHE STRING "PubSub implementation: NONE, DD")
-SET(ENABLE_PUBSUB_VALUES "NONE" "DD") #Add here other implementations
-SET_PROPERTY(CACHE ENABLE_PUBSUB PROPERTY STRINGS ${ENABLE_PUBSUB_VALUES})
-LIST(FIND ENABLE_PUBSUB_VALUES ${ENABLE_PUBSUB} ENABLE_PUBSUB_INDEX)
+SET(ENABLE_DOUBLE_DECKER "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
+SET(ENABLE_DOUBLE_DECKER_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
+SET_PROPERTY(CACHE ENABLE_DOUBLE_DECKER PROPERTY STRINGS ${ENABLE_DOUBLE_DECKER_VALUES})
+LIST(FIND ENABLE_DOUBLE_DECKER_VALUES ${ENABLE_DOUBLE_DECKER} ENABLE_DOUBLE_DECKER_INDEX)
 
-IF(${ENABLE_PUBSUB_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${ENABLE_PUBSUB} not supported, valid entries are ${ENABLE_PUBSUB_VALUES}")
+IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL -1)
+	message(FATAL_ERROR "Option ${ENABLE_DOUBLE_DECKER} not supported, valid entries are ${ENABLE_DOUBLE_DECKER_VALUES}")
 ENDIF()
-IF(${ENABLE_PUBSUB_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DENABLE_PUBSUB)
+IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL 1)
+	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER)
 ENDIF()
 
 OPTION(
@@ -263,7 +263,7 @@ SET(SOURCES
 	utils/sockutils.c
 )
 
-IF(ENABLE_PUBSUB_INDEX EQUAL 1)
+IF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
     SET(SOURCES1
     ${SOURCES}
 		node_resource_manager/pub_sub_client_manager/PubSubClientManager.h
@@ -271,19 +271,13 @@ IF(ENABLE_PUBSUB_INDEX EQUAL 1)
 		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h
 		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.cc
 		              
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_fsm.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_io_unix.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_line.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/cli_parser/cparser_token_tbl.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/keys.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/b64/cdecode.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/lib/protocol.c
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/DDClient.h
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/src/DDClient.c
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/include/DDClient.h
     )
-ENDIF(ENABLE_PUBSUB_INDEX EQUAL 1)
+ELSE()
+     SET(SOURCES1
+         ${SOURCES}
+    	)
+ENDIF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
     SET(SOURCES2
@@ -445,6 +439,7 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	libczmq.so
 	libsodium.so
 	libjson.so
+	libddclient.so
 	-lrt
 )
 
