@@ -23,21 +23,6 @@ typedef struct ddkeystate {
   zhash_t *clientkeys;
 } ddkeystate_t;
 
-typedef struct ddbrokerkeys {
-  // list of tenant names
-  zlist_t *tenants;
-  // broker private and public keys
-  unsigned char *privkey;
-  unsigned char *pubkey;
-  // Broker pre-calc key
-  unsigned char *ddboxk;
-  // Precalculated tenant keys
-  zhash_t *tenantkeys;
-  // hash string
-  char *hash;
-  uint64_t cookie;
-} ddbrokerkeys_t;
-
 typedef struct tenantsinfo {
   char *name;
   uint64_t cookie;
@@ -45,9 +30,6 @@ typedef struct tenantsinfo {
 } ddtenant_t;
 
 ddkeystate_t *read_ddkeys(char *filename, char *customer);
-ddbrokerkeys_t *read_ddbrokerkeys(char *filename);
-void print_ddkeystate(ddkeystate_t *keys);
-void free_ddkeystate(ddkeystate_t *keys);
 
 // state definitions
 #define DD_STATE_UNREG       1
