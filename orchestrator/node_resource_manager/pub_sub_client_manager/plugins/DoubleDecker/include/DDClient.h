@@ -4,12 +4,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <czmq.h>
-#include "../include/dd.h"
-#include "../include/ddkeys.h"
-
-#include "cli_parser/cparser.h"
-#include "cli_parser/cparser_priv.h"
-#include "cli_parser/cparser_token.h"
+#include "dd.h"
 
 #include "../../../../../utils/logger.h"
 #include "../../../../../utils/constants.h"
@@ -17,14 +12,6 @@
 #include "../DDClientManager_constants.h"
 
 void sublist_print(ddclient_t *);
-cparser_result_t cparser_cmd_show_subscriptions (cparser_context_t *);
-cparser_result_t cparser_cmd_show_status (cparser_context_t *);
-cparser_result_t cparser_cmd_subscribe_topic_scope (cparser_context_t *, char **, char **);
-cparser_result_t cparser_cmd_no_subscribe_topic_scope (cparser_context_t *, char **, char **);
-cparser_result_t cparser_cmd_publish_topic_message (cparser_context_t *, char **, char **);
-cparser_result_t cparser_cmd_notify_destination_message (cparser_context_t *, char **, char **);
-cparser_result_t cparser_cmd_quit (cparser_context_t *);
-cparser_result_t cparser_cmd_help (cparser_context_t *);
 int sublist_cmp(const void *, const void *);
 void sublist_free(void **);
 void *sublist_dup(const void *);
