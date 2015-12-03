@@ -139,7 +139,7 @@ typedef struct ddclient
   void (*unsubscribe) (char *, char *,struct ddclient  *);
   void (*publish) (char *, char *, int, struct ddclient *);
   void (*notify) (char *, char *, int, struct ddclient *);
-  void (*shutdown) (void *);
+  void (*shutdown) (void *); 
 } ddclient_t;
 
 ddclient_t * start_ddthread (int,char *,char *,char *,char *,
