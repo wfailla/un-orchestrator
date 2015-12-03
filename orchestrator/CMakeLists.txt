@@ -271,7 +271,7 @@ IF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
 		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h
 		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.cc
 		              
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/include/DDClient.h
+		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClient.h
     )
 ELSE()
      SET(SOURCES1
