@@ -12,6 +12,7 @@
 #define REST_PORT 				8080
 #define BASE_URL_GRAPH			"graph"
 #define BASE_URL_IFACES			"interfaces"
+#define BASE_URL_LOGIN			"login"
 #define REST_URL 				"http://localhost"
 #define REQ_SIZE 				2*1024*1024
 
@@ -22,6 +23,9 @@
 #define GET						"GET"
 #define DELETE					"DELETE"
 #ifdef UNIFY_NFFG
+	#define POST				"POST"
+#endif
+#ifdef ENABLE_SQLITE
 	#define POST				"POST"
 #endif
 
@@ -199,6 +203,14 @@ extern ofp_version_t OFP_VERSION;
 */
 #ifdef LOG_ON_FILE
 	#define LOG_FILE			"node-orchestrator.log"
+#endif
+
+#ifdef ENABLE_SQLITE
+	#define USER				"username"
+	#define PASS				"password"
+	#define HASH_SIZE			20
+	#define TOKEN_TYPE			"application/token"
+	#define DB_NAME				"users.db"
 #endif
 
 #endif //CONSTANTS_H_

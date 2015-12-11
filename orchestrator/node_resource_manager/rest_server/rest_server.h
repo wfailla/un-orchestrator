@@ -41,12 +41,19 @@
 #include <inttypes.h>
 #include <sstream>
 
+#ifdef ENABLE_SQLITE
+	#include <openssl/sha.h>
+	#include <openssl/rand.h>
+#endif
+
 #include "../graph_manager/graph_manager.h"
 #include "../../utils/constants.h"
 #include "../graph/high_level_graph/high_level_output_action_port.h"
 #include "../graph/high_level_graph/high_level_output_action_endpoint.h"
 #include "../graph/vlan_action.h"
 #include "match_parser.h"
+
+#include "../database_manager/SQLite/SQLiteManager.h"
 
 #include <json_spirit/json_spirit.h>
 #include <json_spirit/value.h>
@@ -79,7 +86,11 @@ private:
 	static int doGet(struct MHD_Connection *connection,const char *url);
 	static int doGetGraph(struct MHD_Connection *connection,char *graphID);
 	static int doGetInterfaces(struct MHD_Connection *connection);
-	
+#ifdef ENABLE_SQLITE
+	static int doPost(struct MHD_Connection *connection, const char *url, void **con_cls);
+	static bool parsePostBody(struct connection_info_struct &con_info,char **user, char **pwd);
+	static bool parseLoginForm(Value value, char **user, char **pwd);
+#endif
 	static int doPut(struct MHD_Connection *connection, const char *url, void **con_cls);
 	static bool parsePutBody(struct connection_info_struct &con_info,highlevel::Graph &graph, bool newGraph);
 	
