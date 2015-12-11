@@ -39,6 +39,11 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; Now install the above library according to the description provided
 	; in the cloned folder
 
+## Users authentication
+
+	; Install sqlite3
+	$ sudo apt-get install sqlite3 libsqlite3-dev
+
 ## Install the proper virtual switch
 
 The current un-orchestrator supports different types of virtual switches.
