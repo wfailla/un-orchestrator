@@ -134,7 +134,7 @@ Then execute the following commands:
 
     $ tar -xf dpdk-2.1.0.tar.gz
     $ cd dpdk-2.1.0
-    $ export DPDK_DIR=\`pwd\`
+    $ export DPDK_DIR=`pwd`
     ; modify the file `$DPDK_DIR/config/common_linuxapp` so that
     ; `CONFIG_RTE_BUILD_COMBINE_LIBS=y`
     ; `CONFIG_RTE_LIBRTE_VHOST=y`
@@ -163,7 +163,7 @@ Now create the ovsdb database:
 	
 	$ mkdir -p /usr/local/etc/openvswitch
 	$ mkdir -p /usr/local/var/run/openvswitch
-	$ rm /usr/local/etc/openvswitch/conf.db
+	$ sudo rm /usr/local/etc/openvswitch/conf.db
 	$ sudo ovsdb-tool create /usr/local/etc/openvswitch/conf.db  \
 		/usr/local/share/openvswitch/vswitch.ovsschema
 
