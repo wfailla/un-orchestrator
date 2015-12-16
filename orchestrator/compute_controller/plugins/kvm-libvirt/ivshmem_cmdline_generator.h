@@ -4,6 +4,8 @@
 #pragma once
 
 #include <pthread.h>
+#include <string>
+#include <vector>
 
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
@@ -34,6 +36,16 @@ public:
 	* @param:	size		Size of the buffer for the command line
 	*/
 	bool get_mempool_cmdline(char * cmdline, int size);
+
+    /*
+    * @brief:   generates the command line for mapping mempool(s) and ports into a guest
+    *
+    * @param:   cmdline     Buffer where the command line will be saved
+    * @param:   size        Size of the buffer for the command line
+    * @param:   vnf_name
+    * @param:   port_names  List of port names to export
+    */
+    bool get_single_cmdline(char * cmdline, int size, const std::string& vnf_name, std::vector<std::string>& port_names);
 
 private:
 	bool read_from_pipe(const char *name, char *buf, size_t len);

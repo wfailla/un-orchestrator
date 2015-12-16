@@ -7,12 +7,14 @@
 #include <rte_ivshmem.h>
 #include <rte_mempool.h>
 #include <rte_ring.h>
+#include <rte_log.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
 
 #define DPDKR_FORMAT "dpdkr%d"
 #define DPDKR_TX_FORMAT DPDKR_FORMAT"_tx"
@@ -21,8 +23,9 @@
 #define MEMPOOL_METADATA_NAME "OVSMEMPOOL"
 
 int init_dpdk(void);
-int get_mempool_cmdline(char * cmdline, int size);
-int get_port_cmdline(const char * port_name, char * cmdline, size_t size);
+int setup_metadata(const char* metadata);
+int expose_mempool_cmdline(const char * metadata);
+int expose_port_cmdline(const char * port_name, const char * metadata);
 int write_to_pipe(const char * name, char * buf, size_t lenght);
 int write_to_file(const char * name, char * buf, size_t lenght);
 
@@ -49,34 +52,73 @@ int init_dpdk(void)
 	return rte_eal_init(argv, (char**)arg);
 }
 
-int get_mempool_cmdline(char * cmdline, int size)
+/*
+ * Find global packet's mempool matching OVS pattern
+ */
+#define MAX_MEMPOOLS 100
+struct mempool_list {
+    const struct rte_mempool *mp[MAX_MEMPOOLS];
+    int num_mp;
+};
+static void mempool_check_func(const struct rte_mempool *mp, void *arg)
 {
-	struct rte_mempool * packets_pool;
+    /*
+     * WARNING: This function searches for mempools with names using specific patterns.
+     *          Mempools names are given by the DPDK-based vSwitch and the naming
+     *          convention might change from release to release.
+     */
+    const char ovs_mp_prefix[] = "ovs_mp_";
+    const char *mp_exact_match[] = { "pool_direct", "pool_indirect", NULL };
+    int i;
 
-	/*
-	* XXX: improve the wasy the memory pool is looked, the name could not
-	* always be the same
-	*/
-	packets_pool = rte_mempool_lookup("ovs_mp_1500_0_262144");
-	if(packets_pool == NULL)
-	{
-		goto error;
-	}
+    struct mempool_list* mpl = (struct mempool_list*)arg;
+    RTE_LOG(ERR, APP, "Considering mempool '%s'\n", mp->name);
+    if (strncmp(mp->name, ovs_mp_prefix,
+                            sizeof(ovs_mp_prefix)/sizeof(*ovs_mp_prefix) - 1) == 0) {
+        if (mpl->num_mp < MAX_MEMPOOLS) {
+                mpl->mp[mpl->num_mp] = mp;
+                mpl->num_mp++;
+        }
+    }
 
-	if (rte_ivshmem_metadata_create(MEMPOOL_METADATA_NAME) < 0)
-	{
-		goto error;
-	}
+    for (i = 0; mp_exact_match[i]; i++) {
+        if (strncmp(mp->name, mp_exact_match[i], strlen(mp_exact_match[i])) == 0) {
+            if (mpl->num_mp < MAX_MEMPOOLS) {
+                mpl->mp[mpl->num_mp] = mp;
+                mpl->num_mp++;
+            }
+        }
+    }
+}
 
-	if(rte_ivshmem_metadata_add_mempool(packets_pool, MEMPOOL_METADATA_NAME) < 0)
-	{
-		goto error;
-	}
+int expose_mempool_cmdline(const char* metadata)
+{
+	struct mempool_list mpl;
+	int i;
 
-	if (rte_ivshmem_metadata_cmdline_generate(cmdline, size, MEMPOOL_METADATA_NAME) < 0)
-	{
-		goto error;
-	}
+	RTE_LOG(INFO, APP, "Adding mempools to metadata '%s'\n", metadata);
+
+    /* Walk the mempools and stores the ones that hold OVS mbufs in mp */
+    mpl.num_mp = 0;
+    rte_mempool_walk(mempool_check_func, (void *)&mpl);
+    if (mpl.num_mp >= MAX_MEMPOOLS) {
+        RTE_LOG(ERR, APP, "Too many mempool to share to metadata '%s'\n",
+                metadata);
+        goto error;
+    }
+    if (0 == mpl.num_mp) {
+        RTE_LOG(ERR, APP, "No mempool found to share to metadata '%s'\n",
+                metadata);
+        goto error;
+    }
+
+    for (i = 0; i < mpl.num_mp; i++) {
+        if (rte_ivshmem_metadata_add_mempool(mpl.mp[i], metadata) < 0) {
+            RTE_LOG(ERR, APP, "Failed adding mempool '%s' to metadata '%s'\n",
+                                            mpl.mp[i]->name, metadata);
+            goto error;
+        }
+    }
 
 	return 0;
 
@@ -84,7 +126,7 @@ error:
 	return -1;
 }
 
-int get_port_cmdline(const char * port_name, char * cmdline, size_t size)
+int expose_port_cmdline(const char * port_name, const char * metadata)
 {
 	char ring_name[20];
 	int port_no;
@@ -105,7 +147,7 @@ int get_port_cmdline(const char * port_name, char * cmdline, size_t size)
 		return -1;
 	}
 
-	/* look fot the reception ring */
+	/* look for the reception ring */
 	snprintf(ring_name, 20, DPDKR_RX_FORMAT, port_no);
 	rx = rte_ring_lookup(ring_name);
 	if(rx == NULL)
@@ -113,22 +155,12 @@ int get_port_cmdline(const char * port_name, char * cmdline, size_t size)
 		return -1;
 	}
 
-	if (rte_ivshmem_metadata_create(port_name) < 0)
+	if(rte_ivshmem_metadata_add_ring(tx, metadata) < 0)
 	{
 		return -1;
 	}
 
-	if(rte_ivshmem_metadata_add_ring(tx, port_name) < 0)
-	{
-		return -1;
-	}
-
-	if(rte_ivshmem_metadata_add_ring(rx, port_name) < 0)
-	{
-		return -1;
-	}
-
-	if (rte_ivshmem_metadata_cmdline_generate(cmdline, size, port_name) < 0)
+	if(rte_ivshmem_metadata_add_ring(rx, metadata) < 0)
 	{
 		return -1;
 	}
@@ -168,9 +200,27 @@ int write_to_file(const char * name, char * buf, size_t size)
 	return 0;
 }
 
+char metadata_name[255] = "\0";
+
+int setup_metadata(const char* metadata)
+{
+    if (! *metadata_name) {
+        strncpy(metadata_name, metadata, sizeof(metadata_name));
+
+        if (rte_ivshmem_metadata_create(metadata_name) < 0)
+        {
+            printf("Failed to create IVSHMEM metadata '%s'\n", metadata_name);
+            return -1;
+        }
+        printf("Created IVSHMEM metadata '%s'\n", metadata_name);
+    }
+    return 0;
+}
+
 int main(int argc, char * argv[])
 {
 	char buf[512];
+	int i;
 
 	if(argc < 2)
 		return -1;
@@ -181,36 +231,58 @@ int main(int argc, char * argv[])
 		return -1;
 	}
 
-	if(!strcmp("-m", argv[1]))
-	{
-		if(get_mempool_cmdline(buf, sizeof(buf)) < 0)
-		{
-			printf("Failed to get mempool commandline\n");
-			return -1;
-		}
+	for (i=1; i<argc; ++i) {
+	    printf("A:%s\n", argv[i]);
 
-		//if(write_to_pipe(MEMPOOL_METADATA_NAME, buf, sizeof(buf) < 0))
-		//	return -1;
-		if(write_to_file(MEMPOOL_METADATA_NAME, buf, sizeof(buf) < 0))
-			return -1;
+	    if(!strcmp("-n", argv[i]))
+	    {
+            if((i+1) >= argc) {
+                printf("Missing metadat name argument value\n");
+                return -1;
+            }
+	        setup_metadata(argv[i+1]);
+	        i++;
+	    }
+	    else if(!strcmp("-m", argv[i]))
+        {
+            setup_metadata(MEMPOOL_METADATA_NAME);  // Default if not specified by -n
+            if(expose_mempool_cmdline(metadata_name) < 0)
+            {
+                printf("Failed to get mempool commandline\n");
+                return -1;
+            }
+        }
+        else if(!strcmp("-p", argv[i]))
+        {
+            if((i+1) >= argc) {
+                printf("Missing port_name argument value\n");
+                return -1;
+            }
 
+            setup_metadata(argv[i+1]);   // Default if not specified by -n
+            if(expose_port_cmdline(argv[i+1], metadata_name) < 0)
+            {
+                printf("Failed to IVSHMEM expose port %s\n", argv[i+1]);
+                return -1;
+            }
+            i++;
+        }
+        else {
+            printf("Unknown option: %s", argv[i]);
+            return -1;
+        }
 	}
-	else if(!strcmp("-p", argv[1]))
+
+	if (rte_ivshmem_metadata_cmdline_generate(buf, sizeof(buf), metadata_name) < 0)
 	{
-		if(argc < 3)
-			return -1;
-
-		if(get_port_cmdline(argv[2], buf, sizeof(buf)) < 0)
-		{
-			printf("Failed to get port commandline\n");
-			return -1;
-		}
-
-		//if(write_to_pipe(argv[2], buf, sizeof(buf) < 0))
-		//	return -1;
-		if(write_to_file(argv[2], buf, sizeof(buf) < 0))
-			return -1;
+        printf("Failed to create IVSHMEM metadata '%s'\n", metadata_name);
+        return -1;
 	}
+
+    //if(write_to_pipe(argv[2], buf, sizeof(buf) < 0))
+    //	return -1;
+    if(write_to_file(metadata_name, buf, sizeof(buf) < 0))
+        return -1;
 
 	printf("Ready----\n");
 
