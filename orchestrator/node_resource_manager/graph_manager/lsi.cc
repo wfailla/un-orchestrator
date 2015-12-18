@@ -1,6 +1,6 @@
 #include "lsi.h"
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions,vector<VLink> virtual_links, map<string,nf_t>  nf_types) :
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions,map<string,pair<string, string> > endpoints_ports, vector<VLink> virtual_links, map<string,nf_t>  nf_types) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		nf_types(nf_types.begin(),nf_types.end()),
 		virtual_links(virtual_links.begin(),virtual_links.end())
@@ -31,6 +31,12 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 			nf_ports[ss.str()] = 0;
 		}
 		this->network_functions[name] = nf_ports;
+	}
+	
+	//fill the map of endpoints
+	for(map<string,pair<string, string> >::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
+	{
+		this->endpoints_ports[ep->first] = ep->second;	
 	}
 }
 
@@ -63,6 +69,16 @@ set<string> LSI::getNetworkFunctionsName()
 		names.insert(nf->first);
 	
 	return names;
+}
+
+map<string, pair<string, string> > LSI::getEndpointsPorts()
+{
+	return endpoints_ports;
+}
+
+map<string,unsigned int > LSI::getEndpointsPortsId()
+{
+	return endpoints_ports_id;
 }
 
 map<string,nf_t> LSI::getNetworkFunctionsType()
@@ -125,6 +141,18 @@ bool LSI::setNfPortsID(string nf, map<string, unsigned int> translation)
 	}
 
 	network_functions[nf] = ports;
+	return true;
+}
+
+bool LSI::setEndpointPortID(string ep, uint64_t id)
+{
+	if(endpoints_ports.count(ep) == 0)
+	{
+		assert(0);
+		return false;
+	}
+	
+	endpoints_ports_id[ep] = id;
 	return true;
 }
 

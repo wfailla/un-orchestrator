@@ -4,7 +4,7 @@ namespace highlevel
 {
 
 Match::Match() :
-	graph::Match(),input(NULL), nf_port(0), type(MATCH_GENERIC)
+	graph::Match(), nf_port(0), type(MATCH_GENERIC)
 {
 
 }
@@ -34,13 +34,11 @@ bool Match::setNFport(string network_function, int port)
 	return true;
 }
 
-bool Match::setEndPoint(string graphID, unsigned int endpoint)
+bool Match::setEndPoint(unsigned int endpoint)
 {
 	if(type != MATCH_GENERIC)
 		return false;
 
-	input = (char*)malloc(sizeof(char)*(graphID.length()+1));
-	strcpy(input,graphID.c_str());
 	this->endpoint = endpoint;
 	type = MATCH_ENDPOINT;
 	
@@ -114,7 +112,7 @@ void Match::print()
 		else
 		{
 			assert(type == MATCH_ENDPOINT);
-			cout << "\t\t\tendpoint: " << input << ":" << endpoint << endl;
+			cout << "\t\t\tendpoint: " << endpoint << endl;
 		}
 		
 		graph::Match::print();
@@ -139,8 +137,8 @@ Object Match::toJSON()
 	{
 		assert(type == MATCH_ENDPOINT);
 		stringstream ep;
-		ep << input << ":" << endpoint;
-		match[ENDPOINT_ID] = ep.str().c_str();
+		ep << endpoint;
+		match[ENDPOINT] = ep.str().c_str();
 	}
 	
 	graph::Match::toJSON(match);

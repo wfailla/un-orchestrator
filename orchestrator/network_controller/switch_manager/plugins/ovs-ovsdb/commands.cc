@@ -6,7 +6,7 @@ char ErrBuf[BUFFER_SIZE];
 
 int rnumber = 1;
 uint64_t dnumber = 1;
-int pnumber = 1, nfnumber = 0;
+int pnumber = 1, nfnumber = 0, gnumber = 1;
 
 int id = 0;
 
@@ -24,6 +24,8 @@ map<uint64_t, list<string> > vport_l;
 map<uint64_t, list<string> > port_uuid;
 /*map use to obtain list of vport uuid from bridge-id*/
 map<uint64_t, list<string> > vport_uuid;
+/*map use to obtain list of greport uuid from bridge-id*/
+map<uint64_t, list<string> > gport_uuid;
 /*map use to obtain virtual link id from bridge name*/
 map<string, list<uint64_t> > virtual_link_id;
 /*map use to obtain name of port from port_id*/
@@ -104,6 +106,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	CreateLsiOut *clo = NULL;
 	map<string,unsigned int> physical_ports;
 	map<string,map<string, unsigned int> >  network_functions_ports;
+	map<string,unsigned int >  endpoints_ports;
 	list<pair<unsigned int, unsigned int> > virtual_links;
 	
     int dnumber_new = 0, nfnumber_old = 0;
@@ -115,7 +118,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	set<string> nfs = cli.getNetworkFunctionsName();
 
 	//list of nft	
-	map<string,nf_t> nf_type = cli.getNetworkFunctionsType(); 	
+	map<string,nf_t> nf_type = cli.getNetworkFunctionsType(); 
+	
+	//list of endpoints	
+	map<string,pair<string,string> > endpoints = cli.getEndpointsPortsName(); 	
 
 	//list of remote LSI
 	list<uint64_t> vport = cli.getVirtualLinksRemoteLSI();
@@ -437,6 +443,33 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		}
 	}
 	
+	//if there are one or more endpoints
+	if(endpoints.size() != 0)
+	{
+		/*for each endpoint in the list of endpoints*/
+		for(map<string,pair<string,string> >::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
+		{
+			char gre[64] = "gre";
+		
+			string id = ep->first;
+			string remote_ip = ep->second.first;
+			
+	    	char ifac[64] = "iface";
+	    	
+			sprintf(temp, "%d", gnumber);
+			strcat(gre, temp);
+			
+			sprintf(temp, "%d", rnumber);
+			strcat(ifac, temp);
+			
+			gnumber++;
+			
+			add_endpoint(dnumber, (char *)remote_ip.c_str(), gre, ifac, s);
+			
+			endpoints_ports[id] = rnumber-1;
+		}
+	}
+	
 	/*Create interfaces related by the vlink ports*/
 	if(vport.size() != 0)
 	{	
@@ -558,7 +591,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		}
 	}
 
-    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, out_nf_ports_name_on_switch, virtual_links);
+    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
     	
 	return clo;
 }
@@ -720,6 +753,17 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 	
 		port2.clear();
 	}
+	
+	for(list<string>::iterator u = gport_uuid[dnumber].begin(); u != gport_uuid[dnumber].end(); u++)
+	{
+		port2.push_back("uuid");
+			
+		port2.push_back((*u));
+	
+		port1.push_back(port2);
+	
+		port2.clear();
+	}
 		
 	port2.push_back("named-uuid");
 	port2.push_back(temp);
@@ -865,7 +909,281 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 		if(retVal != 0)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
 	}
+}
 
+void commands::add_endpoint(uint64_t dpi, char remote_ip[64], char gre[64], char ifac[64], int s){
+	
+    ssize_t nwritten;
+	
+	char read_buf[4096] = "", tmmp[64];
+	
+	int r = 0;
+	
+	locale loc;	
+	
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array, peer, peer1, peer2;
+
+	Array ma;
+	Array maa;
+	
+	Array third_object;
+	Array fourth_object;
+
+	//connect socket
+    s = cmd_connect();
+
+	root["method"] = "transact";
+
+	params.push_back("Open_vSwitch");
+			
+	first_obj["op"] = "insert";
+	first_obj["table"] = "Interface";
+		
+	/*Insert an Interface*/
+	row["name"] = gre;
+	row["type"] = "gre";
+	
+	row["admin_state"] = "up";
+	row["link_state"] = "up";
+	row["ofport"] = rnumber;
+	row["ofport_request"] = rnumber;
+		
+	/*Add options remote_ip and key*/
+	peer.push_back("map");
+	
+	peer2.push_back("remote_ip");
+	peer2.push_back(remote_ip);		
+	peer1.push_back(peer2);
+	peer2.clear();
+	
+	peer2.push_back("key");
+	sprintf(tmmp, "%d", gnumber-1);
+	peer2.push_back(tmmp);		
+	peer1.push_back(peer2);
+	peer2.clear();
+	
+	peer.push_back(peer1);
+
+    row["options"] = peer;
+		
+	first_obj["row"] = row;
+		
+	first_obj["uuid-name"] = ifac;
+		
+	params.push_back(first_obj);
+		
+	row.clear();
+	first_obj.clear();
+				
+	first_obj["op"] = "insert";
+	first_obj["table"] = "Port";
+		
+	/*Insert a port*/
+	row["name"] = gre;
+		
+	iface.push_back("set");
+	
+	iface2.push_back("named-uuid");
+	iface2.push_back(ifac);
+	
+	iface1.push_back(iface2);
+	iface.push_back(iface1);
+		
+	row["interfaces"] = iface;
+		
+	first_obj["row"] = row;
+		
+	first_obj["uuid-name"] = gre;
+		
+	params.push_back(first_obj);
+		
+	row.clear();
+	first_obj.clear();
+	peer.clear();
+	peer1.clear();
+	peer2.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
+		
+	first_obj["op"] = "update";
+	first_obj["table"] = "Bridge";
+			
+	third_object.push_back("_uuid");
+	third_object.push_back("==");
+		
+	fourth_object.push_back("uuid");
+	fourth_object.push_back(switch_uuid[dpi].c_str());
+		
+	third_object.push_back(fourth_object);
+	where.push_back(third_object);
+		
+	first_obj["where"] = where;
+	
+	where.clear();
+	
+	for(list<string>::iterator u = port_uuid[dpi].begin(); u != port_uuid[dpi].end(); u++)
+	{
+		port2.push_back("uuid");
+			
+		port2.push_back((*u));
+	
+		port1.push_back(port2);
+	
+		port2.clear();
+	}
+	
+	for(list<string>::iterator u = vport_uuid[dpi].begin(); u != vport_uuid[dpi].end(); u++)
+	{
+		port2.push_back("uuid");
+			
+		port2.push_back((*u));
+	
+		port1.push_back(port2);
+	
+		port2.clear();
+	}
+	
+	for(list<string>::iterator u = gport_uuid[dpi].begin(); u != gport_uuid[dpi].end(); u++)
+	{
+		port2.push_back("uuid");
+			
+		port2.push_back((*u));
+	
+		port1.push_back(port2);
+	
+		port2.clear();
+	}
+	
+	port2.push_back("named-uuid");
+	port2.push_back(gre);
+	
+	port1.push_back(port2);
+	
+	port2.clear();
+		
+	/*Array with two elements*/
+	i_array.push_back("set");
+		
+	i_array.push_back(port1);
+		
+	row["ports"] = i_array;
+		
+	first_obj["row"] = row;
+		
+	params.push_back(first_obj);
+		
+	second_obj.clear();
+		
+	/*Object with four items [op, table, where, mutations]*/
+	second_obj["op"] = "mutate";
+	second_obj["table"] = "Open_vSwitch";
+		
+	/*Empty array [where]*/
+	second_obj["where"] = where;
+			
+	/*Array with two element*/
+	maa.push_back("next_cfg");
+	maa.push_back("+=");
+	maa.push_back(1);
+			
+	ma.push_back(maa);
+		
+	second_obj["mutations"] = ma;
+			
+	params.push_back(second_obj);
+	
+	ma.clear();
+	maa.clear();
+	row.clear();
+	where.clear();
+	first_obj.clear();
+	second_obj.clear();
+	third_object.clear();
+	fourth_object.clear();
+	i_array.clear();
+	iface.clear();
+	iface1.clear();
+	iface2.clear();
+	port1.clear();
+	port2.clear();
+	root["params"] = params;
+
+	root["id"] = id;
+
+	stringstream ss;
+ 	write_formatted(root, ss );
+	
+	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+	if (nwritten == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		throw commandsException();
+	}
+
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+	if (r == sockFAILURE)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		throw commandsException();
+	}
+		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+		
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);	
+		
+	Value value;
+    read( read_buf, value );
+    Object rootNode = value.getObject();
+
+	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+	{
+		std::string name = (*it).first;
+		const Value &node = it->second;
+		if (name == "result")
+		{
+			const Array &result = node.getArray();
+				
+			for(unsigned i=0;i<result.size();i++)
+			{
+				Object uuidNode = result[i].getObject();
+						 		
+				for (Object::iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+				{
+					std::string name1 = (*it1).first;
+					Value &node1 = (*it1).second;
+							
+					if(name1 == "uuid")
+					{
+						const Array &stuff1 = node1.getArray();
+									
+						if(i==1){
+							gport_uuid[dpi].push_back(stuff1[i].getString());
+						}
+					} else if(name1 == "details"){
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
+						throw commandsException();
+					}
+				}		
+			}
+		}
+	}
+			
+	root.clear();
+	params.clear();
+			
+	//Increment transaction id
+	id++;
+	
+	rnumber++;
+	
+	//disconnect socket
+    cmd_disconnect(s);
 }
 
 void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
@@ -1166,6 +1484,17 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			port1.push_back(port2);
 			port2.clear();
 		}
+		
+		for(list<string>::iterator u = gport_uuid[anpi.getDpid()].begin(); u != gport_uuid[anpi.getDpid()].end(); u++)
+		{
+			port2.push_back("uuid");
+			
+			port2.push_back((*u));
+	
+			port1.push_back(port2);
+	
+			port2.clear();
+		}
 
 		list<string> ports_name_on_switch;
 		for(list<string>::iterator nff = nfp.begin(); nff != nfp.end(); nff++)
@@ -1389,6 +1718,17 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		}
 		
 		for(list<string>::iterator u = vport_uuid[dnpi.getDpid()].begin(); u != vport_uuid[dnpi.getDpid()].end(); u++)
+		{
+			port2.push_back("uuid");
+			
+			port2.push_back((*u));
+	
+			port1.push_back(port2);
+	
+			port2.clear();
+		}
+		
+		for(list<string>::iterator u = gport_uuid[dnpi.getDpid()].begin(); u != gport_uuid[dnpi.getDpid()].end(); u++)
 		{
 			port2.push_back("uuid");
 			
@@ -1678,6 +2018,17 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 		port2.clear();
 	}
 	
+	for(list<string>::iterator u = gport_uuid[dpi].begin(); u != gport_uuid[dpi].end(); u++)
+	{
+		port2.push_back("uuid");
+			
+		port2.push_back((*u));
+	
+		port1.push_back(port2);
+	
+		port2.clear();
+	}
+	
 	port2.push_back("named-uuid");
 	port2.push_back(vrt);
 	
@@ -1905,6 +2256,18 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s){
 	
 	//insert vports
 	for(list<string>::iterator u = vport_uuid[dpi].begin(); u != vport_uuid[dpi].end(); u++)
+	{
+		port2.push_back("uuid");
+			
+		port2.push_back((*u));
+	
+		port1.push_back(port2);
+	
+		port2.clear();
+	}
+	
+	//insert gport
+	for(list<string>::iterator u = gport_uuid[dpi].begin(); u != gport_uuid[dpi].end(); u++)
 	{
 		port2.push_back("uuid");
 			

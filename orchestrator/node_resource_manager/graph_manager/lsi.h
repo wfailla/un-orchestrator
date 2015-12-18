@@ -58,6 +58,16 @@ private:
 	map<string,map<string, unsigned int> >  network_functions;
 	
 	/**
+	*	@brief: The map is <endpoint name, pair<node, interface>>. It contains endpoint ports
+	*/
+	map<string,pair<string, string> > endpoints_ports;
+	
+	/**
+	*	@brief: The map is <endpoint name, endpoint id>. It contains endpoint id
+	*/
+	map<string,unsigned int > endpoints_ports_id;
+	
+	/**
 	*	@brief: Names of the ports connected to the LSI and related to network functions
 	*		The map is
 	*			<nf name, list<nf ports name> >
@@ -96,7 +106,7 @@ private:
 	map<string, uint64_t> endpoints_vlinks;
 
 public:
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions,vector<VLink> virtual_links,map<string,nf_t>  nf_types);
+	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string,pair<string, string> > endpoints_ports, vector<VLink> virtual_links,map<string,nf_t>  nf_types);
 
 	string getControllerAddress();
 	string getControllerPort();
@@ -105,6 +115,10 @@ public:
 
 	set<string> getNetworkFunctionsName();
 	list<string> getNetworkFunctionsPortNames(string nf);
+	
+	map<string,pair<string, string> > getEndpointsPorts();
+
+	map<string,unsigned int > getEndpointsPortsId();
 
 	list<uint64_t> getVirtualLinksRemoteLSI();
 
@@ -143,6 +157,7 @@ protected:
 	bool setPhysicalPortID(string port, uint64_t id);
 	bool setNfPortsID(string nf, map<string, unsigned int>);
 	void setVLinkIDs(unsigned int position, unsigned int localID, unsigned int remoteID);
+	bool setEndpointPortID(string ep, uint64_t id);
 	
 	void setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names);
 

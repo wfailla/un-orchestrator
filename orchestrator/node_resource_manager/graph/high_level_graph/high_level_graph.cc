@@ -162,7 +162,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 			else
 			{
 				stringstream ss;
-				ss << match.getGraphID() << ":" << match.getEndPoint();
+				ss << match.getEndPoint();
 				rri.endpoint = ss.str();
 			}
 
@@ -294,31 +294,32 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::addEndPoint(string graphID, string endpoint)
+bool Graph::addEndPoint(string ep, pair<string, string> p)
 {	
-	if(graphID == ID)
-		endpoints[endpoint] = true;
-	else
-		endpoints[endpoint] = false;
-		
-	return endpoints[endpoint];
+	if(endpoints.count(ep) != 0)
+		return false;
+
+	endpoints[ep] = p;
+	
+	return true;
 }
 
-set<string> Graph::getEndPoints()
+map<string, pair<string, string> > Graph::getEndPoints()
 {
-	set<string> endPoints;
-	
-	for(map<string,bool>::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
-		endPoints.insert(ep->first);
-
-	return endPoints;
+	return endpoints;
 }
 
 bool Graph::isDefinedHere(string endpoint)
 {
-	assert(endpoints.count(endpoint) != 0);
-	
-	return endpoints[endpoint];
+	for(map<string, pair<string, string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
+	{
+			string ep = mep->first;
+			
+			if(ep.compare(endpoint) == 0)
+				return true;
+	}
+
+	return false;
 }
 
 string Graph::getEndpointInvolved(string flowID)
@@ -333,7 +334,7 @@ string Graph::getEndpointInvolved(string flowID)
 	if(m.matchOnEndPoint())
 	{
 		stringstream ss;
-		ss << m.getGraphID() << ":" << m.getEndPoint();
+		ss << m.getEndPoint();
 		return ss.str();
 	}
 	
@@ -348,7 +349,7 @@ bool Graph::endpointIsUsedInMatch(string endpoint)
 		if(match.matchOnEndPoint())
 		{
 			stringstream ss;
-			ss << match.getGraphID() << ":" << match.getEndPoint();
+			ss << match.getEndPoint();
 			if(ss.str() == endpoint)
 				//The endpoint is used in a match
 				return true;

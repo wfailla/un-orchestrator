@@ -20,7 +20,7 @@ protected:
 	
 	static unsigned int graphEndPoint(string name_port);
 	
-	static bool parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, highlevel::Graph &graph);
+	static bool parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, highlevel::Graph &graph);
 	
 private:
 	static bool validateMac(const char* mac);

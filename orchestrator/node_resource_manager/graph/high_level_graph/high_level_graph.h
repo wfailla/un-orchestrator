@@ -39,17 +39,16 @@ private:
 	*		an element of the map is <NF, <1,2> >
 	*/
 	map<string, list<unsigned int> > networkFunctions;
+	
+	/**
+	*	@brief: for each end point attached to the graph specifies a pair <node, interface>
+	*/
+	map<string, pair<string, string> > endpoints;
 
 	/**
 	*	@brief: physical ports to be attached to the graph
 	*/
 	set<string> ports;
-	
-	/**
-	*	@brief: for each end point of the graph, the following structure specifies if that end
-	*		point is defined in this graph or not
-	*/
-	map<string,bool> endpoints;
 	
 	/**
 	*	@brief: List of rules describing the graph
@@ -99,26 +98,33 @@ public:
 	bool updateNetworkFunction(string nf, unsigned port);
 
 	/**
+	*	@brief: Add a EndPoint to the graph
+	*
+	*	@param:	ep	Name of the end point to be added
+	*	@param:	p	Pair <node, iface> of the end point
+	*/
+	
+	/**
 	*	@brief: Return the NFs of the graph and the ports they require
 	*/
 	map<string, list<unsigned int> > getNetworkFunctions();
-	
+
 	/**
 	*	@brief: Add an end point to the graph, to be used to connect the graph itself with
 	*		other graphs.
 	*
-	*	@param: graphID		Indefier of the graph defining the end point
-	*	@param: endpoint	Identifier of the end point
+	*	@param: ep			Identifier of the graph defining the end point
+	*	@param: p			pair<node, iface>
 	*
 	*	@return: true if the endpoint is defined in the current graph; false otherwise
 	*/
-	bool addEndPoint(string graphID, string endpoint);
+	bool addEndPoint(string ep, pair<string, string> p);
 	
 	/**
 	*	@brief: Return the end points of the graph, i.e. the ports to be used to connect
 	*		multiple graphs together.
 	*/
-	set<string> getEndPoints();
+	map<string, pair<string, string> > getEndPoints();
 	
 	/**
 	*	@brief: given a graph endpoint (in the form graphID:epID), return true if it is defined

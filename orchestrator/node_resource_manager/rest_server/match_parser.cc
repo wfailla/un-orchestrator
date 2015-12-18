@@ -121,22 +121,23 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 	return true;
 }
 
-bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, highlevel::Graph &graph)
+bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, highlevel::Graph &graph)
 {
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
+	bool is_tcp = false;
 
 	for(Object::const_iterator i = object.begin(); i != object.end(); i++)
 	{
 		const string& name  = i->first;
 		const Value&  value = i->second;
 	
-		if(name == PORT)
+		if(name == PORT_IN)
 		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,PORT,value.getString().c_str());
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,PORT_IN,value.getString().c_str());
 			if(foundOne)
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT,VNF_ID,ENDPOINT_ID,MATCH);
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT_IN,VNF,ENDPOINT,MATCH);
 				return false;
 			}
 		
@@ -144,15 +145,107 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 #ifdef UNIFY_NFFG
 			//In this case, the virtualized port name must be translated into the real one.
 			try
-			{
-				string realName = Virtualizer::getRealName(value.getString());
-			
+			{		
 #else
-			string realName = value.getString();
+
+			string port_in_name = value.getString();
+			string realName;
+			const char *port_in_name_tmp = port_in_name.c_str();
+			char vnf_name_tmp[BUFFER_SIZE];
+
+			//Check the name of port
+			char delimiter[] = ":";
+		 	char * pnt;
+
+			int p_type = 0;
+
+			char tmp[BUFFER_SIZE];
+			strcpy(tmp,(char *)port_in_name_tmp);
+			pnt=strtok(tmp, delimiter);
+			int i = 0;
+			while( pnt!= NULL )
+			{
+				switch(i)
+				{
+					case 0:
+						//VNF port
+						if(strcmp(pnt,VNF) == 0)
+						{
+							p_type = 0;
+						}
+						//ENDPOINT port
+						else if(strcmp(pnt,ENDPOINT) == 0){
+							p_type = 1;	
+						}
+						//physical port
+						else
+						{
+							realName.assign(port_in_name);
+							p_type = 2;
+						}
+						break;
+					//only for VNF ports
+					case 1:
+						if(p_type == 0)
+						{
+							strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
+							strcat(vnf_name_tmp,":");
+						}
+						break;
+					case 3:
+						if(p_type == 0)
+						{
+							strcat(vnf_name_tmp,pnt);
+						}
+				}
+		
+				pnt = strtok( NULL, delimiter );
+				i++;
+			}
 #endif			
+			//NF port
+			if(p_type == 0)
+			{
+				//convert char *vnf_name_tmp to string vnf_name
+				string vnf_name(vnf_name_tmp, strlen(vnf_name_tmp));
 			
-			match.setInputPort(realName);
-			graph.addPort(realName);
+				string nf_name = nfName(vnf_name);
+				unsigned int port = nfPort(vnf_name);
+				if(nf_name == "" || port == 0)
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" is not valid. It must be in the form \"name:port\"",vnf_name_tmp);
+					return false;	
+				}
+				match.setNFport(nf_name,port);
+			
+				set<unsigned int> ports;
+				if(nfs.count(nf_name) != 0)
+					ports = nfs[nf_name];
+				ports.insert(port);
+				nfs[nf_name] = ports;
+			}
+			//ENDPOINT port
+			else if(p_type == 1)
+			{
+				unsigned int endPoint = graphEndPoint(value.getString());
+				if(endPoint == 0)
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
+					return false;	
+				}
+				match.setEndPoint(endPoint);
+			
+				stringstream ss;
+				ss << match.getEndPoint();
+			} 
+			//physical port
+			else {
+#ifdef UNIFY_NFFG
+				realName = Virtualizer::getRealName(port_in_name);		
+#endif	
+				match.setInputPort(realName);
+				graph.addPort(realName);
+			}
 			
 #ifdef UNIFY_NFFG
 			}catch(exception e)
@@ -163,54 +256,12 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 #endif			
 			
 		}
-		else if(name == VNF_ID)
+		else if(name == PROTOCOL)
 		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,VNF_ID,value.getString().c_str());
-			if(foundOne)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT,VNF_ID,ENDPOINT_ID,MATCH);
-				return false;		
-			}
-			foundOne = true;
-			
-			string nf_name = nfName(value.getString());
-			unsigned int port = nfPort(value.getString());
-			if(nf_name == "" || port == 0)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" is not valid. It must be in the form \"name:port\"",value.getString().c_str());
-				return false;	
-			}
-			match.setNFport(nf_name,port);
-			
-			set<unsigned int> ports;
-			if(nfs.count(nf_name) != 0)
-				ports = nfs[nf_name];
-			ports.insert(port);
-			nfs[nf_name] = ports;
-		}
-		else if(name == ENDPOINT_ID)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ENDPOINT_ID,value.getString().c_str());
-			if(foundOne)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT,VNF_ID,ENDPOINT_ID,MATCH);
-				return false;		
-			}
-			foundOne = true;
-			foundEndPointID = true;
-			
-			string graph_id = graphID(value.getString());
-			unsigned int endPoint = graphEndPoint(value.getString());
-			if(graph_id == "" || endPoint == 0)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
-				return false;	
-			}
-			match.setEndPoint(graph_id,endPoint);
-			
-			stringstream ss;
-			ss << match.getGraphID() << ":" << match.getEndPoint();
-			definedInCurrentGraph = graph.addEndPoint(graph_id,ss.str());
+			if(value.getString().compare(TCP) == 0)
+				is_tcp = true;
+			else
+				is_tcp = false;
 		}
 		else if(name == ETH_SRC)
 		{
@@ -336,6 +387,57 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			match.setIpProto(ipProto & 0xFF);
 			foundProtocolField = true;
 		}
+		else if(name == IP_SRC)
+		{
+			size_t found = value.getString().find(':');
+			//IPv6
+			if(found!=string::npos)
+			{
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_SRC,value.getString().c_str());
+				if(!validateIpv6(value.getString()))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_SRC,value.getString().c_str());
+					return false;
+				}
+				match.setIpv6Src((char*)value.getString().c_str());
+				foundProtocolField = true;	
+			//IPv4
+			} else {
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_SRC,value.getString().c_str());
+				if(!validateIpv4(value.getString()))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_SRC,value.getString().c_str());
+					return false;
+				}
+				match.setIpv4Src((char*)value.getString().c_str());		
+				foundProtocolField = true;
+			}
+		}
+		else if(name == IP_DST)
+		{
+			size_t found = value.getString().find(':');
+			//IPv6
+			if(found!=string::npos)
+			{
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_DST,value.getString().c_str());
+				if(!validateIpv6(value.getString()))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_DST,value.getString().c_str());
+					return false;
+				}
+				match.setIpv6Dst((char*)value.getString().c_str());
+				foundProtocolField = true;
+			} else {
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_SRC,value.getString().c_str());
+				if(!validateIpv4(value.getString()))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_SRC,value.getString().c_str());
+					return false;
+				}
+				match.setIpv4Src((char*)value.getString().c_str());		
+				foundProtocolField = true;
+			}		
+		}
 		else if(name == IPv4_SRC)
 		{
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_SRC,value.getString().c_str());
@@ -379,6 +481,60 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			}
 			match.setIpv4DstMask((char*)value.getString().c_str());
 			foundProtocolField = true;
+		}
+		else if(name == PORT_SRC)
+		{
+			//TCP
+			if(is_tcp)
+			{
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,TCP_SRC,value.getString().c_str());
+				uint32_t tcpSrc;
+				if((sscanf(value.getString().c_str(),"%"SCNd32,&tcpSrc) != 1) || (tcpSrc > 65535))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",TCP_SRC,value.getString().c_str());
+					return false;
+				}
+				match.setTcpSrc(tcpSrc & 0xFFFF);
+				foundProtocolField = true;
+			//UDP
+			} else {
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,UDP_SRC,value.getString().c_str());
+				uint32_t udpSrc;
+				if((sscanf(value.getString().c_str(),"%"SCNd32,&udpSrc) != 1)  || (udpSrc > 65535))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",UDP_SRC,value.getString().c_str());
+					return false;
+				}
+				match.setUdpSrc(udpSrc & 0xFFFF);
+				foundProtocolField = true;
+			}
+		}
+		else if(name == PORT_DST)
+		{
+			//TCP
+			if(is_tcp)
+			{
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,TCP_DST,value.getString().c_str());
+				uint32_t tcpDst;
+				if((sscanf(value.getString().c_str(),"%"SCNd32,&tcpDst) != 1)  || (tcpDst > 65535))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",TCP_DST,value.getString().c_str());
+					return false;
+				}
+				match.setTcpDst(tcpDst & 0xFFFF);
+				foundProtocolField = true;
+			//UDP
+			} else {
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,UDP_DST,value.getString().c_str());
+				uint32_t udpDst;
+				if((sscanf(value.getString().c_str(),"%"SCNd32,&udpDst) != 1)  || (udpDst > 65535))
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",UDP_DST,value.getString().c_str());
+					return false;
+				}
+				match.setUdpDst(udpDst & 0xFFFF);
+				foundProtocolField = true;
+			}
 		}
 		else if(name == TCP_SRC)
 		{
@@ -700,7 +856,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 	
 	if(foundProtocolField && foundEndPointID && definedInCurrentGraph)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "A \"%s\" specifying an \"%s\" (defined in the current graph) and at least a protocol field was found. This is not supported.",MATCH,ENDPOINT_ID);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "A \"%s\" specifying an \"%s\" (defined in the current graph) and at least a protocol field was found. This is not supported.",MATCH,ENDPOINT);
 		return false;
 	}
 	

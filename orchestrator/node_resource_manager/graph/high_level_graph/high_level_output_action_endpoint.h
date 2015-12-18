@@ -15,10 +15,6 @@ namespace highlevel
 class ActionEndPoint : public Action
 {
 private:
-	/**
-	*	@brief: ID of the graph defining this endpoint
-	*/
-	string graphID;
 	
 	/**
 	*	@brief: endpoint identifier
@@ -27,7 +23,7 @@ private:
 	
 public:
 
-	ActionEndPoint(string graphID, unsigned int endpoint);
+	ActionEndPoint(unsigned int endpoint);
 	string getInfo();
 	unsigned int getPort();
 	string toString();

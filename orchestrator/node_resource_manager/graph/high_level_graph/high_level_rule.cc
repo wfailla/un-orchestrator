@@ -56,7 +56,7 @@ Object Rule::toJSON()
 	rule[_ID] = flowID.c_str();
 	rule[PRIORITY] = priority;
 	rule[MATCH] = match.toJSON();
-	rule[ACTION] = action->toJSON();
+	rule[ACTIONS] = action->toJSON();
 		
 	return rule;
 }

@@ -208,6 +208,124 @@ public:
 	*/
 	void add_ports(string p, uint64_t dnumber, int nf, int s);
 	
+	/*
+	*	Example of command to create a new GRE PORT
+	*
+		{
+			"id" : 9,
+			"method" : "transact",
+			"params" : [
+				"Open_vSwitch",
+				{
+				    "op" : "insert",
+				    "row" : {
+				        "admin_state" : "up",
+				        "link_state" : "up",
+				        "name" : "gre2",
+				        "ofport" : 8,
+				        "ofport_request" : 8,
+				        "options" : [
+				            "map",
+				            [
+				                [
+				                    "remote_ip",
+				                    "10.0.0.1"
+				                ],
+				                [
+				                	"local_ip",
+				                	"10.0.0.1"
+				                ],
+				                [
+				                	"in_key",
+				                	"1"
+				                ],
+				                [
+				                	"out_key",
+				                	"1"
+				                ],
+				                [
+				                	"key",
+				                	"1"
+				                ]
+				            ]
+				        ],
+				        "type" : "gre"
+				    },
+				    "table" : "Interface",
+				    "uuid-name" : "iface8"
+				},
+				{
+				    "op" : "insert",
+				    "row" : {
+				        "interfaces" : [
+				            "set",
+				            [
+				                [
+				                    "named-uuid",
+				                    "iface8"
+				                ]
+				            ]
+				        ],
+				        "name" : "gre2"
+				    },
+				    "table" : "Port",
+				    "uuid-name" : "gre2"
+				},
+				{
+				    "op" : "update",
+				    "row" : {
+				        "ports" : [
+				            "set",
+				            [
+				                [
+				                    "uuid",
+				                    "9ab63040-1a10-4dc3-9606-d78386773fff"
+				                ],
+				                [
+				                    "uuid",
+				                    "eacd9aa2-eb2a-47e6-888b-364c4fe2d4c3"
+				                ],
+				                [
+				                    "uuid",
+				                    "9b4efcb3-28ee-4e61-bea5-f7255a7e9171"
+				                ],
+				                [
+				                    "named-uuid",
+				                    "gre2"
+				                ]
+				            ]
+				        ]
+				    },
+				    "table" : "Bridge",
+				    "where" : [
+				        [
+				            "_uuid",
+				            "==",
+				            [
+				                "uuid",
+				                "3cb09eac-7f03-4099-98c5-168f83790eac"
+				            ]
+				        ]
+				    ]
+				},
+				{
+				    "mutations" : [
+				        [
+				            "next_cfg",
+				            "+=",
+				            1
+				        ]
+				    ],
+				    "op" : "mutate",
+				    "table" : "Open_vSwitch",
+				    "where" : [
+				    ]
+				}
+			]
+		}
+	*/
+	void add_endpoint(uint64_t dpi, char remote_ip[64], char gre[64], char ifac[64], int s);
+	
 	/**
 	*	Example of command to create a new INTERNAL PORT
 	*

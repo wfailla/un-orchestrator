@@ -88,10 +88,9 @@ public:
 	/**
 	*	@brief: set a graph endpoint
 	*
-	*	@param: graphID		identifier of the graph defining the endpoint
 	*	@param: endpoint	identifier of the endpoint within the graph
 	*/
-	bool setEndPoint(string graphID, unsigned int endpoint);
+	bool setEndPoint(unsigned int endpoint);
 	
 	/**
 	*	@brief: return true if the match is on a physical port
