@@ -407,6 +407,8 @@ public:
 	*/
 	AddNFportsOut *cmd_editconfig_NFPorts(AddNFportsIn anpi, int s);
 	
+	AddEndpointOut* cmd_editconfig_endpoint (AddEndpointIn aepi, int s);
+	
 	AddVirtualLinkOut *cmd_addVirtualLink(AddVirtualLinkIn avli, int s);
 	
 	/*
@@ -598,6 +600,8 @@ public:
 		}
 	*/
 	void cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s);
+	
+	void cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s);
 	
 	void cmd_delete_virtual_link(uint64_t dpid, uint64_t id, int s);
 

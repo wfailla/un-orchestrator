@@ -29,19 +29,21 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		
 		if( (match.matchOnNF()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT) )
 		{
+			continue;
+		}
 			/**
 			*	NF -> endpoint
 			*/
-			if(graph->isDefinedHere(action->toString()))
-			{
+			/*if(graph->isDefinedHere(action->toString()))
+			{*/
 				/**
 				*	the rule is not included in case the endpoint is defined by the graph itself
 				*/
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tRule with action expressed on end point \"%s\" defined in this graph. The rule is not inserted in the LSI-0",action->toString().c_str());
+				/*logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tRule with action expressed on end point \"%s\" defined in this graph. The rule is not inserted in the LSI-0",action->toString().c_str());
 			}
 			else
 			{
-				assert(endPointsDefinedInMatches.count(action->toString()) != 0);
+				//assert(endPointsDefinedInMatches.count(action->toString()) != 0);
 		
 				if(creating)
 				{
@@ -52,7 +54,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				{
 					availableEndPoints[action->toString()]--;
 					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" still used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
-				}
+				}*/
 
 				/**				
 				*	The entire match must be replaced with the virtual link associated with the endpoint
@@ -61,7 +63,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				*	the endpoint itself (hence expressed in endPointsDefinedInMatches)
 				*/
 				
-				string action_info = action->getInfo();
+				/*string action_info = action->getInfo();
 				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on NF \"%s\", action is on endpoint \"%s\"",match.getNF().c_str(),action->toString().c_str());
 		
 				//Translate the match
@@ -96,7 +98,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				lsi0Graph.addRule(lsi0Rule);
 			}
 			continue;
-		}
+		}*/
 		
 		if(match.matchOnPort())
 		{
@@ -295,7 +297,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 
 				if(action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION)
 				{
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the endpoint \"%s\", and the action is \"%s:%d\"",ss.str().c_str(),action_info.c_str(),action_nf->getPort());
+					/*logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the endpoint \"%s\", and the action is \"%s:%d\"",ss.str().c_str(),action_info.c_str(),action_nf->getPort());
 				
 					//Translate the action
 					map<string, uint64_t> nfs_vlinks = tenantLSI->getNFsVlinks();
@@ -325,7 +327,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 					stringstream newRuleID;
 					newRuleID << graph->getID() << "_" << hlr->getFlowID();
 					lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
-					lsi0Graph.addRule(lsi0Rule);
+					lsi0Graph.addRule(lsi0Rule);*/
 				}
 				else
 				{
@@ -458,11 +460,11 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 			if(action->getType() == highlevel::ACTION_ON_ENDPOINT)
 			{
 				assert(action->getType() == highlevel::ACTION_ON_ENDPOINT);
-				
-				highlevel::ActionEndPoint *action_ep = (highlevel::ActionEndPoint*)action;
-				unsigned int inputPort = action_ep->getPort();
 			
 				map<string,unsigned int> tenantEndpointsPorts = tenantLSI->getEndpointsPortsId();
+			
+				highlevel::ActionEndPoint *action_ep = (highlevel::ActionEndPoint*)action;
+				unsigned int inputPort = action_ep->getPort();
 			
 				stringstream ep_port;
 				ep_port << inputPort;
@@ -618,8 +620,11 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					stringstream action_port;
 					action_port << action_info << "_" << action_nf->getPort();
 				
+					map<string,unsigned int> tenantNetworkFunctionsPorts = tenantLSI->getNetworkFunctionsPorts(action_info);
+				
 					//Translate the action
-					map<string, uint64_t> nfs_vlinks = tenantLSI->getNFsVlinks();
+					map<string,unsigned int>::iterator translation = tenantNetworkFunctionsPorts.find(action_port.str());
+					/*map<string, uint64_t> nfs_vlinks = tenantLSI->getNFsVlinks();
 					if(nfs_vlinks.count(action_port.str()) == 0)
 					{
 						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a NF action \"%s:%d\" which has not been translated into a virtual link",action_info.c_str(),action_nf->getPort());
@@ -633,8 +638,8 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 						if(vlink->getID() == vlink_id)
 							break;
 					}
-					assert(vlink != tenantVirtualLinks.end());
-					lowlevel::Action tenantAction(vlink->getRemoteID());
+					assert(vlink != tenantVirtualLinks.end());*/
+					lowlevel::Action tenantAction(/*vlink->getRemoteID()*/translation->second);
 				
 					//XXX the generic actions must be inserted in this graph.
 					list<GenericAction*> gas = action->getGenericActions();
@@ -808,11 +813,15 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 			
 				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the \"%s:%d\", and the action is an output on endpoint \"%s\"",nf.c_str(),nfPort,action->toString().c_str());
 				
+				unsigned int e_id = 0;
 				//Al the traffic for an endpoint is sent on the same virtual link
+				map<string,unsigned int> tenantEndpointsPorts = tenantLSI->getEndpointsPortsId();
+				for(map<string, unsigned int >::iterator ep = tenantEndpointsPorts.begin(); ep != tenantEndpointsPorts.end(); ep++){
+					if(strcmp(ep->first.c_str(), action->toString().c_str()) == 0)
+						e_id = ep->second;
+				}
 				
-				map<string, uint64_t> endpoints_vlinks = tenantLSI->getEndPointsVlinks();
-				
-				if(endpoints_vlinks.count(action->toString()) == 0)
+				/*if(endpoints_vlinks.count(action->toString()) == 0)
 				{
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on endpoint \"%s\" which has not been translated into a virtual link",action->toString().c_str());
 					assert(0);
@@ -825,8 +834,8 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					if(vlink->getID() == vlink_id)
 						break;
 				}
-				assert(vlink != tenantVirtualLinks.end());
-				lowlevel::Action tenantAction(vlink->getLocalID());
+				assert(vlink != tenantVirtualLinks.end());*/
+				lowlevel::Action tenantAction(/*vlink->getLocalID()*/e_id);
 				
 				//XXX the generic actions must be inserted in this graph.
 				list<GenericAction*> gas = action->getGenericActions();

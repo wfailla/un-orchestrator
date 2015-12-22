@@ -166,6 +166,9 @@ protected:
 
 	void addNF(string name, list< unsigned int> ports, nf_t type);
 	void removeNF(string nf);
+	
+	void addEndpoint(string name, pair<string, string> interface);
+	void removeEndpoint(string ep);
 };
 
 #endif //LSI_H_

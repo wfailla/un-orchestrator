@@ -51,11 +51,13 @@ private:
 	*/
 	//FIXME: useless? This information can be retrieved by the previous map
 	set<string> networkFunctionsName;
-	
+
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 	/**
 	*	@brief: list of endpoints ports to be connected to the lsi
 	*/
 	map<string,pair<string, string> > endpointsPortsName;
+#endif
 	
 	/**
 	*	@brief: map of network functions, list of network function ports
@@ -68,6 +70,7 @@ private:
 	list<uint64_t> vlinksRemoteLsi;
 
 protected:
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<string> > netFunctionsPortsName, map<string,pair<string,string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi)
 		: controllerAddress(controllerAddress), controllerPort(controllerPort),
 		physicalPortsName(physicalPortsName.begin(),physicalPortsName.end()),
@@ -80,7 +83,20 @@ protected:
 		for(; it != nf_types.end(); it++)
 			networkFunctionsName.insert(it->first);
 	}
-	
+#else
+	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<string> > netFunctionsPortsName, list<uint64_t> vlinksRemoteLsi)
+		: controllerAddress(controllerAddress), controllerPort(controllerPort),
+		physicalPortsName(physicalPortsName.begin(),physicalPortsName.end()),
+		nf_types(nf_types.begin(),nf_types.end()),
+		netFunctionsPortsName(netFunctionsPortsName.begin(),netFunctionsPortsName.end()),
+		vlinksRemoteLsi(vlinksRemoteLsi.begin(),vlinksRemoteLsi.end())
+	{
+		map<string,nf_t>::iterator it = nf_types.begin();
+		for(; it != nf_types.end(); it++)
+			networkFunctionsName.insert(it->first);
+	}
+#endif
+
 public:
 	
 	string getControllerAddress()
@@ -107,12 +123,12 @@ public:
 	{			
 		return networkFunctionsName;
 	}
-	
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 	map<string,pair<string, string> > getEndpointsPortsName()
 	{
 		return endpointsPortsName;
 	}
-	
+#endif	
 	list<string> getNetworkFunctionsPortNames(string nf)
 	{
 		return netFunctionsPortsName[nf];

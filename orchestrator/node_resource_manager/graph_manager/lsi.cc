@@ -322,6 +322,11 @@ void LSI::addNF(string name, list< unsigned int> ports, nf_t type)
 	nf_types[name] = type;
 }
 
+void LSI::addEndpoint(string name, pair<string, string> interface)
+{
+	endpoints_ports[name] = interface;
+}
+
 int LSI::addVlink(VLink vlink)
 {
 	//TODO: protect the next operation with a mutex
@@ -355,5 +360,15 @@ void LSI::removeNF(string nf)
 
 	map<string,nf_t>::iterator jt = nf_types.find(nf);
 	nf_types.erase(jt);
+	return;
+}
+
+void LSI::removeEndpoint(string ep)
+{
+	assert(endpoints_ports.count(ep) == 0);
+
+	map<string,pair<string, string> >::iterator it =  endpoints_ports.find(ep);
+	endpoints_ports.erase(it);
+	
 	return;
 }

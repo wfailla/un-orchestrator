@@ -18,6 +18,8 @@ map<uint64_t, string> switch_uuid;
 map<string, string> peer_n;
 /*map use to obtain list of ports from bridge-id*/
 map<uint64_t, list<string> > port_l;
+/*map use to obtain list of endpoint from bridge-id*/
+map<uint64_t, list<string> > endpoint_l;
 /*map use to obtain list of vports from bridge-id*/
 map<uint64_t, list<string> > vport_l;
 /*map use to obtain list of port uuid from bridge-id*/
@@ -467,6 +469,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			add_endpoint(dnumber, (char *)remote_ip.c_str(), gre, ifac, s);
 			
 			endpoints_ports[id] = rnumber-1;
+			
+			endpoint_l[dnumber].push_back(id);
 		}
 	}
 	
@@ -1641,6 +1645,34 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 	return anf;
 }
 
+AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
+	AddEndpointOut *apf = NULL;
+	
+	char gre[64] = "gre", temp[64];
+	
+	string id = aepi.getEPname();
+	string remote_ip = aepi.getEPiface().second;
+			
+	char ifac[64] = "iface";
+	    	
+	sprintf(temp, "%d", gnumber);
+	strcat(gre, temp);
+			
+	sprintf(temp, "%d", rnumber);
+	strcat(ifac, temp);
+			
+	gnumber++;
+			
+	//create endpoint
+	add_endpoint(aepi.getDpid(), (char *)remote_ip.c_str(), gre, ifac, s);
+	
+	endpoint_l[aepi.getDpid()].push_back(id);
+	
+	apf = new AddEndpointOut(aepi.getEPname(), rnumber-1);
+	
+	return apf;
+}
+
 void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 	
     ssize_t nwritten;
@@ -1729,6 +1761,184 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		}
 		
 		for(list<string>::iterator u = gport_uuid[dnpi.getDpid()].begin(); u != gport_uuid[dnpi.getDpid()].end(); u++)
+		{
+			port2.push_back("uuid");
+			
+			port2.push_back((*u));
+	
+			port1.push_back(port2);
+	
+			port2.clear();
+		}
+		
+		/*Array with two elements*/
+		i_array.push_back("set");
+		
+		i_array.push_back(port1);
+		
+		row["ports"] = i_array;
+		
+		first_obj["row"] = row;
+		
+		params.push_back(first_obj);
+		
+		second_obj.clear();
+		
+		/*Object with four items [op, table, where, mutations]*/
+		second_obj["op"] = "mutate";
+		second_obj["table"] = "Open_vSwitch";
+		
+		/*Empty array [where]*/
+		second_obj["where"] = where;
+			
+		/*Array with two element*/
+		maa.push_back("next_cfg");
+		maa.push_back("+=");
+		maa.push_back(1);
+			
+		ma.push_back(maa);
+		
+		second_obj["mutations"] = ma;
+			
+		params.push_back(second_obj);
+		
+		ma.clear();
+		maa.clear();
+		row.clear();
+		where.clear();
+		first_obj.clear();
+		second_obj.clear();
+		third_object.clear();
+		fourth_object.clear();
+		i_array.clear();
+		iface.clear();
+		iface1.clear();
+		iface2.clear();
+		port1.clear();
+		port2.clear();
+		root["params"] = params;
+
+		root["id"] = id;
+
+		stringstream ss;
+ 		write_formatted(root, ss );
+		
+		nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+		if (nwritten == sockFAILURE)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+			throw commandsException();
+		}
+
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+		if (r == sockFAILURE)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+			throw commandsException();
+		}
+			
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+		
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+		
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
+			
+		root.clear();
+		params.clear();
+			
+		//Increment transaction id
+		id++;
+		
+		cmd_disconnect(s);
+	}
+}
+
+void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
+	
+	ssize_t nwritten;
+	
+	char read_buf[4096] = "";
+	
+	int r = 0;
+	
+	locale loc;	
+	
+	map<string, unsigned int> ports;
+
+	string ep_name = depi.getEPname();
+	
+	Object root, first_obj, second_obj, row;
+	Array params, iface, iface1, iface2, where, port1, port2, i_array;
+
+	Array ma;
+	Array maa;
+	
+	Array third_object;
+	Array fourth_object;
+
+	//connect socket
+    s = cmd_connect();
+
+	if(ep_name.compare("") != 0){
+		
+		root["method"] = "transact";
+
+		params.push_back("Open_vSwitch");
+		
+		first_obj["op"] = "update";
+		first_obj["table"] = "Bridge";
+			
+		third_object.push_back("_uuid");
+		third_object.push_back("==");
+		
+		fourth_object.push_back("uuid");
+		fourth_object.push_back(switch_uuid[depi.getDpid()].c_str());
+		
+		third_object.push_back(fourth_object);
+		where.push_back(third_object);
+		
+		first_obj["where"] = where;
+	
+		where.clear();
+		
+		list<string>::iterator uu = gport_uuid[depi.getDpid()].begin();
+		
+		uu = gport_uuid[depi.getDpid()].begin();
+		//should be search in endpoint_l, p....if find it take the index and remove it from the set endpoint-uuid[pi]
+		for(list<string>::iterator u = endpoint_l[depi.getDpid()].begin(); u != endpoint_l[depi.getDpid()].end(); u++){
+			string s = (*u);
+			if(s.compare(ep_name) == 0){
+				gport_uuid[depi.getDpid()].remove((*uu));
+				break;	
+			}
+			uu++;
+		}
+	
+		for(list<string>::iterator u = port_uuid[depi.getDpid()].begin(); u != port_uuid[depi.getDpid()].end(); u++)
+		{
+			port2.push_back("uuid");
+				
+			port2.push_back((*u));
+	
+			port1.push_back(port2);
+	
+			port2.clear();
+		}
+		
+		for(list<string>::iterator u = vport_uuid[depi.getDpid()].begin(); u != vport_uuid[depi.getDpid()].end(); u++)
+		{
+			port2.push_back("uuid");
+			
+			port2.push_back((*u));
+	
+			port1.push_back(port2);
+	
+			port2.clear();
+		}
+		
+		for(list<string>::iterator u = gport_uuid[depi.getDpid()].begin(); u != gport_uuid[depi.getDpid()].end(); u++)
 		{
 			port2.push_back("uuid");
 			

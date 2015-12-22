@@ -692,15 +692,19 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	In principle a virtual link could also be shared between a NF port and an endpoint but, for simplicity, we
 	*	use separated virtual links in case of endpoint.
 	*/
-	unsigned int biggest = 0;
-	//unsigned int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
-	if (vlNFs.size() > biggest)
+	//unsigned int biggest = 0;
+	unsigned int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
+	/*if (vlNFs.size() > biggest)
     	biggest=vlNFs.size();
   	if (vlPhyPorts.size() > biggest)
     	biggest=vlPhyPorts.size();
  	if(vlEndPoints.size() > biggest)
-    	biggest=vlEndPoints.size();
-	unsigned int numberOfVLrequired = /*numberOfVLrequiredBeforeEndPoints + vlEndPoints.size()*/biggest;
+    	biggest=vlEndPoints.size();*/
+	unsigned int numberOfVLrequired = 0/*numberOfVLrequiredBeforeEndPointsvlNFs.size() + vlEndPoints.size()*//*biggest*/;
+	if(vlNFs.size() == 0)
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPoints.size()/*biggest*/;
+	else
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints;
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new LSI with LSI-0",numberOfVLrequired);
 	
@@ -867,14 +871,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	map<string, uint64_t> endpoints_vlinks;
 	vector<VLink>::iterator vl3 = vls.begin();
 	
-	/*unsigned int aux = 0;
-	while(aux < numberOfVLrequiredBeforeEndPoints)
+	unsigned int aux = 0;
+	while(aux < numberOfVLrequiredBeforeEndPoints-1)
 	{
 		//The first vlinks are only used for NFs and physical ports
 		//TODO: this could be optimized, although it is not easy (and useful)
 		aux++;
 		vl3++;
-	}*/
+	}
 	
 	for(set<string>::iterator ep = vlEndPoints.begin(); ep != vlEndPoints.end(); ep++, vl3++)
 	{			
@@ -1209,6 +1213,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	
 	set<string> phyPorts = tmp->getPorts();
 	map<string, list<unsigned int> > network_functions = tmp->getNetworkFunctions();
+	map<string, pair<string, string> > tmp_endpoints = tmp->getEndPoints();//#ADDED
 	
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 	
@@ -1218,9 +1223,21 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	set<string> vlEndPoints = vlVector[2];
 	set<string> NFsFromEndPoint = vlVector[3];
 
-	//TODO: check if a virtual link is already available and can be used (because it is currentl used only in one direction)	
+	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)	
 	int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
-	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPoints.size();
+	/*unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPoints.size();
+	unsigned int biggest = 0;
+	if (vlNFs.size() > biggest)
+    	biggest=vlNFs.size();
+  	if (vlPhyPorts.size() > biggest)
+    	biggest=vlPhyPorts.size();
+ 	if(vlEndPoints.size() > biggest)
+    	biggest=vlEndPoints.size();*/
+	unsigned int numberOfVLrequired = 0/*numberOfVLrequiredBeforeEndPointsvlNFs.size() + vlEndPoints.size()*//*biggest*/;
+	if(vlNFs.size() == 0)
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPoints.size()/*biggest*/;
+	else
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints;
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);
 
@@ -1370,6 +1387,38 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			lsi->removeNF(nf->first);
 			if(anpo != NULL)
 				delete(anpo);
+			delete(tmp);
+			tmp = NULL;	
+			throw GraphManagerException();
+		}
+	}
+	
+	
+	for(map<string, pair<string, string> >::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
+	{
+		AddEndpointOut *aepo = NULL;
+		try
+		{
+			lsi->addEndpoint(ep->first, ep->second);
+			AddEndpointIn aepi(dpid,ep->first,ep->second);
+			
+			aepo = switchManager.addEndpoint(aepi);
+			
+			if(!lsi->setEndpointPortID(aepo->getEPname(), aepo->getEPid()))
+			{
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required endpoint \"%s\" has been attached to the tenant-lsi",ep->first.c_str());
+				lsi->removeEndpoint(ep->first);
+				delete(aepo);
+				throw GraphManagerException();
+			}
+			
+			delete(aepo);
+		}catch(SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			lsi->removeEndpoint(ep->first);
+			if(aepo != NULL)
+				delete(aepo);
 			delete(tmp);
 			tmp = NULL;	
 			throw GraphManagerException();
@@ -1844,7 +1893,20 @@ next2:
 #ifndef UNIFY_NFFG
 	//Remove the endpoint, if it no longer appear in the graph
 	if((rri.endpoint != "") && (!graph->stillExistEndpoint(rri.endpoint)))
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The endpoint '%s' is no longer part of the graph",rri.endpoint.c_str());	
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The endpoint '%s' is no longer part of the graph",rri.endpoint.c_str());
+		
+		try
+		{		
+			DestroyEndpointIn depi(lsi->getDpid(),rri.endpoint);
+			switchManager.destroyEndpoint(depi);
+			lsi->removeEndpoint(rri.endpoint);
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}	
+	}
 #endif
 }
 
