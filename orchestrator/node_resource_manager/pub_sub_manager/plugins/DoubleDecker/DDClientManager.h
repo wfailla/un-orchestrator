@@ -8,7 +8,7 @@
 #include "../../../../utils/logger.h"
 #include "../../../../utils/constants.h"
 
-#include "../../PubSubClientManager.h"
+#include "../../PubSubManager.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,16 +25,25 @@ using namespace std;
 class DDClientManager : public PubSubClientManager
 {
 private:
+
+	/**
+	*	@brief: Double decker client pointer
+	*/
 	ddclient_t *client;
 	
 public:
+
 	DDClientManager();
 	
 	~DDClientManager();
 	
-	bool publishDomainInformation();
+	bool publishBoot();
+	
+	bool publishUpdating();
 	
 	void terminateClient();
+	
+	ddclient_t *getClient();
 };
 
 class DDClientManagerException : public PubSubClientManagerException

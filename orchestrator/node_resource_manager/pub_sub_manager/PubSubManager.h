@@ -12,8 +12,19 @@ class PubSubClientManager
 {
 public:
 	
-	virtual bool publishDomainInformation() = 0;
+	/**
+	*	@brief: Publish domain information at the boot time
+	*/
+	virtual bool publishBoot() = 0;
 	
+	/**
+	*	@brief: Publish updating domain information
+	*/
+	virtual bool publishUpdating() = 0;
+	
+	/**
+	*	@brief: Terminate client
+	*/
 	virtual void terminateClient() = 0;
 };
 

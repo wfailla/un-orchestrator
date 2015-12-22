@@ -266,12 +266,12 @@ SET(SOURCES
 IF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
     SET(SOURCES1
     ${SOURCES}
-		node_resource_manager/pub_sub_client_manager/PubSubClientManager.h
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.cc
+		node_resource_manager/pub_sub_manager/PubSubClientManager.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
 		              
-		node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClient.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClient.h
     )
 ELSE()
      SET(SOURCES1
@@ -386,7 +386,6 @@ ELSE()
          ${SOURCES6}
     	)
 ENDIF(ENABLE_DPDK_PROCESSES)
-
 
 INCLUDE_DIRECTORIES (
 	/usr/include/boost

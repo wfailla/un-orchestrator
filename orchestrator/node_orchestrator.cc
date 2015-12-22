@@ -8,8 +8,8 @@
 #include "node_resource_manager/rest_server/rest_server.h"
 
 #ifdef ENABLE_DOUBLE_DECKER
-	#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager.h"
-	#include "node_resource_manager/pub_sub_client_manager/plugins/DoubleDecker/DDClientManager_constants.h"
+	#include "node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h"
+	#include "node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h"
 #endif
 
 #include <unistd.h>
@@ -107,9 +107,9 @@ int main(int argc, char *argv[])
 
 #ifdef ENABLE_DOUBLE_DECKER
 	/*Client pub/sub*/
-	if(!client->publishDomainInformation())
+	if(!client->publishBoot())
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the DD client. The %s cannot be run.",MODULE_NAME);
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the Double Decker client. The %s cannot be run.",MODULE_NAME);
 		
 		client->terminateClient();
 		
