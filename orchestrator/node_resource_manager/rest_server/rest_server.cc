@@ -5,6 +5,13 @@ GraphManager *RestServer::gm = NULL;
 	bool RestServer::firstTime = true;
 #endif
 
+/*
+*
+* SQLiteManager pointer
+*
+*/
+SQLiteManager *dbmanager = NULL;
+
 bool RestServer::init(char *nffg_filename,int core_mask, char *ports_file_name)
 {	
 
@@ -37,7 +44,9 @@ bool RestServer::init(char *nffg_filename,int core_mask, char *ports_file_name)
 			return false;
 		}
 	}
-			
+		
+	dbmanager = new SQLiteManager(DB_NAME);
+	
 	return true;
 }
 
@@ -375,7 +384,6 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 				return doDelete(connection,url,con_cls);
 		}
 	}
-#ifdef ENABLE_SQLITE
 	else if (0 == strcmp (method, POST))
 	{	
 		struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
@@ -390,7 +398,6 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		else if (NULL != con_info->message)
 			return doPost(connection,url,con_cls);
 	}
-#endif
 	else
 	{
 		//Methods not implemented
@@ -426,7 +433,6 @@ int RestServer::print_out_key (void *cls, enum MHD_ValueKind kind, const char *k
 	return MHD_YES;
 }
 
-#ifdef ENABLE_SQLITE
 int RestServer::doPost(struct MHD_Connection *connection, const char *url, void **con_cls)
 {
 	struct MHD_Response *response;
@@ -442,8 +448,6 @@ int RestServer::doPost(struct MHD_Connection *connection, const char *url, void 
 	unsigned char hash_token[HASH_SIZE], temp[BUFFER_SIZE];
 	
 	char hash_pwd[BUFFER_SIZE], nonce[BUFFER_SIZE];
-	
-	SQLiteManager *dbm = new SQLiteManager();
 
 	char *user, *pass;
 	
@@ -504,7 +508,7 @@ put_malformed_url:
 	
 		if(user != NULL && pass != NULL){
 		
-			SHA1((const unsigned char*)pass, sizeof(pass) - 1, hash_token);
+			SHA512((const unsigned char*)pass, sizeof(pass) - 1, hash_token);
 		    
 		    strcpy(tmp, "");
 		    strcpy(hash_pwd, "");
@@ -516,10 +520,10 @@ put_malformed_url:
 
 			strcpy(user_tmp, user);
 
-			dbm->selectOperation(DB_NAME, user, (char *)hash_pwd);
+			dbmanager->selectUsrPwd(user, (char *)hash_pwd);
 			
-			if(strcmp(dbm->getUser(), user_tmp) == 0 && strcmp(dbm->getPwd(), (char *)hash_pwd) == 0){
-				if(strcmp(dbm->getToken(), "") == 0){
+			if(strcmp(dbmanager->getUser(), user_tmp) == 0 && strcmp(dbmanager->getPwd(), (char *)hash_pwd) == 0){
+				if(strcmp(dbmanager->getToken(), "") == 0){
 
 					rc = RAND_bytes(temp, sizeof(temp));
 					if(rc != 1)
@@ -533,7 +537,7 @@ put_malformed_url:
         				strcat(nonce, tmp);
     				}
 					
-					dbm->updateOperation(DB_NAME, user_tmp, (char *)nonce);
+					dbmanager->updateToken(user_tmp, (char *)nonce);
 				}
 				
 				response = MHD_create_response_from_buffer (strlen((char *)nonce),(void*) nonce, MHD_RESPMEM_PERSISTENT);
@@ -633,7 +637,6 @@ bool RestServer::parseLoginForm(Value value, char **user, char **pwd)
 	
 	return true;
 }
-#endif
 
 int RestServer::doPut(struct MHD_Connection *connection, const char *url, void **con_cls)
 {
@@ -645,9 +648,7 @@ int RestServer::doPut(struct MHD_Connection *connection, const char *url, void *
 	//Check the URL
 	char delimiter[] = "/";
  	char * pnt;
-#ifdef ENABLE_SQLITE
-	SQLiteManager *dbm = new SQLiteManager();
-#endif
+
 	char graphID[BUFFER_SIZE];
 	
 	char tmp[BUFFER_SIZE];
@@ -722,7 +723,6 @@ put_malformed_url:
 		graph->print();
 	try
 	{
-#ifdef ENABLE_SQLITE
 		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
 		if(token == NULL)
@@ -733,10 +733,10 @@ put_malformed_url:
 			MHD_destroy_response (response);
 			return ret;
 		} else{
-			dbm->selectTokenOperation(DB_NAME, (char *)token);
-			if(strcmp(dbm->getToken(), token) == 0){
+			dbmanager->selectToken((char *)token);
+			if(strcmp(dbmanager->getToken(), token) == 0){
 				//User authenticated!
-#endif
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
 				if(newGraph)
 				{
 					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");		
@@ -762,7 +762,6 @@ put_malformed_url:
 						return ret;		
 					}	
 				}
-#ifdef ENABLE_SQLITE
 			} else{
 				//User unauthenticated!
 				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
@@ -772,7 +771,6 @@ put_malformed_url:
 				return ret;
 			}
 		}
-#endif
 	}catch (...)
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the %s of the graph!",(newGraph)? "creation" : "update");
@@ -1280,9 +1278,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 	//Check the URL
 	char delimiter[] = "/";
  	char * pnt;
-#ifdef ENABLE_SQLITE
-	SQLiteManager *dbm = new SQLiteManager();
-#endif
+
 	char graphID[BUFFER_SIZE];
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,url);
@@ -1329,7 +1325,6 @@ get_malformed_url:
 		return ret;
 	}
 	
-#ifdef ENABLE_SQLITE
 	const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
 	if( token == NULL)
@@ -1340,17 +1335,15 @@ get_malformed_url:
 		MHD_destroy_response (response);
 		return ret;
 	} else{
-		dbm->selectTokenOperation(DB_NAME, (char *)token);
-		if(strcmp(dbm->getToken(), token) == 0){
+		dbmanager->selectToken((char *)token);
+		if(strcmp(dbmanager->getToken(), token) == 0){
 			//User authenticated!
-#endif
 			if(!request)
 				//request for a graph description
 				return doGetGraph(connection,graphID);
 			else
 				//request for interfaces description
 				return doGetInterfaces(connection);
-#ifdef ENABLE_SQLITE
 		} else{
 			//User unauthenticated!
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
@@ -1360,7 +1353,6 @@ get_malformed_url:
 			return ret;
 		}
 	}
-#endif
 }
 
 int RestServer::doGetGraph(struct MHD_Connection *connection,char *graphID)
@@ -1441,9 +1433,7 @@ int RestServer::doDelete(struct MHD_Connection *connection, const char *url, voi
 	//Check the URL
 	char delimiter[] = "/";
  	char * pnt;
-#ifdef ENABLE_SQLITE
-	SQLiteManager *dbm = new SQLiteManager();
-#endif
+
 	char graphID[BUFFER_SIZE];
 	char flowID[BUFFER_SIZE];
 	bool specificFlow = false;
@@ -1503,7 +1493,7 @@ delete_malformed_url:
 		MHD_destroy_response (response);
 		return ret;
 	}
-#ifdef ENABLE_SQLITE
+
 	const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
 	if(token == NULL)
@@ -1514,10 +1504,9 @@ delete_malformed_url:
 		MHD_destroy_response (response);
 		return ret;
 	} else{
-		dbm->selectTokenOperation(DB_NAME, (char *)token);
-		if(strcmp(dbm->getToken(), token) == 0){
+		dbmanager->selectToken((char *)token);
+		if(strcmp(dbmanager->getToken(), token) == 0){
 			//User authenticated!
-#endif
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
 
 			if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
@@ -1572,7 +1561,6 @@ delete_malformed_url:
 				MHD_destroy_response (response);
 				return ret;
 			}
-#ifdef ENABLE_SQLITE
 		} else{
 			//User unauthenticated
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the user authentication!");
@@ -1582,6 +1570,5 @@ delete_malformed_url:
 			return ret;
 		}
 	}	
-#endif
 }
 

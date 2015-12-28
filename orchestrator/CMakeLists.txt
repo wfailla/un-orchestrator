@@ -75,19 +75,6 @@ IF(${ENABLE_KVM_INDEX} EQUAL 2)
 	ADD_DEFINITIONS(-DENABLE_KVM_IVSHMEM -DENABLE_KVM)
 ENDIF()
 
-# Rather complicated CMake code for selecting the database implementation
-SET(ENABLE_SQLITE "NONE" CACHE STRING "Database implementation: NONE, SQLITE")
-SET(ENABLE_SQLITE_VALUES "NONE" "SQLITE") #Add here other implementations
-SET_PROPERTY(CACHE ENABLE_SQLITE PROPERTY STRINGS ${ENABLE_SQLITE_VALUES})
-LIST(FIND ENABLE_SQLITE_VALUES ${ENABLE_SQLITE} ENABLE_SQLITE_INDEX)
-
-IF(${ENABLE_SQLITE_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${ENABLE_SQLITE} not supported, valid entries are ${ENABLE_SQLITE_VALUES}")
-ENDIF()
-IF(${ENABLE_SQLITE_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DENABLE_SQLITE)
-ENDIF()
-
 OPTION(
 	RUN_NFS
 	"Turn on the actually run the NFs"
@@ -255,6 +242,10 @@ SET(SOURCES
 	node_resource_manager/rest_server/match_parser.h
 	node_resource_manager/rest_server/match_parser.cc
 
+	node_resource_manager/database_manager/SQLite/SQLiteManager.h
+	node_resource_manager/database_manager/SQLite/SQLiteManager.cc
+	node_resource_manager/database_manager/SQLite/SQLiteManager_constants.h
+
 	utils/logger.h
 	utils/logger.c
 	utils/constants.h
@@ -370,19 +361,6 @@ ELSE()
     	)
 ENDIF(ENABLE_DPDK_PROCESSES)
 
-IF(ENABLE_SQLITE_INDEX EQUAL 1)
-    SET(SOURCES8
-    ${SOURCES7}
-		node_resource_manager/database_manager/SQLite/SQLiteManager.h
-		node_resource_manager/database_manager/SQLite/SQLiteManager.cc
-		node_resource_manager/database_manager/SQLite/SQLiteManager_constants.h
-    )
-ELSE()
-     SET(SOURCES8
-         ${SOURCES7}
-    	)
-ENDIF(ENABLE_SQLITE_INDEX EQUAL 1)
-
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
@@ -405,7 +383,7 @@ ENDIF(VIRTUALIZER_NFFG)
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES8}
+	${SOURCES7}
 )
 
 LINK_DIRECTORIES(

@@ -2,15 +2,26 @@
 #include "SQLiteManager_constants.h"
 
 sqlite3 *SQLiteManager::db = NULL;
+char *SQLiteManager::db_name = NULL;
 
 char usr[BUFFER_SIZE], pwd[BUFFER_SIZE], token[BUFFER_SIZE];
 
 //Constructor
-SQLiteManager::SQLiteManager(){
+SQLiteManager::SQLiteManager(char *db_name){
+	this->db_name = db_name;
+	/*Open database*/
+	if(connect(db_name)){
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
+		throw SQLiteManagerException();
+	} else{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
+	}
 }
 
 //Destroyer
 SQLiteManager::~SQLiteManager(){
+	/*Close database*/
+	disconnect();
 }
 
 //Connect
@@ -47,19 +58,10 @@ int SQLiteManager::callback(void *NotUsed, int argc, char **argv, char **azColNa
 	return 0;
 }
 
-//Create Table
-bool SQLiteManager::createTable(char *db_name){
+//Create users table
+bool SQLiteManager::createTable(){
 	int rc = 0;
 	char *zErrMsg = 0, *sql = 0;
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
 	
 	/* Create SQL statement */
    	sql = "CREATE TABLE USERS("  \
@@ -70,32 +72,20 @@ bool SQLiteManager::createTable(char *db_name){
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
 	if(rc != SQLITE_OK){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.", zErrMsg);
-		dropTable(DB_NAME);
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.", zErrMsg);
+		eraseAllToken();
 		return false;
 	} else{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Table created successfully.");
 	}
 	
-	/*Close database*/
-	disconnect();
-	
 	return true;
 }
 
-//Insert Operation
-bool SQLiteManager::insertOperation(char *db_name, char *user, char *pwd){
+//Insert username and password into the users table
+bool SQLiteManager::insertUsrPwd(char *user, char *pwd){
 	int rc = 0;
 	char *zErrMsg = 0, sql[BUFFER_SIZE];
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
 	
 	/* Create SQL statement */
 	sprintf(sql, "INSERT INTO USERS (USER, PWD) VALUES ('%s', '%s'); SELECT * FROM USERS;", user, pwd);
@@ -109,25 +99,13 @@ bool SQLiteManager::insertOperation(char *db_name, char *user, char *pwd){
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Records created successfully.");
 	}
 	
-	/*Close database*/
-	disconnect();
-	
 	return true;
 }
 
-//Select Operation
-bool SQLiteManager::selectOperation(char *db_name, char *user, char *pwd){
+//Search username and password into the users table
+bool SQLiteManager::selectUsrPwd(char *user, char *pwd){
 	int rc = 0;
 	char *zErrMsg = 0, sql[BUFFER_SIZE];
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
 	
 	/* Create SQL statement */
    	sprintf(sql, "SELECT * from USERS where USER = '%s' and PWD = '%s';", user, pwd);
@@ -140,27 +118,15 @@ bool SQLiteManager::selectOperation(char *db_name, char *user, char *pwd){
 	} else{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
 	}
-	
-	/*Close database*/
-	disconnect();
-	
+		
 	return true;
 }
 
-//Select Token Operation
-bool SQLiteManager::selectTokenOperation(char *db_name, char *token){
+//Seach token into the users table
+bool SQLiteManager::selectToken(char *token){
 	int rc = 0;
 	char *zErrMsg = 0, sql[BUFFER_SIZE];
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
-	
+		
 	/* Create SQL statement */
    	sprintf(sql, "SELECT * from USERS where TOKEN = '%s';", token);
 	
@@ -173,26 +139,14 @@ bool SQLiteManager::selectTokenOperation(char *db_name, char *token){
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
 	}
 	
-	/*Close database*/
-	disconnect();
-	
 	return true;
 }
 
-//Select All Operation
-bool SQLiteManager::selectAllOperation(char *db_name){
+//Dump users table
+bool SQLiteManager::selectAllTable(){
 	int rc = 0;
 	char *zErrMsg = 0, *sql = 0;
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
-	
+		
 	/* Create SQL statement */
    	sql = "SELECT * from USERS;";
 	
@@ -205,25 +159,13 @@ bool SQLiteManager::selectAllOperation(char *db_name){
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
 	}
 	
-	/*Close database*/
-	disconnect();
-	
 	return true;
 }
 
-//Update Operation
-bool SQLiteManager::updateOperation(char *db_name, char *user, char *token){
+//Update token value
+bool SQLiteManager::updateToken(char *user, char *token){
 	int rc = 0;
 	char *zErrMsg = 0, sql[BUFFER_SIZE];
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
 	
 	/* Create SQL statement */
    	sprintf(sql, "UPDATE USERS set TOKEN = '%s' where USER = '%s'; SELECT * FROM USERS;", token, user);
@@ -236,30 +178,18 @@ bool SQLiteManager::updateOperation(char *db_name, char *user, char *token){
 	} else{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
 	}
-	
-	/*Close database*/
-	disconnect();
-	
+
 	return true;
 }
 
-//Delete Operation
-bool SQLiteManager::deleteRow(char *db_name, pair<char *, char *> condition){
+//Erase all token value
+bool SQLiteManager::eraseAllToken(){
 	int rc = 0;
 	char *zErrMsg = 0, sql[BUFFER_SIZE];
 	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
-	
-	/* Create delete SQL statement */
-	sprintf(sql, "DELETE from USERS where %s = '%s';", condition.first, condition.second);
-	
+	/* Create SQL statement */
+   	sprintf(sql, "UPDATE USERS set TOKEN = ''; SELECT * FROM USERS;");
+   	
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
 	if(rc != SQLITE_OK){
@@ -268,106 +198,7 @@ bool SQLiteManager::deleteRow(char *db_name, pair<char *, char *> condition){
 	} else{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
 	}
-	
-	/*Close database*/
-	disconnect();
-	
-	return true;
-}
 
-//Erase Table
-bool SQLiteManager::eraseTable(char *db_name){
-	int rc = 0;
-	char *zErrMsg = 0, *sql = 0;
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
-	
-	/* Create delete SQL statement */
-    sql = "DELETE from USERS;";
-	
-	/*Execute SQL statement*/
-	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
-	if(rc != SQLITE_OK){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.", zErrMsg);
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
-	}
-	
-	/*Close database*/
-	disconnect();
-	
-	return true;
-}
-
-//Drop Table
-bool SQLiteManager::dropTable(char *db_name){
-	int rc = 0;
-	char *zErrMsg = 0, *sql = 0;
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
-	
-	/* Create dropped SQL statement */
-    sql = "DROP TABLE USERS;";
-	
-	/*Execute SQL statement*/
-	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
-	if(rc != SQLITE_OK){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.", zErrMsg);
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
-	}
-	
-	/*Close database*/
-	disconnect();
-	
-	return true;
-}
-
-//Drop Database
-bool SQLiteManager::dropDB(char *db_name){
-	int rc = 0;
-	char *zErrMsg = 0, *sql = 0;
-	
-	/*Open database*/
-	rc = connect(db_name);
-	if(rc){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't open database: %s.", sqlite3_errmsg(this->db));
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Opened database successfully.");
-	}
-	
-	/* Create dropped SQL statement */
-    sprintf(sql, "DROP DATABASE %s;", db_name);
-	
-	/*Execute SQL statement*/
-	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
-	if(rc != SQLITE_OK){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.", zErrMsg);
-		return false;
-	} else{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
-	}
-	
-	/*Close database*/
-	disconnect();
-	
 	return true;
 }
 

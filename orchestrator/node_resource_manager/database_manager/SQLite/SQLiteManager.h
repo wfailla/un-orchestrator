@@ -25,6 +25,11 @@ private:
 	static sqlite3 *db;
 
 	/**
+	*	@brief: Name of database
+	*/
+	static char *db_name;
+
+	/**
 	*	@brief:	Open a connection with given database db_name
 	*/
 	int connect(char *db_name);
@@ -41,29 +46,23 @@ private:
 	
 public:
 
-	SQLiteManager();
+	SQLiteManager(char *db_name);
 	
 	~SQLiteManager();
 	
-	bool createTable(char *db_name);
+	bool createTable();
 	
-	bool insertOperation(char *db_name, char *user, char *pwd);
+	bool insertUsrPwd(char *user, char *pwd);
 	
-	bool selectOperation(char *db_name, char *user, char *pwd);
+	bool selectUsrPwd(char *user, char *pwd);
 	
-	bool selectTokenOperation(char *db_name, char *token);
+	bool selectToken(char *token);
 	
-	bool selectAllOperation(char *db_name);
+	bool selectAllTable();
 	
-	bool updateOperation(char *db_name, char *user, char *token);
-	
-	bool deleteRow(char *db_name, pair<char *, char *> condition);
-	
-	bool eraseTable(char *db_name);
-	
-	bool dropTable(char *db_name);
-	
-	bool dropDB(char *db_name);
+	bool updateToken(char *user, char *token);
+
+	bool eraseAllToken();
 	
 	char *getUser();
 	

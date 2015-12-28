@@ -11,11 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef ENABLE_SQLITE
-	#include <openssl/sha.h>
-	#include "node_resource_manager/database_manager/SQLite/SQLiteManager.h"
-#endif	
-
+#include <openssl/sha.h>
+#include "node_resource_manager/database_manager/SQLite/SQLiteManager.h"	
 
 /**
 *	Global variables (defined in ../utils/constants.h)
@@ -27,9 +24,12 @@ ofp_version_t OFP_VERSION;
 */
 struct MHD_Daemon *http_daemon = NULL;
 
-#ifdef ENABLE_SQLITE
-	SQLiteManager *dbm = new SQLiteManager();
-#endif
+/*
+*
+* Pointer to database class
+*
+*/
+SQLiteManager *dbm = new SQLiteManager(DB_NAME);
 
 /**
 *	Private prototypes
@@ -55,10 +55,6 @@ void singint_handler(int sig)
 	
 #ifdef UNIFY_NFFG
 	terminateVirtualizer();
-#endif
-
-#ifdef ENABLE_SQLITE
-	dbm->dropTable(DB_NAME);
 #endif
 	
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Bye :D");
@@ -93,28 +89,31 @@ int main(int argc, char *argv[])
 	sigfillset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 	
-#ifdef ENABLE_SQLITE
+	/*
+	*
+	* Test user database
+	*	
+	*/
 	unsigned char hash_token[HASH_SIZE];
 	char hash_pwd[BUFFER_SIZE];
 	char tmp[HASH_SIZE];
 	char *pwd = new char[HASH_SIZE];
-	dbm->dropTable(DB_NAME);
-	dbm->createTable(DB_NAME);
-	
-	strcpy(pwd, "stackstack");
-	
-	SHA1((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
-	
-	strcpy(tmp, "");
-	strcpy(hash_pwd, "");
 
-    for (int i = 0; i < HASH_SIZE; i++) {
-        sprintf(tmp, "%x", hash_token[i]);
-        strcat(hash_pwd, tmp);
-    }
-    
-	dbm->insertOperation(DB_NAME, "patrick", (char *)hash_pwd);
-#endif
+	if(dbm->createTable()){
+		strcpy(pwd, "stackstack");
+	
+		SHA512((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
+	
+		strcpy(tmp, "");
+		strcpy(hash_pwd, "");
+
+		    for (int i = 0; i < HASH_SIZE; i++) {
+			sprintf(tmp, "%x", hash_token[i]);
+			strcat(hash_pwd, tmp);
+		    }
+	    
+		dbm->insertUsrPwd("patrick", (char *)hash_pwd);
+	}
 	
 #ifdef UNIFY_NFFG
 	//Initialize the Python code

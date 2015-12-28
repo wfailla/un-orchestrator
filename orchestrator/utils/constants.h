@@ -25,9 +25,8 @@
 #ifdef UNIFY_NFFG
 	#define POST				"POST"
 #endif
-#ifdef ENABLE_SQLITE
-	#define POST				"POST"
-#endif
+
+#define POST				"POST"
 
 /*
 *	HTTP headers
@@ -205,12 +204,10 @@ extern ofp_version_t OFP_VERSION;
 	#define LOG_FILE			"node-orchestrator.log"
 #endif
 
-#ifdef ENABLE_SQLITE
-	#define USER				"username"
-	#define PASS				"password"
-	#define HASH_SIZE			20
-	#define TOKEN_TYPE			"application/token"
-	#define DB_NAME				"users.db"
-#endif
+#define USER				"username"
+#define PASS				"password"
+#define HASH_SIZE			20
+#define TOKEN_TYPE			"application/token"
+#define DB_NAME				"users.db"
 
 #endif //CONSTANTS_H_
