@@ -9,6 +9,7 @@
 #include <sqlite3.h>
 #include <list>
 #include <string.h>
+#include <ctime>
 
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
@@ -60,7 +61,7 @@ public:
 	
 	bool selectAllTable();
 	
-	bool updateToken(char *user, char *token);
+	bool updateTokenAndTimestamp(char *user, char *token, char *timestamp);
 
 	bool eraseAllToken();
 	

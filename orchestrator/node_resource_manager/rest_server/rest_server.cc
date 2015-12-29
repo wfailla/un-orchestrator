@@ -447,7 +447,7 @@ int RestServer::doPost(struct MHD_Connection *connection, const char *url, void 
 	int ret = 0, rc = 0;
 	unsigned char hash_token[HASH_SIZE], temp[BUFFER_SIZE];
 	
-	char hash_pwd[BUFFER_SIZE], nonce[BUFFER_SIZE];
+	char hash_pwd[BUFFER_SIZE], nonce[BUFFER_SIZE], timestamp[BUFFER_SIZE];
 
 	char *user, *pass;
 	
@@ -510,13 +510,13 @@ put_malformed_url:
 		
 			SHA512((const unsigned char*)pass, sizeof(pass) - 1, hash_token);
 		    
-		    strcpy(tmp, "");
-		    strcpy(hash_pwd, "");
+		    	strcpy(tmp, "");
+		    	strcpy(hash_pwd, "");
 		    
-		    for (int i = 0; i < HASH_SIZE; i++) {
-        		sprintf(tmp, "%x", hash_token[i]);
-        		strcat(hash_pwd, tmp);
-    		}
+		    	for (int i = 0; i < HASH_SIZE; i++) {
+        			sprintf(tmp, "%x", hash_token[i]);
+        			strcat(hash_pwd, tmp);
+    			}
 
 			strcpy(user_tmp, user);
 
@@ -533,11 +533,23 @@ put_malformed_url:
 					strcpy(hash_pwd, "");
 					
 					for (int i = 0; i < HASH_SIZE; i++) {
-        				sprintf(tmp, "%x", temp[i]);
-        				strcat(nonce, tmp);
-    				}
+        					sprintf(tmp, "%x", temp[i]);
+        					strcat(nonce, tmp);
+    					}
 					
-					dbmanager->updateToken(user_tmp, (char *)nonce);
+					/*
+					*
+					* Calculating a timestamp
+					*
+					*/
+					time_t now = time(0);
+
+					tm *ltm = localtime(&now);
+
+					strcpy(timestamp, "");
+					sprintf(timestamp, "%d/%d/%d %d:%d", ltm->tm_mday, 1 + ltm->tm_mon, 1900 + ltm->tm_year, ltm->tm_hour, 1 + ltm->tm_min);
+
+					dbmanager->updateTokenAndTimestamp(user_tmp, (char *)nonce, (char *)timestamp);
 				}
 				
 				response = MHD_create_response_from_buffer (strlen((char *)nonce),(void*) nonce, MHD_RESPMEM_PERSISTENT);

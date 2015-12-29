@@ -66,8 +66,9 @@ bool SQLiteManager::createTable(){
 	/* Create SQL statement */
    	sql = "CREATE TABLE USERS("  \
     		"USER		TEXT PRIMARY KEY  NOT NULL," \
-    	    "PWD		TEXT    		  NOT NULL," \
-        	"TOKEN		TEXT     		  NULL );";
+    	    	"PWD		TEXT    		  NOT NULL," \
+        	"TOKEN		TEXT     		  NULL," \
+ 		"TIMESTAMP	TEXT     		  NULL);";
 
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
@@ -162,13 +163,13 @@ bool SQLiteManager::selectAllTable(){
 	return true;
 }
 
-//Update token value
-bool SQLiteManager::updateToken(char *user, char *token){
+//Update token and timestamp values
+bool SQLiteManager::updateTokenAndTimestamp(char *user, char *token, char *timestamp){
 	int rc = 0;
 	char *zErrMsg = 0, sql[BUFFER_SIZE];
 	
 	/* Create SQL statement */
-   	sprintf(sql, "UPDATE USERS set TOKEN = '%s' where USER = '%s'; SELECT * FROM USERS;", token, user);
+   	sprintf(sql, "UPDATE USERS set TOKEN = '%s', TIMESTAMP = '%s' where USER = '%s'; SELECT * FROM USERS;", token, timestamp, user);
    	
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
