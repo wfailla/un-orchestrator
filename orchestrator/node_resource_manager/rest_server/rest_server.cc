@@ -11,10 +11,12 @@ GraphManager *RestServer::gm = NULL;
 *
 */
 SQLiteManager *dbmanager = NULL;
+bool client_auth = false;
 
-bool RestServer::init(char *nffg_filename,int core_mask, char *ports_file_name)
+bool RestServer::init(bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
 {	
-
+	char *nffg_file_name = new char[BUFFER_SIZE];
+	strcpy(nffg_file_name, nffg_filename);
 #ifdef UNIFY_NFFG
 	if(nffg_filename != NULL)
 	{
@@ -34,18 +36,21 @@ bool RestServer::init(char *nffg_filename,int core_mask, char *ports_file_name)
 	}
 
 	//Handle the file containing the first graph to be deployed
-	if(nffg_filename != NULL)
+	if(nffg_file_name != NULL)
 	{	
 		sleep(2); //XXX This give time to the controller to be initialized
-		
-		if(!readGraphFromFile(nffg_filename))
+
+		if(!readGraphFromFile(nffg_file_name))
 		{
 			delete gm;
 			return false;
 		}
 	}
-		
-	dbmanager = new SQLiteManager(DB_NAME);
+	
+	client_auth = cli_auth;
+	
+	if(client_auth)
+		dbmanager = new SQLiteManager(DB_NAME);	
 	
 	return true;
 }
@@ -695,10 +700,6 @@ put_malformed_url:
 		goto put_malformed_url;
 	}
 	
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
-	
 	if(MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Host") == NULL)
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Host\" header not present in the request");
@@ -735,52 +736,88 @@ put_malformed_url:
 		graph->print();
 	try
 	{
-		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
+		if(dbmanager != NULL){
+			const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
-		if(token == NULL)
-		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
-			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-			MHD_destroy_response (response);
-			return ret;
-		} else{
-			dbmanager->selectToken((char *)token);
-			if(strcmp(dbmanager->getToken(), token) == 0){
-				//User authenticated!
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
-				if(newGraph)
-				{
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");		
-					if(!gm->newGraph(graph))
-					{
-						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-						response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-						int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-						MHD_destroy_response (response);
-						return ret;
-					}
-				}
-				else
-				{
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
-					if(!gm->updateGraph(graphID,graph))
-					{
-						delete(graph);
-						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-						response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-						int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-						MHD_destroy_response (response);
-						return ret;		
-					}	
-				}
-			} else{
-				//User unauthenticated!
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
+			if(token == NULL)
+			{
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
 				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
 				MHD_destroy_response (response);
 				return ret;
+			} else{
+				dbmanager->selectToken((char *)token);
+				if(strcmp(dbmanager->getToken(), token) == 0){
+					//User authenticated!
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
+					
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
+					if(newGraph)
+					{
+						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");		
+						if(!gm->newGraph(graph))
+						{
+							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+							MHD_destroy_response (response);
+							return ret;
+						}
+					}
+					else
+					{
+						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
+						if(!gm->updateGraph(graphID,graph))
+						{
+							delete(graph);
+							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+							MHD_destroy_response (response);
+							return ret;		
+						}	
+					}
+				} else{
+					//User unauthenticated!
+					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+					MHD_destroy_response (response);
+					return ret;
+				}
+			}
+		} else{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
+
+			if(newGraph)
+			{
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");		
+				if(!gm->newGraph(graph))
+				{
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+					MHD_destroy_response (response);
+					return ret;
+				}
+			}
+			else
+			{
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
+				if(!gm->updateGraph(graphID,graph))
+				{
+					delete(graph);
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+					MHD_destroy_response (response);
+					return ret;		
+				}	
 			}
 		}
 	}catch (...)

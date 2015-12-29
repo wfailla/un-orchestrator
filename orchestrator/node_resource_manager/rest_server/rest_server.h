@@ -105,7 +105,7 @@ private:
 #endif
 	
 public:
-	static bool init(char *nffg_filename,int core_mask, char *ports_file_name);
+	static bool init(bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name);
 	
 	static void terminate();
 

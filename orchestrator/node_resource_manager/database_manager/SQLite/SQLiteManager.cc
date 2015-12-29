@@ -189,7 +189,7 @@ bool SQLiteManager::eraseAllToken(){
 	char *zErrMsg = 0, sql[BUFFER_SIZE];
 	
 	/* Create SQL statement */
-   	sprintf(sql, "UPDATE USERS set TOKEN = ''; SELECT * FROM USERS;");
+   	sprintf(sql, "UPDATE USERS set TOKEN = '', TIMESTAMP = ''; SELECT * FROM USERS;");
    	
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
