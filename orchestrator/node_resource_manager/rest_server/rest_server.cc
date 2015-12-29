@@ -1374,33 +1374,44 @@ get_malformed_url:
 		return ret;
 	}
 	
-	const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
+	if(dbmanager != NULL){
+		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
-	if( token == NULL)
-	{
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
-		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-		int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-		MHD_destroy_response (response);
-		return ret;
-	} else{
-		dbmanager->selectToken((char *)token);
-		if(strcmp(dbmanager->getToken(), token) == 0){
-			//User authenticated!
-			if(!request)
-				//request for a graph description
-				return doGetGraph(connection,graphID);
-			else
-				//request for interfaces description
-				return doGetInterfaces(connection);
-		} else{
-			//User unauthenticated!
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
+		if( token == NULL)
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+			int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
 			MHD_destroy_response (response);
 			return ret;
+		} else{
+			dbmanager->selectToken((char *)token);
+			if(strcmp(dbmanager->getToken(), token) == 0){
+				//User authenticated!
+				if(!request)
+					//request for a graph description
+					return doGetGraph(connection,graphID);
+				else
+					//request for interfaces description
+					return doGetInterfaces(connection);
+			} else{
+				//User unauthenticated!
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
+				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+				MHD_destroy_response (response);
+				return ret;
+			}
 		}
+	}
+	else {
+		//User authenticated!
+		if(!request)
+			//request for a graph description
+			return doGetGraph(connection,graphID);
+		else
+			//request for interfaces description
+			return doGetInterfaces(connection);	
 	}
 }
 
@@ -1542,82 +1553,141 @@ delete_malformed_url:
 		MHD_destroy_response (response);
 		return ret;
 	}
-
-	const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
-	if(token == NULL)
-	{
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
-		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-		int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-		MHD_destroy_response (response);
-		return ret;
-	} else{
-		dbmanager->selectToken((char *)token);
-		if(strcmp(dbmanager->getToken(), token) == 0){
-			//User authenticated!
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
-
-			if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
-			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method DELETE is not supported for this resource");
-				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				MHD_add_response_header (response, "Allow", PUT);
-				ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
-				MHD_destroy_response (response);
-				return ret;
-			}
+	if(dbmanager != NULL){
+		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
-			try
-			{	
-				if(!specificFlow)
+		if(token == NULL)
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+			int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+			MHD_destroy_response (response);
+			return ret;
+		} else{
+			dbmanager->selectToken((char *)token);
+			if(strcmp(dbmanager->getToken(), token) == 0){
+				//User authenticated!
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
+
+				if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
 				{
-					//The entire graph must be deleted
-					if(!gm->deleteGraph(graphID))
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method DELETE is not supported for this resource");
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					MHD_add_response_header (response, "Allow", PUT);
+					ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
+					MHD_destroy_response (response);
+					return ret;
+				}
+	
+				try
+				{	
+					if(!specificFlow)
 					{
-						response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-						int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-						MHD_destroy_response (response);
-						return ret;
+						//The entire graph must be deleted
+						if(!gm->deleteGraph(graphID))
+						{
+							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+							MHD_destroy_response (response);
+							return ret;
+						}
+						else
+							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
+							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
 					}
 					else
-						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
-						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
-				}
-				else
-				{
-					//A specific flow must be deleted
-					if(!gm->deleteFlow(graphID,flowID))
 					{
-						response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-						int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-						MHD_destroy_response (response);
-						return ret;
+						//A specific flow must be deleted
+						if(!gm->deleteFlow(graphID,flowID))
+						{
+							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+							MHD_destroy_response (response);
+							return ret;
+						}
+						else
+							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
 					}
-					else
-						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
-				}
 		
-				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);		
-				ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
-				MHD_destroy_response (response);
-				return ret;
-			}catch(...)
-			{
-				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the destruction of the graph!");
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);		
+					ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
+					MHD_destroy_response (response);
+					return ret;
+				}catch(...)
+				{
+					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the destruction of the graph!");
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+					MHD_destroy_response (response);
+					return ret;
+				}
+			} else{
+				//User unauthenticated
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the user authentication!");
 				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 				ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 				MHD_destroy_response (response);
 				return ret;
 			}
-		} else{
-			//User unauthenticated
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the user authentication!");
+		}
+	}
+	else {
+		//User authenticated!
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
+
+		if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method DELETE is not supported for this resource");
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+			MHD_add_response_header (response, "Allow", PUT);
+			ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
+			MHD_destroy_response (response);
+			return ret;
+		}
+	
+		try
+		{	
+			if(!specificFlow)
+			{
+				//The entire graph must be deleted
+				if(!gm->deleteGraph(graphID))
+				{
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+					MHD_destroy_response (response);
+					return ret;
+				}
+				else
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
+			}
+			else
+			{
+				//A specific flow must be deleted
+				if(!gm->deleteFlow(graphID,flowID))
+				{
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+					MHD_destroy_response (response);
+					return ret;
+				}
+				else
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
+			}
+		
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);		
+			ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
+			MHD_destroy_response (response);
+			return ret;
+		}catch(...)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the destruction of the graph!");
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 			ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 			MHD_destroy_response (response);
 			return ret;
-		}
+		}	
 	}	
 }
 

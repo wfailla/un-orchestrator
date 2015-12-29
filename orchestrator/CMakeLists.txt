@@ -245,6 +245,8 @@ SET(SOURCES
 	node_resource_manager/database_manager/SQLite/SQLiteManager.h
 	node_resource_manager/database_manager/SQLite/SQLiteManager.cc
 	node_resource_manager/database_manager/SQLite/SQLiteManager_constants.h
+	node_resource_manager/database_manager/SQLite/INIReader.cpp
+	node_resource_manager/database_manager/SQLite/ini.c
 
 	utils/logger.h
 	utils/logger.c
