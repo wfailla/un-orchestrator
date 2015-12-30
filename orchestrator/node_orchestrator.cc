@@ -99,38 +99,6 @@ int main(int argc, char *argv[])
 	sigset_t mask;
 	sigfillset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
-	
-	if(cli_auth)
-	{
-
-		dbm = new SQLiteManager(DB_NAME);
-
-		/*
-		*
-		* Test user database
-		*	
-		*/
-		unsigned char *hash_token = new unsigned char[HASH_SIZE];
-		char *hash_pwd = new char[BUFFER_SIZE];
-		char *tmp = new char[HASH_SIZE];
-		char *pwd = new char[HASH_SIZE];
-
-		if(dbm->createTable()){
-			strcpy(pwd, "admin");
-	
-			SHA512((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
-	
-			strcpy(tmp, "");
-			strcpy(hash_pwd, "");
-
-			    for (int i = 0; i < HASH_SIZE; i++) {
-				sprintf(tmp, "%x", hash_token[i]);
-				strcat(hash_pwd, tmp);
-			    }
-		    
-			dbm->insertUsrPwd("admin", (char *)hash_pwd);
-		}
-	}
 
 #ifdef UNIFY_NFFG
 	//Initialize the Python code
@@ -187,6 +155,7 @@ bool parse_command_line(int argc, char *argv[],int *rest_port, bool *cli_auth, c
 	
 static struct option lgopts[] = {
 		{"c", 1, 0, 0},
+		{"i", 1, 0, 0},
 		{"w", 1, 0, 0},
 		{"h", 0, 0, 0},
 		{NULL, 0, 0, 0}
@@ -201,7 +170,7 @@ static struct option lgopts[] = {
 	*rest_port = REST_PORT;
 
 	while ((opt = getopt_long(argc, argvopt, "", lgopts, &option_index)) != EOF)
-    {
+    	{
 		switch (opt)
 		{
 			/* long options */
@@ -217,6 +186,37 @@ static struct option lgopts[] = {
 	   				strcpy(port,optarg);
 	   				
 	   				sscanf(port,"%x",&(*core_mask));
+	   				
+	   				arg_c++;
+	   			}
+				else if (!strcmp(lgopts[option_index].name, "i"))/* inserting admin password */
+	   			{
+					dbm = new SQLiteManager(DB_NAME);
+	   				/*
+					*
+					* Test user database
+					*	
+					*/
+					unsigned char *hash_token = new unsigned char[HASH_SIZE];
+					char *hash_pwd = new char[BUFFER_SIZE];
+					char *tmp = new char[HASH_SIZE];
+					char *pwd = new char[HASH_SIZE];
+
+					if(dbm->createTable()){
+						strcpy(pwd, optarg);
+	
+						SHA512((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
+	
+						strcpy(tmp, "");
+						strcpy(hash_pwd, "");
+
+						    for (int i = 0; i < HASH_SIZE; i++) {
+							sprintf(tmp, "%x", hash_token[i]);
+							strcat(hash_pwd, tmp);
+						    }
+					    
+						dbm->insertUsrPwd("admin", (char *)hash_pwd);
+					}
 	   				
 	   				arg_c++;
 	   			}
@@ -240,7 +240,7 @@ static struct option lgopts[] = {
 	* Parsing universal node configuration file
 	*
 	*/
-	INIReader reader("config/universal-node-config.ini");
+	INIReader reader(DEFAULT_FILE);
 
 	if (reader.ParseError() < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't load a universal-node-config.ini file");
@@ -269,8 +269,6 @@ static struct option lgopts[] = {
 	char *temp_nf_fg = (char *)reader.Get("rest server", "nf-fg", "UNKNOWN").c_str();
 	*nffg_file_name = temp_nf_fg;
 
-	//logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "-----%s+++++", temp_nf_fg);
-
 	return true;
 }
 
@@ -285,6 +283,8 @@ bool usage(void)
 	"        Mask that specifies which cores must be used for DPDK network functions. These   \n" \
 	"        cores will be allocated to the DPDK network functions in a round robin fashion   \n" \
 	"        (default is 0x2)                                                                 \n" \
+	"  --i admin password                                                                     \n" \
+	"        Insert into the database the default user admin  		          	  \n" \
 	"  --h                                                                                    \n" \
 	"        Print this help.                                                                 \n" \
 	"                                                                                         \n" \

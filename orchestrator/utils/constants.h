@@ -209,5 +209,6 @@ extern ofp_version_t OFP_VERSION;
 #define HASH_SIZE			20
 #define TOKEN_TYPE			"application/token"
 #define DB_NAME				"users.db"
+#define DEFAULT_FILE			"config/default-config.ini"
 
 #endif //CONSTANTS_H_
