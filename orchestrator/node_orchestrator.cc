@@ -290,7 +290,7 @@ bool usage(void)
 	"        cores will be allocated to the DPDK network functions in a round robin fashion   \n" \
 	"        (default is 0x2)                                                                 \n" \
 	"  --i admin password                                                                     \n" \
-	"        Insert into the database the default user admin  		          	  \n" \
+	"        Initialize local database and set the password for the default 'admin' user  	  \n" \
 	"  --h                                                                                    \n" \
 	"        Print this help.                                                                 \n" \
 	"                                                                                         \n" \
