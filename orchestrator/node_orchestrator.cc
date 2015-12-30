@@ -169,6 +169,40 @@ static struct option lgopts[] = {
 	nffg_file_name[0] = '\0';
 	*rest_port = REST_PORT;
 
+	/*
+	*	
+	* Parsing universal node configuration file
+	*
+	*/
+	INIReader reader(DEFAULT_FILE);
+
+	if (reader.ParseError() < 0) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't load a universal-node-config.ini file");
+		return false;
+	}
+	
+	/* physical ports file name */
+	char *temp_config_file = (char *)reader.Get("rest server", "configuration_file", "UNKNOWN").c_str();
+	if(strcmp(temp_config_file, "UNKNOWN") != 0 && strcmp(temp_config_file, "") != 0)
+		*ports_file_name = temp_config_file;
+	else
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Physical ports file must be present");
+		return false;
+	}
+
+	/* REST port */
+	int temp_rest_port = (int)reader.GetInteger("rest server", "server_port", -1);
+	if(temp_rest_port != -1)
+		*rest_port = temp_rest_port;
+
+	/* client authentication */
+	*cli_auth = reader.GetBoolean("user authentication", "user_authentication", true);		
+
+	/* first nf-fg file name */
+	char *temp_nf_fg = (char *)reader.Get("rest server", "nf-fg", "UNKNOWN").c_str();
+	*nffg_file_name = temp_nf_fg;
+
 	while ((opt = getopt_long(argc, argvopt, "", lgopts, &option_index)) != EOF)
     	{
 		switch (opt)
@@ -191,7 +225,13 @@ static struct option lgopts[] = {
 	   			}
 				else if (!strcmp(lgopts[option_index].name, "i"))/* inserting admin password */
 	   			{
-					dbm = new SQLiteManager(DB_NAME);
+					if(*cli_auth)
+						dbm = new SQLiteManager(DB_NAME);
+					else
+					{
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Argument \"--i\" can appear only if authentication is required");
+						return false;
+					}
 	   				/*
 					*
 					* Test user database
@@ -234,40 +274,6 @@ static struct option lgopts[] = {
 				return usage();
 		}
 	}
-
-	/*
-	*	
-	* Parsing universal node configuration file
-	*
-	*/
-	INIReader reader(DEFAULT_FILE);
-
-	if (reader.ParseError() < 0) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't load a universal-node-config.ini file");
-		return false;
-	}
-	
-	/* physical ports file name */
-	char *temp_config_file = (char *)reader.Get("rest server", "configuration_file", "UNKNOWN").c_str();
-	if(strcmp(temp_config_file, "UNKNOWN") != 0 && strcmp(temp_config_file, "") != 0)
-		*ports_file_name = temp_config_file;
-	else
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Physical ports file must be present");
-		return false;
-	}
-
-	/* REST port */
-	int temp_rest_port = (int)reader.GetInteger("rest server", "server_port", -1);
-	if(temp_rest_port != -1)
-		*rest_port = temp_rest_port;
-
-	/* client authentication */
-	*cli_auth = reader.GetBoolean("user authentication", "user_authentication", true);		
-
-	/* first nf-fg file name */
-	char *temp_nf_fg = (char *)reader.Get("rest server", "nf-fg", "UNKNOWN").c_str();
-	*nffg_file_name = temp_nf_fg;
 
 	return true;
 }
