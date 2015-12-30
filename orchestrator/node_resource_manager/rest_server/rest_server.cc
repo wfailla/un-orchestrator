@@ -16,7 +16,10 @@ bool client_auth = false;
 bool RestServer::init(bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
 {	
 	char *nffg_file_name = new char[BUFFER_SIZE];
-	strcpy(nffg_file_name, nffg_filename);
+	if(nffg_filename != NULL && strcmp(nffg_filename, "") != 0)
+		strcpy(nffg_file_name, nffg_filename);
+	else
+		nffg_file_name = NULL;
 #ifdef UNIFY_NFFG
 	if(nffg_filename != NULL)
 	{
@@ -400,8 +403,19 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 			*upload_data_size = 0;
 			return MHD_YES;
 		}
-		else if (NULL != con_info->message)
-			return doPost(connection,url,con_cls);
+		else if (NULL != con_info->message) 
+		{
+			if(client_auth)
+				return doPost(connection,url,con_cls);
+			else {
+				con_info->message[con_info->length] = '\0';
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method \"%s\" not implemented",method);
+				struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
+				MHD_destroy_response (response);
+				return ret;			
+			}	
+		}
 	}
 	else
 	{
@@ -1624,7 +1638,7 @@ delete_malformed_url:
 				}
 			} else{
 				//User unauthenticated
-				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the user authentication!");
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
 				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 				ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 				MHD_destroy_response (response);

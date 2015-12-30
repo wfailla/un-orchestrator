@@ -31,7 +31,7 @@ struct MHD_Daemon *http_daemon = NULL;
 * Pointer to database class
 *
 */
-SQLiteManager *dbm = new SQLiteManager(DB_NAME);
+SQLiteManager *dbm = NULL;
 
 /**
 *	Private prototypes
@@ -77,47 +77,61 @@ int main(int argc, char *argv[])
 	
 	//XXX: change this line to use different versions of Openflow
 	OFP_VERSION = OFP_12;	
-	
-	/*
-	*
-	* Test user database
-	*	
-	*/
-	unsigned char hash_token[HASH_SIZE];
-	char hash_pwd[BUFFER_SIZE];
-	char tmp[HASH_SIZE];
-	char *pwd = new char[HASH_SIZE];
-
-	if(dbm->createTable()){
-		strcpy(pwd, "admin");
-	
-		SHA512((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
-	
-		strcpy(tmp, "");
-		strcpy(hash_pwd, "");
-
-		    for (int i = 0; i < HASH_SIZE; i++) {
-			sprintf(tmp, "%x", hash_token[i]);
-			strcat(hash_pwd, tmp);
-		    }
-	    
-		dbm->insertUsrPwd("admin", (char *)hash_pwd);
-	}
 
 	int core_mask;
-	int rest_port;
-	bool cli_auth;
-	char *ports_file_name = NULL;
-	char *nffg_file_name = NULL;
+	int rest_port, t_rest_port;
+	bool cli_auth, t_cli_auth;
+	char *ports_file_name = new char[BUFFER_SIZE], *t_ports_file_name = NULL;
+	char *nffg_file_name = new char[BUFFER_SIZE], *t_nffg_file_name = NULL;
 
-	if(!parse_command_line(argc,argv,&rest_port,&cli_auth,&nffg_file_name,&core_mask,&ports_file_name))
+	if(!parse_command_line(argc,argv,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&core_mask,&t_ports_file_name))
 		exit(EXIT_FAILURE);
 	
+	rest_port = t_rest_port;
+	cli_auth = t_cli_auth;
+	strcpy(ports_file_name, t_ports_file_name);
+	if(strcmp(t_nffg_file_name, "UNKNOWN") != 0)
+		strcpy(nffg_file_name, t_nffg_file_name);
+	else	
+		nffg_file_name = NULL;
+
 	//XXX: this code avoids that the program terminates when system() is executed
 	sigset_t mask;
 	sigfillset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 	
+	if(cli_auth)
+	{
+
+		dbm = new SQLiteManager(DB_NAME);
+
+		/*
+		*
+		* Test user database
+		*	
+		*/
+		unsigned char *hash_token = new unsigned char[HASH_SIZE];
+		char *hash_pwd = new char[BUFFER_SIZE];
+		char *tmp = new char[HASH_SIZE];
+		char *pwd = new char[HASH_SIZE];
+
+		if(dbm->createTable()){
+			strcpy(pwd, "admin");
+	
+			SHA512((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
+	
+			strcpy(tmp, "");
+			strcpy(hash_pwd, "");
+
+			    for (int i = 0; i < HASH_SIZE; i++) {
+				sprintf(tmp, "%x", hash_token[i]);
+				strcat(hash_pwd, tmp);
+			    }
+		    
+			dbm->insertUsrPwd("admin", (char *)hash_pwd);
+		}
+	}
+
 #ifdef UNIFY_NFFG
 	//Initialize the Python code
 	setenv("PYTHONPATH",PYTHON_DIRECTORY ,1);
@@ -233,23 +247,29 @@ static struct option lgopts[] = {
 		return false;
 	}
 	
+	/* physical ports file name */
+	char *temp_config_file = (char *)reader.Get("rest server", "configuration_file", "UNKNOWN").c_str();
+	if(strcmp(temp_config_file, "UNKNOWN") != 0 && strcmp(temp_config_file, "") != 0)
+		*ports_file_name = temp_config_file;
+	else
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Physical ports file must be present");
+		return false;
+	}
+
 	/* REST port */
 	int temp_rest_port = (int)reader.GetInteger("rest server", "server_port", -1);
 	if(temp_rest_port != -1)
 		*rest_port = temp_rest_port;
 
 	/* client authentication */
-	*cli_auth = reader.GetBoolean("user authentication", "user_authentication", true);	
-
-	/* physical ports file name */
-	char *temp_config_file = (char *)reader.Get("rest server", "configuration_file", "UNKNOWN").c_str();
-	if(strcmp(temp_config_file, "UNKNOWN") != 0)
-		*ports_file_name = temp_config_file;	
+	*cli_auth = reader.GetBoolean("user authentication", "user_authentication", true);		
 
 	/* first nf-fg file name */
 	char *temp_nf_fg = (char *)reader.Get("rest server", "nf-fg", "UNKNOWN").c_str();
-	if(strcmp(temp_nf_fg, "UNKNOWN") != 0)
-		*nffg_file_name = temp_nf_fg;
+	*nffg_file_name = temp_nf_fg;
+
+	//logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "-----%s+++++", temp_nf_fg);
 
 	return true;
 }
