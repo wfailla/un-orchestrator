@@ -3,7 +3,7 @@
 In order to execute the un-orchestrator, we need to setup different components, namely:
 
   * a set of libraries needed to compile the un-orchestrator code
-  * a virtual switch (either xDPd or OpenvSwitch) as a base switch for
+  * a virtual switch (either xDPd, ERFS or OpenvSwitch) as a base switch for
     our platform
   * one or more execution environments for virtual network functions, e.g., KVM for
     executing VM, Docker, or other.
@@ -31,8 +31,11 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; in the cloned folder
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
-	$ git clone https://github.com/bisdn/rofl-common
 	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
+	; Please note that you have to use version 0.6; newer versions have a different API that
+	; is not compatible with our code.
+	;
+	$ git clone https://github.com/bisdn/rofl-common
 	$ cd rofl-common/
 	$ git checkout stable-0.6
 
@@ -46,9 +49,9 @@ You have to install the one that you want to use, choosing from the
 possibilities listed in this section.
 
 
-### xDPd
+### xDPd with DPDK support
 
-In order to install xDPd, you have to follow the steps below.
+In order to install xDPd with DPDK support, you have to follow the steps below.
 
 	$ git clone https://github.com/bisdn/xdpd
 	$ cd xdpd/
@@ -83,7 +86,7 @@ as the OF-CONFIG support in OpenvSwitch is rather primitive).
 OvS with the OFCONFIG support can be installed as follows:
 
 	$ sudo apt-get install autoconf automake gcc libtool libxml2 libxml2-dev m4 make openssl dbus
-	
+
 	; Download LIBSSH from
 	;       https://red.libssh.org/projects/libssh/files
 	; Now install the above library following the INSTALL file provided in the root directory
@@ -103,7 +106,7 @@ OvS with the OFCONFIG support can be installed as follows:
     $ ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
     $ make
     $ sudo make install
-	
+
 	; Clone the of-config repository
 	$ git clone https://github.com/openvswitch/of-config
 
@@ -129,12 +132,12 @@ Before installing OvS with DPDK, you must download and compile the DPDK library.
 the source code from:
 
 	http://dpdk.org/browse/dpdk/snapshot/dpdk-2.1.0.tar.gz
-	
+
 Then execute the following commands:
 
     $ tar -xf dpdk-2.1.0.tar.gz
     $ cd dpdk-2.1.0
-    $ export DPDK_DIR=\`pwd\`
+    $ export DPDK_DIR=`pwd`
     ; modify the file `$DPDK_DIR/config/common_linuxapp` so that
     ; `CONFIG_RTE_BUILD_COMBINE_LIBS=y`
     ; `CONFIG_RTE_LIBRTE_VHOST=y`
@@ -158,12 +161,12 @@ Then execute the following commands:
 	$ ./configure --with-dpdk=$DPDK_BUILD
 	$ make
 	$ sudo make install
-	
-Now create the ovsdb database:	
-	
+
+Now create the ovsdb database:
+
 	$ mkdir -p /usr/local/etc/openvswitch
 	$ mkdir -p /usr/local/var/run/openvswitch
-	$ rm /usr/local/etc/openvswitch/conf.db
+	$ sudo rm /usr/local/etc/openvswitch/conf.db
 	$ sudo ovsdb-tool create /usr/local/etc/openvswitch/conf.db  \
 		/usr/local/share/openvswitch/vswitch.ovsschema
 
@@ -187,7 +190,7 @@ Two flavors of virtual machines are supported:
 
   * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes within the virtual machines. In this case, the host backend for the virtual NICs is implemented through `vhost` in case OvS and xDPd as vSwitches, and through `vhost-user` when OvS-DPDK is used as vSwitch;
   * virtual machines that exchange packets with the vSwitch through shared memory (`ivshmem`). This configuration is oriented to performance, and only supports DPDK-based processes within the virtual machine.
-	
+
 #### Standard QEMU/KVM (without `ivshmem` support)
 
 To install the standard QEMU/KVM/Libvirt execution environment, execute the
@@ -204,8 +207,8 @@ sources using the following commands:
 	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev
 	$ git clone git://libvirt.org/libvirt.git
 	; select the commit that is known to work and have the necessary support
-	$ git checkout f57842ecfda1ece8c59718e62464e17f75a27062
 	$ cd libvirt
+	$ git checkout f57842ecfda1ece8c59718e62464e17f75a27062
 	$ ./autogen.sh
 	$ make
 	$ sudo make install
@@ -241,7 +244,7 @@ since the DPDK library has already been installed together with the vSwitch.
 ## NF-FG library
 
 These steps are mandatory only if you plan to use the Network Functions -
-Forwarding Graph (NF-FG) defined in WP3.
+Forwarding Graph (NF-FG) defined in WP3, which is based on the concept of *virtualizer*.
 
 	; Retrieve the NF-FG library.
 	$ cd [un-orchestrator]

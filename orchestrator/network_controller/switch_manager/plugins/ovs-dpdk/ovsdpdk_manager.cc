@@ -4,7 +4,7 @@
 static const char* OVS_BASE_SOCK_PATH = "/usr/local/var/run/openvswitch/";
 
 #if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
-	int OVSDPDKManager::nextportname = 1;	
+	int OVSDPDKManager::nextportname = 1;
 #endif
 
 OVSDPDKManager::OVSDPDKManager() : m_NextLsiId(0), m_NextPortId(1) /* 0 is not valid for OVS */
@@ -17,7 +17,7 @@ OVSDPDKManager::~OVSDPDKManager()
 
 void OVSDPDKManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 { // SwitchManager implementation
-	
+
 	//TODO: not implemented yet
 }
 
@@ -82,19 +82,19 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 	NfPortsMapMap out_nf_ports;
 	list<pair<unsigned int, unsigned int> > out_virtual_links;
 	set<string> nfs = cli.getNetworkFunctionsName();
-	
+
 	map<string,list<string> > out_nf_ports_name_on_switch;
-	
+
 	for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++) {
 		nf_t nf_type = nf_types[*nf];
 		list<string> nf_ports = cli.getNetworkFunctionsPortNames(*nf);
 		PortsNameIdMap nf_ports_ids;
-		
+
 		list<string> port_name_on_switch;
-		
+
 		for(list<string>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++) {
 			unsigned int port_id = m_NextPortId++;
-			
+
 			stringstream sspn;
 #if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
 			//In these cases we use the rte_rings to exchange packets with the VNFs
@@ -105,13 +105,13 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 #else
 			//XXX for sure this is vhost user
 			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
-			
+
 			sspn << dpid << "_" << *nfp;
 #endif
 			string port_name = sspn.str();
-			
+
 			port_name_on_switch.push_back(port_name);
-			
+
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function port '%s' corresponds to the port '%s' on the switch", nfp->c_str(),port_name.c_str());
 
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
@@ -184,6 +184,8 @@ AddNFportsOut *OVSDPDKManager::addNFPorts(AddNFportsIn anpi)
 
   	//TODO: not implemented yet
 
+	assert(0 && "Method not implemented yet!");
+
 	AddNFportsOut *anpo = NULL;
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
 	list<string> nfs_ports = anpi.getNetworkFunctionsPorts();
@@ -198,6 +200,8 @@ AddVirtualLinkOut *OVSDPDKManager::addVirtualLink(AddVirtualLinkIn avli)
 
 	//TODO: not implemented yet
 
+	assert(0 && "Method not implemented yet!");
+
 	AddVirtualLinkOut *avlo = NULL;
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addVirtualLink(dpid: %" PRIu64 " -> %" PRIu64 ")", avli.getDpidA(), avli.getDpidB());
 	return avlo;
@@ -208,7 +212,7 @@ void OVSDPDKManager::destroyLsi(uint64_t dpid)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")", dpid);
 	stringstream cmd;
 	cmd << CMD_DESTROY_LSI << " " << dpid;
-	
+
 	int retVal = system(cmd.str().c_str());
 	retVal = retVal >> 8;
 	if(retVal == 0) {
@@ -222,6 +226,8 @@ void OVSDPDKManager::destroyVirtualLink(DestroyVirtualLinkIn dvli)
 
 	//TODO: not implemented yet
 
+	assert(0 && "Method not implemented yet!");
+
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyVirtualLink(%" PRIu64 ".%" PRIu64 " -> %" PRIu64 ".%" PRIu64 ")",
 			dvli.getDpidA(), dvli.getIdA(), dvli.getDpidB(), dvli.getIdB());
 
@@ -230,4 +236,6 @@ void OVSDPDKManager::destroyVirtualLink(DestroyVirtualLinkIn dvli)
 void OVSDPDKManager::destroyNFPorts(DestroyNFportsIn dnpi)
 { // SwitchManager implementation
 	//TODO: not implemented yet
+
+	assert(0 && "Method not implemented yet!");
 }
