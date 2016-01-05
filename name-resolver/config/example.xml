@@ -55,4 +55,13 @@
 		<implementation type="kvm" uri="../NFs/kvm/example-ivshmem/nat-ivshmem.xml"/>
 	</network-function>
 
+	<network-function name="lsi-bng"  description="Type 5 BNG">
+		<!-- Point to a Libvirt XML domain template -->
+		<implementation type="docker" uri="bng-cp"/>
+	</network-function>
+
+	<network-function name="lsi-router"  description="Type 5 router">
+		<!-- Point to a Libvirt XML domain template -->
+		<implementation type="docker" uri="router-cp"/>
+	</network-function>
 </network-functions>
