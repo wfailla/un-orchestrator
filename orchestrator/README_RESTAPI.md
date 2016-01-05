@@ -90,7 +90,7 @@ Retrieve information on the available physical interfaces:
 ## Send commands to the un-orchestrator
 
 In order to interact with the un-orchestrator throug its REST API, you can use
-your favourite REST tool (e.g., some nice plugins for Mozilla Firefox). Just in
+your favorite REST tool (e.g., some nice plugins for Mozilla Firefox). Just in
 also use the cURL command line tool, such as in the following example (where the
 NF-FG to be instantiated is stored in the file ``myGraph.json''):
 
