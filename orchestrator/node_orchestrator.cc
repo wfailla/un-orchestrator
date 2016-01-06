@@ -282,14 +282,14 @@ bool usage(void)
 {
 	char message[]=	\
 	"Usage:                                                                                   \n" \
-	"  sudo ./name-orchestrator 		                                                  \n" \
+	"  sudo ./node-orchestrator 		                                                  \n" \
 	"                                                                                         \n" \
 	"Options:                                                                                 \n" \
 	"  --c core_mask                                                                          \n" \
 	"        Mask that specifies which cores must be used for DPDK network functions. These   \n" \
 	"        cores will be allocated to the DPDK network functions in a round robin fashion   \n" \
 	"        (default is 0x2)                                                                 \n" \
-	"  --i admin password                                                                     \n" \
+	"  --i admin_password                                                                     \n" \
 	"        Initialize local database and set the password for the default 'admin' user  	  \n" \
 	"  --h                                                                                    \n" \
 	"        Print this help.                                                                 \n" \
