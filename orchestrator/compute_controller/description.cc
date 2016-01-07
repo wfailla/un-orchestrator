@@ -67,6 +67,8 @@ PortType portTypeFromString(const std::string& s)
 		return IVSHMEM_PORT;
 	else if (s.compare("usvhost") == 0)
 		return USVHOST_PORT;
+	else if (s.compare("vhost") == 0)
+		return VHOST_PORT;
 
 	return UNDEFINED_PORT;
 }

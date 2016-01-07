@@ -260,7 +260,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	    else if (port_type == IVSHMEM_PORT) {
 	    	ivshmemPorts.push_back(port_name);
 	    }
-	    else {
+	    else if (port_type == VHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
@@ -276,6 +276,10 @@ bool Libvirt::startNF(StartNFIn sni)
 
 		    xmlNodePtr virt = xmlNewChild(ifn, NULL, BAD_CAST "virtualport", NULL);
 		    xmlNewProp(virt, BAD_CAST "type", BAD_CAST "openvswitch");
+	    }
+	    else
+	    {
+	    	assert(0 && "There is a BUG! You cannot be here!");
 	    }
 	}
 

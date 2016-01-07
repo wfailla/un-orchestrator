@@ -21,6 +21,7 @@ enum PortType {
 	UNDEFINED_PORT,
 	USVHOST_PORT,
 	IVSHMEM_PORT,
+	VHOST_PORT
 };
 
 PortType portTypeFromString(const std::string& s);
