@@ -83,7 +83,7 @@ KVMImplementation::KVMImplementation(nf_t type, xmlNodePtr xmlDetails) : Impleme
 			}
 			int port_id = atoi((char *)attr_id);
 
-			xmlChar* attr_type = xmlGetProp(elem, (const xmlChar*)"type");
+			xmlChar* attr_type = xmlGetProp(elem, (const xmlChar*)"port-type");
 			if (attr_type == NULL) {
 				throw string("Missing port type attribute for KVM NF implementation");
 			}
