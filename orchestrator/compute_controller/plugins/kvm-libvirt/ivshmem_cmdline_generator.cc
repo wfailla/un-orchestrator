@@ -198,7 +198,10 @@ bool IvshmemCmdLineGenerator::read_from_file(const char *name, char *buf, size_t
 	}
 
 	if(fgets(buf, len, f) == NULL)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"Error in reading file");
 		return false;
+	}
 	return true;
 }
 
