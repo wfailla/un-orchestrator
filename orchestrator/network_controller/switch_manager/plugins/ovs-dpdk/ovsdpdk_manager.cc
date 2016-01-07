@@ -111,7 +111,6 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 				sspn << dpid << "_" << *nfp;
 			}
 #else
-			//XXX for sure this is vhost user
 			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
 			
 			sspn << dpid << "_" << *nfp;
