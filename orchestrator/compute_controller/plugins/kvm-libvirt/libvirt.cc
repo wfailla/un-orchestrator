@@ -241,9 +241,12 @@ bool Libvirt::startNF(StartNFIn sni)
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 		    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
 
-		    xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
-	    	xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
-	    	xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
+			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
+			ostringstream sock_path_os;
+			sock_path_os << OVS_BASE_SOCK_PATH << port_name;
+			xmlNewProp(srcn, BAD_CAST "type", BAD_CAST "unix");
+			xmlNewProp(srcn, BAD_CAST "path", BAD_CAST sock_path_os.str().c_str());
+			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "client");
 
 		    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
 		    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
@@ -264,12 +267,9 @@ bool Libvirt::startNF(StartNFIn sni)
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
-		    xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
-			ostringstream sock_path_os;
-			sock_path_os << OVS_BASE_SOCK_PATH << port_name;
-		    xmlNewProp(srcn, BAD_CAST "type", BAD_CAST "unix");
-		    xmlNewProp(srcn, BAD_CAST "path", BAD_CAST sock_path_os.str().c_str());
-		    xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "client");
+			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
+			xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
+			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
 
 		    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
 		    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
