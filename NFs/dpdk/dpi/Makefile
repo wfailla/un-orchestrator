@@ -1,5 +1,5 @@
 ifeq ($(RTE_SDK),)
-	$(error "Please define RTE_SDK environment variable")
+$(error "Please define RTE_SDK environment variable")
 endif
 
 include $(RTE_SDK)/mk/rte.vars.mk
