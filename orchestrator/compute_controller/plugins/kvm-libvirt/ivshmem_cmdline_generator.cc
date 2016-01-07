@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sstream>
+
+using namespace std;
 
 #define MEMPOOL_METADATA_NAME "OVSMEMPOOL"
 
@@ -115,6 +118,41 @@ IvshmemCmdLineGenerator::get_port_cmdline(const char * port_name, char * cmdline
 	return true;
 error:
 	return false;
+}
+
+bool IvshmemCmdLineGenerator::get_single_cmdline(char * cmdline, int size, const std::string& vnf_name, std::vector<std::string>& port_names)
+{
+    int r;
+
+    ostringstream oss;
+    oss << "./compute_controller/plugins/kvm-libvirt/cmdline_generator/build/cmdline_generator";
+    oss << " -n " << vnf_name << " -m";
+    for (vector<string>::iterator it = port_names.begin(); it != port_names.end(); ++it) {
+        oss << " -p " << (*it);
+    }
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+            "Generating IVSHMEM QEMU command line using: %s", oss.str().c_str());
+
+    r = system(oss.str().c_str());
+    if(r == -1 || WEXITSTATUS(r) == -1)
+    {
+        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+            "Error executing command line generator");
+        //unlink(MEMPOOL_METADATA_NAME);
+        goto error;
+    }
+
+    if(!read_from_file(vnf_name.c_str(), cmdline, size))
+    {
+        //unlink(vnf_name.c_str());
+        goto error;
+    }
+
+    unlink(vnf_name.c_str());
+
+    return true;
+error:
+    return false;
 }
 
 /*
