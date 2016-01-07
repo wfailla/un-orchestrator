@@ -197,8 +197,8 @@ bool IvshmemCmdLineGenerator::read_from_file(const char *name, char *buf, size_t
 		return false;
 	}
 
-	fgets(buf, len, f);
-
+	if(fgets(buf, len, f) == NULL)
+		return false;
 	return true;
 }
 
