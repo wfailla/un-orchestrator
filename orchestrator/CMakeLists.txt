@@ -110,7 +110,7 @@ ENDIF(RUN_NFS)
 OPTION(
 	ENABLE_DOCKER
 	"Turn on the support of NFs implemented in Docker containers"
-	ON
+	OFF
 )
 IF(ENABLE_DOCKER)
 	ADD_DEFINITIONS(-DENABLE_DOCKER)
