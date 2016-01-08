@@ -232,7 +232,7 @@ Additionally, for `ivshmem` support, a patch (`[un-orchestrator]/compute_control
 is needed to introduce the same changes that were present in the old `qemu-1.6-based` 
 version included in OVDK (Intel DPDK vSwitch).
 
-Are are the required steps:
+Hire there are the required steps:
 
 	$ git clone https://github.com/qemu/qemu.git
 	$ cd qemu
