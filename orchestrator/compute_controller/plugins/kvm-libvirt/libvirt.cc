@@ -280,6 +280,8 @@ bool Libvirt::startNF(StartNFIn sni)
 	    else
 	    {
 	    	assert(0 && "There is a BUG! You cannot be here!");
+	    	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
+	    	return false;
 	    }
 	}
 
