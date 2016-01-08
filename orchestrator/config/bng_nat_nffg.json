@@ -2,30 +2,10 @@
    "flow-graph":{  
       "VNFs":[  
          {  
-            "id":"usvhost_bng",
-            "ports_with_requirements":[
-		{
-		   "name":"usvhost_bng:1",
-		   "ethernet":{ "address":"52:54:00:ca:85:69" }
-		},
-		{
-		   "name":"usvhost_bng:2",
-		   "ethernet":{ "address":"52:54:00:ca:09:b7" }
-		}
-	   ]
+            "id":"usvhost_bng"
          },
          {  
-            "id":"gre-nat",
-            "ports_with_requirements":[
-		{
-		   "name":"gre-nat:1",
-		   "ethernet":{ "address":"9a:f1:fb:dd:40:ef" }
-		},
-		{
-		   "name":"gre-nat:2",
-		   "ethernet":{ "address":"56:57:88:12:85:69" }
-		}
-	    ]
+            "id":"gre-nat"
          }
       ],
       "flow-rules":[  
