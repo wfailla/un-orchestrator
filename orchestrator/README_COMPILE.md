@@ -191,7 +191,7 @@ Two flavors of virtual machines are supported:
   * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes within the virtual machines. In this case, the host backend for the virtual NICs is implemented through `vhost` in case OvS and xDPd as vSwitches, and through `vhost-user` when OvS-DPDK is used as vSwitch;
   * virtual machines that exchange packets with the vSwitch through shared memory (`ivshmem`). This configuration is oriented to performance, and only supports DPDK-based processes within the virtual machine.
 	
-#### Standard QEMU/KVM (without `ivshmem` support)
+#### Standard QEMU/KVM (without `ivshmem` or `vhost-user` support)
 
 To install the standard QEMU/KVM/Libvirt execution environment, execute the
 following command:
@@ -222,17 +222,23 @@ alternative version which must then be used instead of the default one:
 
 Similarly, if you use `virsh`, you would have to use the version from `/usr/local/bin`.
 
-#### QEMU with `ivshmem` support
+#### QEMU for `ivshmem` and `vhost-user` support
 
 To compile and install the QEMU/KVM execution environment with the support to `ivshmem`,
-further steps are required:
+or the support for the way the un-orchestrator sets up 'vhost-user', you need a recent qemu
+version.
 
-	$ git clone https://github.com/01org/dpdk-ovs
-	$ cd dpdk-ovs/qemu
-	$ mkdir -p bin/
-	$ cd bin
-	$ sudo apt-get install libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
-	$ ../configure
+Additionally, for `ivshmem` support, a patch (ivshmem-qemu-2.2.1.patch in the
+same directory as this document) is needed to introduce the same changes that
+were present in the old qemu-1.6-based version included in OVDK (Intel DPDK vSwitch).
+
+Are are the required steps:
+
+	$ git clone https://github.com/qemu/qemu.git
+	$ cd qemu
+	$ git checkout v2.2.1
+	$ git apply <path_to_un-orchestrator>/orchestrator/ivshmem-qemu-2.2.1.patch
+	$ ./configure --target-list=x86_64-softmmu
 	$ make
 	$ sudo make install
 
