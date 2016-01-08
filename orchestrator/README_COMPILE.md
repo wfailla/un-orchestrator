@@ -228,7 +228,7 @@ To compile and install the QEMU/KVM execution environment with the support to `i
 or the support for the way the un-orchestrator sets up `vhost-user`, you need a recent qemu
 version.
 
-Additionally, for `ivshmem` support, a patch (`[un-orchestrator]/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch`) 
+Additionally, for `ivshmem` support, a patch (`[un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch`) 
 is needed to introduce the same changes that were present in the old `qemu-1.6-based` 
 version included in OVDK (Intel DPDK vSwitch).
 
@@ -237,7 +237,7 @@ Here there are the required steps:
 	$ git clone https://github.com/qemu/qemu.git
 	$ cd qemu
 	$ git checkout v2.2.1
-	$ git apply [un-orchestrator]/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch
+	$ git apply [un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch
 	$ ./configure --target-list=x86_64-softmmu
 	$ make
 	$ sudo make install
