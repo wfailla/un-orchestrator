@@ -183,6 +183,26 @@ bool SQLiteManager::updateTokenAndTimestamp(char *user, char *token, char *times
 	return true;
 }
 
+//Update password
+bool SQLiteManager::updatePwd(char *user, char *pwd){
+	int rc = 0;
+	char *zErrMsg = 0, sql[BUFFER_SIZE];
+	
+	/* Create SQL statement */
+   	sprintf(sql, "UPDATE USERS set PWD = '%s' where USER = '%s'; SELECT * FROM USERS;", pwd, user);
+   	
+	/*Execute SQL statement*/
+	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
+	if(rc != SQLITE_OK){
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.", zErrMsg);
+		return false;
+	} else{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Operation done successfully.");
+	}
+
+	return true;
+}
+
 //Erase all token value
 bool SQLiteManager::eraseAllToken(){
 	int rc = 0;

@@ -85,7 +85,7 @@ private:
 	static int doGetGraph(struct MHD_Connection *connection,char *graphID);
 	static int doGetInterfaces(struct MHD_Connection *connection);
 
-	static int doPost(struct MHD_Connection *connection, const char *url, void **con_cls);
+	static int doPost(struct MHD_Connection *connection, const char *url, void **con_cls, bool client_auth);
 	static bool parsePostBody(struct connection_info_struct &con_info,char **user, char **pwd);
 	static bool parseLoginForm(Value value, char **user, char **pwd);
 
@@ -103,9 +103,11 @@ private:
 #ifdef UNIFY_NFFG
 	static bool toBeRemovedFromFile(char *filename);
 #endif
+
+	static bool checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbm);
 	
 public:
-	static bool init(bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name);
+	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name);
 	
 	static void terminate();
 

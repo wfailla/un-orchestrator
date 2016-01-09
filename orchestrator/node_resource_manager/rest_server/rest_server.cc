@@ -13,7 +13,7 @@ GraphManager *RestServer::gm = NULL;
 SQLiteManager *dbmanager = NULL;
 bool client_auth = false;
 
-bool RestServer::init(bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
+bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
 {	
 	char *nffg_file_name = new char[BUFFER_SIZE];
 	if(nffg_filename != NULL && strcmp(nffg_filename, "") != 0)
@@ -53,7 +53,7 @@ bool RestServer::init(bool cli_auth, char *nffg_filename,int core_mask, char *po
 	client_auth = cli_auth;
 	
 	if(client_auth)
-		dbmanager = new SQLiteManager(DB_NAME);	
+		dbmanager = dbm;	
 	
 	return true;
 }
@@ -290,7 +290,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		if (NULL == con_info)
 			return MHD_NO;
 		
-		if ((0 == strcmp (method, PUT)) || (0 == strcmp (method, DELETE)) )
+		if ((0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)) )
 		{
 			con_info->message = (char*)malloc(REQ_SIZE * sizeof(char));
 			con_info->length = 0;
@@ -372,7 +372,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 #else
 	if (0 == strcmp (method, GET))
 		return doGet(connection,url);
-	else if( (0 == strcmp (method, PUT)) || (0 == strcmp (method, DELETE)))
+	else if( (0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)))
 	{	
 		struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
 		assert(con_info != NULL);
@@ -388,33 +388,10 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 			con_info->message[con_info->length] = '\0';
 			if(0 == strcmp (method, PUT))
 				return doPut(connection,url,con_cls);
+			else if(0 == strcmp (method, POST))
+				return doPost(connection,url,con_cls,client_auth);
 			else
 				return doDelete(connection,url,con_cls);
-		}
-	}
-	else if (0 == strcmp (method, POST))
-	{	
-		struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
-		assert(con_info != NULL);
-		if (*upload_data_size != 0)
-		{
-			strcpy(&con_info->message[con_info->length],upload_data);
-			con_info->length += *upload_data_size;
-			*upload_data_size = 0;
-			return MHD_YES;
-		}
-		else if (NULL != con_info->message) 
-		{
-			if(client_auth)
-				return doPost(connection,url,con_cls);
-			else {
-				con_info->message[con_info->length] = '\0';
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method \"%s\" not implemented",method);
-				struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
-				MHD_destroy_response (response);
-				return ret;			
-			}	
 		}
 	}
 	else
@@ -432,7 +409,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		else
 		{
 			con_info->message[con_info->length] = '\0';
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method \"%s\" not implemented",method);
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "++++Method \"%s\" not implemented",method);
 			struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 			int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
 			MHD_destroy_response (response);
@@ -452,7 +429,7 @@ int RestServer::print_out_key (void *cls, enum MHD_ValueKind kind, const char *k
 	return MHD_YES;
 }
 
-int RestServer::doPost(struct MHD_Connection *connection, const char *url, void **con_cls)
+int RestServer::doPost(struct MHD_Connection *connection, const char *url, void **con_cls, bool client_auth)
 {
 	struct MHD_Response *response;
 
@@ -487,6 +464,18 @@ put_malformed_url:
 					int ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, response);
 					MHD_destroy_response (response);
 					return ret;
+				}
+				else
+				{
+					if(!client_auth)
+					{
+						con_info->message[con_info->length] = '\0';
+						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource \"%s\" only exists if client authentication is required", url);
+						struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+						int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
+						MHD_destroy_response (response);
+						return ret;
+					}
 				}
 				break;
 		}
@@ -527,7 +516,7 @@ put_malformed_url:
 	
 		if(user != NULL && pass != NULL){
 		
-			SHA512((const unsigned char*)pass, sizeof(pass) - 1, hash_token);
+			SHA256((const unsigned char*)pass, sizeof(pass) - 1, hash_token);
 		    
 		    	strcpy(tmp, "");
 		    	strcpy(hash_pwd, "");
@@ -546,7 +535,13 @@ put_malformed_url:
 
 					rc = RAND_bytes(temp, sizeof(temp));
 					if(rc != 1)
+					{
 						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while generating nonce!");
+						response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+						ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+						MHD_destroy_response (response);
+						return ret;
+					}
 					
 					strcpy(tmp, "");
 					strcpy(hash_pwd, "");
@@ -580,16 +575,16 @@ put_malformed_url:
 				return ret;
 			} 
 			
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during user login!");
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Client unauthorized");
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+			ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
 			MHD_destroy_response (response);
 			
 			return ret;
 		}else{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during user login!");
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Client unauthorized");
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+			ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
 			MHD_destroy_response (response);
 			return ret;
 		}
@@ -601,9 +596,6 @@ put_malformed_url:
 		MHD_destroy_response (response);
 		return ret;
 	}
-	
-	//logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly %s!",(newGraph)? "created" : "updated");
-	//logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
 	
 	//TODO: put the proper content in the answer
 	response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
@@ -625,14 +617,11 @@ bool RestServer::parsePostBody(struct connection_info_struct &con_info,char **us
 
 bool RestServer::parseLoginForm(Value value, char **user, char **pwd)
 {
-	//for each NF, contains the set of ports it requires
-	map<string,set<unsigned int> > nfs_ports_found;
-
 	try
 	{
 		Object obj = value.getObject();
 		
-	  	bool foundUser = false;
+	  	bool foundUser = false, foundPwd = false;
 		
 		//Identify the flow rules
 		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
@@ -647,7 +636,8 @@ bool RestServer::parseLoginForm(Value value, char **user, char **pwd)
 		    }
 		    else if(name == PASS)
 		    {
-		    	(*pwd) = (char *)value.getString().c_str();
+				foundPwd = true;
+		    		(*pwd) = (char *)value.getString().c_str();
 		    }
 		    else
 		    {
@@ -658,6 +648,11 @@ bool RestServer::parseLoginForm(Value value, char **user, char **pwd)
 		if(!foundUser)
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found",USER);
+			return false;
+		}
+		else if(!foundPwd)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found",PASS);
 			return false;
 		}
 	}catch(exception& e)
@@ -750,89 +745,48 @@ put_malformed_url:
 		graph->print();
 	try
 	{
+		//if client authentication is required
 		if(dbmanager != NULL){
 			const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
-			if(token == NULL)
+			if(!checkAuthentication(connection, token, dbmanager))
 			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+				//User unauthenticated!
+				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+				MHD_destroy_response (response);
+				return ret;
+			}
+		}
+
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
+
+		if(newGraph)
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");		
+			if(!gm->newGraph(graph))
+			{
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
 				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
 				MHD_destroy_response (response);
 				return ret;
-			} else{
-				dbmanager->selectToken((char *)token);
-				if(strcmp(dbmanager->getToken(), token) == 0){
-					//User authenticated!
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
-					
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
-					if(newGraph)
-					{
-						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");		
-						if(!gm->newGraph(graph))
-						{
-							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-							MHD_destroy_response (response);
-							return ret;
-						}
-					}
-					else
-					{
-						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
-						if(!gm->updateGraph(graphID,graph))
-						{
-							delete(graph);
-							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-							MHD_destroy_response (response);
-							return ret;		
-						}	
-					}
-				} else{
-					//User unauthenticated!
-					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-					int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-					MHD_destroy_response (response);
-					return ret;
-				}
 			}
-		} else{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
-
-			if(newGraph)
+		}
+		else
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
+			if(!gm->updateGraph(graphID,graph))
 			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");		
-				if(!gm->newGraph(graph))
-				{
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-					MHD_destroy_response (response);
-					return ret;
-				}
-			}
-			else
-			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
-				if(!gm->updateGraph(graphID,graph))
-				{
-					delete(graph);
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-					MHD_destroy_response (response);
-					return ret;		
-				}	
-			}
+				delete(graph);
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+				MHD_destroy_response (response);
+				return ret;		
+			}	
 		}
 	}catch (...)
 	{
@@ -1388,45 +1342,27 @@ get_malformed_url:
 		return ret;
 	}
 	
-	if(dbmanager != NULL){
+	//if client authentication is required
+	if(dbmanager != NULL)
+	{
 		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
-		if( token == NULL)
+		if(!checkAuthentication(connection, token, dbmanager))
 		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+			//User unauthenticated!
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+			int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 			MHD_destroy_response (response);
 			return ret;
-		} else{
-			dbmanager->selectToken((char *)token);
-			if(strcmp(dbmanager->getToken(), token) == 0){
-				//User authenticated!
-				if(!request)
-					//request for a graph description
-					return doGetGraph(connection,graphID);
-				else
-					//request for interfaces description
-					return doGetInterfaces(connection);
-			} else{
-				//User unauthenticated!
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
-				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-				MHD_destroy_response (response);
-				return ret;
-			}
 		}
 	}
-	else {
-		//User authenticated!
-		if(!request)
-			//request for a graph description
-			return doGetGraph(connection,graphID);
-		else
-			//request for interfaces description
-			return doGetInterfaces(connection);	
-	}
+
+	if(!request)
+		//request for a graph description
+		return doGetGraph(connection,graphID);
+	else
+		//request for interfaces description
+		return doGetInterfaces(connection);	
 }
 
 int RestServer::doGetGraph(struct MHD_Connection *connection,char *graphID)
@@ -1568,140 +1504,98 @@ delete_malformed_url:
 		return ret;
 	}
 	
+	//if client authentication is required
 	if(dbmanager != NULL){
 		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
 	
-		if(token == NULL)
+		if(!checkAuthentication(connection, token, dbmanager))
 		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+			//User unauthenticated!
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+			int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 			MHD_destroy_response (response);
 			return ret;
-		} else{
-			dbmanager->selectToken((char *)token);
-			if(strcmp(dbmanager->getToken(), token) == 0){
-				//User authenticated!
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
+		}
+	}
 
-				if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
-				{
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method DELETE is not supported for this resource");
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-					MHD_add_response_header (response, "Allow", PUT);
-					ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
-					MHD_destroy_response (response);
-					return ret;
-				}
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
+
+	if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
+	{
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method DELETE is not supported for this resource");
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header (response, "Allow", PUT);
+		ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
 	
-				try
-				{	
-					if(!specificFlow)
-					{
-						//The entire graph must be deleted
-						if(!gm->deleteGraph(graphID))
-						{
-							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-							MHD_destroy_response (response);
-							return ret;
-						}
-						else
-							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
-							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
-					}
-					else
-					{
-						//A specific flow must be deleted
-						if(!gm->deleteFlow(graphID,flowID))
-						{
-							response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-							int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-							MHD_destroy_response (response);
-							return ret;
-						}
-						else
-							logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
-					}
-		
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);		
-					ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
-					MHD_destroy_response (response);
-					return ret;
-				}catch(...)
-				{
-					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the destruction of the graph!");
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-					ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-					MHD_destroy_response (response);
-					return ret;
-				}
-			} else{
-				//User unauthenticated
-				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
+	try
+	{	
+		if(!specificFlow)
+		{
+			//The entire graph must be deleted
+			if(!gm->deleteGraph(graphID))
+			{
 				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
 				MHD_destroy_response (response);
 				return ret;
 			}
+			else
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
 		}
-	}
-	else {
-		//User authenticated!
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
-
-		if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
+		else
 		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method DELETE is not supported for this resource");
-			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			MHD_add_response_header (response, "Allow", PUT);
-			ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
-			MHD_destroy_response (response);
-			return ret;
-		}
-	
-		try
-		{	
-			if(!specificFlow)
+			//A specific flow must be deleted
+			if(!gm->deleteFlow(graphID,flowID))
 			{
-				//The entire graph must be deleted
-				if(!gm->deleteGraph(graphID))
-				{
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-					MHD_destroy_response (response);
-					return ret;
-				}
-				else
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
+				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+				MHD_destroy_response (response);
+				return ret;
 			}
 			else
-			{
-				//A specific flow must be deleted
-				if(!gm->deleteFlow(graphID,flowID))
-				{
-					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-					int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-					MHD_destroy_response (response);
-					return ret;
-				}
-				else
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
-			}
-		
-			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);		
-			ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
-			MHD_destroy_response (response);
-			return ret;
-		}catch(...)
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
+		}
+	
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);		
+		ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
+		MHD_destroy_response (response);
+		return ret;
+	}catch(...)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the destruction of the graph!");
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+		MHD_destroy_response (response);
+		return ret;
+	}		
+}
+
+bool RestServer::checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbmanager)
+{
+
+	if(token == NULL)
+	{
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+		return false;
+	} 
+	else
+	{
+		dbmanager->selectToken((char *)token);
+		if(strcmp(dbmanager->getToken(), token) == 0){
+			//User authenticated!
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
+			return true;
+		}
+		else
 		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the destruction of the graph!");
-			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-			MHD_destroy_response (response);
-			return ret;
-		}	
-	}	
+			//User unauthenticated!
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
+			return false;
+		}
+	}
 }
 

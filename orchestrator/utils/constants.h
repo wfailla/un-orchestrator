@@ -204,6 +204,7 @@ extern ofp_version_t OFP_VERSION;
 	#define LOG_FILE			"node-orchestrator.log"
 #endif
 
+#define ADMIN				"admin"
 #define USER				"username"
 #define PASS				"password"
 #define HASH_SIZE			20

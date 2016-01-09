@@ -36,10 +36,12 @@ SQLiteManager *dbm = NULL;
 /**
 *	Private prototypes
 */
-bool parse_command_line(int argc, char *argv[],int *rest_port, bool *cli_auth, char **nffg_file_name,int *core_mask, char **ports_file_name);
+bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file, bool *init_db, char **pwd);
+bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name);
 bool usage(void);
 bool doChecks(void);
 void terminateRestServer(void);
+bool createDB(SQLiteManager *dbm, char *pwd);
 #ifdef UNIFY_NFFG
 	void terminateVirtualizer(void);
 #endif
@@ -59,6 +61,8 @@ void singint_handler(int sig)
 	terminateVirtualizer();
 #endif
 	
+	dbm->eraseAllToken();
+
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Bye :D");
 	exit(EXIT_SUCCESS);
 }
@@ -80,20 +84,51 @@ int main(int argc, char *argv[])
 
 	int core_mask;
 	int rest_port, t_rest_port;
-	bool cli_auth, t_cli_auth;
+	bool cli_auth, t_cli_auth, init_db = false;
+	char *config_file_name = new char[BUFFER_SIZE];	
 	char *ports_file_name = new char[BUFFER_SIZE], *t_ports_file_name = NULL;
 	char *nffg_file_name = new char[BUFFER_SIZE], *t_nffg_file_name = NULL;
+	char *pwd = new char[BUFFER_SIZE];
 
-	if(!parse_command_line(argc,argv,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&core_mask,&t_ports_file_name))
+	strcpy(config_file_name, DEFAULT_FILE);
+
+	if(!parse_command_line(argc,argv,&core_mask,&config_file_name,&init_db,&pwd))
 		exit(EXIT_FAILURE);
-	
-	rest_port = t_rest_port;
-	cli_auth = t_cli_auth;
+
+	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name))
+		exit(EXIT_FAILURE);
+
 	strcpy(ports_file_name, t_ports_file_name);
 	if(strcmp(t_nffg_file_name, "UNKNOWN") != 0)
 		strcpy(nffg_file_name, t_nffg_file_name);
 	else	
 		nffg_file_name = NULL;
+	
+	rest_port = t_rest_port;
+	cli_auth = t_cli_auth;
+
+	//test if client authentication is required and if true initialize database
+	if(cli_auth)
+	{
+		//connect to database
+		dbm = new SQLiteManager(DB_NAME);
+		if(init_db)
+		{
+			if(!createDB(dbm, pwd))
+			{
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Database already initialized, argument \"--i\" cannot be specified");
+				exit(EXIT_FAILURE);
+			}			
+		}
+	}
+	else
+	{
+		if(init_db)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Argument \"--i\" can appear only if authentication is required");
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	//XXX: this code avoids that the program terminates when system() is executed
 	sigset_t mask;
@@ -112,7 +147,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 #endif
-	if(!RestServer::init(cli_auth,nffg_file_name,core_mask,ports_file_name))
+	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 #ifdef UNIFY_NFFG
@@ -147,7 +182,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-bool parse_command_line(int argc, char *argv[],int *rest_port, bool *cli_auth, char **nffg_file_name,int *core_mask, char **ports_file_name)
+bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file_name,bool *init_db,char **pwd)
 {
 	int opt;
 	char **argvopt;
@@ -155,8 +190,8 @@ bool parse_command_line(int argc, char *argv[],int *rest_port, bool *cli_auth, c
 	
 static struct option lgopts[] = {
 		{"c", 1, 0, 0},
+		{"d", 1, 0, 0},
 		{"i", 1, 0, 0},
-		{"w", 1, 0, 0},
 		{"h", 0, 0, 0},
 		{NULL, 0, 0, 0}
 	};
@@ -165,6 +200,67 @@ static struct option lgopts[] = {
 	uint32_t arg_c = 0;
 
 	*core_mask = CORE_MASK;
+
+	while ((opt = getopt_long(argc, argvopt, "", lgopts, &option_index)) != EOF)
+    	{
+		switch (opt)
+		{
+			/* long options */
+			case 0:
+	   			if (!strcmp(lgopts[option_index].name, "c"))/* core mask for network functions */
+	   			{
+	   				if(arg_c > 0)
+	   				{
+		   				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Argument \"--c\" can appear only once in the command line");
+	   					return usage();
+	   				}
+	   				char *port = (char*)malloc(sizeof(char)*(strlen(optarg)+1));
+	   				strcpy(port,optarg);
+	   				
+	   				sscanf(port,"%x",&(*core_mask));
+	   				
+	   				arg_c++;
+	   			}
+				else if (!strcmp(lgopts[option_index].name, "d"))/* inserting configuration file */
+	   			{
+					if(arg_c > 0)
+	   				{
+		   				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Argument \"--d\" can appear only once in the command line");
+	   					return usage();
+	   				}
+
+	   				strcpy(*config_file_name,optarg);
+	   				
+	   				arg_c++;
+	   			}
+				else if (!strcmp(lgopts[option_index].name, "i"))/* inserting admin password */
+	   			{
+					*init_db = true;
+
+					strcpy(*pwd, optarg);
+	   				
+	   				arg_c++;
+	   			}
+				else if (!strcmp(lgopts[option_index].name, "h"))/* help */
+	   			{
+	   				return usage();
+	   			}
+	   			else
+	   			{
+	   				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Invalid command line parameter '%s'\n",lgopts[option_index].name);
+	   				return usage();
+	   			}
+				break;
+			default:
+				return usage();
+		}
+	}
+
+	return true;
+}
+
+bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name)
+{
 	ports_file_name[0] = '\0';
 	nffg_file_name[0] = '\0';
 	*rest_port = REST_PORT;
@@ -174,7 +270,7 @@ static struct option lgopts[] = {
 	* Parsing universal node configuration file
 	*
 	*/
-	INIReader reader(DEFAULT_FILE);
+	INIReader reader(config_file_name);
 
 	if (reader.ParseError() < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't load a universal-node-config.ini file");
@@ -203,79 +299,38 @@ static struct option lgopts[] = {
 	char *temp_nf_fg = (char *)reader.Get("rest server", "nf-fg", "UNKNOWN").c_str();
 	*nffg_file_name = temp_nf_fg;
 
-	while ((opt = getopt_long(argc, argvopt, "", lgopts, &option_index)) != EOF)
-    	{
-		switch (opt)
-		{
-			/* long options */
-			case 0:
-	   			if (!strcmp(lgopts[option_index].name, "c"))/* core mask for network functions */
-	   			{
-	   				if(arg_c > 0)
-	   				{
-		   				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Argument \"--c\" can appear only once in the command line");
-	   					return usage();
-	   				}
-	   				char *port = (char*)malloc(sizeof(char)*(strlen(optarg)+1));
-	   				strcpy(port,optarg);
-	   				
-	   				sscanf(port,"%x",&(*core_mask));
-	   				
-	   				arg_c++;
-	   			}
-				else if (!strcmp(lgopts[option_index].name, "i"))/* inserting admin password */
-	   			{
-					if(*cli_auth)
-						dbm = new SQLiteManager(DB_NAME);
-					else
-					{
-						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Argument \"--i\" can appear only if authentication is required");
-						return false;
-					}
-	   				/*
-					*
-					* Test user database
-					*	
-					*/
-					unsigned char *hash_token = new unsigned char[HASH_SIZE];
-					char *hash_pwd = new char[BUFFER_SIZE];
-					char *tmp = new char[HASH_SIZE];
-					char *pwd = new char[HASH_SIZE];
+	return true;
+}
 
-					if(dbm->createTable()){
-						strcpy(pwd, optarg);
-	
-						SHA512((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
-	
-						strcpy(tmp, "");
-						strcpy(hash_pwd, "");
+bool createDB(SQLiteManager *dbm, char *pass)
+{
+	/*
+	*
+	* Initializing user database
+	*	
+	*/
 
-						    for (int i = 0; i < HASH_SIZE; i++) {
-							sprintf(tmp, "%x", hash_token[i]);
-							strcat(hash_pwd, tmp);
-						    }
+	unsigned char *hash_token = new unsigned char[HASH_SIZE];
+	char *hash_pwd = new char[BUFFER_SIZE];
+	char *tmp = new char[HASH_SIZE];
+	char *pwd = new char[HASH_SIZE];
+	
+	if(dbm->createTable()){
+		strcpy(pwd, pass);
+	
+		SHA256((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
+
+		for (int i = 0; i < HASH_SIZE; i++) {
+			sprintf(tmp, "%x", hash_token[i]);
+			strcat(hash_pwd, tmp);
+	    	}
 					    
-						dbm->insertUsrPwd("admin", (char *)hash_pwd);
-					}
-	   				
-	   				arg_c++;
-	   			}
-				else if (!strcmp(lgopts[option_index].name, "h"))/* help */
-	   			{
-	   				return usage();
-	   			}
-	   			else
-	   			{
-	   				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Invalid command line parameter '%s'\n",lgopts[option_index].name);
-	   				return usage();
-	   			}
-				break;
-			default:
-				return usage();
-		}
+		dbm->insertUsrPwd("admin", (char *)hash_pwd);
+
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool usage(void)
@@ -289,6 +344,9 @@ bool usage(void)
 	"        Mask that specifies which cores must be used for DPDK network functions. These   \n" \
 	"        cores will be allocated to the DPDK network functions in a round robin fashion   \n" \
 	"        (default is 0x2)                                                                 \n" \
+	"  --d configuration file                                                                 \n" \
+	"        File that specifies some parameters such as rest port, physical port file,       \n" \
+	"        nffg file to deploy at the boot time and if client authentication is required    \n" \
 	"  --i admin password                                                                     \n" \
 	"        Initialize local database and set the password for the default 'admin' user  	  \n" \
 	"  --h                                                                                    \n" \

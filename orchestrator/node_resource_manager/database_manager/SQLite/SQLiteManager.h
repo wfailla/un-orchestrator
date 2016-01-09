@@ -63,6 +63,8 @@ public:
 	
 	bool updateTokenAndTimestamp(char *user, char *token, char *timestamp);
 
+	bool updatePwd(char *user, char *pwd);
+
 	bool eraseAllToken();
 	
 	char *getUser();

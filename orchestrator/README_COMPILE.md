@@ -20,7 +20,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; - libboost-all-dev: nice c++ library with tons of useful functions
 	; - libmicrohttpd-dev: embedded micro http server
 	; - libxml2-dev: nice library to parse and create xml
-	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev
+	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev libssl-dev
 
 	; Install JSON Spirit (nice library to parse JSON files)
 	$ git clone https://github.com/sirikata/json-spirit
@@ -39,10 +39,14 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; Now install the above library according to the description provided
 	; in the cloned folder
 
-## Users authentication
-
 	; Install sqlite3
 	$ sudo apt-get install sqlite3 libsqlite3-dev
+
+	; Install inih
+	; a copy of inih is provided in `[un-orchestrator]/contrib/inih.zip`
+
+	; Now install the above library according to the description provided
+	; in the cloned folder
 
 ## Install the proper virtual switch
 
