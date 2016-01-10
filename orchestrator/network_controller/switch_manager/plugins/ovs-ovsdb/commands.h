@@ -324,7 +324,7 @@ public:
 			]
 		}
 	*/
-	void add_endpoint(uint64_t dpi, char remote_ip[64], char gre[64], char ifac[64], int s);
+	void add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64], char key[64], char gre[64], char ifac[64], int s);
 	
 	/**
 	*	Example of command to create a new INTERNAL PORT

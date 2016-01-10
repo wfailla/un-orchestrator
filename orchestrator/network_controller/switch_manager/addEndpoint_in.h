@@ -35,11 +35,11 @@ private:
 	/**
 	*	@brief: pair of information related by the endpoint
 	*/
-	pair<string, string> ep_iface;
+	list<string> ep_param;
 
 protected:
-	AddEndpointIn(uint64_t dpid, string ep_name, pair<string, string> ep_iface)
-		: dpid(dpid), ep_name(ep_name), ep_iface(ep_iface)
+	AddEndpointIn(uint64_t dpid, string ep_name, list<string> ep_param)
+		: dpid(dpid), ep_name(ep_name), ep_param(ep_param)
 	{
 	}
 	
@@ -55,9 +55,9 @@ public:
 		return ep_name;
 	}
 	
-	pair<string, string> getEPiface()
+	list<string> getEPparam()
 	{
-		return ep_iface;
+		return ep_param;
 	}
 	
 };

@@ -41,9 +41,9 @@ private:
 	map<string, list<unsigned int> > networkFunctions;
 	
 	/**
-	*	@brief: for each end point attached to the graph specifies a pair <node, interface>
+	*	@brief: for each end point attached to the graph specifies a list of params
 	*/
-	map<string, pair<string, string> > endpoints;
+	map<string, list<string> > endpoints;
 
 	/**
 	*	@brief: physical ports to be attached to the graph
@@ -96,13 +96,6 @@ public:
 	*	@param: port	Identifier of the port of the network function
 	*/
 	bool updateNetworkFunction(string nf, unsigned port);
-
-	/**
-	*	@brief: Add a EndPoint to the graph
-	*
-	*	@param:	ep	Name of the end point to be added
-	*	@param:	p	Pair <node, iface> of the end point
-	*/
 	
 	/**
 	*	@brief: Return the NFs of the graph and the ports they require
@@ -114,17 +107,17 @@ public:
 	*		other graphs.
 	*
 	*	@param: ep			Identifier of the graph defining the end point
-	*	@param: p			pair<node, iface>
+	*	@param: p			List of three elements (local ip, remote ip and key)
 	*
 	*	@return: true if the endpoint is defined in the current graph; false otherwise
 	*/
-	bool addEndPoint(string ep, pair<string, string> p);
+	bool addEndPoint(string ep, list<string> p);
 	
 	/**
 	*	@brief: Return the end points of the graph, i.e. the ports to be used to connect
 	*		multiple graphs together.
 	*/
-	map<string, pair<string, string> > getEndPoints();
+	map<string, list<string> > getEndPoints();
 	
 	/**
 	*	@brief: given a graph endpoint (in the form graphID:epID), return true if it is defined

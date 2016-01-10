@@ -50,6 +50,56 @@ unsigned int MatchParser::nfPort(string name_port)
 	return port;
 }
 
+bool MatchParser::nfIsPort(string name_port)
+{
+	char delimiter[] = ":";
+	char tmp[BUFFER_SIZE];
+	strcpy(tmp,name_port.c_str());
+	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+	unsigned int port = 0;
+
+	int i = 0;
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 1:
+				sscanf(pnt,"%u",&port);
+				return true;
+			break;
+		}
+		
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+	
+	return false;
+}
+
+string MatchParser::epPort(string name_port)
+{
+	char delimiter[] = ":";
+	char tmp[BUFFER_SIZE];
+	strcpy(tmp,name_port.c_str());
+	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+
+	int i = 0;
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 1:
+				return pnt;
+			break;
+		}
+		
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+	
+	return "";
+}
+
 
 /**
 *	http://stackoverflow.com/questions/4792035/how-do-you-validate-that-a-string-is-a-valid-mac-address-in-c
@@ -121,7 +171,7 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 	return true;
 }
 
-bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, highlevel::Graph &graph)
+bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, highlevel::Graph &graph)
 {
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
@@ -163,6 +213,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			strcpy(tmp,(char *)port_in_name_tmp);
 			pnt=strtok(tmp, delimiter);
 			int i = 0;
+
 			while( pnt!= NULL )
 			{
 				switch(i)
@@ -176,12 +227,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 						//ENDPOINT port
 						else if(strcmp(pnt,ENDPOINT) == 0){
 							p_type = 1;	
-						}
-						//physical port
-						else
-						{
-							realName.assign(port_in_name);
-							p_type = 2;
 						}
 						break;
 					//only for VNF ports
@@ -208,14 +253,21 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			{
 				//convert char *vnf_name_tmp to string vnf_name
 				string vnf_name(vnf_name_tmp, strlen(vnf_name_tmp));
-			
+
 				string nf_name = nfName(vnf_name);
-				unsigned int port = nfPort(vnf_name);
-				if(nf_name == "" || port == 0)
+				char *tmp_vnf_name = new char[BUFFER_SIZE];
+				strcpy(tmp_vnf_name, (char *)vnf_name.c_str());
+				unsigned int port = nfPort(string(tmp_vnf_name));
+				bool is_port = nfIsPort(string(tmp_vnf_name));
+							
+				if(nf_name == "" || !is_port)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" is not valid. It must be in the form \"name:port\"",vnf_name_tmp);
 					return false;	
 				}
+				/*nf port starts from 0*/
+				port++;
+
 				match.setNFport(nf_name,port);
 			
 				set<unsigned int> ports;
@@ -227,25 +279,56 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			//ENDPOINT port
 			else if(p_type == 1)
 			{
-				unsigned int endPoint = graphEndPoint(value.getString());
-				if(endPoint == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
-					return false;	
+				bool iface_found = false;
+				char *s_value = new char[BUFFER_SIZE];
+				strcpy(s_value, (char *)value.getString().c_str());
+				string eP = epPort(value.getString());
+				if(eP != ""){
+					map<string,string>::iterator it = iface_id.find(eP);
+					map<string,string>::iterator it1 = iface_out_id.find(eP);
+					if(it != iface_id.end()){
+						//Physical port		
+						realName.assign(iface_id[eP]);
+						iface_found = true;		
+					}
+					else if(it1 != iface_out_id.end()){
+						//Physical port		
+						realName.assign(iface_out_id[eP]);	
+						iface_found = true;	
+					}
 				}
-				match.setEndPoint(endPoint);
+				/*gre endpoint*/
+				if(!iface_found)
+				{
+					unsigned int endPoint = graphEndPoint(string(s_value));
+					if(endPoint == 0)
+					{
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
+						return false;	
+					}
+					match.setEndPoint(endPoint);
 			
-				stringstream ss;
-				ss << match.getEndPoint();
+					stringstream ss;
+					ss << match.getEndPoint();
+				}
+				/*physical endpoint*/
+				else
+				{
+#ifdef UNIFY_NFFG
+					realName = Virtualizer::getRealName(port_in_name);		
+#endif	
+					match.setInputPort(realName);
+					graph.addPort(realName);
+				}
 			} 
-			//physical port
+			/*physical port
 			else {
 #ifdef UNIFY_NFFG
 				realName = Virtualizer::getRealName(port_in_name);		
 #endif	
 				match.setInputPort(realName);
 				graph.addPort(realName);
-			}
+			}*/
 			
 #ifdef UNIFY_NFFG
 			}catch(exception e)

@@ -56,7 +56,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName) :
 
 	//The three following structures are empty. No NF and no virtual link is attached.
 	map<string, list<unsigned int> > dummy_network_functions;
-	map<string, pair<string, string> > dummy_endpoints;
+	map<string, list<string> > dummy_endpoints;
 	vector<VLink> dummy_virtual_links;
 	map<string,nf_t>  nf_types;
 	
@@ -309,8 +309,8 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	if(!shutdown)
 	{
-		map<string, pair<string, string> > endpoints = highLevelGraph->getEndPoints();
-		for(map<string, pair<string, string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
+		map<string, list<string> > endpoints = highLevelGraph->getEndPoints();
+		for(map<string, list<string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
 		{
 			string ep = mep->first;
 		
@@ -367,8 +367,8 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	if(!shutdown)
 	{
-		map<string, pair<string, string> > endpoints = highLevelGraph->getEndPoints();
-		for(map<string, pair<string, string> >::iterator mep = endpoints.begin(); mep != endpoints.end();)
+		map<string, list<string> > endpoints = highLevelGraph->getEndPoints();
+		for(map<string, list<string> >::iterator mep = endpoints.begin(); mep != endpoints.end();)
 		{
 			string ep = mep->first;
 		
@@ -377,7 +377,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 				assert(availableEndPoints.find(ep)->second ==0);
 				assert(endPointsDefinedInMatches.count(ep) != 0 || endPointsDefinedInActions.count(ep) != 0);
 				
-				map<string, pair<string, string> >::iterator tmp = mep;
+				map<string, list<string> >::iterator tmp = mep;
 				mep++;
 				
 				availableEndPoints.erase(ep);
@@ -494,7 +494,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController *computeController)
 {
 	set<string> phyPorts = graph->getPorts();
-	map<string, pair<string, string> > endPoints = graph->getEndPoints();
+	map<string, list<string> > endPoints = graph->getEndPoints();
 
 	string graphID = graph->getID();
 	
@@ -679,7 +679,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	
 	set<string> phyPorts = graph->getPorts();
 	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions();
-	map<string, pair<string, string> > endpoints = graph->getEndPoints();
+	map<string, list<string> > endpoints = graph->getEndPoints();
 	
 	vector<set<string> > vlVector = identifyVirtualLinksRequired(graph);
 	set<string> vlNFs = vlVector[0];
@@ -805,7 +805,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	
 	map<string,unsigned int> lsi_ports = lsi->getPhysicalPorts();
 	set<string> nfs = lsi->getNetworkFunctionsName();
-	map<string, pair<string, string> > eps = lsi->getEndpointsPorts();
+	map<string, list<string> > eps = lsi->getEndpointsPorts();
 	vector<VLink> vls = lsi->getVirtualLinks();
 		
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "LSI ID: %d",dpid);
@@ -825,9 +825,16 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	}
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoints (%d):",eps.size());
-	for(map<string, pair<string, string> >::iterator it = eps.begin(); it != eps.end(); it++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t(ID: %s) %s -> %s",it->first.c_str(), it->second.second.c_str(), it->second.first.c_str());
-	
+	for(map<string, list<string> >::iterator it = eps.begin(); it != eps.end(); it++){
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tID: %s:",it->first.c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tLocal ip: %s", it->second.front().c_str());
+		it->second.pop_front();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tRemote ip: %s", it->second.front().c_str());
+		it->second.pop_front();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tKey: %s", it->second.front().c_str());
+		it->second.pop_front();
+	}
+
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual links (%u): ",vls.size());
 	for(vector<VLink>::iterator v = vls.begin(); v != vls.end(); v++)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t(ID: %x) %x:%d -> %x:%d",v->getID(),dpid,v->getLocalID(),v->getRemoteDpid(),v->getRemoteID());
@@ -1130,10 +1137,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	}
 	
 	//Retrieve the endpoints already existing in the graph
-	map<string, pair<string, string> > endpoints = graph->getEndPoints();
+	map<string, list<string> > endpoints = graph->getEndPoints();
 	//Retrieve the endpoints required by the update
-	map<string, pair<string, string> > new_endpoints = newPiece->getEndPoints();
-	for(map<string, pair<string, string> >::iterator mit = new_endpoints.begin(); mit != new_endpoints.end(); mit++)
+	map<string, list<string> > new_endpoints = newPiece->getEndPoints();
+	for(map<string, list<string> >::iterator mit = new_endpoints.begin(); mit != new_endpoints.end(); mit++)
 	{
 		string it = mit->first;
 	
@@ -1186,8 +1193,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		}
 #endif
 	}
-	map<string, pair<string, string> > nep = tmp->getEndPoints();
-	for(map<string, pair<string, string> >::iterator mep = nep.begin(); mep != nep.end(); mep++)
+	map<string, list<string> > nep = tmp->getEndPoints();
+	for(map<string, list<string> >::iterator mep = nep.begin(); mep != nep.end(); mep++)
 	{
 		string tmp_ep = mep->first;
 	}
@@ -1213,7 +1220,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	
 	set<string> phyPorts = tmp->getPorts();
 	map<string, list<unsigned int> > network_functions = tmp->getNetworkFunctions();
-	map<string, pair<string, string> > tmp_endpoints = tmp->getEndPoints();//#ADDED
+	map<string, list<string> > tmp_endpoints = tmp->getEndPoints();//#ADDED
 	
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 	
@@ -1394,7 +1401,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	}
 	
 	
-	for(map<string, pair<string, string> >::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
+	for(map<string, list<string> >::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
 		AddEndpointOut *aepo = NULL;
 		try
@@ -1983,8 +1990,8 @@ bool GraphManager::canDeleteFlow(highlevel::Graph *graph, string flowID)
 	highlevel::Match m = r.getMatch();
 	highlevel::Action *a = r.getAction();
 	
-	map<string, pair<string, string> > endpoints = graph->getEndPoints();
-	for(map<string, pair<string, string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
+	map<string, list<string> > endpoints = graph->getEndPoints();
+	for(map<string, list<string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
 	{
 		string ep = mep->first;
 	

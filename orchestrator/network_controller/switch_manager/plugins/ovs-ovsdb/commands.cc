@@ -99,10 +99,10 @@ int commands::cmd_disconnect(int s){
 */
 CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 
-    unsigned int i=0;	
-    int nwritten = 0;
+	unsigned int i=0;	
+	int nwritten = 0;
 
-    ssize_t r = 0;
+	ssize_t r = 0;
 	char read_buf[4096] = "";
 
 	CreateLsiOut *clo = NULL;
@@ -111,9 +111,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	map<string,unsigned int >  endpoints_ports;
 	list<pair<unsigned int, unsigned int> > virtual_links;
 	
-    int dnumber_new = 0, nfnumber_old = 0;
+	int dnumber_new = 0, nfnumber_old = 0;
 
-    //list of ports
+	//list of ports
 	list<string> ports = cli.getPhysicalPortsName();
 
 	//list of nf	
@@ -123,7 +123,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	map<string,nf_t> nf_type = cli.getNetworkFunctionsType(); 
 	
 	//list of endpoints	
-	map<string,pair<string,string> > endpoints = cli.getEndpointsPortsName(); 	
+	map<string,list<string> > endpoints = cli.getEndpointsPortsName(); 	
 
 	//list of remote LSI
 	list<uint64_t> vport = cli.getVirtualLinksRemoteLSI();
@@ -137,27 +137,27 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	char sw[64] = "Bridge", tcp_s[64] = "tcp:", ctr[64] = "ctrl", vrt[64] = "VirtualPort", trv[64] = "vport";
 	char temp[64] = "", tmp[64] = "", of_version[64] = "";
 
-    /*force to use OpenFlow12*/
-    strcpy(of_version, "OpenFlow12");
+	/*force to use OpenFlow12*/
+	strcpy(of_version, "OpenFlow12");
 
-    //connect socket
-    s = cmd_connect();
+	//connect socket
+	s = cmd_connect();
 
-    /*root object contained three object [method, params, id]*/
-    Object root;
-    root["method"] = "transact";
+	/*root object contained three object [method, params, id]*/
+	Object root;
+	root["method"] = "transact";
 
-    Array params;
-    params.push_back("Open_vSwitch");
+	Array params;
+	params.push_back("Open_vSwitch");
 
-    Object first_obj;
-    Object row;
-    Array iface;
-    Array iface1;
-    Array iface2;
+	Object first_obj;
+	Object row;
+	Array iface;
+	Array iface1;
+	Array iface2;
 	
 	//create Bridge
-    /*create current name of a bridge "Bridge+dnumber"*/
+	/*create current name of a bridge "Bridge+dnumber"*/
 	sprintf(temp, "%" PRIu64, dnumber);
 	strcat(sw, temp);
 	
@@ -165,46 +165,46 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	switch_id[dnumber] = string(sw);
 	
 	Array peer;
-    Array peer1;
-    Array peer2;
+	Array peer1;
+	Array peer2;
 
-    int l = 0;
+	int l = 0;
 
-    //Create controller
-    /*Create the current target of a controller*/
+	//Create controller
+	/*Create the current target of a controller*/
 	strcat(tcp_s, cli.getControllerAddress().c_str());
 	strcat(tcp_s, ":");
 	strcat(tcp_s, cli.getControllerPort().c_str());
 	strcpy(temp, tcp_s);
 	
 	first_obj["op"] = "insert";
-    first_obj["table"] = "Controller";
+    	first_obj["table"] = "Controller";
 
-    /*insert a Controller*/
-    row["target"] = temp;
-    row["local_ip"] = "127.0.0.1";
-    row["connection_mode"] = "out-of-band";
-    row["is_connected"] = true;
+    	/*insert a Controller*/
+    	row["target"] = temp;
+    	row["local_ip"] = "127.0.0.1";
+    	row["connection_mode"] = "out-of-band";
+    	row["is_connected"] = true;
 
-    first_obj["row"] = row;
+    	first_obj["row"] = row;
 
-    //create the current name of a controller --> ctrl+dnumber
-    sprintf(temp, "%s%" PRIu64, ctr, dnumber);
+    	//create the current name of a controller --> ctrl+dnumber
+    	sprintf(temp, "%s%" PRIu64, ctr, dnumber);
 
-    first_obj["uuid-name"] = temp;
+    	first_obj["uuid-name"] = temp;
 
-    params.push_back(first_obj);
+    	params.push_back(first_obj);
 
-    row.clear();
-    first_obj.clear();
+    	row.clear();
+    	first_obj.clear();
 
 	first_obj["op"] = "insert";
-    first_obj["table"] = "Bridge";
+    	first_obj["table"] = "Bridge";
 
-    /*insert a bridge*/
-    row["name"] = sw;
+    	/*insert a bridge*/
+    	row["name"] = sw;
 
-    Array port;
+    	Array port;
 	Array port1;
 	Array port2;
 	
@@ -217,8 +217,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	port1.clear();
 	port.clear();
 
-    Array ctrl;
-    ctrl.push_back("set");
+    	Array ctrl;
+    	ctrl.push_back("set");
 
 	Array ctrl1;
 	Array ctrl2;
@@ -233,7 +233,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	
 	ctrl.push_back(ctrl1);
 
-    row["controller"] = ctrl;
+    	row["controller"] = ctrl;
 
 	peer.push_back("map");
 	
@@ -243,72 +243,72 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	peer1.push_back(peer2);
 	peer.push_back(peer1);
 
-    row["other_config"] = peer;
+    	row["other_config"] = peer;
 
-    row["protocols"] = of_version;
+    	row["protocols"] = of_version;
 
-    first_obj["row"] = row;
+    	first_obj["row"] = row;
 
-    first_obj["uuid-name"] = sw;
+    	first_obj["uuid-name"] = sw;
 
-    params.push_back(first_obj);
+    	params.push_back(first_obj);
 
-    row.clear();
-    first_obj.clear();
-    port.clear();
-    port1.clear();
-    port2.clear();
-    ctrl.clear();
-    ctrl1.clear();
-    ctrl2.clear();
-    peer.clear();
-    peer1.clear();
-    peer2.clear();
+    	row.clear();
+    	first_obj.clear();
+    	port.clear();
+    	port1.clear();
+    	port2.clear();
+    	ctrl.clear();
+    	ctrl1.clear();
+    	ctrl2.clear();
+    	peer.clear();
+    	peer1.clear();
+    	peer2.clear();
 
-    dnumber_new = dnumber;
+    	dnumber_new = dnumber;
 
-    /*Object with four items [op, table, where, mutations]*/
-    Object second_obj;
-    second_obj["op"] = "mutate";
-    second_obj["table"] = "Open_vSwitch";
+    	/*Object with four items [op, table, where, mutations]*/
+    	Object second_obj;
+    	second_obj["op"] = "mutate";
+    	second_obj["table"] = "Open_vSwitch";
 
-    /*Empty array [where]*/
-    Array where;
-    second_obj["where"] = where;
+    	/*Empty array [where]*/
+    	Array where;
+    	second_obj["where"] = where;
 
-    /*Array with one element*/
-    Array w_array;
+    	/*Array with one element*/
+    	Array w_array;
 
-    /*Array  with three elements*/
-    Array m_array;
-    m_array.push_back("bridges");
-    m_array.push_back("insert");
+    	/*Array  with three elements*/
+    	Array m_array;
+    	m_array.push_back("bridges");
+    	m_array.push_back("insert");
 
-    /*Array with two elements*/
-    Array i_array;
-    i_array.push_back("set");
+    	/*Array with two elements*/
+    	Array i_array;
+    	i_array.push_back("set");
 
-    /*Array with one element*/
-    Array s_array;
+    	/*Array with one element*/
+    	Array s_array;
 
-    /*Array with two element*/
-    Array a_array;
-    a_array.push_back("named-uuid");
-    a_array.push_back(sw);
+    	/*Array with two element*/
+    	Array a_array;
+    	a_array.push_back("named-uuid");
+    	a_array.push_back(sw);
 
-    s_array.push_back(a_array);
+	s_array.push_back(a_array);
 
-    i_array.push_back(s_array);
+	i_array.push_back(s_array);
 
-    m_array.push_back(i_array);
+    	m_array.push_back(i_array);
 
-    w_array.push_back(m_array);
+    	w_array.push_back(m_array);
 
-    second_obj["mutations"] = w_array;
+    	second_obj["mutations"] = w_array;
 
-    params.push_back(second_obj);
+    	params.push_back(second_obj);
 
-    root["params"] = params;
+    	root["params"] = params;
 	root["id"] = id;
 
 	w_array.clear();
@@ -320,19 +320,19 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	//Increment transaction id
 	id++;
 
-    string *strr = new string[256];
+    	string *strr = new string[256];
 
-    stringstream ss;
+    	stringstream ss;
  	write_formatted(root, ss);
 
-    nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+    	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
 	if (nwritten == sockFAILURE)
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 		throw commandsException();
 	}
 
-    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -340,46 +340,46 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 
  	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
+    	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+    	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+    	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	//parse json response
 	Value value;
-    read( read_buf, value );
-    Object rootNode = value.getObject();
+    	read( read_buf, value );
+    	Object rootNode = value.getObject();
 
-    for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
-    {
-    	const string name = (*it).first;
-        const Value &node = (*it).second;
+	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+	{
+		const string name = (*it).first;
+		const Value &node = (*it).second;
 
-        if (name == "result")
-        {
-     		const Array &result = node.getArray();
-     	
-     		for(i=0;i<result.size();i++){
-		 		Object uuidNode = result[i].getObject();
-		 		
-		 		for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
-				{
-					const string name1 = (*it1).first;
-		    		const Value &node1 = (*it1).second;
-		    			
-					if(name1 == "uuid"){
-						const Array &stuff1 = node1.getArray();
-		 				strr[i] = stuff1[1].getString();
-					} else if(name1 == "details"){
-						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
-						throw commandsException();
-					}
-				}	
-     		}	
-        }
+		if (name == "result")
+		{
+	     		const Array &result = node.getArray();
+	     	
+	     		for(i=0;i<result.size();i++){
+			 		Object uuidNode = result[i].getObject();
+			 		
+			 		for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+					{
+						const string name1 = (*it1).first;
+			    		const Value &node1 = (*it1).second;
+			    			
+						if(name1 == "uuid"){
+							const Array &stuff1 = node1.getArray();
+			 				strr[i] = stuff1[1].getString();
+						} else if(name1 == "details"){
+							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
+							throw commandsException();
+						}
+					}	
+	     		}	
+		}
 	}
 
 	//store the switch-uuid
-    switch_uuid[dnumber] = strr[i-2];
+    	switch_uuid[dnumber] = strr[i-2];
 
 	/*create physical ports ports*/
 	if(ports.size() !=0){
@@ -394,7 +394,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	
 	/*Create interfaces related by the nf ports*/
 	map<string,list<string> > out_nf_ports_name_on_switch;
-    if(nfs.size() != 0){
+    	if(nfs.size() != 0){
         		
 		/*for each network function port in the list of nfs*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
@@ -449,14 +449,29 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	if(endpoints.size() != 0)
 	{
 		/*for each endpoint in the list of endpoints*/
-		for(map<string,pair<string,string> >::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
+		for(map<string,list<string> >::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
 		{
 			char gre[64] = "gre";
 		
 			string id = ep->first;
-			string remote_ip = ep->second.first;
+			string local_ip;
+			string remote_ip;
+			string key;
+
+			list<string> mylist = ep->second;
+			/*save the params of gre tunnel*/
+			while (!mylist.empty())
+		  	{
+				if(i == 0)
+		    			local_ip = mylist.front();
+				if(i == 1)
+		    			remote_ip = mylist.front();
+				if(i == 2)
+		    			key = mylist.front();
+		    		mylist.pop_front();
+		  	}
 			
-	    	char ifac[64] = "iface";
+	    		char ifac[64] = "iface";
 	    	
 			sprintf(temp, "%d", gnumber);
 			strcat(gre, temp);
@@ -466,7 +481,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			
 			gnumber++;
 			
-			add_endpoint(dnumber, (char *)remote_ip.c_str(), gre, ifac, s);
+			add_endpoint(dnumber, (char *)local_ip.c_str(), (char *)remote_ip.c_str(), (char *)key.c_str(), gre, ifac, s);
 			
 			endpoints_ports[id] = rnumber-1;
 			
@@ -483,7 +498,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		{
 			strcpy(vrt, "vport");
 			strcpy(trv, "vport");
-	    	char ifac[64] = "iface";
+	    		char ifac[64] = "iface";
 	    	
 			sprintf(temp, "%d", pnumber);
 			strcat(vrt, temp);
@@ -520,36 +535,36 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		}
 	}
 	
-    //increment switch number
-    dnumber++;
+    	//increment switch number
+    	dnumber++;
 
-    root.clear();
-    params.clear();
-    row.clear();
-    first_obj.clear();
-    port2.clear();
-    port1.clear();
-    port.clear();
-    peer.clear();
-    peer1.clear();
-    peer2.clear();
+    	root.clear();
+    	params.clear();
+    	row.clear();
+    	first_obj.clear();
+    	port2.clear();
+    	port1.clear();
+    	port.clear();
+    	peer.clear();
+    	peer1.clear();
+    	peer2.clear();
 
-    pnumber = nfnumber_old;
+    	pnumber = nfnumber_old;
 
-    uint64_t pi = 0;
+    	uint64_t pi = 0;
 
-    Array ma;
+    	Array ma;
 	Array maa;
 	
 	Array third_object;
 	Array fourth_object;
 	
 	//disconnect socket
-    cmd_disconnect(s);
+    	cmd_disconnect(s);
 	
 	l = 0;
 	
-    if(vport.size() != 0)
+    	if(vport.size() != 0)
 	{
 		for(list<uint64_t>::iterator nf = vport.begin(); nf != vport.end(); nf++)
 		{
@@ -595,7 +610,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		}
 	}
 
-    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
+    	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
     	
 	return clo;
 }
@@ -604,7 +619,7 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 	
 	char temp[64] = "", tmp[64] = "";
 	
-    ssize_t nwritten;
+    	ssize_t nwritten;
 	
 	char read_buf[4096] = "";
 	
@@ -915,11 +930,11 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 	}
 }
 
-void commands::add_endpoint(uint64_t dpi, char remote_ip[64], char gre[64], char ifac[64], int s){
+void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64], char key[64], char gre[64], char ifac[64], int s){
 	
-    ssize_t nwritten;
+    	ssize_t nwritten;
 	
-	char read_buf[4096] = "", tmmp[64];
+	char read_buf[4096] = "";
 	
 	int r = 0;
 	
@@ -935,7 +950,7 @@ void commands::add_endpoint(uint64_t dpi, char remote_ip[64], char gre[64], char
 	Array fourth_object;
 
 	//connect socket
-    s = cmd_connect();
+    	s = cmd_connect();
 
 	root["method"] = "transact";
 
@@ -956,20 +971,24 @@ void commands::add_endpoint(uint64_t dpi, char remote_ip[64], char gre[64], char
 	/*Add options remote_ip and key*/
 	peer.push_back("map");
 	
+	peer2.push_back("local_ip");
+	peer2.push_back(local_ip);		
+	peer1.push_back(peer2);
+	peer2.clear();
+
 	peer2.push_back("remote_ip");
 	peer2.push_back(remote_ip);		
 	peer1.push_back(peer2);
 	peer2.clear();
 	
 	peer2.push_back("key");
-	sprintf(tmmp, "%d", gnumber-1);
-	peer2.push_back(tmmp);		
+	peer2.push_back(key);		
 	peer1.push_back(peer2);
 	peer2.clear();
 	
 	peer.push_back(peer1);
 
-    row["options"] = peer;
+    	row["options"] = peer;
 		
 	first_obj["row"] = row;
 		
@@ -1648,10 +1667,26 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	AddEndpointOut *apf = NULL;
 	
+	int i = 0;
 	char gre[64] = "gre", temp[64];
 	
 	string id = aepi.getEPname();
-	string remote_ip = aepi.getEPiface().second;
+	string local_ip;
+	string remote_ip;
+	string key;
+
+	list<string> mylist = aepi.getEPparam();
+	/*save the params of gre tunnel*/
+	while (!mylist.empty())
+  	{
+		if(i == 0)
+    			local_ip = mylist.front();
+		if(i == 1)
+    			remote_ip = mylist.front();
+		if(i == 2)
+    			key = mylist.front();
+    		mylist.pop_front();
+  	}
 			
 	char ifac[64] = "iface";
 	    	
@@ -1662,9 +1697,9 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	strcat(ifac, temp);
 			
 	gnumber++;
-			
+
 	//create endpoint
-	add_endpoint(aepi.getDpid(), (char *)remote_ip.c_str(), gre, ifac, s);
+	add_endpoint(aepi.getDpid(), (char *)local_ip.c_str(), (char *)remote_ip.c_str(), (char *)key.c_str(), gre, ifac, s);
 	
 	endpoint_l[aepi.getDpid()].push_back(id);
 	

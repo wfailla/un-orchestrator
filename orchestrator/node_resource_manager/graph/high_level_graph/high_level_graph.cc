@@ -294,7 +294,7 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::addEndPoint(string ep, pair<string, string> p)
+bool Graph::addEndPoint(string ep, list<string> p)
 {	
 	if(endpoints.count(ep) != 0)
 		return false;
@@ -304,14 +304,14 @@ bool Graph::addEndPoint(string ep, pair<string, string> p)
 	return true;
 }
 
-map<string, pair<string, string> > Graph::getEndPoints()
+map<string, list<string> > Graph::getEndPoints()
 {
 	return endpoints;
 }
 
 bool Graph::isDefinedHere(string endpoint)
 {
-	for(map<string, pair<string, string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
+	for(map<string, list<string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
 	{
 			string ep = mep->first;
 			

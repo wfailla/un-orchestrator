@@ -17,10 +17,13 @@ protected:
 
 	static string nfName(string name_port);
 	static unsigned int nfPort(string name_port);
-	
+	static bool nfIsPort(string name_port);	
+
+	static string epPort(string name_port);
+
 	static unsigned int graphEndPoint(string name_port);
 	
-	static bool parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, highlevel::Graph &graph);
+	static bool parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, highlevel::Graph &graph);
 	
 private:
 	static bool validateMac(const char* mac);

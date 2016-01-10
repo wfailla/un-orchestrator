@@ -58,9 +58,9 @@ private:
 	map<string,map<string, unsigned int> >  network_functions;
 	
 	/**
-	*	@brief: The map is <endpoint name, pair<node, interface>>. It contains endpoint ports
+	*	@brief: The map is <endpoint name, list params>. It contains endpoint ports
 	*/
-	map<string,pair<string, string> > endpoints_ports;
+	map<string,list<string> > endpoints_ports;
 	
 	/**
 	*	@brief: The map is <endpoint name, endpoint id>. It contains endpoint id
@@ -106,7 +106,7 @@ private:
 	map<string, uint64_t> endpoints_vlinks;
 
 public:
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string,pair<string, string> > endpoints_ports, vector<VLink> virtual_links,map<string,nf_t>  nf_types);
+	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string,list<string> > endpoints_ports, vector<VLink> virtual_links,map<string,nf_t>  nf_types);
 
 	string getControllerAddress();
 	string getControllerPort();
@@ -116,7 +116,7 @@ public:
 	set<string> getNetworkFunctionsName();
 	list<string> getNetworkFunctionsPortNames(string nf);
 	
-	map<string,pair<string, string> > getEndpointsPorts();
+	map<string,list<string> > getEndpointsPorts();
 
 	map<string,unsigned int > getEndpointsPortsId();
 
@@ -167,7 +167,7 @@ protected:
 	void addNF(string name, list< unsigned int> ports, nf_t type);
 	void removeNF(string nf);
 	
-	void addEndpoint(string name, pair<string, string> interface);
+	void addEndpoint(string name, list<string> param);
 	void removeEndpoint(string ep);
 };
 
