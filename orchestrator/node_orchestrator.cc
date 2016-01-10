@@ -344,14 +344,10 @@ bool usage(void)
 	"        Mask that specifies which cores must be used for DPDK network functions. These   \n" \
 	"        cores will be allocated to the DPDK network functions in a round robin fashion   \n" \
 	"        (default is 0x2)                                                                 \n" \
-<<<<<<< HEAD
 	"  --d configuration file                                                                 \n" \
 	"        File that specifies some parameters such as rest port, physical port file,       \n" \
 	"        nffg file to deploy at the boot time and if client authentication is required    \n" \
-	"  --i admin password                                                                     \n" \
-=======
 	"  --i admin_password                                                                     \n" \
->>>>>>> 331cb41f102bf1a39d10c03d038a4ed3b603d281
 	"        Initialize local database and set the password for the default 'admin' user  	  \n" \
 	"  --h                                                                                    \n" \
 	"        Print this help.                                                                 \n" \
