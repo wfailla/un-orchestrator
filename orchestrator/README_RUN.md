@@ -152,5 +152,5 @@ instance and run the alternative version installed:
 	$ sudo service libvirt-bin stop
 	$ sudo /usr/local/sbin/libvirtd --daemon
 	
-Similarly, if you use `virsh`, you would have to use the version from `/usr/local/bin`
+Similarly, if you use `virsh`, you would have to use the version from `/usr/local/bin`.
 
