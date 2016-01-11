@@ -32,12 +32,26 @@
 		<implementation type="docker" uri="example"/>
 		<implementation type="dpdk" uri="https://nf_repository.com/example" cores="1" location="remote"/>
 		<implementation type="dpdk" uri="../NFs/dpdk/example/build/example" cores="1" location="local"/>
-		<implementation type="kvm" uri="../NFs/kvm/example/example_vnf_template.xml"/>
+		<implementation type="kvm" uri="../NFs/kvm/example/example_vnf_template.xml">
+			<!--
+				KVM requires to specify, for each port of the VM, it's type.
+				Note that some types are not available with all the possibile vSwitches.
+				Possible values are:
+				*	vhost
+				*	usvhost
+				*	ivshmem
+			-->
+			<port id="0" port-type="vhost"/>
+			<port id="1" port-type="vhost"/>
+		</implementation>
 	</network-function>
 
 	<network-function name="usvhost_example"  description="Network function based on user space vhost">
 		<!-- Point to a Libvirt XML domain template -->
-		<implementation type="kvm" uri="../NFs/kvm/example-dpdk-usvhost/kvm_usvhost_vnf.xml"/>
+		<implementation type="kvm" uri="../NFs/kvm/example-dpdk-usvhost/kvm_usvhost_vnf.xml">
+			<port id="0" port-type="usvhost"/>
+			<port id="1" port-type="usvhost"/>
+		</implementation>
 	</network-function>
 
 	<network-function name="firewall"  num-ports="2" description="iptables based firewall">

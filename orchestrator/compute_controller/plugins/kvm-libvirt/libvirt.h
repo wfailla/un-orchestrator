@@ -21,8 +21,8 @@
 #include "../../nfs_manager.h"
 #include "../../startNF_in.h"
 
+#include "ivshmem_cmdline_generator.h"
 #ifdef ENABLE_KVM_IVSHMEM
-	#include "ivshmem_cmdline_generator.h"
 	#include "../../../utils/sockutils.h"
 #endif
 
@@ -41,8 +41,8 @@ class Libvirt : public NFsManager
 {
 private:
 
-#ifndef ENABLE_KVM_IVSHMEM
-
+#ifndef DIRECT_KVM_IVSHMEM
+	
 	/**
 	*	@bfief: Connection towards Libvirt
 	*/
@@ -68,7 +68,7 @@ private:
 #endif
 
 
-#ifndef ENABLE_KVM_IVSHMEM
+#ifndef DIRECT_KVM_IVSHMEM
 	/**
 	*	@brief:	Open a connection with QEMU/KVM
 	*/
