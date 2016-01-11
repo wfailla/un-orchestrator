@@ -31,8 +31,11 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; in the cloned folder
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
-	$ git clone https://github.com/bisdn/rofl-common
 	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
+	; Please note that you have to use version 0.6; newer versions have a different API that
+	; is not compatible with our code.
+	;
+	$ git clone https://github.com/bisdn/rofl-common
 	$ cd rofl-common/
 	$ git checkout stable-0.6
 
@@ -143,7 +146,7 @@ Then execute the following commands:
 
     $ tar -xf dpdk-2.1.0.tar.gz
     $ cd dpdk-2.1.0
-    $ export DPDK_DIR=\`pwd\`
+    $ export DPDK_DIR=`pwd`
     ; modify the file `$DPDK_DIR/config/common_linuxapp` so that
     ; `CONFIG_RTE_BUILD_COMBINE_LIBS=y`
     ; `CONFIG_RTE_LIBRTE_VHOST=y`
@@ -172,7 +175,7 @@ Now create the ovsdb database:
 	
 	$ mkdir -p /usr/local/etc/openvswitch
 	$ mkdir -p /usr/local/var/run/openvswitch
-	$ rm /usr/local/etc/openvswitch/conf.db
+	$ sudo rm /usr/local/etc/openvswitch/conf.db
 	$ sudo ovsdb-tool create /usr/local/etc/openvswitch/conf.db  \
 		/usr/local/share/openvswitch/vswitch.ovsschema
 
@@ -197,7 +200,7 @@ Two flavors of virtual machines are supported:
   * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes within the virtual machines. In this case, the host backend for the virtual NICs is implemented through `vhost` in case OvS and xDPd as vSwitches, and through `vhost-user` when OvS-DPDK is used as vSwitch;
   * virtual machines that exchange packets with the vSwitch through shared memory (`ivshmem`). This configuration is oriented to performance, and only supports DPDK-based processes within the virtual machine.
 	
-#### Standard QEMU/KVM (without `ivshmem` support)
+#### Standard QEMU/KVM (without `ivshmem` or `vhost-user` support)
 
 To install the standard QEMU/KVM/Libvirt execution environment, execute the
 following command:
@@ -228,17 +231,23 @@ alternative version which must then be used instead of the default one:
 
 Similarly, if you use `virsh`, you would have to use the version from `/usr/local/bin`.
 
-#### QEMU with `ivshmem` support
+#### QEMU for `ivshmem` and `vhost-user` support
 
 To compile and install the QEMU/KVM execution environment with the support to `ivshmem`,
-further steps are required:
+or the support for the way the un-orchestrator sets up `vhost-user`, you need a recent qemu
+version.
 
-	$ git clone https://github.com/01org/dpdk-ovs
-	$ cd dpdk-ovs/qemu
-	$ mkdir -p bin/
-	$ cd bin
-	$ sudo apt-get install libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev
-	$ ../configure
+Additionally, for `ivshmem` support, a patch (`[un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch`) 
+is needed to introduce the same changes that were present in the old `qemu-1.6-based` 
+version included in OVDK (Intel DPDK vSwitch).
+
+Here there are the required steps:
+
+	$ git clone https://github.com/qemu/qemu.git
+	$ cd qemu
+	$ git checkout v2.2.1
+	$ git apply [un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch
+	$ ./configure --target-list=x86_64-softmmu
 	$ make
 	$ sudo make install
 

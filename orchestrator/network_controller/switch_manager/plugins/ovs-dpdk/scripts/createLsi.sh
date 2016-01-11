@@ -29,7 +29,7 @@ ovs-vsctl --no-wait set-controller $bridgeName tcp:$controller_ip:$controller_po
 #XXX The two following commands are used to remove in-band controller, which causes
 #loops in particular configurations
 ovs-vsctl --no-wait set controller $bridgeName connection-mode=out-of-band
-ovs-vsctl --no-wait set $bridgeName other-config:disable-in-band=true
+ovs-vsctl --no-wait set bridge $bridgeName other-config:disable-in-band=true
 
 exit 1
 
