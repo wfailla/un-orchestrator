@@ -58,22 +58,45 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
 ENDIF()
 
+##############################################################################################################
 
-# Rather complicated CMake code for selecting the type of virtual machines supported by the UN
-SET(ENABLE_KVM "NONE" CACHE STRING "KVM-based VMs supported: NONE, KVM, KVM-IVSHMEM")
-SET(ENABLE_KVM_VALUES "NONE" "KVM" "KVM-IVSHMEM") #Add here other implementations
-SET_PROPERTY(CACHE ENABLE_KVM PROPERTY STRINGS ${ENABLE_KVM_VALUES})
-LIST(FIND ENABLE_KVM_VALUES ${ENABLE_KVM} ENABLE_KVM_INDEX)
+## Rather complicated CMake code for selecting the type of virtual machines supported by the UN
+#SET(ENABLE_KVM "NONE" CACHE STRING "KVM-based VMs supported: NONE, KVM, KVM-IVSHMEM")
+#SET(ENABLE_KVM_VALUES "NONE" "KVM" "KVM-IVSHMEM") #Add here other implementations
+#SET_PROPERTY(CACHE ENABLE_KVM PROPERTY STRINGS ${ENABLE_KVM_VALUES})
+#LIST(FIND ENABLE_KVM_VALUES ${ENABLE_KVM} ENABLE_KVM_INDEX)
+#
+#IF(${ENABLE_KVM_INDEX} EQUAL -1)
+#	message(FATAL_ERROR "Option ${ENABLE_KVM} not supported, valid entries are ${ENABLE_KVM_VALUES}")
+#ENDIF()
+#IF(${ENABLE_KVM_INDEX} EQUAL 1)
+#	ADD_DEFINITIONS(-DENABLE_KVM)
+#ENDIF()
+#IF(${ENABLE_KVM_INDEX} EQUAL 2)
+#	ADD_DEFINITIONS(-DENABLE_KVM_IVSHMEM -DENABLE_KVM)
+#ENDIF()
 
-IF(${ENABLE_KVM_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${ENABLE_KVM} not supported, valid entries are ${ENABLE_KVM_VALUES}")
-ENDIF()
-IF(${ENABLE_KVM_INDEX} EQUAL 1)
+#IVANO: added to support both IVSHMEM and other ports at the same time.
+
+OPTION(
+	ENABLE_KVM
+	"Turn on to support NFs implemented in KVM-based virtual machines"
+	ON
+)
+IF(ENABLE_KVM)
 	ADD_DEFINITIONS(-DENABLE_KVM)
-ENDIF()
-IF(${ENABLE_KVM_INDEX} EQUAL 2)
+ENDIF(ENABLE_KVM)
+
+OPTION(
+	ENABLE_KVM-IVSHMEM
+	"Turn on to support NFs implemented in KVM-based virtual machines and shared memory towards the vSwitch"
+	OFF
+)
+IF(ENABLE_KVM-IVSHMEM)
 	ADD_DEFINITIONS(-DENABLE_KVM_IVSHMEM -DENABLE_KVM)
-ENDIF()
+ENDIF(ENABLE_KVM-IVSHMEM)
+
+#################################################################################################################
 
 OPTION(
 	RUN_NFS
@@ -87,7 +110,7 @@ ENDIF(RUN_NFS)
 OPTION(
 	ENABLE_DOCKER
 	"Turn on the support of NFs implemented in Docker containers"
-	ON
+	OFF
 )
 IF(ENABLE_DOCKER)
 	ADD_DEFINITIONS(-DENABLE_DOCKER)
@@ -103,8 +126,8 @@ IF(ENABLE_DPDK_PROCESSES)
 ENDIF(ENABLE_DPDK_PROCESSES)
 
 
-OPTION(DEBUG_KVM 
-	"Turn on the debug of the KVM-libvirt compute plugin" 
+OPTION(DEBUG_KVM
+	"Turn on the debug of the KVM-libvirt compute plugin"
 	OFF
 )
 
@@ -166,7 +189,7 @@ MARK_AS_ADVANCED(
 # Set source files
 SET(SOURCES
 	node_orchestrator.cc
-	
+
 	node_resource_manager/graph_manager/graph_manager.h
 	node_resource_manager/graph_manager/graph_manager.cc
 	node_resource_manager/graph_manager/graph_info.h
@@ -180,14 +203,14 @@ SET(SOURCES
 	node_resource_manager/graph_manager/virtual_link.cc
 	node_resource_manager/graph_manager/fileParser.h
 	node_resource_manager/graph_manager/fileParser.cc
-	
+
 	node_resource_manager/graph/match.h
 	node_resource_manager/graph/match.cc
 	node_resource_manager/graph/generic_action.h
 	node_resource_manager/graph/generic_action.cc
 	node_resource_manager/graph/vlan_action.h
 	node_resource_manager/graph/vlan_action.cc
-	
+
 	node_resource_manager/graph/low_level_graph/output_action.h
 	node_resource_manager/graph/low_level_graph/output_action.cc
 	node_resource_manager/graph/low_level_graph/graph.h
@@ -196,7 +219,7 @@ SET(SOURCES
 	node_resource_manager/graph/low_level_graph/low_level_match.cc
 	node_resource_manager/graph/low_level_graph/rule.h
 	node_resource_manager/graph/low_level_graph/rule.cc
-	
+
 	node_resource_manager/graph/high_level_graph/high_level_output_action.h
 	node_resource_manager/graph/high_level_graph/high_level_output_action.cc
 	node_resource_manager/graph/high_level_graph/high_level_output_action_nf.h
@@ -211,20 +234,20 @@ SET(SOURCES
 	node_resource_manager/graph/high_level_graph/high_level_graph.cc
 	node_resource_manager/graph/high_level_graph/high_level_match.h
 	node_resource_manager/graph/high_level_graph/high_level_match.cc
-	
-	network_controller/switch_manager/switch_manager.h		
+
+	network_controller/switch_manager/switch_manager.h
 	network_controller/switch_manager/addNFports_in.h
 	network_controller/switch_manager/addNFports_out.h
 	network_controller/switch_manager/addVirtualLink_in.h
 	network_controller/switch_manager/addVirtualLink_out.h
 	network_controller/switch_manager/createLSIout.h
 	network_controller/switch_manager/destroyNFports_in.h
-	network_controller/switch_manager/destroyVirtualLink_in.h 
-	network_controller/switch_manager/checkPhysicalPorts_in.h 
-	
+	network_controller/switch_manager/destroyVirtualLink_in.h
+	network_controller/switch_manager/checkPhysicalPorts_in.h
+
 	network_controller/openflow_controller/controller.h
 	network_controller/openflow_controller/controller.cc
-	
+
 	compute_controller/nfs_manager.h
 	compute_controller/nfs_manager.cc
 	compute_controller/compute_controller.h
@@ -236,7 +259,7 @@ SET(SOURCES
 	compute_controller/description.cc
 	compute_controller/startNF_in.h
 	compute_controller/stopNF_in.h
-	
+
 	node_resource_manager/rest_server/rest_server.h
 	node_resource_manager/rest_server/rest_server.cc
 	node_resource_manager/rest_server/match_parser.h
@@ -289,17 +312,19 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 
-IF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
+IF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
     SET(SOURCES3
     ${SOURCES2}
 	compute_controller/plugins/kvm-libvirt/libvirt.cc
-	compute_controller/plugins/kvm-libvirt/libvirt.h
+	compute_controller/plugins/kvm-libvirt/libvirt.h	
+	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
+	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
 	)
 ELSE()
      SET(SOURCES3
          ${SOURCES2}
     	)
-ENDIF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
+ENDIF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
 
 IF(ENABLE_DOCKER)
     SET(SOURCES4
@@ -327,33 +352,29 @@ ELSE()
 	)
 ENDIF(VIRTUALIZER_NFFG)
 
-IF(${ENABLE_KVM_INDEX} EQUAL 2)
-	SET(SOURCES6
-	${SOURCES5}
-	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
-	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
-	)
-	
-	IF(NOT DEFINED ENV{DPDK_PATH})
-		message(FATAL_ERROR "Could not find DPDK_PATH environment variable. Please set it to [dpdk-folder]/x86_64-ivshmem-linuxapp-gcc/")
-	ENDIF(NOT DEFINED ENV{DPDK_PATH}) 
-ELSE()
-	SET(SOURCES6
-	${SOURCES5}
-	)
-ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
+#IF(ENABLE_KVM-IVSHMEM OR ENABLE_KVM)
+#	SET(SOURCES6
+#	${SOURCES5}
+#	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
+#	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
+#	)
+#ELSE()
+#	SET(SOURCES6
+#	${SOURCES5}
+#	)
+#ENDIF(ENABLE_KVM-IVSHMEM OR ENABLE_KVM)
 
 
 IF(ENABLE_DPDK_PROCESSES)
-    SET(SOURCES7
-    ${SOURCES6}
+    SET(SOURCES6
+    ${SOURCES5}
 	compute_controller/plugins/dpdk/dpdk.h
 	compute_controller/plugins/dpdk/dpdk.cc
 	compute_controller/plugins/dpdk/dpdk_constants.h
 	)
 ELSE()
-     SET(SOURCES7
-         ${SOURCES6}
+     SET(SOURCES6
+         ${SOURCES5}
     	)
 ENDIF(ENABLE_DPDK_PROCESSES)
 
@@ -363,11 +384,11 @@ INCLUDE_DIRECTORIES (
 	/usr/include/libxml2
 )
 
-IF(${ENABLE_KVM_INDEX} EQUAL 2)
+IF(ENABLE_KVM-IVSHMEM)
 	INCLUDE_DIRECTORIES (
 		$ENV{DPDK_PATH}/include
 )
-ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
+ENDIF(ENABLE_KVM-IVSHMEM)
 
 #Include specific for the virtualizer NF-FG model defined in WP3
 IF(VIRTUALIZER_NFFG)
@@ -380,7 +401,7 @@ ENDIF(VIRTUALIZER_NFFG)
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES7}
+	${SOURCES6}
 )
 
 LINK_DIRECTORIES(
@@ -388,16 +409,14 @@ LINK_DIRECTORIES(
 	/usr/local/lib/
 	/usr/x86_64-linux-gnu/
 	/usr/lib/x86_64-linux-gnu/
-	/usr/lib/python2.7/config-x86_64-linux-gnu/	
+	/usr/lib/python2.7/config-x86_64-linux-gnu/
 )
 
-IF(${ENABLE_KVM_INDEX} EQUAL 2)
+IF(ENABLE_KVM-IVSHMEM)
 	LINK_DIRECTORIES(
 		$ENV{DPDK_PATH}/lib
 	)
-ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
-
-
+ENDIF(ENABLE_KVM-IVSHMEM)
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
@@ -417,28 +436,11 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
 #Links specific for KVM
-IF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
+IF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
 	TARGET_LINK_LIBRARIES( node-orchestrator
 		libvirt.so
 	)
-ENDIF((${ENABLE_KVM_INDEX} EQUAL 1) OR (${ENABLE_KVM_INDEX} EQUAL 2))
-
-#Links specific for KVM when used with ivshmem
-IF(${ENABLE_KVM_INDEX} EQUAL 2)
-    TARGET_LINK_LIBRARIES( node-orchestrator
-			$ENV{DPDK_PATH}/lib/libdpdk.a 
-			-ldl 
-			-latomic
-			-lpthread
-			-lm
-			-ludev
-	)
-ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
-
-#Enable c++11 in order to compile with new dpdk releases
-IF(${ENABLE_KVM_INDEX} EQUAL 2)
-	set_source_files_properties (SOURCE compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc APPEND_STRING PROPERTY COMPILE_FLAGS " -std=c++11")
-ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
+ENDIF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
 
 #Links specific for the virtualizer NF-FG model defined in WP3
 IF(VIRTUALIZER_NFFG)
@@ -448,37 +450,43 @@ IF(VIRTUALIZER_NFFG)
 	)
 ENDIF(VIRTUALIZER_NFFG)
 
+# Add configuration rules to compile command line generator
+IF(ENABLE_KVM-IVSHMEM)
+	ADD_DEPENDENCIES(node-orchestrator cmd_line_generator)
+
+	ADD_CUSTOM_TARGET(
+		cmd_line_generator
+		COMMAND make
+		WORKING_DIRECTORY compute_controller/plugins/kvm-libvirt/cmdline_generator/
+		)
+ENDIF(ENABLE_KVM-IVSHMEM)
+
 ###############################################################################
 
 #Check unsupported configurations
 
 IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
-	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported 
+	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported
 	message(FATAL_ERROR "OvS not supported with Dpdk processes")
 ENDIF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
 
-IF((${ENABLE_KVM_INDEX} EQUAL 2) AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
-	#This configuration (ovs (ofconfig/ovsdb) + kvm-ivshmem) is not supported 
+IF(ENABLE_KVM-IVSHMEM AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+	#This configuration (ovs (ofconfig/ovsdb) + kvm-ivshmem) is not supported
 	message(FATAL_ERROR "OvS not supported with KVM-IVSHMEM")
-ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
+ENDIF(ENABLE_KVM-IVSHMEM AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
 
-IF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
-	#This configuration (xdpd + kvm-ivshmem) is not supported 
+IF(ENABLE_KVM-IVSHMEM AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
+	#This configuration (xdpd + kvm-ivshmem) is not supported
 	message(FATAL_ERROR "xDPd not supported with KVM-IVSHMEM")
-ENDIF((${ENABLE_KVM_INDEX} EQUAL 2) AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
+ENDIF(ENABLE_KVM-IVSHMEM AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
 
-IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
+IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND ENABLE_KVM AND ENABLE_DPDK_PROCESSES )
 	#In case of ovs-dpdk, dpdk processes and kvm (usvhost) cannot be supported at the same time
 	message(FATAL_ERROR "OvS-DPDK does not support DPDK processes and KVM at the same time")
-ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND (${ENABLE_KVM_INDEX} EQUAL 1) AND ENABLE_DPDK_PROCESSES )
+ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND ENABLE_KVM AND ENABLE_DPDK_PROCESSES )
 
-IF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND ENABLE_DOCKER AND ((${ENABLE_KVM_INDEX} EQUAL 2) OR (ENABLE_DPDK_PROCESSES) ) )
-	#In case of ovs-dpdk, dpdk processes and/or ivshmem cannot be supported with Docker containers
-	message(FATAL_ERROR "OvS-DPDK does not support Docker containers together with DPDK processes and/or KVM-IVSHMEM")
-ENDIF( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2) AND ENABLE_DOCKER AND ((${ENABLE_KVM_INDEX} EQUAL 2) OR (ENABLE_DPDK_PROCESSES) ) )
-
-IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (${ENABLE_KVM_INDEX} EQUAL 0) )
+IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) AND (NOT ENABLE_KVM-IVSHMEM) )
 	#No execution environment is selected
 	message(FATAL_ERROR "At least one execution environmnet must be enabled")
-ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (${ENABLE_KVM_INDEX} EQUAL 0) )
+ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) AND (NOT ENABLE_KVM-IVSHMEM) )
 

@@ -112,6 +112,8 @@ Configure the system (after each reboot of the physical machine):
     ; Mount huge pages directory
     $ mkdir /dev/hugepages
     $ mount -t hugetlbfs nodev /dev/hugepages
+    
+    $ exit
 	
 Set up DPDK (after each reboot of the physical machine):
 
