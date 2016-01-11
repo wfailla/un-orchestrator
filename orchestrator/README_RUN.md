@@ -139,3 +139,16 @@ Start the switching daemon:
     $ sudo ovs-vswitchd --dpdk -c 0x1 -n 4 --socket-mem 1024,0 \
         -- unix:$DB_SOCK --pidfile --detach
 		
+## How to configure and start libvirt
+
+In case you are planning to use OvS with DPDK support as virtual switch, you have 
+to edit the file `/usr/local/etc/libvirt/qemu.conf` by adding the following line:
+
+        hugetlbfs_mount = "/dev/hugepages"
+
+Regardless of the virtual switch used, you have now to stop any running `libvirt` 
+instance and run the alternative version installed:
+
+	$ sudo service libvirt-bin stop
+	$ sudo /usr/local/sbin/libvirtd --daemon
+	

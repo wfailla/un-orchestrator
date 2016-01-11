@@ -461,6 +461,15 @@ ENDIF(VIRTUALIZER_NFFG)
 
 # Add configuration rules to compile command line generator
 IF(ENABLE_KVM-IVSHMEM)
+
+	IF(NOT DEFINED ENV{RTE_SDK})
+		message(FATAL_ERROR "Please define RTE_SDK environment variable (it must point to the DPDK folder)")
+	ENDIF(NOT DEFINED ENV{RTE_SDK})
+	
+	IF(NOT DEFINED ENV{RTE_TARGET})
+		message(FATAL_ERROR "Please define RTE_TARGET environment variable as follows: 'export RTE_TARGET=x86_64-ivshmem-linuxapp-gcc'")
+	ENDIF(NOT DEFINED ENV{RTE_TARGET})
+
 	ADD_DEPENDENCIES(node-orchestrator cmd_line_generator)
 
 	ADD_CUSTOM_TARGET(
