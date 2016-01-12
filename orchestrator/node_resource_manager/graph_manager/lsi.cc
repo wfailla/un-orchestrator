@@ -1,37 +1,27 @@
 #include "lsi.h"
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions,vector<VLink> virtual_links, map<string,nf_t>  nf_types) :
+LSI::LSI(string controllerAddress, string controllerPort,
+		 map<string,string> physical_ports,  map<string, list<unsigned int> > network_functions,
+		 vector<VLink> virtual_links, map<string,nf_t>  nf_types, map<string, vector<PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
-		nf_types(nf_types.begin(),nf_types.end()),
+		nf_types(nf_types.begin(), nf_types.end()),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
 	for(map<string,string>::iterator p = physical_ports.begin(); p != physical_ports.end(); p++)
 	{
 		this->physical_ports[p->first] = 0;
-		ports_type[p->first] = p->second;	
+		ports_type[p->first] = p->second;
 	}
 
 	//create a port name for the NF, by appending to the real name the identifier
 	//of the port
-	map<string, list< unsigned int> >::iterator nf = network_functions.begin();
-	for(; nf != network_functions.end(); nf++)
+	for(map<string, list< unsigned int> >::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		string name = nf->first;
-		//FIXME: save the the content of nf->second, and not just its size
-		//FIXME: don't use _1, _2 ecc for the name, but the ID specified by the user
-		unsigned int num_ports = (nf->second).size();
+		string nf_name = nf->first;
 		
-		map<string, unsigned int> nf_ports;
-		
-		for(unsigned int i = 0; i < num_ports; i++)
-		{
-			stringstream ss;
-			ss << name << "_" << (i+1);
-			
-			nf_ports[ss.str()] = 0;
-		}
-		this->network_functions[name] = nf_ports;
+		addNF(nf_name, nf->second, nf_types[nf_name], a_nfs_ports_type[nf_name]);
 	}
+
 }
 
 string LSI::getControllerAddress()
@@ -80,6 +70,41 @@ list<string> LSI::getNetworkFunctionsPortNames(string nf)
 		names.push_back(p->first);
 		
 	return names;
+}
+
+PortType LSI::getNetworkFunctionPortType(string nf, string port_name)
+{
+	map<string, map< string, PortType> >::iterator nf_it = nfs_ports_type.find(nf);
+	if (nf_it == nfs_ports_type.end())
+		return UNDEFINED_PORT;
+
+	map<string, PortType>& ports = nf_it->second;
+	map< string, PortType >::iterator port_it = ports.find(port_name);
+	if (port_it == ports.end())
+		return UNDEFINED_PORT;
+
+	return port_it->second;
+}
+
+map<string, list< struct nf_port_info> > LSI::getNetworkFunctionsPortsInfo()
+{
+	map<string, list<struct nf_port_info> > res;
+
+	for (map<string,map<string, unsigned int> >::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); ++nf_it) {
+		const string& nf_name = nf_it->first;
+		map<string, unsigned int>& ports = nf_it->second;
+		list<struct nf_port_info> pi_list;
+		for (map<string, unsigned int>::iterator port_it = ports.begin(); port_it != ports.end(); ++port_it) {
+			const string& port_name = port_it->first;
+			struct nf_port_info pi;
+			pi.port_name = port_name;
+			pi.port_type = getNetworkFunctionPortType(nf_name, port_name);
+			pi_list.push_back(pi);
+		}
+		res[nf_name] = pi_list;
+	}
+
+	return res;
 }
 
 list<uint64_t> LSI::getVirtualLinksRemoteLSI()
@@ -157,16 +182,14 @@ map<string,string> LSI::getPortsType()
 
 map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
 {
-	map<string, unsigned int> ports = network_functions[nf];
-	return ports;
+	return network_functions[nf];
 }
 
 list<string> LSI::getNetworkFunctionsPortsNameOnSwitch(string nf)
 {
 	assert(networkFunctionsPortsNameOnSwitch.count(nf) != 0);
 
-	list<string> ports = networkFunctionsPortsNameOnSwitch[nf];
-	return ports;
+	return networkFunctionsPortsNameOnSwitch[nf];
 }
 
 vector<VLink> LSI::getVirtualLinks()
@@ -274,13 +297,14 @@ void LSI::removeEndPointvlink(string endpoint)
 	endpoints_vlinks.erase(it);
 }
 
-void LSI::addNF(string name, list< unsigned int> ports, nf_t type)
+void LSI::addNF(string name, list< unsigned int> ports, nf_t type, const vector<PortType>& a_nf_ports_type)
 {
 	//FIXME: save the the content of nf->second, and not just its size
 	//FIXME: don't use _1, _2 ecc for the name, but the ID specified by the user
 	unsigned int num_ports = ports.size();
-	
+
 	map<string, unsigned int> nf_ports;
+	map<string, PortType> nf_ports_type;
 	
 	for(unsigned int i = 0; i < num_ports; i++)
 	{
@@ -288,8 +312,12 @@ void LSI::addNF(string name, list< unsigned int> ports, nf_t type)
 		ss << name << "_" << (i+1);
 		
 		nf_ports[ss.str()] = 0;
+
+		//Also store the port type
+		nf_ports_type[ss.str()] = a_nf_ports_type[i];
 	}
 	network_functions[name] = nf_ports;
+	nfs_ports_type[name] = nf_ports_type;
 	
 	nf_types[name] = type;
 }

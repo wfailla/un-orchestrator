@@ -5,6 +5,7 @@
 
 #include "virtual_link.h"
 #include "../../compute_controller/nf_type.h"
+#include "../../compute_controller/description.h"
 
 #include <map>
 #include <set>
@@ -58,6 +59,13 @@ private:
 	map<string,map<string, unsigned int> >  network_functions;
 	
 	/**
+	*	@brief: Types of the NFs ports connected to the LSI.
+	*		The map is
+	*			<nf name, map <nf port name, port_type> >
+	*/
+	map<string, map<string, PortType> > nfs_ports_type;
+
+	/**
 	*	@brief: Names of the ports connected to the LSI and related to network functions
 	*		The map is
 	*			<nf name, list<nf ports name> >
@@ -96,7 +104,7 @@ private:
 	map<string, uint64_t> endpoints_vlinks;
 
 public:
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions,vector<VLink> virtual_links,map<string,nf_t>  nf_types);
+	LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions, vector<VLink> virtual_links, map<string,nf_t> nf_types, map<string, vector<PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
@@ -105,6 +113,8 @@ public:
 
 	set<string> getNetworkFunctionsName();
 	list<string> getNetworkFunctionsPortNames(string nf);
+	PortType getNetworkFunctionPortType(string nf, string port);
+	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
 
 	list<uint64_t> getVirtualLinksRemoteLSI();
 
@@ -149,7 +159,7 @@ protected:
 	int addVlink(VLink vlink);
 	void removeVlink(uint64_t ID);
 
-	void addNF(string name, list< unsigned int> ports, nf_t type);
+	void addNF(string name, list< unsigned int> ports, nf_t type, const vector<PortType>& nf_ports_type);
 	void removeNF(string nf);
 };
 
