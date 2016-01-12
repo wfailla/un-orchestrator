@@ -1191,8 +1191,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 
 			AddVirtualLinkIn avli(dpid,dpid0);
 			avlo = switchManager.addVirtualLink(avli);
-			assert(avlo != NULL);
 
+			assert(avlo != NULL);
 			lsi->setVLinkIDs(vlinkPosition,avlo->getIdA(),avlo->getIdB());
 
 			delete(avlo);

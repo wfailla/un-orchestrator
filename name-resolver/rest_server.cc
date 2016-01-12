@@ -135,7 +135,7 @@ void RestServer::request_completed (void *cls, struct MHD_Connection *connection
 
 	if (NULL == con_info)
 		return;
-
+	
 	free (con_info);
 	*con_cls = NULL;
 }
@@ -145,19 +145,19 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 			const char *upload_data,
 			size_t *upload_data_size, void **con_cls)
 {
-
+	
 	if(NULL == *con_cls)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New %s request for %s using version %s", method, url, version);
 		if(LOGGING_LEVEL <= ORCH_DEBUG)
 			MHD_get_connection_values (connection, MHD_HEADER_KIND, &print_out_key, NULL);
-
+	
 		struct connection_info_struct *con_info;
 		con_info = (struct connection_info_struct*)malloc (sizeof (struct connection_info_struct));
 
 		if (NULL == con_info)
 			return MHD_NO;
-
+		
 		if (0 != strcmp (method, GET))
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Method \"%s\" not implemented",method);
@@ -166,14 +166,14 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 			MHD_destroy_response (response);
 			return ret;
 		}
-
+			
 		*con_cls = (void*) con_info;
 		return MHD_YES;
 	}
 
 	if (0 == strcmp (method, GET))
 		return doGet(connection,url);
-
+		
 	//XXX: just for the compiler
 	return MHD_YES;
 }
@@ -190,15 +190,14 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 	struct MHD_Response *response;
 	int ret;
 	bool digest = false;
-
+	
 	//Check the URL
 	char delimiter[] = "/";
  	char * pnt;
 
 	char nf_name[BUFFER_SIZE];
 	char tmp[BUFFER_SIZE];
-        strcpy(tmp,url);
-        printf("\n\nGOT: \"%s\"\n\n", url);
+	strcpy(tmp,url);
 	pnt=strtok(tmp, delimiter);
 	int i = 0;
 	while( pnt!= NULL )
@@ -221,7 +220,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 				else
 					strcpy(nf_name,pnt);
 		}
-
+		
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
@@ -233,7 +232,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 		MHD_destroy_response (response);
 		return ret;
 	}
-
+	
 	if(MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Host") == NULL)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Host\" header not present in the request");
@@ -242,7 +241,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 		MHD_destroy_response (response);
 		return ret;
 	}
-
+	
 	try
 	{
 		Object json ;
@@ -251,7 +250,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 		if(i == 1)
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Required all the resources");
-
+		
 			Array networkFunctions;
 			for(set<NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 				networkFunctions.push_back((*nf)->toJSON());
@@ -262,7 +261,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 			if(digest)
 			{
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Required a summary of the resources");
-
+				
 				Array networkFunctions;
 				for(set<NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 				{
@@ -287,17 +286,17 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 				ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
 				MHD_destroy_response (response);
-				return ret;
+				return ret;	
 			}
 		}
-
-ok:
+		
+ok:		
 		stringstream ssj;
  		write_formatted(json, ssj );
  		string sssj = ssj.str();
  		char *aux = (char*)malloc(sizeof(char) * (sssj.length()+1));
  		strcpy(aux,sssj.c_str());
-		response = MHD_create_response_from_buffer (strlen(aux),(void*) aux, MHD_RESPMEM_PERSISTENT);
+		response = MHD_create_response_from_buffer (strlen(aux),(void*) aux, MHD_RESPMEM_PERSISTENT);		
 		MHD_add_response_header (response, "Content-Type",JSON_C_TYPE);
 		MHD_add_response_header (response, "Cache-Control",NO_CACHE);
 		ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
@@ -310,7 +309,7 @@ ok:
 		ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 		MHD_destroy_response (response);
 		return ret;
-	}
+	}	
 }
 
 

@@ -75,12 +75,10 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
     list<pair<unsigned int, unsigned int> > out_virtual_links;
     list<uint64_t> vlinks = cli.getVirtualLinksRemoteLSI();
     for(list<uint64_t>::iterator vl = vlinks.begin(); vl != vlinks.end(); vl++) {
-        unsigned int s_port_id = nextPort[dpid]++;
-        unsigned int d_port_id = nextPort[*vl]++;
-        AddVirtualLinkIn avli(s_port_id, d_port_id);
+        AddVirtualLinkIn avli(dpid, *vl);
         AddVirtualLinkOut *avlo = addVirtualLink(avli);
         if (avlo == NULL) logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "error in vlink add");
-        out_virtual_links.push_back(make_pair(s_port_id, d_port_id));
+        out_virtual_links.push_back(make_pair(dpid, *vl));
         vlink_n++;
     }
 
@@ -116,6 +114,9 @@ AddNFportsOut *ERFSManager::addNFPorts(AddNFportsIn anpi)
         }
         // TODO - Really check result!
         nf_ports_ids.insert(PortsNameIdMap::value_type(*nfp, port_id));
+        stringstream pid;
+        pid << port_id;
+        port_name_on_switch.push_back(pid.str());
 //        port_name_on_switch.push_back();
     }
     anpo = new AddNFportsOut(anpi.getNFname(), nf_ports_ids, port_name_on_switch);
@@ -142,6 +143,8 @@ AddVirtualLinkOut *ERFSManager::addVirtualLink(AddVirtualLinkIn avli)
         logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
         throw ERFSManagerException();
     }
+    cmd_add.str("");
+    cmd_add.clear();
 
     // XSWITCH port B
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " XSWITCH port %u.%u (type=%s)", avli.getDpidB(), b_port_id, port_type);
@@ -152,6 +155,8 @@ AddVirtualLinkOut *ERFSManager::addVirtualLink(AddVirtualLinkIn avli)
         logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
         throw ERFSManagerException();
     }
+    cmd_add.str("");
+    cmd_add.clear();
 
     // Link between them
     logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Virtual link between LSIs %u:%u <-> %u:%u", avli.getDpidA(), a_port_id, avli.getDpidB(), b_port_id);
