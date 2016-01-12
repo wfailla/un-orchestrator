@@ -705,16 +705,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
 		for (list<unsigned int>::iterator p_it = nf_ports.begin(); p_it != nf_ports.end(); p_it++) {
-			if (*p_it > nf_ports_type.size()) {
-				nf_ports_type.resize(*p_it + 1);
-				nf_ports_type[*p_it] = UNDEFINED_PORT;
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d defaulting to 'UNDEFINED'", *p_it);
+			if (*p_it >= nf_ports_type.size()) {
+				nf_ports_type.resize((*p_it) + 1, UNDEFINED_PORT);
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: undefined (DEFAULTED)", *p_it);
 			}
 			else {
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: %s", *p_it, portTypeToString(nf_ports_type[*p_it]).c_str());
 			}
 		}
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tCompleted ports type list includes %d ports", nf_ports_type.size());
 		nfs_ports_type[nf_name] = nf_ports_type;
 	}
 
