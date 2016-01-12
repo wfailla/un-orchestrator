@@ -1,5 +1,10 @@
 #include "description.h"
 
+bool operator==(const nf_port_info& lhs, const nf_port_info& rhs)
+{
+    return (lhs.port_name.compare(rhs.port_name) == 0) && (lhs.port_type == rhs.port_type);
+}
+
 Description::Description(nf_t type, string uri, string cores, string location, std::vector<PortType>& port_types) :
 	type(type), uri(uri), cores(cores), location(location), port_types(port_types)
 {
@@ -35,22 +40,22 @@ Description::Description(string type, string uri, string cores, string location,
 	return;
 }
 
-nf_t Description::getType()
+nf_t Description::getType() const
 {
 	return type;
 }
 
-string Description::getURI()
+string Description::getURI() const
 {
 	return uri;
 }
 
-string Description::getCores()
+string Description::getCores() const
 {
 	return cores;
 }
 
-string Description::getLocation()
+string Description::getLocation() const
 {
 	assert(type == DPDK
 #ifdef ENABLE_KVM

@@ -26,6 +26,12 @@ enum PortType {
 
 PortType portTypeFromString(const std::string& s);
 
+struct nf_port_info
+{
+	string port_name;
+	PortType port_type;
+};
+bool operator==(const nf_port_info& lhs, const nf_port_info& rhs);
 
 class Description
 {
@@ -47,13 +53,13 @@ public:
 	Description(nf_t type, string uri, string cores, string location, std::vector<PortType>& port_types);
 	Description(string type, string uri, string cores, string location, std::vector<PortType>& port_types);
 	
-	string getURI();
-	string getLocation();
-	nf_t getType();
-	const std::vector<PortType>& getPortTypes() { return port_types; }
+	string getURI() const;
+	string getLocation() const;
+	nf_t getType() const;
+	const std::vector<PortType>& getPortTypes() const { return port_types; }
 	
 protected:
-	string getCores();
+	string getCores() const;
 };
 
 #endif //DESCRIPTION_H_
