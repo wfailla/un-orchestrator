@@ -54,6 +54,11 @@ public:
 	void setDescription(Description *description);
 	
 	/**
+	*	@brief: set the description of the network function to be handled by the manager
+	*/
+	const Description* getDescription() { return description; }
+
+	/**
 	*	@brief: provide the type of the network function handled by the manager
 	*/
 	nf_t getNFType();
