@@ -4,7 +4,7 @@
 static const char* OVS_BASE_SOCK_PATH = "/usr/local/var/run/openvswitch/";
 
 #if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
-	int OVSDPDKManager::nextportname = 1;	
+int OVSDPDKManager::next_dpdkr_port = 1;
 #endif
 
 OVSDPDKManager::OVSDPDKManager() : m_NextLsiId(0), m_NextPortId(1) /* 0 is not valid for OVS */
@@ -88,42 +88,40 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 	for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++) {
 		nf_t nf_type = nf_types[*nf];
 
-		list<string> nf_ports = cli.getNetworkFunctionsPortNames(*nf);
+		list<struct nf_port_info> nf_ports = cli.getNetworkFunctionsPortsInfo(*nf);
 		PortsNameIdMap nf_ports_ids;
 		
 		list<string> port_name_on_switch;
 		
-		for(list<string>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++) {
+		for(list<struct nf_port_info>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++) {
 			unsigned int port_id = m_NextPortId++;
 			
 			stringstream sspn;
-// TODO - Support most combinations of NF types at run-time instead of compile-time
-#if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
-			//In these cases we use the rte_rings to exchange packets with the VNFs
 
-			char* port_type = "dpdkr";
-			if ((nf_type == KVM) || (nf_type == DPDK)) {  // IVSHMEM-based DPDK rings
-				sspn << port_type << nextportname;
-				nextportname++;
+			char* port_type_str = "veth";
+
+			if (nfp->port_type == USVHOST_PORT) {
+				port_type_str = "dpdkvhostuser";
+				sspn << dpid << "_" << nfp->port_name;
 			}
-			else { // This supports e.g. Docker containers
-				port_type = "veth";
-				sspn << dpid << "_" << *nfp;
+			else if (nfp->port_type == IVSHMEM_PORT) {
+				port_type_str = "dpdkr";
+				sspn << port_type_str << next_dpdkr_port;
+				next_dpdkr_port++;
 			}
-#else
-			const char* port_type = (nf_type == KVM) ? "dpdkvhostuser" : "veth";  // TODO - dpdkr, dpdkvhostuser, tap, virtio ...
-			
-			sspn << dpid << "_" << *nfp;
-#endif
+			else {
+				sspn << dpid << "_" << nfp->port_name;
+			}
+
 			string port_name = sspn.str();
 			
 			port_name_on_switch.push_back(port_name);
 			
-			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Network function port '%s' corresponds to the port '%s' on the switch", nfp->c_str(),port_name.c_str());
+			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Network function port '%s' corresponds to the port '%s' on the switch", nfp->port_name.c_str(), port_name.c_str());
+			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (nf_type=%d port_type=%d)", nf->c_str(), nfp->port_name.c_str(), port_id, nf_type, nfp->port_type);
 
-			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (nf_type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
 			stringstream cmd_add;
-			cmd_add << CMD_ADD_PORT << " " << dpid << " " << port_name << " " << port_type << " " << port_id;
+			cmd_add << CMD_ADD_PORT << " " << dpid << " " << port_name << " " << port_type_str << " " << port_id;
 			cmd_add << " " << OVS_BASE_SOCK_PATH;
 			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 			int retVal = system(cmd_add.str().c_str());
@@ -133,7 +131,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 				throw OVSDPDKManagerException();
 			}
 			// TODO - Really check result!
-			nf_ports_ids.insert(PortsNameIdMap::value_type(*nfp, port_id));
+			nf_ports_ids.insert(PortsNameIdMap::value_type(nfp->port_name, port_id));
 		}
 		out_nf_ports.insert(NfPortsMapMap::value_type(*nf, nf_ports_ids));
 		out_nf_ports_name_on_switch[*nf] = port_name_on_switch;
@@ -195,9 +193,9 @@ AddNFportsOut *OVSDPDKManager::addNFPorts(AddNFportsIn anpi)
 
 	AddNFportsOut *anpo = NULL;
 	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
-	list<string> nfs_ports = anpi.getNetworkFunctionsPorts();
-	for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++) {
-		logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "\tport: %s", (*nfp).c_str());
+	list<struct nf_port_info> nfs_ports = anpi.getNetworkFunctionsPorts();
+	for(list<struct nf_port_info>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++) {
+		logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "\tport: %s", nfp->port_name.c_str());
 	}
 	return anpo;
 }
