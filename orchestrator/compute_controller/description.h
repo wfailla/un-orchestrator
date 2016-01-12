@@ -25,6 +25,7 @@ enum PortType {
 };
 
 PortType portTypeFromString(const std::string& s);
+std::string portTypeToString(PortType t);
 
 struct nf_port_info
 {

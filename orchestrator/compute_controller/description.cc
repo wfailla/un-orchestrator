@@ -77,3 +77,24 @@ PortType portTypeFromString(const std::string& s)
 
 	return UNDEFINED_PORT;
 }
+
+std::string portTypeToString(PortType t)
+{
+	switch (t) {
+	case IVSHMEM_PORT:
+		return "ivshmem";
+		break;
+	case USVHOST_PORT:
+		return "usvhost";
+		break;
+	case VHOST_PORT:
+		return "vhost";
+		break;
+	case UNDEFINED_PORT:
+		return "undefined";
+		break;
+	default:
+		break;
+	}
+	return "UNKNOWN";
+}
