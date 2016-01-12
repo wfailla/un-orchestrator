@@ -711,7 +711,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 				    	}
 #endif
 				    	
-				    	//Itearate on the flow rules
+				    	//Iterate on the flow rules
 				    	for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
 						{	
 							//This is a rule, with a match, an action, and an ID
@@ -748,7 +748,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								else if(fr_name == MATCH)
 								{
 									foundMatch = true;
-									if(!MatchParser::parseMatch(fr_value.getObject(), match,nfs_ports_found,graph))
+									if(!MatchParser::parseMatch(fr_value.getObject(), match, nfs_ports_found, graph))
 									{
 										return false;
 									}
