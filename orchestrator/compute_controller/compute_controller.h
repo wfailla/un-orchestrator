@@ -155,6 +155,13 @@ public:
 	nf_t getNFType(string name);
 	
 	/**
+	 *	@brief: Returns the description of the selected NF implementation.
+	 *
+	 *	@param: name	Name of the network function
+	 */
+	const Description* getNFSelectedImplementation(string name);
+
+	/**
 	*	@brief: Set the identifier of the identifier of the LSI attached to the NFs
 	*
 	*	@param:	lsiID	Identifier of an LSI

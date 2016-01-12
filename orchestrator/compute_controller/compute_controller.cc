@@ -541,6 +541,20 @@ nf_t ComputeController::getNFType(string name)
 	return impl->getNFType();
 }
 
+const Description* ComputeController::getNFSelectedImplementation(string name)
+{
+	map<string, NF*>::iterator nf_it = nfs.find(name);
+	if (nf_it == nfs.end()) { // Not found
+		return NULL;
+	}
+
+	NFsManager *impl = (nf_it->second)->getSelectedDescription();
+	if (impl == NULL)
+		return NULL;
+
+	return impl->getDescription();
+}
+
 void ComputeController::setLsiID(uint64_t lsiID)
 {
 	this->lsiID = lsiID;
