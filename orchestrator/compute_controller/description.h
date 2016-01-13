@@ -58,7 +58,7 @@ public:
 	string getLocation() const;
 	nf_t getType() const;
 	const std::map<unsigned int, PortType>& getPortTypes() const { return port_types; }
-	PortType getPortType(unsigned int port_id);
+	PortType getPortType(unsigned int port_id) const;
 	
 protected:
 	string getCores() const;

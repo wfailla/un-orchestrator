@@ -34,9 +34,9 @@ private:
 	string nf_name;
 	
 	/**
-	*	@brief: list of names of ports of the vSwitch that are associated with the network function
+	*	@brief: mapping of port_id to name of port on the vSwitch for ports associated with the network function
 	*/
-	list<string> namesOfPortsOnTheSwitch;
+	map<unsigned int, string> namesOfPortsOnTheSwitch;
 		
 	/**
 	*	@brief: mask of the cores to be assigned to the network functon.
@@ -45,29 +45,29 @@ private:
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, list<string> namesOfPortsOnTheSwitch, uint64_t coreMask = 0x0)
+	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, uint64_t coreMask = 0x0)
 		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), coreMask(coreMask)
 	{
 	}
 	
 public:
 
-	uint64_t getLsiID()
+	uint64_t getLsiID() const
 	{
 		return lsiID;
 	}
 	
-	string getNfName()
+	string getNfName() const
 	{
 		return nf_name;
 	}
 	
-	list<string> getNamesOfPortsOnTheSwitch()
+	const map<unsigned int, string>& getNamesOfPortsOnTheSwitch() const
 	{
 		return namesOfPortsOnTheSwitch;
 	}
 	
-	uint64_t getCoreMask()
+	uint64_t getCoreMask() const
 	{
 		return coreMask;
 	}

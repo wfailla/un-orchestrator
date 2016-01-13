@@ -66,9 +66,9 @@ string Description::getLocation() const
 	return location;
 }
 
-PortType Description::getPortType(unsigned int port_id)
+PortType Description::getPortType(unsigned int port_id) const
 {
-	std::map<unsigned int, PortType>::iterator it = port_types.find(port_id);
+	std::map<unsigned int, PortType>::const_iterator it = port_types.find(port_id);
 	if (it != port_types.end()) {
 		return it->second;
 	}

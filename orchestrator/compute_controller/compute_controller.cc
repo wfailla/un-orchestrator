@@ -558,14 +558,13 @@ void ComputeController::setLsiID(uint64_t lsiID)
 	this->lsiID = lsiID;
 }
 
-//FIXME: I'm assuming that the first element of namesOfPortsOnTheSwitch corresponds to the first port of the network function,
-//the second element corresponds to the second port of the network function, and so on...
-bool ComputeController::startNF(string nf_name, list<string> namesOfPortsOnTheSwitch)
+bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch)
 {
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"",nf_name.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"", nf_name.c_str());
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
-	for(list<string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*it).c_str());
+	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %s", it->first, it->second.c_str());
+	}
 
 	if(nfs.count(nf_name) == 0)
 	{

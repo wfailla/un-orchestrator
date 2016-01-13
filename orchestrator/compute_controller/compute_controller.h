@@ -174,9 +174,9 @@ public:
 	*
 	*
 	*	@param:	nf_name					Name of the network function to be started
-	*	@param: namesOfPortsOnTheSwitch	List of names of ports on the vSwitch that are related to the network function to be started
+	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started
 	*/
-	bool startNF(string nf_name, list<string> namesOfPortsOnTheSwitch);
+	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch);
 	
 	/**
 	*	@brief: Stop all the running NFs

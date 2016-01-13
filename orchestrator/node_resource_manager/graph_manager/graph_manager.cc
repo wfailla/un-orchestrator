@@ -257,7 +257,7 @@ Object GraphManager::toJSONPhysicalInterfaces()
 	
 	LSI *lsi0 = graphInfoLSI0.getLSI();
 	
-	map<string,string> types = lsi0->getPortsType();
+	map<string,string> types = lsi0->getPhysicalPortsType();
 	
 	Array interfaces_array;
 	for(map<string,string>::iterator t = types.begin(); t != types.end(); t++)
@@ -707,13 +707,12 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" (type %d) selected implementation lists %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
 		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
 		for (list<unsigned int>::iterator p_it = nf_ports.begin(); p_it != nf_ports.end(); p_it++) {
-			PortType type = UNDEFINED_PORT;
-			std::map<unsigned int, PortType>::const_iterator pt_it = nf_ports_type.find(*p_it);
+			map<unsigned int, PortType>::iterator pt_it = nf_ports_type.find(*p_it);
 			if (pt_it == nf_ports_type.end()) {
 				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Graph port %d have no matching definition in NF description for \"%s\"", (*p_it), nf_name.c_str());
-				nf_ports_type.insert(map<unsigned int, PortType>::value_type(*p_it, type));  // Default to UNDEFINED - TODO: Or should we cause a failure here?
+				pt_it = nf_ports_type.insert(map<unsigned int, PortType>::value_type(*p_it, UNDEFINED_PORT)).first;  // Default - TODO: Or should we cause a failure here?
 			}
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: %s", (*p_it), portTypeToString(type).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: %s", (*p_it), portTypeToString(pt_it->second).c_str());
 		}
 		nfs_ports_type[nf_name] = nf_ports_type;
 	}
@@ -743,7 +742,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		//TODO: check if the number of vnfs and ports is the same required
 		for(map<string,map<string, unsigned int> >::iterator nfp = nfsports.begin(); nfp != nfsports.end(); nfp++)
 		{
-			if(!lsi->setNfPortsID(nfp->first,nfp->second))
+			if(!lsi->setNfSwitchPortsID(nfp->first,nfp->second))
 			{
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required network function port  related to the network function \"%s\" has been attached to the tenant-lsi",nfp->first.c_str());
 				delete(clo);
@@ -754,7 +753,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		map<string,list<string> > networkFunctionsPortsNameOnSwitch = clo->getNetworkFunctionsPortsNameOnSwitch();
 		
 		for(map<string,list<string> >::iterator nfpnos = networkFunctionsPortsNameOnSwitch.begin(); nfpnos != networkFunctionsPortsNameOnSwitch.end(); nfpnos++)
-			lsi->setNetworkFunctionsPortsNameOnSwitch(nfpnos->first,nfpnos->second);
+			lsi->setNetworkFunctionsPortsNameOnSwitch(nfpnos->first, nfpnos->second);
 		
 		list<pair<unsigned int, unsigned int> > vl = clo->getVirtualLinks();
 		//TODO: check if the number of vlinks is the same required
@@ -891,7 +890,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	{
 		thr[i].nf_name = nf->first;
 		thr[i].computeController = computeController;
-		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
+		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
 			
 		if (pthread_create(&some_thread[i], NULL, &startNF, (void *)&thr[i]) != 0)
 		{
@@ -1332,7 +1331,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			
 			anpo = switchManager.addNFPorts(anpi);
 			
-			if(!lsi->setNfPortsID(anpo->getNFname(), anpo->getPorts()))
+			if(!lsi->setNfSwitchPortsID(anpo->getNFname(), anpo->getPorts()))
 			{
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required network function port related to the network function \"%s\" has been attached to the tenant-lsi",nf->first.c_str());
 				lsi->removeNF(nf->first);
@@ -1366,9 +1365,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		list<string> nfPortsNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
-
-		if(!computeController->startNF(nf->first, nfPortsNameOnSwitch))
+		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);;
+		if(!computeController->startNF(nf->first, nfPortIdToNameOnSwitch))
 		{
 			//TODO: no idea on what I have to do at this point
 			assert(0);
