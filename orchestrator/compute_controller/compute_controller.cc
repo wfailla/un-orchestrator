@@ -214,7 +214,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 			    	string uri;
 					string cores;
 					string location;
-					std::vector<PortType> port_types;
+					std::map<unsigned int, PortType> port_types; // port_id -> port_type
 
 					for( Object::const_iterator impl_el = implementation.begin(); impl_el != implementation.end(); ++impl_el )
 					{
@@ -289,9 +289,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 								}
 								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %d id=%d type=%d", p, port_id, port_type);
 
-								if ((size_t)port_id >= port_types.size())
-									port_types.resize(port_id + 1);
-								port_types[port_id] = port_type;
+								port_types.insert(std::map<unsigned int, PortType>::value_type(port_id, port_type));
 							}
 						}
 						else

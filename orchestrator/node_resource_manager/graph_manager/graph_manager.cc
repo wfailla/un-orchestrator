@@ -56,7 +56,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName) :
 
 	//The three following structures are empty. No NF and no virtual link is attached.
 	highlevel::Graph::t_nfs_ports_list dummy_network_functions;
-	map<string, vector<PortType> > dummy_nfs_ports_type;
+	map<string, map<unsigned int, PortType> > dummy_nfs_ports_type;
 	vector<VLink> dummy_virtual_links;
 	map<string,nf_t>  nf_types;
 
@@ -690,28 +690,30 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	map<string, string> dummyPhyPorts;
 	
 	map<string, nf_t>  nf_types;
-	map<string, vector<PortType> > nfs_ports_type;
+	map<string, map<unsigned int, PortType> > nfs_ports_type;  // nf_name -> map( port_id -> port_type )
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); nf_it++) {
 		const string& nf_name = nf_it->first;
 		list<unsigned int>& nf_ports = nf_it->second;
 
 		nf_types[nf_name] = computeController->getNFType(nf_name);
 
-
 		//Gather VNF ports types
 		const Description* descr = computeController->getNFSelectedImplementation(nf_name);
-		std::vector<PortType> nf_ports_type = descr->getPortTypes();  // Port types as specified by the retrieved and selected NF implementation
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" (type %d) selected implementation lists %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
+		map<unsigned int, PortType> nf_ports_type = descr->getPortTypes();  // Port types as specified by the retrieved and selected NF implementation
 
+		if (nf_ports_type.size() != nf_ports.size())
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from graph does not match number of ports from NF description for \"%s\"", nf_name.c_str());
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" (type %d) selected implementation lists %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
 		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
 		for (list<unsigned int>::iterator p_it = nf_ports.begin(); p_it != nf_ports.end(); p_it++) {
-			if (*p_it >= nf_ports_type.size()) {
-				nf_ports_type.resize((*p_it) + 1, UNDEFINED_PORT);
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: undefined (DEFAULTED)", *p_it);
+			PortType type = UNDEFINED_PORT;
+			std::map<unsigned int, PortType>::const_iterator pt_it = nf_ports_type.find(*p_it);
+			if (pt_it == nf_ports_type.end()) {
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Graph port %d have no matching definition in NF description for \"%s\"", (*p_it), nf_name.c_str());
+				nf_ports_type.insert(map<unsigned int, PortType>::value_type(*p_it, type));  // Default to UNDEFINED - TODO: Or should we cause a failure here?
 			}
-			else {
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: %s", *p_it, portTypeToString(nf_ports_type[*p_it]).c_str());
-			}
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: %s", (*p_it), portTypeToString(type).c_str());
 		}
 		nfs_ports_type[nf_name] = nf_ports_type;
 	}
@@ -1365,7 +1367,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		list<string> nfPortsNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitch(nf->first);
-	
+
 		if(!computeController->startNF(nf->first, nfPortsNameOnSwitch))
 		{
 			//TODO: no idea on what I have to do at this point

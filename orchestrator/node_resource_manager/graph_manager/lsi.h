@@ -104,7 +104,7 @@ private:
 	map<string, uint64_t> endpoints_vlinks;
 
 public:
-	LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions, vector<VLink> virtual_links, map<string,nf_t> nf_types, map<string, vector<PortType> > nfs_ports_type);
+	LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions, vector<VLink> virtual_links, map<string,nf_t> nf_types, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
@@ -112,9 +112,12 @@ public:
 	list<string> getPhysicalPortsName();
 
 	set<string> getNetworkFunctionsName();
+
+	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
 	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
+	list<string> getNetworkFunctionsPortsNameOnSwitch(string nf);
 
 	list<uint64_t> getVirtualLinksRemoteLSI();
 
@@ -124,8 +127,6 @@ public:
 	map<string,unsigned int> getPhysicalPorts();
 	map<string,string> getPortsType();
 
-	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
-	list<string> getNetworkFunctionsPortsNameOnSwitch(string nf);
 
 	map<string,nf_t> getNetworkFunctionsType();
 
@@ -159,7 +160,7 @@ protected:
 	int addVlink(VLink vlink);
 	void removeVlink(uint64_t ID);
 
-	void addNF(string name, list< unsigned int> ports, nf_t type, const vector<PortType>& nf_ports_type);
+	bool addNF(string name, list< unsigned int> ports, nf_t type, const map<unsigned int, PortType>& nf_ports_type);
 	void removeNF(string nf);
 };
 

@@ -48,16 +48,17 @@ private:
 	//plugin to decide wheter an information has to be used or not.
 	string cores;
 	string location;
-	std::vector<PortType> port_types;
+	std::map<unsigned int, PortType> port_types;
 	
 public:
-	Description(nf_t type, string uri, string cores, string location, std::vector<PortType>& port_types);
-	Description(string type, string uri, string cores, string location, std::vector<PortType>& port_types);
+	Description(nf_t type, string uri, string cores, string location, std::map<unsigned int, PortType>& port_types);
+	Description(string type, string uri, string cores, string location, std::map<unsigned int, PortType>& port_types);
 	
 	string getURI() const;
 	string getLocation() const;
 	nf_t getType() const;
-	const std::vector<PortType>& getPortTypes() const { return port_types; }
+	const std::map<unsigned int, PortType>& getPortTypes() const { return port_types; }
+	PortType getPortType(unsigned int port_id);
 	
 protected:
 	string getCores() const;
