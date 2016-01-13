@@ -61,7 +61,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName) :
 	map<string,nf_t>  nf_types;
 
 	// TODO: Should really have two constructors for this, or a common one and some additional setters
-	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions, dummy_virtual_links, nf_types, dummy_nfs_ports_type);
+	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions, dummy_virtual_links, dummy_nfs_ports_type);
 	
 	try
 	{
@@ -719,7 +719,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	//Prepare the structure representing the new tenant-LSI
 	// Note: This will also assign names to ports
-	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), dummyPhyPorts, network_functions, virtual_links, nf_types, nfs_ports_type);
+	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), dummyPhyPorts, network_functions, virtual_links, nfs_ports_type);
 	
 	CreateLsiOut *clo = NULL;
 	try
@@ -1322,7 +1322,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		AddNFportsOut *anpo = NULL;
 		try
 		{
-			lsi->addNF(nf->first, nf->second, computeController->getNFType(nf->first), computeController->getNFSelectedImplementation(nf->first)->getPortTypes());
+			lsi->addNF(nf->first, nf->second, computeController->getNFSelectedImplementation(nf->first)->getPortTypes());
 
 			map<string, list<struct nf_port_info> >pi_map = lsi->getNetworkFunctionsPortsInfo();
 			map<string, list<struct nf_port_info> >::iterator pi_it = pi_map.find(nf->first);

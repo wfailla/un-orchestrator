@@ -4,7 +4,6 @@
 #pragma once
 
 #include "virtual_link.h"
-#include "../../compute_controller/nf_type.h"
 #include "../../compute_controller/description.h"
 
 #include <map>
@@ -67,11 +66,6 @@ private:
 	    list<string> portsNameOnSwitch;
 
 		/**
-		*	@brief: type of the NF
-		*/
-		nf_t  nf_type;
-
-		/**
 		 * 	@brief: port ids assigned to the ports by switch
 		 *		The map is
 		 *			<nf port name, switch_id>
@@ -116,7 +110,7 @@ private:
 	map<string, uint64_t> endpoints_vlinks;
 
 public:
-	LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions, vector<VLink> virtual_links, map<string,nf_t> nf_types, map<string, map<unsigned int, PortType> > nfs_ports_type);
+	LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
@@ -128,7 +122,6 @@ public:
 	map<string,unsigned int> getPhysicalPorts();
 
 	set<string> getNetworkFunctionsName();
-	//map<string,nf_t> getNetworkFunctionsType();
 	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
@@ -167,7 +160,7 @@ protected:
 	int addVlink(VLink vlink);
 	void removeVlink(uint64_t ID);
 
-	bool addNF(string name, list< unsigned int> ports, nf_t type, const map<unsigned int, PortType>& nf_ports_type);
+	bool addNF(string name, list< unsigned int> ports, const map<unsigned int, PortType>& nf_ports_type);
 	void removeNF(string nf);
 };
 
