@@ -26,19 +26,32 @@ NODE_ID = 'UUID11'
 NODE_TYPE = 'BisBis'
 
 '''
-	Supported matches
+	Supported matches.
+	For each key, it indicates the equivalent match in the NF-FG supported natively
+	by the node orchestrator.
 '''
 supported_matches = {
 	"dl_vlan" : "vlan_id"
 }
 
-#XXX: this disctionary must be aligned with that in 
-# [orchestrator]/utils/constants.h
+'''
+	Supported actions.
+	For each key, it indicates the number of parameters required (0 or 1).
+'''
 #XXX: for each key, there must be an handler for that key in actionsParser.py
 supported_actions = {
-	"vlan" : [
-		"push",
-		"pop"
-	]
+	"strip_vlan" : 0,
+	"push_vlan" : 1
+}
+
+'''
+	Equivalent actions.
+	For each key, it indicates the equivalent action in the NF-FG supported natively
+	by the node orchestrator.
+'''
+#XXX: for each key, there must be an handler for that key in actionsParser.py
+equivalent_actions = {
+	"strip_vlan" : "vlan",
+	"push_vlan" : "vlan"
 }
 

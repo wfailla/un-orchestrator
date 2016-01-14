@@ -585,17 +585,25 @@ def extractRules(content):
 		action = {}
 		if flowentry.action is not None:
 			if type(flowentry.action.data) is str:
-				#FIXME: I guess this cannot happen! But never say never...
-				#Then I let it here
-				error = True
-				return
-			elif type(flowentry.action.data) is ET.Element:
-				for node in flowentry.action.data:
-					if not supportedAction(node.tag):
+				#The tag <action> contains a sequence of actions separated by " "
+				actions = flowentry.action.data.split(" ")
+				for action in actions:
+					tokens = action.split("=")
+					elements = len(tokens)
+					if not supportedAction(tokens[0],elements):
 						error = True
 						return
-					#At this point, we have to go more in deep with the analysis					
-					action[node.tag] = handleSpecificAction(node.tag,node)					
+					action[equivalentAction(tokens[0])] = handleSpecificAction(tokens)
+			else:
+				error = True
+				return
+#			elif type(flowentry.action.data) is ET.Element:
+#				for node in flowentry.action.data:
+#					if not supportedAction(node.tag):
+#						error = True
+#						return
+#					#At this point, we have to go more in deep with the analysis					
+#					action[node.tag] = handleSpecificAction(node.tag,node)					
 							
 		#The content of <out> must be added to the action
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
@@ -762,17 +770,28 @@ def equivalentMatch(tag):
 	'''
 	return constants.supported_matches[tag]
 	
-def supportedAction(tag):
+def supportedAction(tag,elements):
 	'''
-	Given an element within an action, this function checks whether such an element is supported or node
+	Given an element within an action, this function checks whether such an element is supported or not
 	'''
 	
 	if tag in constants.supported_actions:
-		LOG.debug("'%s' is supported!",tag)
-		return True
+		LOG.debug("'%s' is supported with %d elements!",tag,constants.supported_actions[tag])
+		if constants.supported_actions[tag] == elements:
+			return True
+		else:
+			LOG.debug("The action specifies has a wrong number of elements: %d",elements)
+			return False
 	else:
 		LOG.error("'%s' is not a supported action!",tag)
 		return False
+		
+def equivalentAction(tag):
+	'''
+	Given an element within action, this function return the element with equivalent meaning in native orchestrator NF-FG
+	'''
+	return constants.equivalent_actions[tag]
+
 		
 def toBeAddedToFile(flowRules,vnfs,fileName):
 	'''
