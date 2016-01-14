@@ -21,7 +21,7 @@ def handleSpecificAction(tokens):
 	
 	return ""
 
-def handleStripVlanAction(node):
+def handleStripVlanAction(tokens):
 	'''
 	Parses the content of an action and translates it in the internal JSON representation.
 	Such a representation is then returned.
@@ -32,7 +32,7 @@ def handleStripVlanAction(node):
 		
 	return action
 	
-def handlePushVlanAction(node):
+def handlePushVlanAction(tokens):
 	'''
 	Parses the content of an action and translates it in the internal JSON representation.
 	Such a representation is then returned.
