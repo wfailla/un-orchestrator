@@ -588,7 +588,7 @@ def extractRules(content):
 				#The tag <action> contains a sequence of actions separated by " "
 				actions = flowentry.action.data.split(" ")
 				for action in actions:
-					tokens = action.split("=")
+					tokens = action.split(":")
 					elements = len(tokens)
 					if not supportedAction(tokens[0],elements):
 						error = True
