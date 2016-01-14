@@ -533,8 +533,8 @@ def extractRules(content):
 			if type(flowentry.match.data) is str:
 				#The tag <match> contains a sequence of matches separated by " "
 				matches = flowentry.match.data.split(" ")
-				for match in matches:
-					tokens = match.split("=")
+				for m in matches:
+					tokens = m.split("=")
 					elements = len(tokens)
 					if elements != 2:
 						error = True
@@ -545,19 +545,12 @@ def extractRules(content):
 						return
 					#We have to convert the virtualizer match into the UN equivalent match
 					match[equivalentMatch(tokens[0])] = tokens[1]
-			else:
-				error = True
-				return
-#			elif type(flowentry.match.data) is ET.Element:
-#				for node in flowentry.match.data:
-#					if not supportedMatch(node.tag):
-#						error = True
-#						return
-#					match[node.tag] = node.text
+
+			#We ignore the element in case it's not a string. It is possible that it is simply empty
 					
 		#The content of <port> must be added to the match
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
-		
+
 		portPath = flowentry.port.get_target().get_path()
 		port = flowentry.port.get_target()	
 		tokens = portPath.split('/');
@@ -587,27 +580,20 @@ def extractRules(content):
 			if type(flowentry.action.data) is str:
 				#The tag <action> contains a sequence of actions separated by " "
 				actions = flowentry.action.data.split(" ")
-				for action in actions:
-					tokens = action.split(":")
+				for a in actions:
+					tokens = a.split(":")
 					elements = len(tokens)
 					if not supportedAction(tokens[0],elements):
 						error = True
+						print "Returning because action is not supported"
 						return
 					action[equivalentAction(tokens[0])] = handleSpecificAction(tokens)
-			else:
-				error = True
-				return
-#			elif type(flowentry.action.data) is ET.Element:
-#				for node in flowentry.action.data:
-#					if not supportedAction(node.tag):
-#						error = True
-#						return
-#					#At this point, we have to go more in deep with the analysis					
-#					action[node.tag] = handleSpecificAction(node.tag,node)					
+
+			# We ignore the element in case it's not a string. It could be simply empty.
 							
 		#The content of <out> must be added to the action
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
-		
+
 		portPath = flowentry.out.get_target().get_path()
 		port = flowentry.out.get_target()	
 		tokens = portPath.split('/');
