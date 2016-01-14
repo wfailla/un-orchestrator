@@ -30,6 +30,8 @@ map<string, list<uint64_t> > virtual_link_id;
 map<uint64_t, string> port_id;
 /*map use to id of switch from vport_id*/
 map<uint64_t, uint64_t> vl_id;
+/*map use to obtain id of peer vlink from local vlink*/
+map<uint64_t, uint64_t> vl_p;
 
 //Constructor
 commands::commands(){
@@ -475,6 +477,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			vl_id[rnumber-1] = dnumber;
 			vl_id[rnumber+vport.size()-1] = (*nf);
 				
+			vl_p[rnumber-1] = rnumber+vport.size()-1;	
+				
 			pnumber++;
 			
 			l++;
@@ -892,6 +896,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 	/*for all virtual link ports, destroy it*/
 	for(list<uint64_t>::iterator i = virtual_link_id[switch_id[dpi]].begin(); i != virtual_link_id[switch_id[dpi]].end(); i++){
 		cmd_delete_virtual_link(vl_id[(*i)], (*i), s);
+		cmd_delete_virtual_link(vl_id[vl_p[(*i)]], vl_p[(*i)], s);
 	}
 
 	port_l.erase(dpi);
@@ -1831,6 +1836,7 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s){
 	//remove this port id from vport id list
 	virtual_link_id[switch_id[dvli.getDpidA()]].remove(dvli.getIdA());
 	virtual_link_id[switch_id[dvli.getDpidB()]].remove(dvli.getIdB());
+	
 }
 
 void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s){
