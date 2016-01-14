@@ -531,16 +531,29 @@ def extractRules(content):
 		match = {}
 		if flowentry.match is not None:
 			if type(flowentry.match.data) is str:
-				#FIXME: I guess this cannot happen! But never say never...
-				#Then I let it here
-				error = True
-				return
-			elif type(flowentry.match.data) is ET.Element:
-				for node in flowentry.match.data:
-					if not supportedMatch(node.tag):
+				#The tag <match> contains a sequence of matches separated by " "
+				matches = flowentry.match.data.split(" ")
+				for match in matches:
+					tokens = match.split("=")
+					elements = len(tokens)
+					if elements != 2:
 						error = True
 						return
-					match[node.tag] = node.text
+					#The match is in the form "name=value"
+					if not supportedMatch(tokens[0]):
+						error = True
+						return
+					#We have to convert the virtualizer match into the UN equivalent match
+					match[equivalentMatch(tokens[0])] = tokens[1]
+			else:
+				error = True
+				return
+#			elif type(flowentry.match.data) is ET.Element:
+#				for node in flowentry.match.data:
+#					if not supportedMatch(node.tag):
+#						error = True
+#						return
+#					match[node.tag] = node.text
 					
 		#The content of <port> must be added to the match
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
@@ -742,6 +755,12 @@ def supportedMatch(tag):
 	else:
 		LOG.error("'%s' is not a supported match!",tag)
 		return False
+		
+def equivalentMatch(tag):
+	'''
+	Given an element within match, this function return the element with equivalent meaning in native orchestrator NF-FG
+	'''
+	return constants.supported_matches[tag]
 	
 def supportedAction(tag):
 	'''
@@ -752,12 +771,9 @@ def supportedAction(tag):
 		LOG.debug("'%s' is supported!",tag)
 		return True
 	else:
-		LOG.error("'%s' is not a supported match!",tag)
+		LOG.error("'%s' is not a supported action!",tag)
 		return False
-	
-def vlan_action():
-	LOG.debug("!!!!!!!!!!!!!!!!")
-	
+		
 def toBeAddedToFile(flowRules,vnfs,fileName):
 	'''
 	Given a set (potentially empty) of flow rules and NFs, write it in a file respecting the syntax expected by the Univeral Node
