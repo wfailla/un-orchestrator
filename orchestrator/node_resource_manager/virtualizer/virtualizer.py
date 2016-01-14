@@ -583,7 +583,7 @@ def extractRules(content):
 				for a in actions:
 					tokens = a.split(":")
 					elements = len(tokens)
-					if not supportedAction(tokens[0],elements):
+					if not supportedAction(tokens[0],elements-1):
 						error = True
 						print "Returning because action is not supported"
 						return
