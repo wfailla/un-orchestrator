@@ -468,7 +468,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			port_id[rnumber-1] = vrt;
 			port_id[rnumber+vport.size()-1] = trv;
 			
-			virtual_link_id[sw].push_back(rnumber+vport.size()-1);
+			virtual_link_id[sw].push_back(rnumber-1);
 			
 			vport_l[dnumber].push_back(vrt);
 				
