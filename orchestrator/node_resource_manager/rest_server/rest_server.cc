@@ -451,6 +451,7 @@ int RestServer::doPost(struct MHD_Connection *connection, const char *url, void 
 	strcpy(tmp,url);
 	pnt=strtok(tmp, delimiter);
 	int i = 0;
+	
 	while( pnt!= NULL )
 	{
 		switch(i)
@@ -513,7 +514,6 @@ put_malformed_url:
 	
 	try
 	{
-	
 		if(user != NULL && pass != NULL){
 		
 			SHA256((const unsigned char*)pass, sizeof(pass) - 1, hash_token);

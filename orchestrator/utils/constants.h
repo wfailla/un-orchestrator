@@ -10,7 +10,7 @@
 #define FIRTS_OF_CONTROLLER_PORT	6653
 
 #define REST_PORT 				8080
-#define BASE_URL_GRAPH			"graph"
+#define BASE_URL_GRAPH			"NF-FG"
 #define BASE_URL_IFACES			"interfaces"
 #define BASE_URL_LOGIN			"login"
 #define REST_URL 				"http://localhost"
