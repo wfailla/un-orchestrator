@@ -783,7 +783,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t%s -> %d",(n->first).c_str(),n->second);
 	}
 	
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual links:",vls.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual links (%d):",vls.size());
 	for(vector<VLink>::iterator v = vls.begin(); v != vls.end(); v++)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t(ID: %x) %x:%d -> %x:%d",v->getID(),dpid,v->getLocalID(),v->getRemoteDpid(),v->getRemoteID());
 
