@@ -476,10 +476,10 @@ string Virtualizer::getRealName(string port)
 
 	for(map<string,string>::iterator it = nameVirtualization.begin(); it != nameVirtualization.end(); it++)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tcurrent: \"%s\"",it->second.c_str());
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tcurrent: \"%s\"",it->second.c_str());
 		if(it->second == port)
 		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Virtual port \"%s\" is actually the port \"%s\" of the node",port.c_str(),(it->first).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual port \"%s\" is actually the port \"%s\" of the node",port.c_str(),(it->first).c_str());
 			return it->first;
 		}
 	}
