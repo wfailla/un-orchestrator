@@ -57,7 +57,7 @@ In order to install xDPd with DPDK support, you have to follow the steps below.
 	$ cd xdpd/
 
 	;Install all the libraries required by the README provided in this folder
-	$ bash autogen
+	$ bash autogen.sh
 	$ cd build
 	$ ../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"
 	$ make
