@@ -871,6 +871,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 	//disconnect socket
     cmd_disconnect(s);
 
+#if 0
     //XXX: this code is a trick that activates a VNF ports through ifconfig. In fact, we noted that on some system
     //this operation has not done by OVSDB
     if(is_nf_port && (port_type != USVHOST_PORT) && (port_type != IVSHMEM_PORT))
@@ -886,6 +887,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		if(retVal != 0)
 			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
 	}
+#endif
 
 }
 
