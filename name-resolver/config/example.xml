@@ -41,16 +41,16 @@
 				*	usvhost
 				*	ivshmem
 			-->
-			<port id="0" port-type="vhost"/>
 			<port id="1" port-type="vhost"/>
+			<port id="2" port-type="vhost"/>
 		</implementation>
 	</network-function>
 
 	<network-function name="usvhost_example"  description="Network function based on user space vhost">
 		<!-- Point to a Libvirt XML domain template -->
 		<implementation type="kvm" uri="../NFs/kvm/example-dpdk-usvhost/kvm_usvhost_vnf.xml">
-			<port id="0" port-type="usvhost"/>
 			<port id="1" port-type="usvhost"/>
+			<port id="2" port-type="usvhost"/>
 		</implementation>
 	</network-function>
 	
