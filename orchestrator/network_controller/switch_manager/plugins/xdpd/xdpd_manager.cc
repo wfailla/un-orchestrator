@@ -13,7 +13,7 @@ XDPDManager::XDPDManager()
 	
 	if (sock_initaddress (XDPD_ADDRESS, xDPDport.c_str(), &Hints, &AddrInfo, ErrBuf, sizeof(ErrBuf)) == sockFAILURE)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error resolving given address/port (%s/%s): %s",  XDPD_ADDRESS, xDPDport.c_str(), ErrBuf);
+		logger(ORCH_ERROR, XDPD_MODULE_NAME, __FILE__, __LINE__, "Error resolving given address/port (%s/%s): %s",  XDPD_ADDRESS, xDPDport.c_str(), ErrBuf);
 		throw XDPDManagerException();
 	}
 }
@@ -38,14 +38,14 @@ string XDPDManager::sendMessage(string message)
 	if ( (socket= sock_open(AddrInfo, 0, 0,  ErrBuf, sizeof(ErrBuf))) == sockFAILURE)
 	{
 		// AddrInfo is no longer required
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot contact xDPd: %s", ErrBuf);
+		logger(ORCH_ERROR, XDPD_MODULE_NAME, __FILE__, __LINE__, "Cannot contact xDPd: %s", ErrBuf);
 		throw XDPDManagerException();
 	}
 
 	WrittenBytes= sock_send(socket, command, strlen(command), ErrBuf, sizeof(ErrBuf));
 	if (WrittenBytes == sockFAILURE)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		logger(ORCH_ERROR, XDPD_MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 		throw XDPDManagerException();
 
 	}
@@ -53,7 +53,7 @@ string XDPDManager::sendMessage(string message)
 	ReadBytes= sock_recv(socket, DataBuffer, sizeof(DataBuffer), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (ReadBytes == sockFAILURE)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		logger(ORCH_ERROR, XDPD_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
 		throw XDPDManagerException();
 	}
 
@@ -62,8 +62,8 @@ string XDPDManager::sendMessage(string message)
 	// Warning: this can originate a buffer overflow
 	DataBuffer[ReadBytes]= 0;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Data received: ");
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",DataBuffer);
+	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Data received: ");
+	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "%s",DataBuffer);
 
 	shutdown(socket,SHUT_WR);
 	sock_close(socket,ErrBuf,sizeof(ErrBuf));
@@ -111,7 +111,7 @@ void XDPDManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 		{
 			const Array& ports_array = value.getArray();
 			if(ports_array.size() == 0)
-			    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with an empty port list.",DISCOVER_PHY_PORTS);
+			    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with an empty port list.",DISCOVER_PHY_PORTS);
 
 			for( unsigned int i = 0; i < ports_array.size(); ++i )
 			{
@@ -129,14 +129,14 @@ void XDPDManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 					}
 					else
 					{
-						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DISCOVER_PHY_PORTS,p_name.c_str());
+						logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DISCOVER_PHY_PORTS,p_name.c_str());
 						assert(0);
 						throw XDPDManagerException();
 					}
 				}
 				if(!foundName)
 				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with a \"port\" without \"name\"",DISCOVER_PHY_PORTS);
+					logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with a \"port\" without \"name\"",DISCOVER_PHY_PORTS);
 					assert(0);
 					throw XDPDManagerException();	
 				}
@@ -148,14 +148,14 @@ void XDPDManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 		else
 		{
 			//error
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DISCOVER_PHY_PORTS,name.c_str());
+			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DISCOVER_PHY_PORTS,name.c_str());
 			throw XDPDManagerException();
 		}
 	}
 
 	if(!foundPorts)
 	{
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"ports\" received",DISCOVER_PHY_PORTS);
+		logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"ports\" received",DISCOVER_PHY_PORTS);
 		throw XDPDManagerException();
 	}
 
@@ -166,7 +166,7 @@ void XDPDManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 		{
 			if(ethernetInterfaces.count(pit->getPortName()) == 0)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Ethernet interface \"%s\" not supported by xDPd",(pit->getPortName()).c_str());
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Ethernet interface \"%s\" not supported by xDPd",(pit->getPortName()).c_str());
 				throw XDPDManagerException();
 			}
 		}
@@ -233,7 +233,7 @@ string XDPDManager::prepareCreateLSIrequest(CreateLsiIn cli)
 		{
 			if(foundWireless)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Only a single wireless interface is currently supported in xDPd",(*p).c_str());
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Only a single wireless interface is currently supported in xDPd",(*p).c_str());
 				throw XDPDManagerException();
 			}	
 			json["wireless"] = *p;
@@ -241,7 +241,7 @@ string XDPDManager::prepareCreateLSIrequest(CreateLsiIn cli)
 		}
 		else
 		{
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Interface \"%s\" was not discovered by xDPd",(*p).c_str());
+			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Interface \"%s\" was not discovered by xDPd",(*p).c_str());
 			throw XDPDManagerException();
 		}
 	}
@@ -301,8 +301,8 @@ string XDPDManager::prepareCreateLSIrequest(CreateLsiIn cli)
  	stringstream ss;
  	write_formatted(json, ss );
  	
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
 
  	return ss.str();
 }
@@ -352,7 +352,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 			
 			if(ports_array.size() != (cli.getPhysicalPortsName().size() - ((hasWireless)?1:0)))
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of physical ports",CREATE_LSI);
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of physical ports",CREATE_LSI);
 				throw XDPDManagerException();
 			}
 			
@@ -386,13 +386,13 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 		    		set<string> tmp_ep(ep.begin(),ep.end());
 		    		if(tmp_ep.count(name) == 0)
 		    		{
-		    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required port \"%d\"",CREATE_LSI,name.c_str());
+		    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required port \"%d\"",CREATE_LSI,name.c_str());
 						throw XDPDManagerException();
 		    		}
 		    	}
 		    	else
 	    		{
-	    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a port without the name, the ID, or both",CREATE_LSI);
+	    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a port without the name, the ID, or both",CREATE_LSI);
 					throw XDPDManagerException();
 	    		}
 			} //end iteration on the array
@@ -408,7 +408,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
     		set<string> tmp_ep(ep.begin(),ep.end());
     		if(tmp_ep.count(wirelessName) == 0)
     		{
-    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required port \"%d\"",CREATE_LSI,wirelessName.c_str());
+    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required port \"%d\"",CREATE_LSI,wirelessName.c_str());
 				throw XDPDManagerException();
     		}
         } //end name=="wireless"
@@ -418,7 +418,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 			
 			if(nfs_array.size() != cli.getNetworkFunctionsName().size())
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of network functions (expected: %d - received: %d)",CREATE_LSI,cli.getNetworkFunctionsName().size(),nfs_array.size());
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of network functions (expected: %d - received: %d)",CREATE_LSI,cli.getNetworkFunctionsName().size(),nfs_array.size());
 				throw XDPDManagerException();
 			}
 			
@@ -474,7 +474,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 							}
 							if(!foundPortName || !foundPortID)
 	    					{
-	    						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_LSI);
+	    						logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_LSI);
 								throw XDPDManagerException();		    					
 	    					}
 							ports[port_name] = port_id;
@@ -498,13 +498,13 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 					set<string> names = cli.getNetworkFunctionsName();
 		    		if(names.count(name) == 0)
 		    		{
-		    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required network function",CREATE_LSI,name.c_str());
+		    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required network function",CREATE_LSI,name.c_str());
 						throw XDPDManagerException();
 		    		}
 		    	}
 		    	else
 	    		{
-	    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_LSI);
+	    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_LSI);
 	    			throw XDPDManagerException();
 	    		}
 			} //end iteration on the array
@@ -515,7 +515,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 			
 			if(vls_array.size() != cli.getVirtualLinksRemoteLSI().size())
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains virtual links",CREATE_LSI);
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains virtual links",CREATE_LSI);
 				throw XDPDManagerException();
 			}
 			
@@ -549,7 +549,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 		    	}
 		    	else
 	    		{
-	    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a virtual link without the local ID, the remote ID, or both",CREATE_LSI);
+	    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a virtual link without the local ID, the remote ID, or both",CREATE_LSI);
 					throw XDPDManagerException();
 	    		}
 			} //end iteration on the array
@@ -557,22 +557,22 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
         else
         {
         	//error
-		    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",CREATE_LSI,name.c_str());
+		    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",CREATE_LSI,name.c_str());
 			throw XDPDManagerException();
         }
 	} //end parsing the message
 	
 	if(!foundLSIid)
 	{
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"lsi-id\" received",CREATE_LSI);
+		logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"lsi-id\" received",CREATE_LSI);
 		throw XDPDManagerException();
 	}
 	
 	if(hasWireless && !foundWireless)
 	{
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "%d %d",hasWireless,foundWireless);
+		logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "%d %d",hasWireless,foundWireless);
 	
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"wireless\" received, although a wireless interface was required",CREATE_LSI);
+		logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"wireless\" received, although a wireless interface was required",CREATE_LSI);
 		throw XDPDManagerException();
 	}
 	
@@ -582,7 +582,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 		//The virtual wireless interface created on xDPd must be connected to a physical wireless interface through a Linux bridge
 		if(!attachWirelessPort(dpid, wirelessName))
 		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while attaching the wireless interface \"%s\" to a Linux bridge",wirelessName.c_str());
+			logger(ORCH_ERROR, XDPD_MODULE_NAME, __FILE__, __LINE__, "An error occurred while attaching the wireless interface \"%s\" to a Linux bridge",wirelessName.c_str());
 			throw XDPDManagerException();
 		}
 		wirelessList.push_back(wirelessName);
@@ -603,7 +603,7 @@ bool XDPDManager::findCommand(Object message, string expected)
         {
 			if(value.getString() != expected)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Expected command \"%s\" - received \"%s\"",expected.c_str(),value.getString().c_str());
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Expected command \"%s\" - received \"%s\"",expected.c_str(),value.getString().c_str());
 				return false;	
 			}
 			else
@@ -611,7 +611,7 @@ bool XDPDManager::findCommand(Object message, string expected)
  		}
  	}
  	
- 	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Command not found in the answer");
+ 	logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Command not found in the answer");
  	return false;	
 }
 
@@ -625,7 +625,7 @@ bool XDPDManager::findStatus(Object message)
         {
 			if(value.getString() != OK)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Expected status \"%s\" - received \"%s\"",OK,value.getString().c_str());
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Expected status \"%s\" - received \"%s\"",OK,value.getString().c_str());
 				return false;	
 			}
 			else
@@ -633,7 +633,7 @@ bool XDPDManager::findStatus(Object message)
  		}
  	}
  	
- 	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Status not found in the answer");
+ 	logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Status not found in the answer");
  	return false;	
 }
 
@@ -697,8 +697,8 @@ string XDPDManager::prepareCreateNFPortsRequest(AddNFportsIn anpi)
  	stringstream ss;
  	write_formatted(json, ss );
  	
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
 
  	return ss.str();
 }
@@ -725,7 +725,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 			
 			if(nfs_array.size() != 1)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of network functions ports",CREATE_LSI);
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of network functions ports",CREATE_LSI);
 				throw XDPDManagerException();
 			}
 			
@@ -749,7 +749,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 		    			name = n_value.getString();
 		    			if(name != anpi.getNFname())
 		    			{
-							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required network function",CREATE_LSI,name.c_str());
+							logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required network function",CREATE_LSI,name.c_str());
 							throw XDPDManagerException();
 						}
 		    			
@@ -785,7 +785,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 							}
 							if(!foundPortName || !foundPortID)
 	    					{
-	    						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_LSI);
+	    						logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_LSI);
 								throw XDPDManagerException();		    					
 	    					}
 	    					
@@ -793,7 +793,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 	    					set<string> tmp_ptbt(ports_to_be_translated.begin(),ports_to_be_translated.end());
 	    					if(tmp_ptbt.count(port_name) == 0)
 							{
-								logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required network function port",CREATE_LSI,port_name.c_str());
+								logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required network function port",CREATE_LSI,port_name.c_str());
 								throw XDPDManagerException();
 							}
 	    					
@@ -809,7 +809,7 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 		    	}
 		    	if(!foundName || !foundPorts)
 		    	{
-	    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_NF_PORTS);
+	    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a network function without the name, the ports, or both",CREATE_NF_PORTS);
 	    			throw XDPDManagerException();
 	    		}
 			} //end iteration on the array
@@ -817,14 +817,14 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
         else
         {
         	//error
-		    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",CREATE_NF_PORTS,name.c_str());
+		    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",CREATE_NF_PORTS,name.c_str());
 			throw XDPDManagerException();
         }
 	} //end parsing the message
 	
 	if(!foundNFs)
 	{
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"network-functions\" received",CREATE_NF_PORTS);
+		logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"network-functions\" received",CREATE_NF_PORTS);
 		throw XDPDManagerException();
 	}
 	
@@ -847,7 +847,7 @@ AddVirtualLinkOut *XDPDManager::addVirtualLink(AddVirtualLinkIn avli)
 	
 	//int vlink_position = lsi.addVlink(vlink);	
 	
-	//logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Virtual link with ID %d inserted in position %d",vlink.getID(),vlink_position);
+	//logger(ORCH_DEBUG, XDPD_MODULE_NAME, __FILE__, __LINE__, "Virtual link with ID %d inserted in position %d",vlink.getID(),vlink_position);
 	
 	AddVirtualLinkOut *avlo = NULL;
 	try
@@ -875,8 +875,8 @@ string XDPDManager::prepareCreateVirtualLinkRequest(AddVirtualLinkIn avli)
  	stringstream ss;
  	write_formatted(json, ss );
  	
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
 
  	return ss.str();
 
@@ -902,7 +902,7 @@ AddVirtualLinkOut *XDPDManager::parseCreateVirtualLinkResponse(AddVirtualLinkIn 
 			
 			if(vls_array.size() != 1)//XXX: we create a vlink at a time, althugh xDPd allows the creation of many vlinks together
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of virtual links",CREATE_VLINKS);
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a wrong number of virtual links",CREATE_VLINKS);
 				throw XDPDManagerException();
 			}
 			
@@ -929,7 +929,7 @@ AddVirtualLinkOut *XDPDManager::parseCreateVirtualLinkResponse(AddVirtualLinkIn 
 		    	}
 		    	if(!foundA || !foundB)
 	    		{
-	    			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a virtual link without the id-a, the id-b, or both",CREATE_VLINKS);
+	    			logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a virtual link without the id-a, the id-b, or both",CREATE_VLINKS);
 					throw XDPDManagerException();
 	    		}
 			} //end iteration on the array
@@ -937,14 +937,14 @@ AddVirtualLinkOut *XDPDManager::parseCreateVirtualLinkResponse(AddVirtualLinkIn 
         else
         {
         	//error
-		    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",CREATE_VLINKS,name.c_str());
+		    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",CREATE_VLINKS,name.c_str());
 			throw XDPDManagerException();
         }
 	} //end parsing the message
 	
 	if(!foundVlinks)
 	{
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"virtual-links\" received",CREATE_VLINKS);
+		logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" without \"virtual-links\" received",CREATE_VLINKS);
 		throw XDPDManagerException();
 	}
 	
@@ -1026,8 +1026,8 @@ string XDPDManager::prepareDestroyLSIrequest(uint64_t dpid)
  	stringstream ss;
  	write_formatted(json, ss );
  	
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
 
  	return ss.str();
 }
@@ -1044,7 +1044,7 @@ void XDPDManager::parseDestroyLSIresponse(Object message)
         else
         {
         	//error
-		    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DESTROY_LSI,name.c_str());
+		    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DESTROY_LSI,name.c_str());
 			throw XDPDManagerException();
         }
 	} //end parsing the message
@@ -1067,8 +1067,8 @@ string XDPDManager::prepareDestroyVirtualLinkRequest(DestroyVirtualLinkIn dvli)
  	stringstream ss;
  	write_formatted(json, ss );
  	
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
 
  	return ss.str();
 }
@@ -1085,7 +1085,7 @@ void XDPDManager::parseDestroyVirtualLinkResponse(Object message)
         else
         {
         	//error
-		    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DESTROY_VLINKS,name.c_str());
+		    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DESTROY_VLINKS,name.c_str());
 			throw XDPDManagerException();
         }
 	} //end parsing the message
@@ -1112,7 +1112,7 @@ string XDPDManager::prepareDestroyNFPortsRequest(DestroyNFportsIn dnpi)
 	if( ports_array.size() == 0)
 	{
        	//error
-	    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "It seems that NF '%s' does not have any port!",dnpi.getNFname().c_str());
+	    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "It seems that NF '%s' does not have any port!",dnpi.getNFname().c_str());
 		assert(0);
 		throw XDPDManagerException();
 	}
@@ -1121,8 +1121,8 @@ string XDPDManager::prepareDestroyNFPortsRequest(DestroyNFportsIn dnpi)
  	stringstream ss;
  	write_formatted(json, ss );
  	
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Command to be sent: ");
+ 	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "%s",ss.str().c_str());
 
  	return ss.str();
 }
@@ -1139,7 +1139,7 @@ void XDPDManager::parseDestroyNFPortsResponse(Object message)
         else
         {
         	//error
-		    logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DESTROY_NF_PORTS,name.c_str());
+		    logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" with the unespected parameter \"%s\"",DESTROY_NF_PORTS,name.c_str());
 			throw XDPDManagerException();
         }
 	} //end parsing the message
@@ -1150,11 +1150,11 @@ bool XDPDManager::attachWirelessPort(uint64_t dpid, string wirelessInterfaceName
 {
 	//The virtual wireless interface created by xDPd must be attached to the real wireles interface through a bridge
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Attaching the wireless interface '%s'...",wirelessInterfaceName.c_str());
+	logger(ORCH_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Attaching the wireless interface '%s'...",wirelessInterfaceName.c_str());
 	
 	stringstream command;
 	command << ATTACH_WIRELESS_INTERFACE << " " << dpid << " " << wirelessInterfaceName;
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -1167,10 +1167,10 @@ bool XDPDManager::attachWirelessPort(uint64_t dpid, string wirelessInterfaceName
 
 void XDPDManager::detachWirelessPort(uint64_t dpid, string wirelessInterfaceName)
 {
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Detaching the wireless interface '%s'...",wirelessInterfaceName.c_str());
+	logger(ORCH_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Detaching the wireless interface '%s'...",wirelessInterfaceName.c_str());
 	stringstream command;
 	command << DETACH_WIRELESS_INTERFACE << " " << dpid << " " << wirelessInterfaceName;
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	int retVal = system(command.str().c_str());
 	retVal += 1; //XXX: just to remove a warning
 	

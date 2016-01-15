@@ -26,7 +26,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 
 	unsigned int dpid = m_NextLsiId++;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "createLsi() creating LSI %d", dpid);
+	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "createLsi() creating LSI %d", dpid);
 
 	stringstream cmd;
 	cmd << CMD_CREATE_LSI << " " << dpid << " " << cli.getControllerAddress() << " " << cli.getControllerPort() << " ";
@@ -42,11 +42,11 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			cmd << "OpenFlow13";
 			break;
 	}
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd.str().c_str());
+	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd.str().c_str());
 	int retVal = system(cmd.str().c_str());
 	retVal = retVal >> 8;
 	if(retVal == 0) {
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to create LSI");
+		logger(ORCH_WARNING, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Failed to create LSI");
 		throw OVSDPDKManagerException();
 	}
 
@@ -60,16 +60,16 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 	{
 		// Go create it!
 		unsigned int port_id = m_NextPortId++;
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " phy port \"%s\" = %d", pit->c_str(), port_id);
+		logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, " phy port \"%s\" = %d", pit->c_str(), port_id);
 		stringstream cmd_add;
 
 		const char * port_type = ((*pit).compare(0, 4, "dpdk") == 0) ? "dpdk":"host";
 		cmd_add << CMD_ADD_PORT << " " << dpid << " " << *pit << " " << port_type << " " << port_id;
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+		logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 		int retVal = system(cmd_add.str().c_str());
 		retVal = retVal >> 8;
 		if(retVal == 0) {
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port");
+			logger(ORCH_WARNING, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Failed to add port");
 			throw OVSDPDKManagerException();
 		}
 		// TODO - Really check result!
@@ -119,17 +119,17 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			
 			port_name_on_switch.push_back(port_name);
 			
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function port '%s' corresponds to the port '%s' on the switch", nfp->c_str(),port_name.c_str());
+			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Network function port '%s' corresponds to the port '%s' on the switch", nfp->c_str(),port_name.c_str());
 
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (nf_type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
+			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (nf_type=%d)", nf->c_str(), nfp->c_str(), port_id, nf_type);
 			stringstream cmd_add;
 			cmd_add << CMD_ADD_PORT << " " << dpid << " " << port_name << " " << port_type << " " << port_id;
 			cmd_add << " " << OVS_BASE_SOCK_PATH;
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+			logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 			int retVal = system(cmd_add.str().c_str());
 			retVal = retVal >> 8;
 			if(retVal == 0) {
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port");
+				logger(ORCH_WARNING, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Failed to add port");
 				throw OVSDPDKManagerException();
 			}
 			// TODO - Really check result!
@@ -153,7 +153,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 		// graph, we know when the flooding VLink is deleted and we can enable another VLink.
 		bool enable_flooding = (vlink_n == 0);
 
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Virtual link to LSI %u: %u:%u <-> %u:%u", *vl, dpid, s_port_id, *vl, d_port_id);
+		logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, " Virtual link to LSI %u: %u:%u <-> %u:%u", *vl, dpid, s_port_id, *vl, d_port_id);
 		stringstream cmd_add;
 		cmd_add << CMD_VIRTUAL_LINK << " " << dpid << " " << *vl << " " << s_port_id << " " << d_port_id << " " << vlink_n << " " << enable_flooding;
 		// Set the OpenFlow version
@@ -169,11 +169,11 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 				break;
 		}
 
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+		logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
 		int retVal = system(cmd_add.str().c_str());
 		retVal = retVal >> 8;
 		if(retVal == 0) {
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to create virtual link");
+			logger(ORCH_WARNING, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Failed to create virtual link");
 			throw OVSDPDKManagerException();
 		}
 
@@ -194,10 +194,10 @@ AddNFportsOut *OVSDPDKManager::addNFPorts(AddNFportsIn anpi)
 	assert(0 && "Method not implemented yet!");
 
 	AddNFportsOut *anpo = NULL;
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
+	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
 	list<string> nfs_ports = anpi.getNetworkFunctionsPorts();
 	for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tport: %s", (*nfp).c_str());
+		logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "\tport: %s", (*nfp).c_str());
 	}
 	return anpo;
 }
@@ -210,20 +210,20 @@ AddVirtualLinkOut *OVSDPDKManager::addVirtualLink(AddVirtualLinkIn avli)
 	assert(0 && "Method not implemented yet!");
 
 	AddVirtualLinkOut *avlo = NULL;
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addVirtualLink(dpid: %" PRIu64 " -> %" PRIu64 ")", avli.getDpidA(), avli.getDpidB());
+	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "addVirtualLink(dpid: %" PRIu64 " -> %" PRIu64 ")", avli.getDpidA(), avli.getDpidB());
 	return avlo;
 }
 
 void OVSDPDKManager::destroyLsi(uint64_t dpid)
 { // SwitchManager implementation
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")", dpid);
+	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")", dpid);
 	stringstream cmd;
 	cmd << CMD_DESTROY_LSI << " " << dpid;
 	
 	int retVal = system(cmd.str().c_str());
 	retVal = retVal >> 8;
 	if(retVal == 0) {
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to destroy LSI");
+		logger(ORCH_WARNING, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Failed to destroy LSI");
 		throw OVSDPDKManagerException();
 	}
 }
@@ -235,7 +235,7 @@ void OVSDPDKManager::destroyVirtualLink(DestroyVirtualLinkIn dvli)
 	
 	assert(0 && "Method not implemented yet!");
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyVirtualLink(%" PRIu64 ".%" PRIu64 " -> %" PRIu64 ".%" PRIu64 ")",
+	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "destroyVirtualLink(%" PRIu64 ".%" PRIu64 " -> %" PRIu64 ".%" PRIu64 ")",
 			dvli.getDpidA(), dvli.getIdA(), dvli.getDpidB(), dvli.getIdB());
 
 }
