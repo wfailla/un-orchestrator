@@ -710,7 +710,13 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			map<unsigned int, PortType>::iterator pt_it = nf_ports_type.find(*p_it);
 			if (pt_it == nf_ports_type.end()) {
 				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\tNF Port \"%s\":%d has no type defined in NF description", nf_name.c_str(), (*p_it));
-				pt_it = nf_ports_type.insert(map<unsigned int, PortType>::value_type(*p_it, UNDEFINED_PORT)).first;  // Default - TODO: Or should we cause a failure here?
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\tThe ports ID used in the graph must correspond to those specified in the name resolver...");
+				//This is an error of the client, which specified a wrong NF-FG (wrong ports towards a VNF)
+				delete(computeController);
+				delete(controller);
+				computeController = NULL;
+				controller = NULL;
+				return false;
 			}
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tNF Port \"%s\":%d is of type '%s'", nf_name.c_str(), (*p_it), portTypeToString(pt_it->second).c_str());
 		}
