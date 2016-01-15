@@ -3,8 +3,8 @@
 namespace highlevel
 {
 
-ActionPort::ActionPort(string port) :
-	Action(ACTION_ON_PORT), port(port)
+ActionPort::ActionPort(string port, string input_port) :
+	Action(ACTION_ON_PORT), port(port), input_port(input_port)
 {
 
 }
@@ -16,7 +16,7 @@ ActionPort::~ActionPort()
 
 bool ActionPort::operator==(const ActionPort &other) const
 {
-	if(port == other.port)
+	if(port == other.port && input_port == other.input_port)
 		return true;
 		
 	return false;
@@ -37,7 +37,7 @@ void ActionPort::print()
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
 		cout << "\t\tAction:" << endl << "\t\t{" << endl;
-		cout << "\t\t\tport: " << port << endl;
+		cout << "\t\t\toutput_to_port: " << port << endl;
 		for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 			(*ga)->print();
 		cout << "\t\t}" << endl;
@@ -47,7 +47,7 @@ void ActionPort::print()
 Object ActionPort::toJSON()
 {
 	Object action;
-	action[PORT] = port.c_str();
+	action[OUTPUT] = input_port.c_str();
 	
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		(*ga)->toJSON(action);

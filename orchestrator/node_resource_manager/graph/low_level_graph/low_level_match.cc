@@ -149,7 +149,6 @@ void Match::setInputPort(unsigned int input_port)
 {
 	this->input_port = input_port;
 	isInput_port = true;
-
 }
 
 void Match::setAllCommonFields(graph::Match match)

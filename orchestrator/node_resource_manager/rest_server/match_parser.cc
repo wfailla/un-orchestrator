@@ -223,10 +223,12 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 						if(strcmp(pnt,VNF) == 0)
 						{
 							p_type = 0;
+							match.setNFEndpointPort(port_in_name_tmp);
 						}
 						//ENDPOINT port
 						else if(strcmp(pnt,ENDPOINT) == 0){
-							p_type = 1;	
+							p_type = 1;
+							match.setInputEndpoint(port_in_name_tmp);	
 						}
 						break;
 					//only for VNF ports
@@ -339,56 +341,9 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 #endif			
 			
 		}
-		else if(name == PROTOCOL)
+		else if(name == HARD_TIMEOUT)
 		{
-			if(value.getString().compare(TCP) == 0)
-				is_tcp = true;
-			else
-				is_tcp = false;
-		}
-		else if(name == ETH_SRC)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_SRC,value.getString().c_str());
-			if(!validateMac(value.getString().c_str()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_SRC,value.getString().c_str());
-				return false;
-			}
-			match.setEthSrc((char*)value.getString().c_str());
-			foundProtocolField = true;
-		}
-		else if(name == ETH_SRC_MASK)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_SRC_MASK,value.getString().c_str());
-			if(!validateMac(value.getString().c_str()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_SRC_MASK,value.getString().c_str());
-				return false;
-			}
-			match.setEthSrcMask((char*)value.getString().c_str());
-			foundProtocolField = true;
-		}
-		else if(name == ETH_DST)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_DST,value.getString().c_str());
-			if(!validateMac(value.getString().c_str()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_DST,value.getString().c_str());
-				return false;
-			}
-			match.setEthDst((char*)value.getString().c_str());
-			foundProtocolField = true;
-		}
-		else if(name == ETH_DST_MASK)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_DST_MASK,value.getString().c_str());
-			if(!validateMac(value.getString().c_str()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_DST_MASK,value.getString().c_str());
-				return false;
-			}
-			match.setEthDstMask((char*)value.getString().c_str());
-			foundProtocolField = true;		
+			//XXX: currently, this information is ignored	
 		}
 		else if(name == ETH_TYPE)
 		{
@@ -422,52 +377,30 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			}
 			foundProtocolField = true;
 		}
-		else if(name == VLAN_PCP)
+		else if(name == VLAN_PRIORITY)
 		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,VLAN_PCP,value.getString().c_str());
-			uint16_t vlanPCP;
-			if((sscanf(value.getString().c_str(),"%"SCNd16,&vlanPCP) != 1) || (vlanPCP > 255) )
+			//XXX: currently, this information is ignored	
+		}
+		else if(name == ETH_SRC)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_SRC,value.getString().c_str());
+			if(!validateMac(value.getString().c_str()))
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_PCP,value.getString().c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_SRC,value.getString().c_str());
 				return false;
 			}
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%x\"",MATCH,VLAN_PCP,vlanPCP);
-			match.setVlanPCP(vlanPCP & 0xFF);
+			match.setEthSrc((char*)value.getString().c_str());
 			foundProtocolField = true;
 		}
-		else if(name == IP_DSCP)
+		else if(name == ETH_DST)
 		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_DSCP,value.getString().c_str());
-			uint16_t ipDSCP;
-			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipDSCP) != 1) || (ipDSCP > 255) )
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_DST,value.getString().c_str());
+			if(!validateMac(value.getString().c_str()))
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_DSCP,value.getString().c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_DST,value.getString().c_str());
 				return false;
 			}
-			match.setIpDSCP(ipDSCP & 0xFF);
-		}
-		else if(name == IP_ECN)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_ECN,value.getString().c_str());
-			uint16_t ipECN;
-			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipECN) != 1) || (ipECN > 255) )
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_ECN,value.getString().c_str());
-				return false;
-			}
-			match.setIpECN(ipECN & 0xFF);
-			foundProtocolField = true;
-		}
-		else if(name == IP_PROTO)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_PROTO,value.getString().c_str());
-			uint16_t ipProto;
-			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipProto) != 1) || (ipProto > 255) )
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_PROTO,value.getString().c_str());
-				return false;
-			}
-			match.setIpProto(ipProto & 0xFF);
+			match.setEthDst((char*)value.getString().c_str());
 			foundProtocolField = true;
 		}
 		else if(name == IP_SRC)
@@ -521,49 +454,9 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 				foundProtocolField = true;
 			}		
 		}
-		else if(name == IPv4_SRC)
+		else if(name == TOS_BITS)
 		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_SRC,value.getString().c_str());
-			if(!validateIpv4(value.getString()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_SRC,value.getString().c_str());
-				return false;
-			}
-			match.setIpv4Src((char*)value.getString().c_str());		
-			foundProtocolField = true;
-		}
-		else if(name == IPv4_SRC_MASK)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_SRC_MASK,value.getString().c_str());
-			if(!validateIpv4Netmask(value.getString()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_SRC_MASK,value.getString().c_str());
-				return false;
-			}
-			match.setIpv4SrcMask((char*)value.getString().c_str());
-			foundProtocolField = true;
-		}
-		else if(name == IPv4_DST)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_DST,value.getString().c_str());
-			if(!validateIpv4(value.getString()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_DST,value.getString().c_str());
-				return false;
-			}
-			match.setIpv4Dst((char*)value.getString().c_str());
-			foundProtocolField = true;		
-		}
-		else if(name == IPv4_DST_MASK)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_DST_MASK,value.getString().c_str());
-			if(!validateIpv4Netmask(value.getString()))
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_DST_MASK,value.getString().c_str());
-				return false;
-			}
-			match.setIpv4DstMask((char*)value.getString().c_str());
-			foundProtocolField = true;
+			//XXX: currently, this information is ignored	
 		}
 		else if(name == PORT_SRC)
 		{
@@ -618,6 +511,127 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 				match.setUdpDst(udpDst & 0xFFFF);
 				foundProtocolField = true;
 			}
+		}
+		else if(name == PROTOCOL)
+		{
+			if(value.getString().compare(TCP) == 0)
+				is_tcp = true;
+			else
+				is_tcp = false;
+		}
+		/*else if(name == ETH_SRC_MASK)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_SRC_MASK,value.getString().c_str());
+			if(!validateMac(value.getString().c_str()))
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_SRC_MASK,value.getString().c_str());
+				return false;
+			}
+			match.setEthSrcMask((char*)value.getString().c_str());
+			foundProtocolField = true;
+		}
+		else if(name == ETH_DST_MASK)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_DST_MASK,value.getString().c_str());
+			if(!validateMac(value.getString().c_str()))
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_DST_MASK,value.getString().c_str());
+				return false;
+			}
+			match.setEthDstMask((char*)value.getString().c_str());
+			foundProtocolField = true;		
+		}
+		else if(name == VLAN_PCP)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,VLAN_PCP,value.getString().c_str());
+			uint16_t vlanPCP;
+			if((sscanf(value.getString().c_str(),"%"SCNd16,&vlanPCP) != 1) || (vlanPCP > 255) )
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_PCP,value.getString().c_str());
+				return false;
+			}
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%x\"",MATCH,VLAN_PCP,vlanPCP);
+			match.setVlanPCP(vlanPCP & 0xFF);
+			foundProtocolField = true;
+		}
+		else if(name == IP_DSCP)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_DSCP,value.getString().c_str());
+			uint16_t ipDSCP;
+			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipDSCP) != 1) || (ipDSCP > 255) )
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_DSCP,value.getString().c_str());
+				return false;
+			}
+			match.setIpDSCP(ipDSCP & 0xFF);
+		}
+		else if(name == IP_ECN)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_ECN,value.getString().c_str());
+			uint16_t ipECN;
+			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipECN) != 1) || (ipECN > 255) )
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_ECN,value.getString().c_str());
+				return false;
+			}
+			match.setIpECN(ipECN & 0xFF);
+			foundProtocolField = true;
+		}
+		else if(name == IP_PROTO)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_PROTO,value.getString().c_str());
+			uint16_t ipProto;
+			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipProto) != 1) || (ipProto > 255) )
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_PROTO,value.getString().c_str());
+				return false;
+			}
+			match.setIpProto(ipProto & 0xFF);
+			foundProtocolField = true;
+		}
+		else if(name == IPv4_SRC)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_SRC,value.getString().c_str());
+			if(!validateIpv4(value.getString()))
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_SRC,value.getString().c_str());
+				return false;
+			}
+			match.setIpv4Src((char*)value.getString().c_str());		
+			foundProtocolField = true;
+		}
+		else if(name == IPv4_SRC_MASK)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_SRC_MASK,value.getString().c_str());
+			if(!validateIpv4Netmask(value.getString()))
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_SRC_MASK,value.getString().c_str());
+				return false;
+			}
+			match.setIpv4SrcMask((char*)value.getString().c_str());
+			foundProtocolField = true;
+		}
+		else if(name == IPv4_DST)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_DST,value.getString().c_str());
+			if(!validateIpv4(value.getString()))
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_DST,value.getString().c_str());
+				return false;
+			}
+			match.setIpv4Dst((char*)value.getString().c_str());
+			foundProtocolField = true;		
+		}
+		else if(name == IPv4_DST_MASK)
+		{
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IPv4_DST_MASK,value.getString().c_str());
+			if(!validateIpv4Netmask(value.getString()))
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IPv4_DST_MASK,value.getString().c_str());
+				return false;
+			}
+			match.setIpv4DstMask((char*)value.getString().c_str());
+			foundProtocolField = true;
 		}
 		else if(name == TCP_SRC)
 		{
@@ -923,7 +937,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			}
 			match.setMplsTC(mplsTC & 0xFF);
 			foundProtocolField = true;
-		}
+		}*/
 		else
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",name.c_str());

@@ -14,7 +14,7 @@ VlanAction::~VlanAction()
 void VlanAction::print()
 {
 	stringstream ss;
-	ss << ((type == ACTION_VLAN_PUSH)? "push " : "pop");
+	ss << ((type == ACTION_VLAN_PUSH)? "push_vlan " : "pop_vlan");
 	if(type == ACTION_VLAN_PUSH)
 		ss << " " << label;
 	ss << endl;
@@ -25,15 +25,11 @@ void VlanAction::print()
 void VlanAction::toJSON(Object &action)
 {
 	Object vlanAction;
-	vlanAction[VLAN_OP] = ((type == ACTION_VLAN_PUSH)? "push" : "pop");
-	if(type == ACTION_VLAN_PUSH)
-	{
-		stringstream s_label;
-		s_label << label;
-		vlanAction[VLAN_ID] = s_label.str();
-	}
+	string vlan_op = ((type == ACTION_VLAN_PUSH)? "push_vlan" : "pop_vlan");
 	
-	action[VLAN] = vlanAction;
+	stringstream s_label;
+	s_label << label;
+	action[vlan_op] = s_label.str();
 }
 
 void  VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsigned int *position)
@@ -70,7 +66,7 @@ void  VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsign
 string VlanAction::prettyPrint()
 {
 	stringstream ss;
-	ss << " # vlan: " << ((type == ACTION_VLAN_PUSH)? "push " : "pop");
+	ss << " # vlan: " << ((type == ACTION_VLAN_PUSH)? "push_vlan " : "pop_vlan");
 	if(type == ACTION_VLAN_PUSH)
 		ss << " " << label;
 	return ss.str();

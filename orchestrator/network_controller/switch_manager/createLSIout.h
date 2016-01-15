@@ -34,12 +34,12 @@ private:
 	*		be later used by the node resource manager to properly create the graph.
 	*/
 	map<string,map<string, unsigned int> >  network_functions_ports;
-#ifdef VSWITCH_IMPLEMENTATION_OVSDB
+
 	/**
 	*	@brief: map of endpoint name, identifier on the lsi
 	*/
 	map<string,unsigned int >  endpoints_ports;
-#endif
+
 	/**
 	*	@brief: map of network functions name, list of ports on the vSwitch that are associated with such a network function.
 	*		The name of the port created on the switch may differ from the name used by the node resource manager to refer to
@@ -71,12 +71,12 @@ protected:
 	{
 		return network_functions_ports;
 	}
-#ifdef VSWITCH_IMPLEMENTATION_OVSDB	
+
 	map<string,unsigned int > getEndpointsPorts()
 	{
 		return endpoints_ports;
 	}
-#endif	
+
 	map<string,list<string> > getNetworkFunctionsPortsNameOnSwitch()
 	{
 		return nf_ports_name_on_switch;
@@ -88,15 +88,11 @@ protected:
 	}
 
 public:
-#ifdef VSWITCH_IMPLEMENTATION_OVSDB
+
 	CreateLsiOut(uint64_t dpid, map<string,unsigned int> physical_ports, map<string,map<string, unsigned int> >  network_functions_ports, map<string,unsigned int> endpoints_ports, map<string,list<string> > nf_ports_name_on_switch, list<pair<unsigned int, unsigned int> > virtual_links)
 		: dpid(dpid), physical_ports(physical_ports.begin(),physical_ports.end()),network_functions_ports(network_functions_ports.begin(),network_functions_ports.end()), endpoints_ports(endpoints_ports.begin(),endpoints_ports.end()),nf_ports_name_on_switch(nf_ports_name_on_switch.begin(),nf_ports_name_on_switch.end()), virtual_links(virtual_links.begin(),virtual_links.end())
 	{}
-#else
-	CreateLsiOut(uint64_t dpid, map<string,unsigned int> physical_ports, map<string,map<string, unsigned int> >  network_functions_ports, map<string,list<string> > nf_ports_name_on_switch, list<pair<unsigned int, unsigned int> > virtual_links)
-		: dpid(dpid), physical_ports(physical_ports.begin(),physical_ports.end()),network_functions_ports(network_functions_ports.begin(),network_functions_ports.end()),nf_ports_name_on_switch(nf_ports_name_on_switch.begin(),nf_ports_name_on_switch.end()), virtual_links(virtual_links.begin(),virtual_links.end())
-	{}
-#endif	
+
 };
 
 #endif //CreateLsiOut_H_

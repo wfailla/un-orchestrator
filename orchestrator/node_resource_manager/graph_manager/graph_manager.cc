@@ -375,7 +375,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 			if(highLevelGraph->isDefinedHere(ep))
 			{
 				assert(availableEndPoints.find(ep)->second ==0);
-				assert(endPointsDefinedInMatches.count(ep) != 0 || endPointsDefinedInActions.count(ep) != 0);
+				//assert(endPointsDefinedInMatches.count(ep) != 0 || endPointsDefinedInActions.count(ep) != 0);
 				
 				map<string, list<string> >::iterator tmp = mep;
 				mep++;
@@ -513,41 +513,6 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	}
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d graph endpoints (i.e., logical ports to be used to connect two graphs together)",endPoints.size());
-	
-	//No checks is necessary!
-	/*for(map<string, pair<string, string> >::iterator mgraphEP = endPoints.begin(); mgraphEP != endPoints.end(); mgraphEP++)
-	{
-		string graphEP = mgraphEP->first; 
-	
-		if(!graph->isDefinedHere(graphEP))
-		{
-			//since this endpoint is defined into another graph, that endpoint must already exist
-			if(availableEndPoints.count(graphEP) == 0)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint \"%s\" is not defined by the current graph, and it does not exist yet",graphEP.c_str());
-				return false;
-			}
-			
-			if(graph->endpointIsUsedInMatch(graphEP))
-			{
-				//Another graph must have been defined it in an action
-				if(endPointsDefinedInActions.count(graphEP) == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint \"%s\" is used in a match of the current graph, but it was not defined in an action of another graph",graphEP.c_str());
-					return false;
-				}
-			}
-			if(graph->endpointIsUsedInAction(graphEP))
-			{
-				//Another graph must have been defined it in a match
-				if(endPointsDefinedInMatches.count(graphEP) == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint \"%s\" is used in an action of the current graph, but it was not defined in a match of another graph",graphEP.c_str());
-					return false;
-				}
-			}
-		}
-	}*/
 	
 	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctions();
 
@@ -692,7 +657,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	use separated virtual links in case of endpoint.
 	*/
 	//unsigned int biggest = 0;
-	unsigned int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
+	unsigned int numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : */vlPhyPorts.size();
 	/*if (vlNFs.size() > biggest)
     	biggest=vlNFs.size();
   	if (vlPhyPorts.size() > biggest)
@@ -700,10 +665,10 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
  	if(vlEndPoints.size() > biggest)
     	biggest=vlEndPoints.size();*/
 	unsigned int numberOfVLrequired = 0/*numberOfVLrequiredBeforeEndPointsvlNFs.size() + vlEndPoints.size()*//*biggest*/;
-	if(vlNFs.size() == 0)
-		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPoints.size()/*biggest*/;
-	else
-		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints;
+	//if(vlNFs.size() == 0)
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints/* + vlEndPoints.size()biggest*/;
+	/*else
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints;*/
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new LSI with LSI-0",numberOfVLrequired);
 	
@@ -825,12 +790,15 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoints (%d):",eps.size());
 	for(map<string, list<string> >::iterator it = eps.begin(); it != eps.end(); it++){
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tID: %s:",it->first.c_str());
+		int id = 0;
+		sscanf(it->first.c_str(), "%d", &id);
+		
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tID %d:", id);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tKey: %s", it->second.front().c_str());
+		it->second.pop_front();
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tLocal ip: %s", it->second.front().c_str());
 		it->second.pop_front();
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tRemote ip: %s", it->second.front().c_str());
-		it->second.pop_front();
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tKey: %s", it->second.front().c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tRemote_ip: %s", it->second.front().c_str());
 		it->second.pop_front();
 	}
 
@@ -877,30 +845,19 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	map<string, uint64_t> endpoints_vlinks;
 	vector<VLink>::iterator vl3 = vls.begin();
 	
-	unsigned int aux = 0;
+	/*unsigned int aux = 0;
 	while(aux < numberOfVLrequiredBeforeEndPoints-1)
 	{
 		//The first vlinks are only used for NFs and physical ports
 		//TODO: this could be optimized, although it is not easy (and useful)
 		aux++;
 		vl3++;
-	}
+	}*/
 	
 	for(set<string>::iterator ep = vlEndPoints.begin(); ep != vlEndPoints.end(); ep++, vl3++)
 	{			
 		endpoints_vlinks[*ep] = vl3->getID();
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*ep).c_str(),vl3->getID());
-		if(graph->isDefinedHere(*ep))
-		{
-			//since this endpoint is in an action (hence it requires a virtual link), and it is defined in this
-			//graph, we save the port of the vlink in LSI-0, so that other graphs can use this endpoint
-					
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The endpoint \"%s\" is defined in an action of the current Graph. Other graph can use it expressing a match on the port %d of the LSI-0",(*ep).c_str(),vl3->getRemoteID());
-			endPointsDefinedInActions[*ep] = vl3->getRemoteID();
-			
-			//This endpoint is currently not used in any other graph, since it is defined in the current graph
-			availableEndPoints[*ep] = 0;
-		}
 	}
 	lsi->setEndPointsVLinks(endpoints_vlinks);
 
@@ -1230,7 +1187,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	set<string> NFsFromEndPoint = vlVector[3];
 
 	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)	
-	int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
+	int numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : */vlPhyPorts.size();
 	/*unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPoints.size();
 	unsigned int biggest = 0;
 	if (vlNFs.size() > biggest)
@@ -1240,10 +1197,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
  	if(vlEndPoints.size() > biggest)
     	biggest=vlEndPoints.size();*/
 	unsigned int numberOfVLrequired = 0/*numberOfVLrequiredBeforeEndPointsvlNFs.size() + vlEndPoints.size()*//*biggest*/;
-	if(vlNFs.size() == 0)
-		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPoints.size()/*biggest*/;
-	else
-		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints;
+	//if(vlNFs.size() == 0)
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints/* + vlEndPoints.size()biggest*/;
+	/*else
+		numberOfVLrequired = numberOfVLrequiredBeforeEndPoints;*/
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);
 

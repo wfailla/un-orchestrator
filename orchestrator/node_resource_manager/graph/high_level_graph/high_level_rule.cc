@@ -52,11 +52,13 @@ void Rule::print()
 Object Rule::toJSON()
 {
 	Object rule;
+	Array actions;
 	
 	rule[_ID] = flowID.c_str();
 	rule[PRIORITY] = priority;
 	rule[MATCH] = match.toJSON();
-	rule[ACTIONS] = action->toJSON();
+	actions.push_back(action->toJSON());
+	rule[ACTIONS] = actions;
 		
 	return rule;
 }

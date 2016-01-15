@@ -35,9 +35,7 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 	
 	//fill the map of endpoints
 	for(map<string,list<string> >::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
-	{
 		this->endpoints_ports[ep->first] = ep->second;	
-	}
 }
 
 string LSI::getControllerAddress()

@@ -63,6 +63,18 @@ private:
 	unsigned int endpoint;
 	
 	/**
+	*	@brief: this attribute can either represent
+	*		a endpoint port (e.g. endpoint:00000001)
+	*/
+	char *input_endpoint;
+	
+	/**
+	*	@brief: this attribute can either represent
+	*		a vnf endpoint port (e.g. vnf:00000002:inout:0)
+	*/
+	char *nf_endpoint_port;
+	
+	/**
 	*	@brief: type of the match
 	*/
 	match_t type;
@@ -91,6 +103,27 @@ public:
 	*	@param: endpoint	identifier of the endpoint within the graph
 	*/
 	bool setEndPoint(unsigned int endpoint);
+	
+	/**
+	*	@brief: set a input endpoint
+	*
+	*	@param: input_endpoint	endpoint (e.g., endpoint:00000001)
+	*/
+	bool setInputEndpoint(string input_endpoint);
+	
+	/**
+	*	@brief: set a name of endpoint
+	*
+	*	@param: endpoint_name	name of endpoint (e.g., gre1)
+	*/
+	bool setEndpointName(string endpoint_name);
+	
+	/**
+	*	@brief: set a endpoint (type: vnf)
+	*
+	*	@param: nf_endpoint	the name of a vnf endpoint port (e.g., vnf:00000002:inout:0)
+	*/
+	bool setNFEndpointPort(string nf_endpoint_port);
 	
 	/**
 	*	@brief: return true if the match is on a physical port
@@ -131,6 +164,11 @@ public:
 	*	@brief: get the identifier of the endpoint within the graph defining it (the match must be on a graph endpoint)
 	*/
 	unsigned int getEndPoint();
+	
+	/**
+	*	@brief: get the full identifier of the endpoint within the graph defining it (the match must be on a graph endpoint)
+	*/
+	char *getInputEndpoint();
 	
 	/**
 	*	@brief: print the match in a json like style

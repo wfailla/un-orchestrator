@@ -13,6 +13,98 @@ string Graph::getID()
 	return ID;
 }
 
+void Graph::setId(string id)
+{
+	this->id = id;
+}
+
+string Graph::getId()
+{
+	return id;
+}
+
+void Graph::setName(string name)
+{
+	this->name = name;
+}
+
+string Graph::getName()
+{
+	return name;
+}
+
+bool Graph::addEndPointInterface(EndPointInterface endpoint)
+{
+	for(list<EndPointInterface>::iterator e = endPointsInterface.begin(); e != endPointsInterface.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsInterface.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointInterface> Graph::getEndPointsInterface()
+{
+	return endPointsInterface;
+}
+
+bool Graph::addEndPointInterfaceOut(EndPointInterfaceOut endpoint)
+{
+	for(list<EndPointInterfaceOut>::iterator e = endPointsInterfaceOut.begin(); e != endPointsInterfaceOut.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsInterfaceOut.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointInterfaceOut> Graph::getEndPointsInterfaceOut()
+{
+	return endPointsInterfaceOut;
+}
+
+bool Graph::addEndPointGre(EndPointGre endpoint)
+{
+	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsGre.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointGre> Graph::getEndPointsGre()
+{
+	return endPointsGre;
+}
+
+bool Graph::addVNF(VNFs vnf)
+{
+	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end(); v++)
+	{
+		if(*v == vnf)
+			return false;
+	}
+
+	vnfs.push_back(vnf);
+	
+	return true;
+}
+
+list<VNFs> Graph::getVNFs()
+{
+	return vnfs;
+}
+
 set<string> Graph::getPorts()
 {
 	return ports;
@@ -201,17 +293,45 @@ void Graph::print()
 
 Object Graph::toJSON()
 {
-	Object flow_graph;
+	Object forwarding_graph, big_switch;
 	
-	Array flow_rules;
+	Array flow_rules, end_points, vnf;
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end();r++)
 	{
 		flow_rules.push_back(r->toJSON());
 	}
 	
-	flow_graph[FLOW_RULES] = flow_rules;
+	for(list<EndPointInterface>::iterator e = endPointsInterface.begin(); e != endPointsInterface.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
 	
-	return flow_graph;
+	for(list<EndPointInterfaceOut>::iterator e = endPointsInterfaceOut.begin(); e != endPointsInterfaceOut.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+	
+	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+	
+	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end();v++)
+	{
+		vnf.push_back(v->toJSON());
+	}
+	
+	forwarding_graph[F_ID] = id;
+	forwarding_graph[F_NAME] = name;
+	if(end_points.size() != 0)
+		forwarding_graph[END_POINTS] = end_points;
+	if(vnf.size() != 0)
+		forwarding_graph[VNFS] = vnf;
+	big_switch[FLOW_RULES] = flow_rules;
+	
+	forwarding_graph[BIG_SWITCH] = big_switch;
+	
+	return forwarding_graph;
 }
 
 bool Graph::stillExistNF(string nf)

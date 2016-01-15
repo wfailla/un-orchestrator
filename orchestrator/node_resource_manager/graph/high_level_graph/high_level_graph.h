@@ -9,6 +9,10 @@
 #include <iostream>
 #include <sstream>
 
+#include "high_level_graph_endpoint_interface.h"
+#include "high_level_graph_endpoint_interface_out.h"
+#include "high_level_graph_endpoint_gre.h"
+#include "high_level_graph_vnf.h"
 #include "high_level_rule.h"
 #include "high_level_output_action_nf.h"
 #include "high_level_output_action_port.h"
@@ -56,9 +60,39 @@ private:
 	list<Rule> rules;
 	
 	/**
+	*	@brief: List of endPointsInterface describing the graph
+	*/
+	list<EndPointInterface> endPointsInterface;
+	
+	/**
+	*	@brief: List of endPointsInterfaceOut describing the graph
+	*/
+	list<EndPointInterfaceOut> endPointsInterfaceOut;
+	
+	/**
+	*	@brief: List of endPointsGRE describing the graph
+	*/
+	list<EndPointGre> endPointsGre;
+	
+	/**
+	*	@brief: List of VNFs describing the graph
+	*/
+	list<VNFs> vnfs;
+	
+	/**
 	*	@brief: Identifier of the graph
 	*/
 	string ID;
+	
+	/**
+	*	@brief: id of the graph
+	*/
+	string id;
+	
+	/**
+	*	@brief: Name of the graph
+	*/
+	string name;
 	
 public:	
 
@@ -129,6 +163,66 @@ public:
 	*	@brief: Return the ID of the graph
 	*/
 	string getID();
+	
+	/**
+	*	@brief: Set the id of the graph
+	*/
+	void setId(string id);
+	
+	/**
+	*	@brief: Return the id of the graph
+	*/
+	string getId();
+	
+	/**
+	*	@brief: Set the name of the graph
+	*/
+	void setName(string name);
+	
+	/**
+	*	@brief: Return the name of the graph
+	*/
+	string getName();
+	
+	/**
+	*	@brief: Add a new endpointInterface to the graph
+	*/
+	bool addEndPointInterface(EndPointInterface endpoint);
+	
+	/**
+	*	@brief: Return the endpointsInterface of the graph
+	*/
+	list<EndPointInterface> getEndPointsInterface();
+	
+	/**
+	*	@brief: Add a new endpointInterfaceOut to the graph
+	*/
+	bool addEndPointInterfaceOut(EndPointInterfaceOut endpoint);
+	
+	/**
+	*	@brief: Return the endpointsInterfaceOut of the graph
+	*/
+	list<EndPointInterfaceOut> getEndPointsInterfaceOut();
+	
+	/**
+	*	@brief: Add a new endpointGre to the graph
+	*/
+	bool addEndPointGre(EndPointGre endpoint);
+	
+	/**
+	*	@brief: Return the endpointsGre of the graph
+	*/
+	list<EndPointGre> getEndPointsGre();
+	
+	/**
+	*	@brief: Add a new vnf to the graph
+	*/
+	bool addVNF(VNFs vnf);
+	
+	/**
+	*	@brief: Return the vnfs of the graph
+	*/
+	list<VNFs> getVNFs();
 	
 	/**
 	*	@brief: Return the rules of the graph

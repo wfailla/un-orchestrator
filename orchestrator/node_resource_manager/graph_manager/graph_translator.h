@@ -32,11 +32,6 @@ protected:
 	*	@param: graph						High level graph to be translated
 	*	@param: tenantLSI					Information related to the LSI of the tenant
 	*	@param: lsi0						Information related to the LSI-0
-	*	@param:	endPointsDefinedInMatches	For each endpoint currently defined, contains the port
-	*										in the LSI-0 to be used to send packets on that endpoint
-	*	@param: endPointsDefinedInActions	For each endpoint currently defined, contains the port
-	*										in the LSI-0 to be used to match packets coming from that
-	*										endpoint
 	*	@param: availableEndPoints			Indicates the number of time each available endpoint is used
 	*										by graphs not defining the endpoint itself
 	*	@param: creating					Indicates if the translation is needed to create or to detroy

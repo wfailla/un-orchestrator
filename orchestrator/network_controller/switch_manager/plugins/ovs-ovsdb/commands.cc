@@ -34,6 +34,8 @@ map<string, list<uint64_t> > virtual_link_id;
 map<uint64_t, string> port_id;
 /*map use to id of switch from vport_id*/
 map<uint64_t, uint64_t> vl_id;
+/*map use to obtain id of peer vlink from local vlink*/
+map<uint64_t, uint64_t> vl_p;
 
 //Constructor
 commands::commands(){
@@ -448,30 +450,33 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	//if there are one or more endpoints
 	if(endpoints.size() != 0)
 	{
+		i = 0;
+	
 		/*for each endpoint in the list of endpoints*/
 		for(map<string,list<string> >::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
 		{
 			char gre[64] = "gre";
 		
 			string id = ep->first;
-			string local_ip;
-			string remote_ip;
-			string key;
+			char local_ip[64] = "";
+			char remote_ip[64] = "";
+			char key[64] = "";
 
-			list<string> mylist = ep->second;
+			list<string> l_param = ep->second;
 			/*save the params of gre tunnel*/
-			while (!mylist.empty())
-		  	{
+			for(list<string>::iterator e = l_param.begin(); e != l_param.end(); e++)
+			{
 				if(i == 0)
-		    			local_ip = mylist.front();
-				if(i == 1)
-		    			remote_ip = mylist.front();
-				if(i == 2)
-		    			key = mylist.front();
-		    		mylist.pop_front();
-		  	}
+					strcpy(key, (*e).c_str());
+				else if(i == 1)
+		    			strcpy(local_ip, (*e).c_str());
+				else if(i == 2)
+		    			strcpy(remote_ip, (*e).c_str());
+		    	
+		    	i++;
+			}
 			
-	    		char ifac[64] = "iface";
+	    	char ifac[64] = "iface";
 	    	
 			sprintf(temp, "%d", gnumber);
 			strcat(gre, temp);
@@ -481,7 +486,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			
 			gnumber++;
 			
-			add_endpoint(dnumber, (char *)local_ip.c_str(), (char *)remote_ip.c_str(), (char *)key.c_str(), gre, ifac, s);
+			add_endpoint(dnumber, local_ip, remote_ip, key, gre, ifac, s);
 			
 			endpoints_ports[id] = rnumber-1;
 			
@@ -520,12 +525,14 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			port_id[rnumber-1] = vrt;
 			port_id[rnumber+vport.size()-1] = trv;
 			
-			virtual_link_id[sw].push_back(rnumber+vport.size()-1);
+			virtual_link_id[sw].push_back(rnumber-1);
 			
 			vport_l[dnumber].push_back(vrt);
 				
 			vl_id[rnumber-1] = dnumber;
 			vl_id[rnumber+vport.size()-1] = (*nf);
+				
+			vl_p[rnumber-1] = rnumber+vport.size()-1;
 				
 			pnumber++;
 			
@@ -930,9 +937,9 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 	}
 }
 
-void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64], char key[64], char gre[64], char ifac[64], int s){
-	
-    	ssize_t nwritten;
+void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64], char key[64], char gre[64], char ifac[64], int s)
+{
+    ssize_t nwritten;
 	
 	char read_buf[4096] = "";
 	
@@ -950,7 +957,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	Array fourth_object;
 
 	//connect socket
-    	s = cmd_connect();
+    s = cmd_connect();
 
 	root["method"] = "transact";
 
@@ -1233,6 +1240,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 	/*for all virtual link ports, destroy it*/
 	for(list<uint64_t>::iterator i = virtual_link_id[switch_id[dpi]].begin(); i != virtual_link_id[switch_id[dpi]].end(); i++){
 		cmd_delete_virtual_link(vl_id[(*i)], (*i), s);
+		cmd_delete_virtual_link(vl_id[vl_p[(*i)]], vl_p[(*i)], s);
 	}
 
 	port_l.erase(dpi);
@@ -1671,23 +1679,24 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	char gre[64] = "gre", temp[64];
 	
 	string id = aepi.getEPname();
-	string local_ip;
-	string remote_ip;
-	string key;
+	char local_ip[64] = "";
+	char remote_ip[64] = "";
+	char key[64] = "";
 
-	list<string> mylist = aepi.getEPparam();
+	list<string> l_param = aepi.getEPparam();
 	/*save the params of gre tunnel*/
-	while (!mylist.empty())
-  	{
+	for(list<string>::iterator e = l_param.begin(); e != l_param.end(); e++)
+	{
 		if(i == 0)
-    			local_ip = mylist.front();
-		if(i == 1)
-    			remote_ip = mylist.front();
-		if(i == 2)
-    			key = mylist.front();
-    		mylist.pop_front();
-  	}
-			
+			strcpy(key, (*e).c_str());
+		else if(i == 1)
+		    strcpy(local_ip, (*e).c_str());
+		else if(i == 2)
+		    strcpy(remote_ip, (*e).c_str());
+		    	
+		i++;
+	}
+	
 	char ifac[64] = "iface";
 	    	
 	sprintf(temp, "%d", gnumber);
@@ -1699,7 +1708,7 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	gnumber++;
 
 	//create endpoint
-	add_endpoint(aepi.getDpid(), (char *)local_ip.c_str(), (char *)remote_ip.c_str(), (char *)key.c_str(), gre, ifac, s);
+	add_endpoint(aepi.getDpid(), local_ip, remote_ip, key, gre, ifac, s);
 	
 	endpoint_l[aepi.getDpid()].push_back(id);
 	

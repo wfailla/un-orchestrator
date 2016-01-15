@@ -230,6 +230,14 @@ SET(SOURCES
 	node_resource_manager/graph/high_level_graph/high_level_output_action_endpoint.cc
 	node_resource_manager/graph/high_level_graph/high_level_rule.h
 	node_resource_manager/graph/high_level_graph/high_level_rule.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface_out.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface_out.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_vnf.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_vnf.h
 	node_resource_manager/graph/high_level_graph/high_level_graph.h
 	node_resource_manager/graph/high_level_graph/high_level_graph.cc
 	node_resource_manager/graph/high_level_graph/high_level_match.h

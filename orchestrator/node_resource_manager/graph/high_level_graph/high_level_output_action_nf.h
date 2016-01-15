@@ -21,13 +21,18 @@ private:
 	string nf;
 	
 	/**
+	*	@brief: name of the endpoint port (e.g., vnf:00000001:inout:0)
+	*/
+	string nf_endpoint_port;
+	
+	/**
 	*	@brief: the port of the NF (e.g., 1)
 	*/
 	unsigned int port;
 	
 public:
 
-	ActionNetworkFunction(string nf, unsigned int port = 1);
+	ActionNetworkFunction(string nf, string nf_endpoint_port, unsigned int port = 1);
 	string getInfo();
 	unsigned int getPort();
 	string toString();
