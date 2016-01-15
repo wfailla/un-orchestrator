@@ -1,6 +1,8 @@
 #ifndef DPDK_CONSTANTS_H_
 #define DPDK_CONSTANTS_H_ 1
 
+#define DPDK_MODULE_NAME		"DPDK-Process-Manager"
+
 /**
 *	@brief: paths of the bash scripts used to manage DPDK
 */

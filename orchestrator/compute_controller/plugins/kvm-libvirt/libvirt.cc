@@ -14,16 +14,16 @@
 #ifndef DIRECT_KVM_IVSHMEM
 void Libvirt::customErrorFunc(void *userdata, virErrorPtr err)
 {
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Failure of libvirt library call:");
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tCode: %d", err->code);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tDomain: %d", err->domain);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tMessage: %s", err->message);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tLevel: %d", err->level);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tstr1: %s", err->str1);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tstr2: %s", err->str2);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tstr3: %s", err->str3);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tint1: %d", err->int1);
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "\tint2: %d", err->int2);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Failure of libvirt library call:");
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tCode: %d", err->code);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tDomain: %d", err->domain);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tMessage: %s", err->message);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tLevel: %d", err->level);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tstr1: %s", err->str1);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tstr2: %s", err->str2);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tstr3: %s", err->str3);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tint1: %d", err->int1);
+	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "\tint2: %d", err->int2);
 }
 #endif
 
@@ -62,12 +62,12 @@ void Libvirt::connect()
 		//The connection is already open
 		return;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Connecting to Libvirt ...");
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Connecting to Libvirt ...");
 	connection = virConnectOpen("qemu:///system");
 	if (connection == NULL)
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Failed to open connection to qemu:///system");
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Failed to open connection to qemu:///system");
 	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Open connection to qemu:///system successfull");
+		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Open connection to qemu:///system successfull");
 }
 
 void Libvirt::disconnect()
@@ -92,7 +92,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	/* Domain name */
 	sprintf(domain_name, "%" PRIu64 "_%s", sni.getLsiID(), nf_name.c_str());
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Using Libvirt XML template %s", uri_image.c_str());
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Using Libvirt XML template %s", uri_image.c_str());
 	xmlInitParser();
 
 	xmlDocPtr doc;
@@ -102,21 +102,21 @@ bool Libvirt::startNF(StartNFIn sni)
 	/* Load XML document */
 	doc = xmlParseFile(uri_image.c_str());
 	if (doc == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to parse file \"%s\"", uri_image.c_str());
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Unable to parse file \"%s\"", uri_image.c_str());
 		return 0;
 	}
 
 	/* xpath evaluation for Libvirt various elements we may want to update */
 	xpathCtx = xmlXPathNewContext(doc);
 	if(xpathCtx == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create new XPath context");
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Unable to create new XPath context");
 		xmlFreeDoc(doc);
 		return 0;
 	}
 	const xmlChar* xpathExpr = BAD_CAST "/domain/devices/interface|/domain/name|/domain/devices/emulator";
 	xpathObj = xmlXPathEvalExpression(xpathExpr, xpathCtx);
 	if(xpathObj == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"", xpathExpr);
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"", xpathExpr);
 		xmlXPathFreeContext(xpathCtx);
 		xmlFreeDoc(doc);
 		return 0;
@@ -130,7 +130,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	xmlNodeSetPtr nodes = xpathObj->nodesetval;
 	int size = (nodes) ? nodes->nodeNr : 0;
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "xpath return size: %d", size);
+    logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "xpath return size: %d", size);
 	int i;
 	for(i = size - 1; i >= 0; i--) {
 	  	xmlNodePtr node = nodes->nodeTab[i];
@@ -161,10 +161,10 @@ bool Libvirt::startNF(StartNFIn sni)
 		   			}
 		   			break;
 		   		case XML_ATTRIBUTE_NODE:
-		   			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "ATTRIBUTE found here");
+		   			logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "ATTRIBUTE found here");
 		   			break;
 		   		default:
-		   			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Other type");
+		   			logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Other type");
 		   			break;
 		   	}
 		}
@@ -204,14 +204,14 @@ bool Libvirt::startNF(StartNFIn sni)
 	const xmlChar* xpathExpr_devs = BAD_CAST "/domain/devices";
 	xpathObj = xmlXPathEvalExpression(xpathExpr_devs, xpathCtx);
 	if(xpathObj == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"", xpathExpr);
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Error: unable to evaluate xpath expression \"%s\"", xpathExpr);
 		xmlXPathFreeContext(xpathCtx);
 		xmlFreeDoc(doc);
 		return 0;
 	}
 	nodes = xpathObj->nodesetval;
 	if (!nodes || (nodes->nodeNr != 1)) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "xpath(devices) failed accessing <devices> node");
+		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "xpath(devices) failed accessing <devices> node");
 		xmlXPathFreeContext(xpathCtx);
 		xmlFreeDoc(doc);
 		return 0;
@@ -235,7 +235,7 @@ bool Libvirt::startNF(StartNFIn sni)
 		const string& port_name = *pn;
 
 		PortType port_type = description->getPortTypes().at(port_id);
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM VNF Port %d (%s) is of type %d", port_id, port_name.c_str(), port_type);
+		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "KVM VNF Port %d (%s) is of type %d", port_id, port_name.c_str(), port_type);
 
 	    if (port_type == USVHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
@@ -280,7 +280,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	    else
 	    {
 	    	assert(0 && "There is a BUG! You cannot be here!");
-	    	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
+	    	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
 	    	return false;
 	    }
 	}
@@ -295,7 +295,7 @@ bool Libvirt::startNF(StartNFIn sni)
             return false;
         }
 
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command line for ivshmem '%s'", cmdline);
+        logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Command line for ivshmem '%s'", cmdline);
         ivshmemCmdElems.push_back(cmdline);
 #else
         // Mempool(s)
@@ -324,7 +324,7 @@ bool Libvirt::startNF(StartNFIn sni)
 				    xmlNewProp(argEl, BAD_CAST "value", BAD_CAST it->substr(sizeof(START_KEY)).c_str());
 				}
 				else {
-					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unexpected result from IVSHMEM command line generation: %s", it->c_str());
+					logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Unexpected result from IVSHMEM command line generation: %s", it->c_str());
 					return false;
 				}
 			}
@@ -344,7 +344,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	xmlCleanupParser();
 
 #ifdef DEBUG_KVM
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Dumping XML to %s", domain_name);
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Dumping XML to %s", domain_name);
 	FILE* fp = fopen(domain_name, "w");
 	if (fp) {
 		fwrite(xmlconfig, 1, strlen(xmlconfig), fp);
@@ -357,11 +357,11 @@ bool Libvirt::startNF(StartNFIn sni)
 	dom = virDomainCreateXML(connection, xmlconfig, 0);
 	if (!dom) {
 		virDomainFree(dom);
-    		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Domain definition failed");
+    		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Domain definition failed");
     		return false;
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Boot guest");
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Boot guest");
 
 	virDomainFree(dom);
 
@@ -379,7 +379,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	//XXX: we ignore all the information written in the xml file, except the path with the VM image
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This function is KVM-IVSHMEM");
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "This function is KVM-IVSHMEM");
 
 
 	char domain_name[64];
@@ -397,7 +397,7 @@ bool Libvirt::startNF(StartNFIn sni)
 	/* Load XML document */
 	doc = xmlParseFile(uri_image.c_str());
 	if (doc == NULL) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to parse file \"%s\"", uri_image.c_str());
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Unable to parse file \"%s\"", uri_image.c_str());
 		return 0;
 	}
 
@@ -450,11 +450,11 @@ after_parsing:
 
 	if(disk_path == NULL)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Wrong XML file describing the VM to run: no path for VM disk found.");
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Wrong XML file describing the VM to run: no path for VM disk found.");
 		return false;
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual machine disk available at path: '%s'",disk_path);
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Virtual machine disk available at path: '%s'",disk_path);
 
 
 	//Get the command line generator and prepare the command line
@@ -482,7 +482,7 @@ after_parsing:
 		ivshmemcmdline << " " << cmdline;
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Command line part for ivshmem '%s'",ivshmemcmdline.str().c_str());
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Command line part for ivshmem '%s'",ivshmemcmdline.str().c_str());
 
 	pthread_mutex_lock(&Libvirt_mutex);
 
@@ -517,7 +517,7 @@ bool Libvirt::stopNF(StopNFIn sni)
 
 	/*destroy the VM*/
 	if(virDomainDestroy(virDomainLookupByName(connection, vm_name)) != 0){
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "failed to stop (destroy) VM. %s", vm_name);
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "failed to stop (destroy) VM. %s", vm_name);
 		return false;
 	}
 #else
@@ -541,21 +541,21 @@ bool Libvirt::stopNF(StopNFIn sni)
 
 	if (sock_initaddress ("127.0.0.1", tcpport.c_str(), &Hints, &AddrInfo, ErrBuf, sizeof(ErrBuf)) == sockFAILURE)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error resolving given address/port (%s/%s): %s",  "127.0.0.1",  tcpport.c_str(), ErrBuf);
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Error resolving given address/port (%s/%s): %s",  "127.0.0.1",  tcpport.c_str(), ErrBuf);
 		return false;
 	}
 
 	if ( (socket= sock_open(AddrInfo, 0, 0,  ErrBuf, sizeof(ErrBuf))) == sockFAILURE)
 	{
 		// AddrInfo is no longer required
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot contact the VM: %s", ErrBuf);
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Cannot contact the VM: %s", ErrBuf);
 		return false;
 	}
 
 	WrittenBytes= sock_send(socket, command, strlen(command), ErrBuf, sizeof(ErrBuf));
 	if (WrittenBytes == sockFAILURE)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 		return false;
 
 	}

@@ -29,7 +29,7 @@ bool Dpdk::startNF(StartNFIn sni)
 	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 		command << " "  << *pn;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, DPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -49,7 +49,7 @@ bool Dpdk::stopNF(StopNFIn sni)
 		
 	command << STOP_DPDK_NF << " " << lsiID << " " << nf_name;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, DPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
