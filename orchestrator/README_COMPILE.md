@@ -191,7 +191,7 @@ Two flavors of virtual machines are supported:
   * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes within the virtual machines. In this case, the host backend for the virtual NICs is implemented through `vhost` in case OvS and xDPd as vSwitches, and through `vhost-user` when OvS-DPDK is used as vSwitch;
   * virtual machines that exchange packets with the vSwitch through shared memory (`ivshmem`). This configuration is oriented to performance, and only supports DPDK-based processes within the virtual machine.
 
-##### Libvirt
+#### Libvirt
 
 In order to start/stop virtual machines, a recent version of Libvirt must be used. 
 You can build it from sources using the following commands:
