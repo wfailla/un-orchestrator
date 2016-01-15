@@ -335,10 +335,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		throw commandsException();
 	}
 
- 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-    logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-    logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-    logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+ 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	//parse json response
 	Value value;
@@ -818,13 +818,10 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		throw commandsException();
 	}
 		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 		
 	Value value;
     read( read_buf, value );
@@ -1014,13 +1011,10 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 		throw commandsException();
 	}
 			
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	root.clear();
 	params.clear();
@@ -1280,10 +1274,10 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			throw commandsException();
 		}
 		
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 		
 		Value value;
     	read( read_buf, value );
@@ -1490,13 +1484,10 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 			throw commandsException();
 		}
 			
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
 		root.clear();
 		params.clear();
@@ -1776,13 +1767,10 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 		throw commandsException();
 	}
 		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);	
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);	
 		
 	Value value;
     read( read_buf, value );
@@ -2007,13 +1995,10 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s){
 		throw commandsException();
 	}
 			
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
 	root.clear();
 	params.clear();
