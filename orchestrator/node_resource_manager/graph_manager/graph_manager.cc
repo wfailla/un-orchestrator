@@ -1859,10 +1859,17 @@ bool GraphManager::stopNetworkFunction(string graphID, string nf_name)
 #endif
 	try
 	{
-		list<struct nf_port_info> tmpListPorts = lsi->getNetworkFunctionsPortsInfo(nf_name);
-		set<struct nf_port_info> portsToBeRemoved(tmpListPorts.begin(),tmpListPorts.end());
+	//	list<struct nf_port_info> tmpListPorts = lsi->getNetworkFunctionsPortsInfo(nf_name);
+		map<string,unsigned int>tmpListPorts= lsi->getNetworkFunctionsPorts(nf_name);
 		
-		DestroyNFportsIn dnpi(lsi->getDpid(),nf_name,portsToBeRemoved);
+		set<string> nf_ports;
+		for (map<string,unsigned int>::iterator lsi_nfp_it = tmpListPorts.begin(); lsi_nfp_it != tmpListPorts.end(); ++lsi_nfp_it)
+				nf_ports.insert(lsi_nfp_it->first);
+		
+		
+//		set<struct nf_port_info> portsToBeRemoved(tmpListPorts.begin(),tmpListPorts.end());
+		
+		DestroyNFportsIn dnpi(lsi->getDpid(),nf_name,/*portsToBeRemoved*/nf_ports);
 		switchManager.destroyNFPorts(dnpi);
 		lsi->removeNF(nf_name);
 	} catch (SwitchManagerException e)
