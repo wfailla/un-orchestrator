@@ -234,7 +234,7 @@ bool Libvirt::startNF(StartNFIn sni)
 		const string& port_name = p->second;
 
 		PortType port_type = description->getPortTypes().at(port_id);
-		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "KVM VNF Port %d (%s) is of type %d", port_id, port_name.c_str(), port_type);
+		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "NF Port \"%s\":%d (%s) is of type %s", nf_name.c_str(), port_id, port_name.c_str(), portTypeToString(port_type).c_str());
 
 	    if (port_type == USVHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);

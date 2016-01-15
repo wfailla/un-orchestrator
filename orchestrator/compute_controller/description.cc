@@ -84,7 +84,7 @@ PortType portTypeFromString(const std::string& s)
 	else if (s.compare("vhost") == 0)
 		return VHOST_PORT;
 
-	return UNDEFINED_PORT;
+	return INVALID_PORT;
 }
 
 std::string portTypeToString(PortType t)
@@ -105,5 +105,5 @@ std::string portTypeToString(PortType t)
 	default:
 		break;
 	}
-	return "UNKNOWN";
+	return "INVALID";
 }

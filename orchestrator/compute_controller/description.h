@@ -18,7 +18,8 @@ using namespace std;
 class NFsManager;
 
 enum PortType {
-	UNDEFINED_PORT,
+	INVALID_PORT = -1,
+	UNDEFINED_PORT = 0,
 	USVHOST_PORT,
 	IVSHMEM_PORT,
 	VHOST_PORT

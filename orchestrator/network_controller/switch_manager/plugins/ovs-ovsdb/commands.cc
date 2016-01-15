@@ -652,8 +652,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		case USVHOST_PORT:
 			row["type"] = "dpdkvhosthuser";
 			break;
-		case VHOST_PORT:
-		case UNDEFINED_PORT:
+		default:
 			row["type"] = "internal";
 			break;
 		}

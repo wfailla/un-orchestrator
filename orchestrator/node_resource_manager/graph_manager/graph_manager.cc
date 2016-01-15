@@ -646,7 +646,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	/**
 	*	2) Select an implementation for each network function of the graph
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "2) Select an implementation for each NF of the graph");	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "2) Select an implementation for each NF of the graph");
 	if(!computeController->selectImplementation())
 	{
 		//This is an internal error
@@ -704,15 +704,15 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		if (nf_ports_type.size() != nf_ports.size())
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from graph does not match number of ports from NF description for \"%s\"", nf_name.c_str());
 
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" (type %d) selected implementation lists %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" selected implementation (type %d) defines type for %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
 		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
 		for (list<unsigned int>::iterator p_it = nf_ports.begin(); p_it != nf_ports.end(); p_it++) {
 			map<unsigned int, PortType>::iterator pt_it = nf_ports_type.find(*p_it);
 			if (pt_it == nf_ports_type.end()) {
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Graph port %d have no matching definition in NF description for \"%s\"", (*p_it), nf_name.c_str());
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\tNF Port \"%s\":%d has no type defined in NF description", nf_name.c_str(), (*p_it));
 				pt_it = nf_ports_type.insert(map<unsigned int, PortType>::value_type(*p_it, UNDEFINED_PORT)).first;  // Default - TODO: Or should we cause a failure here?
 			}
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGraph port %d type: %s", (*p_it), portTypeToString(pt_it->second).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tNF Port \"%s\":%d is of type '%s'", nf_name.c_str(), (*p_it), portTypeToString(pt_it->second).c_str());
 		}
 		nfs_ports_type[nf_name] = nf_ports_type;
 	}

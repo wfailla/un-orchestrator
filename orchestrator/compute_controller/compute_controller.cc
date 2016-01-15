@@ -251,7 +251,6 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						else if(el_name == "ports")
 						{
 					    	const Array& ports_array = el_value.getArray();
-					    	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "%d ports in implementation", ports_array.size());
 
 					    	if (ports_array.size() == 0)
 					    	{
@@ -273,6 +272,10 @@ bool ComputeController::parseAnswer(string answer, string nf)
 									}
 									else if (pel_name == "type") {
 										port_type = portTypeFromString(pel_value.getString());
+										if (port_type == INVALID_PORT) {
+											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid port type \"%s\" for implementation port", pel_value.getString().c_str());
+											return false;
+										}
 									}
 									else {
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within an implementation port", pel_name.c_str());
@@ -287,7 +290,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Missing port \"type\" attribute for implementation");
 									return false;
 								}
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %d id=%d type=%d", p, port_id, port_type);
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Port %d id=%d type=%s", p, port_id, portTypeToString(port_type).c_str());
 
 								port_types.insert(std::map<unsigned int, PortType>::value_type(port_id, port_type));
 							}
@@ -326,8 +329,6 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					}
 
 					Description* descr = new Description(type, uri, cores, location, port_types);
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Description has %d PortTypes (ref %d)", descr->getPortTypes().size(), port_types.size());
-
 					possibleDescriptions.push_back(descr);
 				}
 		    } //end if(name == "implementations")
