@@ -1,5 +1,17 @@
 #include "xdpd_manager.h"
 
+#include <algorithm>
+
+// Functor to compare port names of nf_port_info structs
+struct comparePortInfoName
+{
+	comparePortInfoName(const std::string& name) : name(name) {}
+  bool operator()(const struct nf_port_info& pi) { return pi.port_name == name; }
+
+private:
+  std::string name;
+};
+
 XDPDManager::XDPDManager()
 	: xDPDport(XDPD_PORT)
 {
@@ -269,11 +281,11 @@ string XDPDManager::prepareCreateLSIrequest(CreateLsiIn cli)
 			
 		network_function["type"] = NFType::toString(nft);
 		
-		Array nfs_ports_array;
-		list<string> nfs_ports = cli.getNetworkFunctionsPortNames(*nf);
-		for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++)
-			nfs_ports_array.push_back(*nfp);
-		network_function["ports"] = nfs_ports_array;
+		Array nf_ports_array;
+		list<struct nf_port_info> nf_ports = cli.getNetworkFunctionsPortsInfo(*nf);
+		for(list<struct nf_port_info>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++)
+			nf_ports_array.push_back(nfp->port_name);
+		network_function["ports"] = nf_ports_array;
 		
 		nfs_array.push_back(network_function);
 	}
@@ -684,12 +696,12 @@ string XDPDManager::prepareCreateNFPortsRequest(AddNFportsIn anpi)
 			
 	network_function["type"] = NFType::toString(type);
 		
-	Array nfs_ports_array;
-	list<string> nfs_ports = anpi.getNetworkFunctionsPorts();
-	for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++)
-		nfs_ports_array.push_back(*nfp);
+	Array nf_ports_array;
+	list<struct nf_port_info> nf_ports = anpi.getNetworkFunctionsPorts();
+	for(list<struct nf_port_info>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++)
+		nf_ports_array.push_back(nfp->port_name);
 			
-	network_function["ports"] = nfs_ports_array;	
+	network_function["ports"] = nf_ports_array;
 	nfs_array.push_back(network_function);
 	
 	json["network-functions"] = nfs_array;
@@ -789,9 +801,8 @@ AddNFportsOut *XDPDManager::parseCreateNFPortsResponse(AddNFportsIn anpi, Object
 								throw XDPDManagerException();		    					
 	    					}
 	    					
-	    					list<string> ports_to_be_translated = anpi.getNetworkFunctionsPorts();
-	    					set<string> tmp_ptbt(ports_to_be_translated.begin(),ports_to_be_translated.end());
-	    					if(tmp_ptbt.count(port_name) == 0)
+	    					list<struct nf_port_info> ports_to_be_translated = anpi.getNetworkFunctionsPorts();
+	    					if (count_if(ports_to_be_translated.begin(), ports_to_be_translated.end(), comparePortInfoName(port_name)) == 0)
 							{
 								logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Answer to command \"%s\" contains a non-required network function port",CREATE_LSI,port_name.c_str());
 								throw XDPDManagerException();

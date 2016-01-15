@@ -26,14 +26,14 @@ bool Docker::startNF(StartNFIn sni)
 	
 	string uri_image = description->getURI();
 	
-	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
 	stringstream command;
 	command << PULL_AND_RUN_DOCKER_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
 		
-	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
-		command << " "  << *pn;
+	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
+		command << " "  << pn->second;
 
 	logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 

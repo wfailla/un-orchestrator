@@ -214,7 +214,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 			    	string uri;
 					string cores;
 					string location;
-					std::vector<PortType> port_types;
+					std::map<unsigned int, PortType> port_types; // port_id -> port_type
 
 					for( Object::const_iterator impl_el = implementation.begin(); impl_el != implementation.end(); ++impl_el )
 					{
@@ -251,7 +251,6 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						else if(el_name == "ports")
 						{
 					    	const Array& ports_array = el_value.getArray();
-					    	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "%d ports in implementation", ports_array.size());
 
 					    	if (ports_array.size() == 0)
 					    	{
@@ -273,6 +272,10 @@ bool ComputeController::parseAnswer(string answer, string nf)
 									}
 									else if (pel_name == "type") {
 										port_type = portTypeFromString(pel_value.getString());
+										if (port_type == INVALID_PORT) {
+											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid port type \"%s\" for implementation port", pel_value.getString().c_str());
+											return false;
+										}
 									}
 									else {
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within an implementation port", pel_name.c_str());
@@ -287,11 +290,9 @@ bool ComputeController::parseAnswer(string answer, string nf)
 									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Missing port \"type\" attribute for implementation");
 									return false;
 								}
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %d id=%d type=%d", p, port_id, port_type);
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Port %d id=%d type=%s", p, port_id, portTypeToString(port_type).c_str());
 
-								if ((size_t)port_id >= port_types.size())
-									port_types.resize(port_id + 1);
-								port_types[port_id] = port_type;
+								port_types.insert(std::map<unsigned int, PortType>::value_type(port_id, port_type));
 							}
 						}
 						else
@@ -328,8 +329,6 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					}
 
 					Description* descr = new Description(type, uri, cores, location, port_types);
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Description has %d PortTypes (ref %d)", descr->getPortTypes().size(), port_types.size());
-
 					possibleDescriptions.push_back(descr);
 				}
 		    } //end if(name == "implementations")
@@ -541,19 +540,32 @@ nf_t ComputeController::getNFType(string name)
 	return impl->getNFType();
 }
 
+const Description* ComputeController::getNFSelectedImplementation(string name)
+{
+	map<string, NF*>::iterator nf_it = nfs.find(name);
+	if (nf_it == nfs.end()) { // Not found
+		return NULL;
+	}
+
+	NFsManager *impl = (nf_it->second)->getSelectedDescription();
+	if (impl == NULL)
+		return NULL;
+
+	return impl->getDescription();
+}
+
 void ComputeController::setLsiID(uint64_t lsiID)
 {
 	this->lsiID = lsiID;
 }
 
-//FIXME: I'm assuming that the first element of namesOfPortsOnTheSwitch corresponds to the first port of the network function,
-//the second element corresponds to the second port of the network function, and so on...
-bool ComputeController::startNF(string nf_name, list<string> namesOfPortsOnTheSwitch)
+bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch)
 {
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"",nf_name.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"", nf_name.c_str());
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
-	for(list<string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*it).c_str());
+	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %s", it->first, it->second.c_str());
+	}
 
 	if(nfs.count(nf_name) == 0)
 	{

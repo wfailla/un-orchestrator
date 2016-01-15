@@ -4,7 +4,7 @@
 #pragma once
 
 #include "virtual_link.h"
-#include "../../compute_controller/nf_type.h"
+#include "../../compute_controller/description.h"
 
 #include <map>
 #include <set>
@@ -44,33 +44,47 @@ private:
 	*/
 	map<string,unsigned int> physical_ports;
 	
-	
 	/**
 	*	@brief: the pair is <port name, port type>
 	*/
 	map<string,string> ports_type;
+
+	/**
+	*	@brief: Data related to a specific NF
+	*/
+	struct nfData {
+		/**
+		*	@brief: Types of the NF ports.
+		*		The map is
+		*			<nf port name, port_type>
+		*/
+		map<string, PortType> ports_type;
+
+		/**
+		*	@brief: Names of the ports connected to the LSI and related to the network function
+		*/
+	    list<string> portsNameOnSwitch;
+
+		/**
+		 * 	@brief: port ids assigned to the ports by switch
+		 *		The map is
+		 *			<nf port name, switch_id>
+		 */
+		map<string, unsigned int> ports_switch_id;
+
+		/**
+		 * 	@brief: port ids as they are designated in the NF-FG and NF description
+		 */
+		list<unsigned int> nf_ports_id;
+	};
 	
 	/**
 	*	@brief: NFs connected to the LSI.
 	*		The map is
-	*			<nf name, map <nf port name, id> >
+	*			<nf name, nfData >
 	*/
-	map<string,map<string, unsigned int> >  network_functions;
+	map<string, struct nfData>  network_functions;
 	
-	/**
-	*	@brief: Names of the ports connected to the LSI and related to network functions
-	*		The map is
-	*			<nf name, list<nf ports name> >
-	*/
-    map<string,list<string> > networkFunctionsPortsNameOnSwitch;
-	
-	/**
-	*	@brief: type of the NFs connected to the LSI.
-	*		The map is
-	*			<nf_name, nf_type>
-	*/
-	map<string,nf_t>  nf_types;
-
 	/**
 	*	@brief: virtual links attached to the LSI
 	*	FIXME although supported in this class VLink, the code does not support vlinks connected to multiple LSIs
@@ -96,29 +110,26 @@ private:
 	map<string, uint64_t> endpoints_vlinks;
 
 public:
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions,vector<VLink> virtual_links,map<string,nf_t>  nf_types);
+	LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
 
-	list<string> getPhysicalPortsName();
-
-	set<string> getNetworkFunctionsName();
-	list<string> getNetworkFunctionsPortNames(string nf);
-
-	list<uint64_t> getVirtualLinksRemoteLSI();
-
 	uint64_t getDpid();
 
-
+	list<string> getPhysicalPortsName();
+	map<string,string> getPhysicalPortsType();
 	map<string,unsigned int> getPhysicalPorts();
-	map<string,string> getPortsType();
 
+	set<string> getNetworkFunctionsName();
 	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
+	list<string> getNetworkFunctionsPortNames(string nf);
+	PortType getNetworkFunctionPortType(string nf, string port);
+	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
 	list<string> getNetworkFunctionsPortsNameOnSwitch(string nf);
+	map<unsigned int, string> getNetworkFunctionsPortsNameOnSwitchMap(string nf);
 
-	map<string,nf_t> getNetworkFunctionsType();
-
+	list<uint64_t> getVirtualLinksRemoteLSI();
 	vector<VLink> getVirtualLinks();
 	VLink getVirtualLink(uint64_t ID);
 	map<string, uint64_t> getNFsVlinks();
@@ -141,7 +152,7 @@ public:
 protected:
 	void setDpid(uint64_t dpid);
 	bool setPhysicalPortID(string port, uint64_t id);
-	bool setNfPortsID(string nf, map<string, unsigned int>);
+	bool setNfSwitchPortsID(string nf, map<string, unsigned int>);
 	void setVLinkIDs(unsigned int position, unsigned int localID, unsigned int remoteID);
 	
 	void setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names);
@@ -149,7 +160,7 @@ protected:
 	int addVlink(VLink vlink);
 	void removeVlink(uint64_t ID);
 
-	void addNF(string name, list< unsigned int> ports, nf_t type);
+	bool addNF(string name, list< unsigned int> ports, const map<unsigned int, PortType>& nf_ports_type);
 	void removeNF(string nf);
 };
 

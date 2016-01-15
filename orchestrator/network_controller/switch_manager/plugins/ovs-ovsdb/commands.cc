@@ -1,6 +1,8 @@
 #include "ovsdb_manager.h"
 #include "ovsdb_constants.h"
 
+#include <algorithm>
+
 struct in_addr sIPaddr1;/* struct IP addr server*/
 char ErrBuf[BUFFER_SIZE];
 
@@ -379,33 +381,33 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	if(ports.size() !=0){
 		for(list<string>::iterator p = ports.begin(); p != ports.end(); p++)
 		{
-			add_ports((*p), dnumber, 0, s);
+			add_port((*p), dnumber, false, s);
 			
 			port_l[dnumber].push_back((*p).c_str());
 			physical_ports[(*p)] = rnumber-1;
 		}
 	}
 	
-	/*Create interfaces related by the nf ports*/
+	/*Create interfaces related to the NFs*/
 	map<string,list<string> > out_nf_ports_name_on_switch;
-    if(nfs.size() != 0){
+    if(nfs.size() != 0) {
         		
 		/*for each network function port in the list of nfs*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 		{
-			list<string> nfs_ports = cli.getNetworkFunctionsPortNames(*nf);
+			list<struct nf_port_info> nfs_ports = cli.getNetworkFunctionsPortsInfo(*nf);
 			
 			list<string> port_name_on_switch;
 			
 			map<string,unsigned int> n_ports_1;
 			
 			/*for each network function port in the list of nfs_ports*/
-			for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++){
-				add_ports((*nfp), dnumber, 1, s);
+			for(list<struct nf_port_info>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++){
+				add_port(nfp->port_name, dnumber, true, s, nfp->port_type);
 				
 				locale loc;	
 				port2.push_back("named-uuid");
-				string str = (*nfp);
+				string str = nfp->port_name;
 				
 				for (string::size_type i=0; i<str.length(); ++i)
     				str[i] = tolower(str[i], loc);
@@ -425,10 +427,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 				port_l[dnumber].push_back(temp);
 				
 				/*fill the map ports*/
-				n_ports_1[(*nfp)] = rnumber-1;
+				n_ports_1[nfp->port_name] = rnumber-1;
 				
 				stringstream pnos;
-				pnos << dnumber << "_" << *nfp;
+				pnos << dnumber << "_" << nfp->port_name;
 				port_name_on_switch.push_back(pnos.str());
 				
 			}
@@ -567,7 +569,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	return clo;
 }
 
-void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
+void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type){
 	
 	char temp[64] = "", tmp[64] = "";
 	
@@ -590,6 +592,9 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 	Array third_object;
 	Array fourth_object;
 
+	std::replace( p.begin(), p.end(), '-', '_');  // OVSDB doesn't like '-' in names
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "add_port(%s,type=%s)", p.c_str(), portTypeToString(port_type).c_str());
+
 	//connect socket
     s = cmd_connect();
 
@@ -597,7 +602,7 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
     char p_n[64] = "";
 		
 	//Create the current name of a interface
-	if(nf == 0){
+	if(!is_nf_port){
 		sprintf(temp, "%d", rnumber);
 		strcat(ifac, temp);
 		
@@ -639,9 +644,24 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 		
 	/*Insert an Interface*/
 	row["name"] = p_n;
-	if(nf != 0)
-		row["type"] = "internal";
-		
+	if (is_nf_port) {
+		switch (port_type) {
+		case IVSHMEM_PORT:
+			row["type"] = "dpdkr";
+			break;
+		case USVHOST_PORT:
+			row["type"] = "dpdkvhosthuser";
+			break;
+		default:
+			row["type"] = "internal";
+			break;
+		}
+	}
+	else { // External ports
+		if (p.compare(0, 4, "dpdk") == 0)
+			row["type"] = "dpdk";
+	}
+
 	row["admin_state"] = "up";
 	row["link_state"] = "up";
 	row["ofport"] = rnumber;
@@ -856,7 +876,7 @@ void commands::add_ports(string p, uint64_t dnumber, int nf, int s){
 
     //XXX: this code is a trick that activates a VNF ports through ifconfig. In fact, we noted that on some system
     //this operation has not done by OVSDB
-    if(nf != 0)
+    if(is_nf_port && (port_type != USVHOST_PORT) && (port_type != IVSHMEM_PORT))
     {
     	stringstream command;
 		command << ACTIVATE_INTERFACE << " " << p_n;
@@ -1029,7 +1049,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 	map<string, unsigned int> ports;
 	list<string> ports_name_on_switch;
 
-	list<string> nfp = anpi.getNetworkFunctionsPorts();
+	list<struct nf_port_info> nf_ports = anpi.getNetworkFunctionsPorts();
 	
 	Object root, first_obj, second_obj, row;
 	Array params, iface, iface1, iface2, where, port1, port2, i_array;
@@ -1043,14 +1063,14 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 	//connect socket
     s = cmd_connect();
 
-	if(nfp.size() != 0){
+	if(nf_ports.size() != 0){
 		
 		root["method"] = "transact";
 
 		params.push_back("Open_vSwitch");
 		
 		/*for each port in the list of nfp*/
-		for(list<string>::iterator nf = nfp.begin(); nf != nfp.end(); nf++)
+		for(list<struct nf_port_info>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++)
 		{
 			char ifac[64] = "iface";
 			char p_n[64] = "";
@@ -1059,7 +1079,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			sprintf(temp, "%d", rnumber);
 			strcat(ifac, temp);
 			
-			string str = (*nf);
+			string str = nfp->port_name;
 				
 			//Create port name to lower case
 			for (string::size_type i=0; i<str.length(); ++i)
@@ -1083,7 +1103,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			first_obj["op"] = "insert";
 			first_obj["table"] = "Interface";
 		
-			sprintf(p_n, "%" PRIu64 "_%s", anpi.getDpid(), (*nf).c_str());
+			sprintf(p_n, "%" PRIu64 "_%s", anpi.getDpid(), nfp->port_name.c_str());
 			row["name"] = p_n;
 			row["type"] = "internal";
 			
@@ -1131,10 +1151,10 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			//insert this port name into port_n
 			port_l[anpi.getDpid()].push_back(temp);
 				
-			ports[(*nf)] = rnumber;	
+			ports[nfp->port_name] = rnumber;
 			
 			stringstream pnos;
-			pnos << anpi.getDpid() << "_" << *nf;
+			pnos << anpi.getDpid() << "_" << nfp->port_name;
 			ports_name_on_switch.push_back(pnos.str());
 			
 			rnumber++;
@@ -1173,9 +1193,9 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 		}
 
 		list<string> ports_name_on_switch;
-		for(list<string>::iterator nff = nfp.begin(); nff != nfp.end(); nff++)
+		for(list<struct nf_port_info>::iterator nff = nf_ports.begin(); nff != nf_ports.end(); nff++)
 		{
-			string str = (*nff);
+			string str = nff->port_name;
 				
 			//Create port name to lower case
 			for (string::size_type i=0; i<str.length(); ++i)

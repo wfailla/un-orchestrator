@@ -32,7 +32,7 @@ private:
 	unsigned int m_NextPortId;
 	
 #if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
-	static int nextportname;	
+	static int next_dpdkr_port;
 #endif
 
 public:
