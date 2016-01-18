@@ -77,7 +77,7 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 			//Element <resources>
 			
 			int cpu, memory, storage;
-			char *memory_unit, *storage_unit;
+			char *memory_unit = NULL, *storage_unit = NULL;
 			
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "RESOURCES");
 			xmlNodePtr resources = cur_root_child;
