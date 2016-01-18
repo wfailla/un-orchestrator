@@ -138,7 +138,7 @@ def addResources(cpu, memory, memory_unit, storage, storage_unit):
 
 	return 1
 	
-def addNodePort(name, ptype):
+def addNodePort(name, ptype, psap):
 	'''
 	Adds the description of a port of the node
 	'''
@@ -161,7 +161,7 @@ def addNodePort(name, ptype):
 		
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
 	
-	port = Port(id=name, name=name, port_type=ptype)
+	port = Port(id=name, name=name, port_type=ptype, sap=psap)
 	universal_node.ports.add(port)
 
 	if(ptype == 'port-abstract'):

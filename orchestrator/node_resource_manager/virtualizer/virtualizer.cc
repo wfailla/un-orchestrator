@@ -165,7 +165,7 @@ bool Virtualizer::addResources(int cpu, int memory, char *memory_unit, int stora
     }
 }
 
-bool Virtualizer::addPort(char *physicalName, char *name, char *type)
+bool Virtualizer::addPort(char *physicalName, char *name, char *type, char *sap)
 {
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding port to the virtualizer...");
 
@@ -181,11 +181,13 @@ bool Virtualizer::addPort(char *physicalName, char *name, char *type)
 	    		    	
 	    	//Set the arguments to the python function
 	    	//TODO: check that pythonValue is not NULL
-			pythonArgs = PyTuple_New(2);
+			pythonArgs = PyTuple_New(3);
 	    	pythonValue = PyString_FromString(name);
             PyTuple_SetItem(pythonArgs, 0, pythonValue);
             pythonValue = PyString_FromString(type);
             PyTuple_SetItem(pythonArgs, 1, pythonValue);
+            pythonValue = PyString_FromString(sap);
+            PyTuple_SetItem(pythonArgs, 2, pythonValue);
 	    	
 	    	//Call the python function
 	    	pythonRetVal = PyObject_CallObject(pythonFunction, pythonArgs);

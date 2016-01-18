@@ -170,10 +170,11 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 							//Element <virtualized>
 							xmlChar* attr_as = xmlGetProp(virtualized, (const xmlChar*)AS_ATTRIBUTE);
 							xmlChar* attr_type = xmlGetProp(virtualized, (const xmlChar*)PORT_TYPE_ATTRIBUTE);
+							xmlChar* attr_sap = xmlGetProp(virtualized, (const xmlChar*)SAP_ATTRIBUTE);
 							
-							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtualized as: name: '%s' - type: '%s'",attr_as,attr_type);
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtualized as: name: '%s' - type: '%s' - sap: '%s'",attr_as,attr_type,attr_sap);
 			
-							if(!Virtualizer::addPort((char*)attr_name,(char*)attr_as,(char*)attr_type))
+							if(!Virtualizer::addPort((char*)attr_name,(char*)attr_as,(char*)attr_type,(char*)attr_sap))
 							{
 								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error while adding a port in the virtualizer");
 								throw new FileParserException();

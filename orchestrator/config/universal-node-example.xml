@@ -18,11 +18,11 @@
 	</resources>	
 
 	<ports>
-		<port name="10ge0" type="ethernet" side="edge">
-			<virtualized as="OVS-north external port" port-type="port-sap"/>
+		<port name="eth1" type="ethernet" side="edge">
+			<virtualized as="OVS-north external port" port-type="port-sap" sap="sap1"/>
 		</port>
-		<port name="10ge1" type="ethernet" side="core">
-			<virtualized as="OVS-south external port" port-type="port-sap"/>
+		<port name="eth2" type="ethernet" side="core">
+			<virtualized as="OVS-south external port" port-type="port-sap" sap="sap2"/>
 		</port>
 		
 		<!-- 
