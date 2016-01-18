@@ -702,7 +702,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		map<unsigned int, PortType> nf_ports_type = descr->getPortTypes();  // Port types as specified by the retrieved and selected NF implementation
 
 		if (nf_ports_type.size() != nf_ports.size())
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from graph does not match number of ports from NF description for \"%s\"", nf_name.c_str());
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from (%d) graph does not match number of ports from NF description (%d) for \"%s\"",nf_ports.size(),nf_ports_type.size(), nf_name.c_str());
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" selected implementation (type %d) defines type for %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
 		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
