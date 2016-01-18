@@ -262,6 +262,7 @@ string XDPDManager::prepareCreateLSIrequest(CreateLsiIn cli)
 
 	set<string> nfs = cli.getNetworkFunctionsName();
 	map<string,nf_t> nf_type = cli.getNetworkFunctionsType(); 	
+		
 	Array nfs_array;
 	for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 	{
@@ -270,22 +271,48 @@ string XDPDManager::prepareCreateLSIrequest(CreateLsiIn cli)
 		
 		assert(nf_type.count(*nf) != 0);
 		nf_t nft = nf_type[*nf];
-
-		//FIXME: it is really bad that a network plugin has knowledge of the compute environment
-
-		//XXX: this is a trick since xDPd does not support kvm ports
-#ifdef ENABLE_KVM
-		if(nft == KVM)
-			nft = DOCKER;
-#endif
-			
-		network_function["type"] = NFType::toString(nft);
 		
 		Array nf_ports_array;
 		list<struct nf_port_info> nf_ports = cli.getNetworkFunctionsPortsInfo(*nf);
+
+		PortType port_type = UNDEFINED_PORT;
 		for(list<struct nf_port_info>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++)
+		{
 			nf_ports_array.push_back(nfp->port_name);
+			port_type = nfp->port_type;
+
+			switch (port_type) {
+				case VETH_PORT:
+					assert(nft == DOCKER);
+					continue;
+				case DPDKR_PORT:
+					assert(nft == DPDK);
+					continue;
+				case VHOST_PORT:
+					//XXX xDPd does not exepct the port type, but the VNF type
+					nft = DOCKER;
+					logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" (that is a VM) is handled in xDPd as a \"%s\"",(*nf).c_str(),(NFType::toString(nft)).c_str());
+					continue;
+				case IVSHMEM_PORT:				
+					//XXX xDPd does not exepct the port type, but the VNF type
+					nft = DPDK;
+					logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" (that is a VM) is handled in xDPd as a \"%s\"",(*nf).c_str(),(NFType::toString(nft)).c_str());
+					continue;
+				case USVHOST_PORT:
+					logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Port type not supported.");
+					assert(0 && "Port type not supported");
+					throw XDPDManagerException();
+					break;
+				default:
+					assert(0 && "You cannot be here!");
+					throw XDPDManagerException();
+			}
+
+		}
+		
 		network_function["ports"] = nf_ports_array;
+				
+		network_function["type"] = NFType::toString(nft);
 		
 		nfs_array.push_back(network_function);
 	}
@@ -684,22 +711,46 @@ string XDPDManager::prepareCreateNFPortsRequest(AddNFportsIn anpi)
 	Array nfs_array;
 	Object network_function;
 	network_function["name"] = anpi.getNFname();
-
-	//FIXME: it is really bad that a network plugin has knowledge of the compute environment
 	
-	//XXX: this is a trick since xDPd does not support kvm ports
 	nf_t type = anpi.getNFtype();
-#ifdef ENABLE_KVM
-	if(type == KVM)
-		type = DOCKER;
-#endif
+	
+	Array nf_ports_array;
+	list<struct nf_port_info> nf_ports = anpi.getNetworkFunctionsPorts();	
+	PortType port_type = UNDEFINED_PORT;
+	for(list<struct nf_port_info>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++)
+	{
+		nf_ports_array.push_back(nfp->port_name);
+		port_type = nfp->port_type;
+
+		switch (port_type) {
+			case VETH_PORT:
+				assert(type == DOCKER);
+				continue;
+			case DPDKR_PORT:
+				assert(type == DPDK);
+				continue;
+			case VHOST_PORT:
+				//XXX xDPd does not exepct the port type, but the VNF type
+				type = DOCKER;
+				logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" (that is a VM) is handled in xDPd as a \"%s\"",anpi.getNFname().c_str(),(NFType::toString(type)).c_str());
+				continue;
+			case IVSHMEM_PORT:				
+				//XXX xDPd does not exepct the port type, but the VNF type
+				type = DPDK;
+				logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" (that is a VM) is handled in xDPd as a \"%s\"",anpi.getNFname().c_str(),(NFType::toString(type)).c_str());
+				continue;
+			case USVHOST_PORT:
+				logger(ORCH_WARNING, XDPD_MODULE_NAME, __FILE__, __LINE__, "Port type not supported.");
+				assert(0 && "Port type not supported");
+				throw XDPDManagerException();
+				break;
+			default:
+				assert(0 && "You cannot be here!");
+				throw XDPDManagerException();
+		}
+	}
 			
 	network_function["type"] = NFType::toString(type);
-		
-	Array nf_ports_array;
-	list<struct nf_port_info> nf_ports = anpi.getNetworkFunctionsPorts();
-	for(list<struct nf_port_info>::iterator nfp = nf_ports.begin(); nfp != nf_ports.end(); nfp++)
-		nf_ports_array.push_back(nfp->port_name);
 			
 	network_function["ports"] = nf_ports_array;
 	nfs_array.push_back(network_function);
