@@ -46,7 +46,7 @@
 		</implementation>
 	</network-function>
 
-	<network-function name="usvhost_example"  description="Network function based on user space vhost">
+	<network-function name="usvhost_example" num-ports="2" description="Network function based on user space vhost">
 		<!-- Point to a Libvirt XML domain template -->
 		<implementation type="kvm" uri="../NFs/kvm/example-dpdk-usvhost/kvm_usvhost_vnf.xml">
 			<port port-id="1" port-type="usvhost"/>
