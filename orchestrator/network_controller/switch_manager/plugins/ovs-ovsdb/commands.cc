@@ -593,13 +593,13 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 	Array fourth_object;
 
 	std::replace( p.begin(), p.end(), '-', '_');  // OVSDB doesn't like '-' in names
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "add_port(%s,type=%s)", p.c_str(), portTypeToString(port_type).c_str());
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_port(%s,type=%s)", p.c_str(), portTypeToString(port_type).c_str());
 
 	//connect socket
     s = cmd_connect();
 
 	char ifac[64] = "iface";
-    char p_n[64] = "";
+    stringstream port_name;
 		
 	//Create the current name of a interface
 	if(!is_nf_port){
@@ -607,8 +607,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		strcat(ifac, temp);
 		
 		strcpy(temp, p.c_str());
-		
-		strcpy(p_n, p.c_str());
+		port_name << p.c_str();
 	}else{
 		string str = p;
 		
@@ -632,7 +631,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		}
 		
 		/*create name of port --> lsiId_portName*/
-		sprintf(p_n, "%" PRIu64 "_%s", dnumber, p.c_str());
+		port_name << dnumber << "_" << p.c_str();
 	}
 	
 	root["method"] = "transact";
@@ -643,16 +642,46 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 	first_obj["table"] = "Interface";
 		
 	/*Insert an Interface*/
-	row["name"] = p_n;
+	row["name"] = port_name.str().c_str();
 	if (is_nf_port) {
 		switch (port_type) {
 		case IVSHMEM_PORT:
+		case DPDKR_PORT:
+			assert(0 && "Currently supported by the OvS-DPDK plugin");
 			row["type"] = "dpdkr";
 			break;
 		case USVHOST_PORT:
+			assert(0 && "Currently supported by the OvS-DPDK plugin");
 			row["type"] = "dpdkvhostuser";
 			break;
+		case VETH_PORT:
+		{		
+			//In this case the veth pair needs to be created!
+			stringstream new_port_name;
+			new_port_name << port_name.str() << ".lxc";
+			stringstream cmd_create_veth_pair;
+			cmd_create_veth_pair << CREATE_VETH_PAIR << " " << port_name.str() << " " << new_port_name.str();
+			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_create_veth_pair.str().c_str());
+
+			int retVal = system(cmd_create_veth_pair.str().c_str());
+			retVal = retVal >> 8;
+			if(retVal == 0) {
+				logger(ORCH_WARNING, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Failed to create 'veth' port");
+				throw OVSDBManagerException();
+			}
+			
+			//	The veth pair peer given to the container is the one with the port_name as derived from the NF-FG.
+			//	As a result, the veth pair peer we add to OVS is the one with the decorated name: port_name.lxc
+			row["name"] = new_port_name.str().c_str();
+			
+			port_name.str("");
+			port_name.clear();
+			port_name << new_port_name.str();
+			break;
+		}
 		default:
+			//We are here in case of type "vhost"
+			assert(port_type == VHOST_PORT);
 			row["type"] = "internal";
 			break;
 		}
@@ -661,7 +690,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		if (p.compare(0, 4, "dpdk") == 0)
 			row["type"] = "dpdk";
 	}
-
+	
 	row["admin_state"] = "up";
 	row["link_state"] = "up";
 	row["ofport"] = rnumber;
@@ -680,7 +709,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 	first_obj["table"] = "Port";
 		
 	/*Insert a port*/
-	row["name"] = p_n;
+	row["name"] = port_name.str().c_str();
 		
 	iface.push_back("set");
 	

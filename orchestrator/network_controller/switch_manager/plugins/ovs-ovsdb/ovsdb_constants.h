@@ -3,10 +3,11 @@
 
 #define OVSDB_MODULE_NAME			"OvS-OVSDB-Manager"
 
-#if 0
 /**
 *	@brief: paths of the bash scripts exploited by the plugin
 */
+#define CREATE_VETH_PAIR			"./network_controller/switch_manager/plugins/ovs-ovsdb/scripts/create_veth_pair.sh"
+#if 0
 #define ACTIVATE_INTERFACE			"./network_controller/switch_manager/plugins/ovs-ovsdb/scripts/activate_interface.sh"
 #endif
 
