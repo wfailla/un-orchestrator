@@ -118,7 +118,6 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			else {
 				//We are here in case of type "veth"
 				assert(port_type == VETH_PORT);
-				
 				sspn << dpid << "_" << nfp->port_name;
 			}
 

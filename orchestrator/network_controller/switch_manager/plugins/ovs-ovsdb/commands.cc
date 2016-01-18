@@ -649,7 +649,6 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		case DPDKR_PORT:
 			row["type"] = "dpdkr";
 			
-			
 			//XXX the next rows have to be removed when this plugin with support OvS-DPDK
 			logger(ORCH_WARNING, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Currently supported by the OvS-DPDK plugin");
 			assert(0 && "Currently supported by the OvS-DPDK plugin");
