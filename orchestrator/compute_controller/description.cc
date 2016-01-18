@@ -99,6 +99,12 @@ std::string portTypeToString(PortType t)
 	case VHOST_PORT:
 		return "vhost";
 		break;
+	case VETH_PORT:
+		return "veth";
+		break;
+	case DPDKR_PORT:
+		return "dpdkr";
+		break;
 	case UNDEFINED_PORT:
 		return "undefined";
 		break;

@@ -20,9 +20,14 @@ class NFsManager;
 enum PortType {
 	INVALID_PORT = -1,
 	UNDEFINED_PORT = 0,
-	USVHOST_PORT,
-	IVSHMEM_PORT,
-	VHOST_PORT
+	//Ports used for virtual machines
+	USVHOST_PORT,			//user space vhost port
+	IVSHMEM_PORT,			//ivshmem port
+	VHOST_PORT,				//(in kernel) vhost port
+	//Ports used fro Docker containers 
+	VETH_PORT,				//veth pair port
+	//Ports used for DPDK processes executed in the host
+	DPDKR_PORT				//dpdkr port
 };
 
 PortType portTypeFromString(const std::string& s);

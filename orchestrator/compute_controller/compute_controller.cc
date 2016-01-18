@@ -356,12 +356,25 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						if(type != "kvm")
 						{
 							//The port types are not specified in the message coming from the name-resolver.
-							//We put it to undfined for all the ports of the VNF.
-							for(unsigned int i = 0; i < numports; i++)
-								port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, UNDEFINED_PORT));
+							//We set the port type as follows:
+							//	* VETH_PORT in case of Docker container
+							//	* DPDKR_PORT in case of DPDK process
+							if(type == "dpdk")
+							{
+								for(unsigned int i = 0; i < numports; i++)
+									port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, DPDKR_PORT));
+							}
+							else
+							{
+								assert(type == "docker");
+								for(unsigned int i = 0; i < numports; i++)
+									port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, VETH_PORT));
+							}
 						}
 						else
 						{
+							//In case of KVM, the port type must be specified by the name-resolver.
+							assert(0 && "Probably there is a BUG in the name resover!");
 							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the element \"ports\"",type.c_str());
 							return false;
 						}
