@@ -104,12 +104,21 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 				port_type_str = "dpdkvhostuser";
 				sspn << dpid << "_" << nfp->port_name;
 			}
-			else if (nfp->port_type == IVSHMEM_PORT) {
+			else if ( (nfp->port_type == IVSHMEM_PORT) || (nfp->port_type == DPDKR_PORT) ) {
+				//These two port types are handled in the same way by the network controller.
 				port_type_str = "dpdkr";
 				sspn << port_type_str << next_dpdkr_port;
 				next_dpdkr_port++;
 			}
+			else if (nfp->port_type == VHOST_PORT) {
+				logger(ORCH_WARNING, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "Currently supported by the OvS-OVSDB plugin");
+				assert(0 && "Currently supported by the OvS-OVSDB plugin");
+				throw OVSDPDKManagerException();
+			}
 			else {
+				//We are here in case of type "veth"
+				assert(port_type == VETH_PORT);
+				
 				sspn << dpid << "_" << nfp->port_name;
 			}
 
