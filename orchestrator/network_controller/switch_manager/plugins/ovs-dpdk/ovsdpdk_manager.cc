@@ -3,9 +3,7 @@
 /* TODO - These should come from an orchestrator config file (currently, there is only one for the UN ports) */
 static const char* OVS_BASE_SOCK_PATH = "/usr/local/var/run/openvswitch/";
 
-#if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
 int OVSDPDKManager::next_dpdkr_port = 1;
-#endif
 
 OVSDPDKManager::OVSDPDKManager() : m_NextLsiId(0), m_NextPortId(1) /* 0 is not valid for OVS */
 {
@@ -117,7 +115,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 			}
 			else {
 				//We are here in case of type "veth"
-				assert(port_type == VETH_PORT);
+				assert(nfp->port_type == VETH_PORT);
 				sspn << dpid << "_" << nfp->port_name;
 			}
 
