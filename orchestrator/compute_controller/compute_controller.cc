@@ -153,13 +153,35 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		list<Description*> possibleDescriptions;
 		string nf_name;
+
+		bool foundNports = false;
+		unsigned int numports = 0;		
+
 #ifdef UNIFY_NFFG
-		unsigned int numports = 0;
 		string text_description;
-		
-		bool foundNports = false, foundTextDescription = false;
+		bool foundTextDescription = false;
 #endif
 
+		//A first sacan of the json is done in order to read the number of ports of the VNF.
+		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
+		{
+	 	    const string& name  = i->first;
+		    const Value&  value = i->second;
+			if(name == "nports")
+		    {
+				foundNports = true;
+		    	numports = value.getInt();
+		    	break;
+		    }
+		}
+		if(!foundNports)
+		{
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"num-ports\" not found in the answer");
+			return false;
+		}
+
+		//Now let's do a second scan in order to retrieve all the other information received from
+		//the name-resolver
 		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
 		{
 	 	    const string& name  = i->first;
@@ -177,10 +199,8 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		    }
 		    else if(name == "nports")
 		    {
-#ifdef UNIFY_NFFG
-				foundNports = true;
-		    	numports = value.getInt();
-#endif
+		    	//Information already retrieved
+		    	continue;
 		    }
 		    else if(name == "description")
 		    {
@@ -199,6 +219,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					return false;
 		    	}
 
+				bool foundPorts = false; //Mandatory only in case of KVM
 				bool next = false;
 		    	//Itearate on the implementations
 		    	for( unsigned int impl = 0; impl < impl_array.size(); ++impl)
@@ -250,6 +271,8 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						}
 						else if(el_name == "ports")
 						{
+							foundPorts = true;
+							
 					    	const Array& ports_array = el_value.getArray();
 
 					    	if (ports_array.size() == 0)
@@ -328,6 +351,22 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						return false;
 					}
 
+					if(!foundPorts)
+					{
+						if(type != "kvm")
+						{
+							//The port types are not specified in the message coming from the name-resolver.
+							//We put it to undfined for all the ports of the VNF.
+							for(unsigned int i = 0; i < numports; i++)
+								port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, UNDEFINED_PORT));
+						}
+						else
+						{
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the element \"ports\"",type.c_str());
+							return false;
+						}
+					}
+
 					Description* descr = new Description(type, uri, cores, location, port_types);
 					possibleDescriptions.push_back(descr);
 				}
@@ -341,12 +380,12 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		if(!foundName || !foundImplementations
 #ifdef UNIFY_NFFG
-			|| !foundNports || !foundTextDescription
+			 || !foundTextDescription
 #endif		
 		)
 		{
 #ifdef UNIFY_NFFG
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", and/or key \"implementations\", and/or key \"num-ports\", and/or key \"description\" not found in the answer");
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", and/or key \"implementations\", and/or key \"description\" not found in the answer");
 #else
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", or key \"implementations\", or both not found in the answer");
 #endif
