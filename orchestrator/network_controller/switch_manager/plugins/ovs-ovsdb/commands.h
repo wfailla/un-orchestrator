@@ -206,7 +206,10 @@ public:
 			]
 		}
 	*/
-	void add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type = UNDEFINED_PORT);
+	/**
+	 * Add a port to the LSI identifed by dnumber. Returns the port name on as known on the switch.
+	 */
+	string add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type = UNDEFINED_PORT);
 	
 	/**
 	*	Example of command to create a new INTERNAL PORT
