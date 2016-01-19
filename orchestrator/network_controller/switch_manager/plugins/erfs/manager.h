@@ -20,6 +20,8 @@
 #include <sstream>
 #include <getopt.h>
 
+#define ERFS_MAN_MODULE_NAME "ERFS-manager"
+
 using namespace std;
 using namespace json_spirit;
 

@@ -13,9 +13,8 @@
 
 LSI_ID=$1
 NAME=$2
-MONITOR=$3
-VM_IMG=$4
-PORTS=$5
+VM_IMG=$3
+PORTS=$4
 NCORES=2
 COREMASK=""
 
@@ -47,6 +46,7 @@ then
 fi
 
 COMMAND="group-ivshmems LSI$LSI_ID"
+echo "PORTS=$PORTS"
 for i in `echo $PORTS | awk -F "," '{print $1,$2,$3,$4,$5,$6,$7}'`
 do
     echo "NF port = $i"
@@ -73,7 +73,6 @@ $TASKSET $QEMU_BIN -enable-kvm -name $NAME \
 -machine pc-i440fx-1.6,accel=kvm,usb=off \
 -cpu host \
 -vnc :1$LSI_ID \
--monitor tcp:127.0.0.1:$MONITOR,server,nowait \
 -smp cores=$NCORES,threads=1 -m 4096  \
 -drive media=disk,format=raw,file=$VM_IMG \
 -daemonize \

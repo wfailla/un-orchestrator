@@ -22,14 +22,14 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
     nextPort[dpid]=1;
     string core_id = "auto"; // FIXME: this should be handled by the LO
 
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "createLsi() creating ERFS LSI %d", dpid);
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "createLsi() creating ERFS LSI %d", dpid);
 
     stringstream cmd;
     cmd << CMD_CREATE_LSI << " " << dpid << " " << cli.getControllerAddress() << " " << cli.getControllerPort() << " ";
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd.str().c_str());
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd.str().c_str());
     int retVal = system(cmd.str().c_str());
     if(retVal != 0) {
-        logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to create LSI, result: %d", retVal);
+        logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Failed to create LSI, result: %d", retVal);
         throw ERFSManagerException();
     }
 
@@ -41,13 +41,13 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
     for(; pit != ports.end(); pit++)
     {
         unsigned int port_id = nextPort[dpid]++;
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " phy port \"%s\" = %d", pit->c_str(), port_id);
+        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, " phy port \"%s\" = %d", pit->c_str(), port_id);
         stringstream cmd_add;
         cmd_add << CMD_ADD_PORT << " " << dpid << " " << *pit << " " << "dpdk" << " " << port_id << " " << core_id;
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
         int retVal = system(cmd_add.str().c_str());
         if(retVal != 0) {
-            logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
+            logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
             throw ERFSManagerException();
         }
         // TODO - Really check result!
@@ -64,7 +64,7 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
 //        list<string> port_name_on_switch;
         AddNFportsIn anfpi(dpid, *nf, nf_types[*nf], cli.getNetworkFunctionsPortNames(*nf));
         AddNFportsOut *anfpo = addNFPorts(anfpi);
-        if (anfpo == NULL) logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "error in nfport add");
+        if (anfpo == NULL) logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "error in nfport add");
         out_nf_ports.insert(NfPortsMapMap::value_type(*nf, anfpo->getPorts()));
         out_nf_ports_name_on_switch[*nf] = anfpo->getPortsNameOnSwitch();
         delete anfpo;
@@ -77,8 +77,8 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
     for(list<uint64_t>::iterator vl = vlinks.begin(); vl != vlinks.end(); vl++) {
         AddVirtualLinkIn avli(dpid, *vl);
         AddVirtualLinkOut *avlo = addVirtualLink(avli);
-        if (avlo == NULL) logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "error in vlink add");
-        out_virtual_links.push_back(make_pair(dpid, *vl));
+        if (avlo == NULL) logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "error in vlink add");
+        out_virtual_links.push_back(make_pair(avlo->getIdA(), avlo->getIdB()));
         vlink_n++;
     }
 
@@ -94,22 +94,22 @@ AddNFportsOut *ERFSManager::addNFPorts(AddNFportsIn anpi)
     uint64_t dpid = anpi.getDpid();
     string nf = anpi.getNFname();
     nf_t nf_type = anpi.getNFtype();
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
     list<string> nfs_ports = anpi.getNetworkFunctionsPorts();
     list<string> port_name_on_switch;
     PortsNameIdMap nf_ports_ids;
 
     for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++) {
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tport: %s", (*nfp).c_str());
+        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "\tport: %s", (*nfp).c_str());
         unsigned int port_id = nextPort[dpid]++;
         const char* port_type = "ivshmem";
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf.c_str(), nfp->c_str(), port_id, nf_type);
+        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf.c_str(), nfp->c_str(), port_id, nf_type);
         stringstream cmd_add;
-        cmd_add << CMD_ADD_PORT << " " << dpid << " " << numa_node << " " << port_type << " " << port_id;
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+        cmd_add << CMD_ADD_PORT << " " << dpid << " " << numa_node << " " << port_type << " " << port_id << " auto";
+        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
         int retVal = system(cmd_add.str().c_str());
         if(retVal != 0) {
-            logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
+            logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
             throw ERFSManagerException();
         }
         // TODO - Really check result!
@@ -126,7 +126,7 @@ AddNFportsOut *ERFSManager::addNFPorts(AddNFportsIn anpi)
 AddVirtualLinkOut *ERFSManager::addVirtualLink(AddVirtualLinkIn avli)
 { // SwitchManager implementation
     AddVirtualLinkOut *avlo = NULL;
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "addVirtualLink(dpid: %" PRIu64 " -> %" PRIu64 ")", avli.getDpidA(), avli.getDpidB());
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "addVirtualLink(dpid: %" PRIu64 " -> %" PRIu64 ")", avli.getDpidA(), avli.getDpidB());
     unsigned int a_port_id = nextPort[avli.getDpidA()]++;
     unsigned int b_port_id = nextPort[avli.getDpidB()]++;
     const char* port_type = "xswitch";
@@ -135,57 +135,57 @@ AddVirtualLinkOut *ERFSManager::addVirtualLink(AddVirtualLinkIn avli)
     int retVal;
 
     // XSWITCH port A
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " XSWITCH port %u.%u (type=%s)", avli.getDpidA(), a_port_id, port_type);
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, " XSWITCH port %u.%u (type=%s)", avli.getDpidA(), a_port_id, port_type);
     cmd_add << CMD_ADD_PORT << " " << avli.getDpidA() << " " << port_name << " " << port_type << " " << a_port_id;
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
     retVal = system(cmd_add.str().c_str());
     if(retVal != 0) {
-        logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
+        logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
         throw ERFSManagerException();
     }
     cmd_add.str("");
     cmd_add.clear();
 
     // XSWITCH port B
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " XSWITCH port %u.%u (type=%s)", avli.getDpidB(), b_port_id, port_type);
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, " XSWITCH port %u.%u (type=%s)", avli.getDpidB(), b_port_id, port_type);
     cmd_add << CMD_ADD_PORT << " " << avli.getDpidB() << " " << port_name << " " << port_type << " " << b_port_id;
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
     retVal = system(cmd_add.str().c_str());
     if(retVal != 0) {
-        logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
+        logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Failed to add port, result: %d", retVal);
         throw ERFSManagerException();
     }
     cmd_add.str("");
     cmd_add.clear();
 
     // Link between them
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Virtual link between LSIs %u:%u <-> %u:%u", avli.getDpidA(), a_port_id, avli.getDpidB(), b_port_id);
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, " Virtual link between LSIs %u:%u <-> %u:%u", avli.getDpidA(), a_port_id, avli.getDpidB(), b_port_id);
     cmd_add << CMD_VIRTUAL_LINK << " " << avli.getDpidA() << " " << avli.getDpidB() << " " << a_port_id << " " << b_port_id;
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
     retVal = system(cmd_add.str().c_str());
     if(retVal != 0) {
-        logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Failed to create virtual link, result: %d", retVal);
+        logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Failed to create virtual link, result: %d", retVal);
         throw ERFSManagerException();
     }
 
-    avlo = new AddVirtualLinkOut(avli.getDpidA(), avli.getDpidB());
+    avlo = new AddVirtualLinkOut(a_port_id, b_port_id);
     return avlo;
 }
 
 void ERFSManager::destroyLsi(uint64_t dpid)
 { // SwitchManager implementation
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")", dpid);
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NOT SUPPORTED");
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "destroyLsi(dpid: %" PRIu64 " -> %" PRIu64 ")", dpid);
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "NOT SUPPORTED");
 }
 
 void ERFSManager::destroyVirtualLink(DestroyVirtualLinkIn dvli)
 { // SwitchManager implementation
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyVirtualLink(%" PRIu64 ".%" PRIu64 " -> %" PRIu64 ".%" PRIu64 ")", dvli.getDpidA(), dvli.getIdA(), dvli.getDpidB(), dvli.getIdB());
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NOT SUPPORTED");
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "destroyVirtualLink(%" PRIu64 ".%" PRIu64 " -> %" PRIu64 ".%" PRIu64 ")", dvli.getDpidA(), dvli.getIdA(), dvli.getDpidB(), dvli.getIdB());
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "NOT SUPPORTED");
 }
 
 void ERFSManager::destroyNFPorts(DestroyNFportsIn dnpi)
 { // SwitchManager implementation
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "destroyNFPorts");
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NOT SUPPORTED");
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "destroyNFPorts");
+    logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "NOT SUPPORTED");
 }

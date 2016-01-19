@@ -77,6 +77,63 @@ void Libvirt::disconnect()
 }
 #endif
 
+#ifdef VSWITCH_IMPLEMENTATION_ERFS
+//#define VSWITCH_IMPLEMENTATION_ERFS_DIRECT_KVM
+#endif
+
+#ifdef VSWITCH_IMPLEMENTATION_ERFS_DIRECT_KVM
+// No need for command line generator, ERFS generates the command line for Qemu
+bool Libvirt::startNF(StartNFIn sni)
+{
+    const char *a = QEMU_BIN_PATH;
+    const char *b = OVS_BASE_SOCK_PATH;
+    if (a == b);
+
+    stringstream ports;
+    list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+    int port_id = 0;
+    for(list<string>::iterator name = namesOfPortsOnTheSwitch.begin(); name != namesOfPortsOnTheSwitch.end(); name++) {
+        PortType port_type = description->getPortTypes().at(port_id);
+        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM VNF Port %d (%s) is of type %d", port_id, (*name).c_str(), port_type);
+        ports << port_id + 1 << ",";
+        port_id++;
+    }
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "ports: (%s)", ports.str().c_str());
+
+    // Get image name
+    stringstream command;
+    char image_path[512];
+    command << "cat " << description->getURI().c_str() << " | grep 'source file' | awk -F '\"' '{print $2}'";
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "command for getting image file: %s", command.str().c_str());
+    FILE *out = popen(command.str().c_str(), "r");
+    if (out) {
+        int res = fscanf(out, "%s", image_path);
+        if (res) {
+            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "image path: (%s)", image_path);
+        }
+        else {
+            logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "error in getting image path");
+            return false;
+        }
+    }
+    else {
+        logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "can not open file");
+        return false;
+    }
+
+    // TODO: number of cores and core mask is to be added
+    command.str("");
+    command.clear();
+    command << QEMU_ERFS << " " << sni.getLsiID() << " " << sni.getNfName();
+    command << " " << image_path << " " << ports.str().c_str();
+    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "command for starting KVM: (%s)", command.str().c_str());
+
+    int retVal = system(command.str().c_str());
+    if(retVal != 0)
+        return false;
+    return true;
+}
+#else
 #if not defined(DIRECT_KVM_IVSHMEM)
 bool Libvirt::startNF(StartNFIn sni)
 {
@@ -286,10 +343,46 @@ bool Libvirt::startNF(StartNFIn sni)
 	}
 
 	if (! ivshmemPorts.empty()) {
-		IvshmemCmdLineGenerator ivshmemCmdGenerator;
+		char cmdline[512];
         vector<string> ivshmemCmdElems;
 
-		char cmdline[512];
+#ifdef VSWITCH_IMPLEMENTATION_ERFS
+        stringstream ports;
+        list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+
+        ostringstream cmd;
+        cmd << "group-ivshmems " << sni.getLsiID() << "." << sni.getNfName();
+        for (vector<string>::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
+            cmd << " IVSHMEM:" << sni.getLsiID() << "-" << *it;
+        }
+        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating IVSHMEM QEMU command line using ERFS cmd: %s", cmd.str().c_str());
+
+        ostringstream oss;
+        oss << "echo " << cmd.str().c_str() << " | nc localhost 16632"; // FIXME: this should be a parameter later
+        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "final command: %s", oss.str().c_str());
+
+        int r = system(oss.str().c_str());
+        if(r == -1 || WEXITSTATUS(r) == -1) {
+            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error executing command line generator");
+        }
+
+        char name[256];
+        sprintf(name, "/tmp/ivshmem_qemu_cmdline_%lu.%s", sni.getLsiID(), sni.getNfName().c_str());
+        FILE *f = fopen(name, "r");
+        if(f == NULL) {
+            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error opening file");
+            return false;
+        }
+        if(fgets(cmdline, sizeof(cmdline), f) == NULL) {
+            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"Error in reading file");
+            return false;
+        }
+        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"commandline: %s", cmdline);
+        ivshmemCmdElems.push_back(cmdline);
+#else
+
+        IvshmemCmdLineGenerator ivshmemCmdGenerator;
+
 #if 1
         if(!ivshmemCmdGenerator.get_single_cmdline(cmdline, sizeof(cmdline), domain_name, ivshmemPorts)) {
             return false;
@@ -310,7 +403,8 @@ bool Libvirt::startNF(StartNFIn sni)
             }
             ivshmemCmdElems.push_back(cmdline);
         }
-#endif
+#endif // 1
+#endif // ERFS
 
 		if (! ivshmemCmdElems.empty()) {
 			xmlNodePtr rootEl = xmlDocGetRootElement(doc);
@@ -456,34 +550,6 @@ after_parsing:
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual machine disk available at path: '%s'",disk_path);
 
-#ifdef VSWITCH_IMPLEMENTATION_ERFS
-        // No need for command line generator, ERFS generates the command line for Qemu
-
-        stringstream ports;
-        list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
-	for(list<string>::iterator name = namesOfPortsOnTheSwitch.begin(); name != namesOfPortsOnTheSwitch.end(); name++)
-	{
-            ports << *name << ",";
-	}
-
-        pthread_mutex_lock(&Libvirt_mutex);
-        // TODO: number of cores and core mask is to be added
-	stringstream command;
-        command << QEMU_ERFS << " " << sni.getLsiID() << " " << sni.getNfName() << " " << next_tcp_port;
-        command << " " << disk_path << " " << ports.str().c_str();
-
-        stringstream portstream;
-	portstream << next_tcp_port;
-	monitor[domain_name] = portstream.str();
-	next_tcp_port++;
-	pthread_mutex_unlock(&Libvirt_mutex);
-
-	int retVal = system(command.str().c_str());
-	if(retVal != 0)
-		return false;
-	return true;
-#else
-
 	//Get the command line generator and prepare the command line
 	IvshmemCmdLineGenerator cmdgenerator;
 
@@ -529,9 +595,9 @@ after_parsing:
 		return false;
 
 	return true;
-#endif // ifdef VSWITCH_IMPLEMENTATION_ERFS
 }
 #endif // if not defined(ENABLE_KVM_IVSHMEM)
+#endif // ERFS_DIRECT_KVM
 
 bool Libvirt::stopNF(StopNFIn sni)
 {

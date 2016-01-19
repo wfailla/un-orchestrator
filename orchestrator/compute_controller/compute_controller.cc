@@ -23,11 +23,11 @@ void ComputeController::setCoreMask(uint64_t core_mask)
 			cores[nextCore] = mask;
 			nextCore++;
 		}
-			
+
 		mask = mask << 1;
 	}
 	nextCore = 0;
-	
+
 	for(unsigned int i = 0; i < cores.size(); i++)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Mask of an available core: \"%d\"",cores[i]);
 }
@@ -156,7 +156,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 #ifdef UNIFY_NFFG
 		unsigned int numports = 0;
 		string text_description;
-		
+
 		bool foundNports = false, foundTextDescription = false;
 #endif
 
@@ -289,9 +289,9 @@ bool ComputeController::parseAnswer(string answer, string nf)
 								}
 								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %d id=%d type=%d", p, port_id, port_type);
 
-								if ((size_t)port_id >= port_types.size())
-									port_types.resize(port_id + 1);
-								port_types[port_id] = port_type;
+								if ((size_t)p >= port_types.size())
+									port_types.resize(p + 1);
+								port_types[p] = port_type;
 							}
 						}
 						else
@@ -300,14 +300,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							return false;
 						}
 					}
-					
+
 					if(next)
 					{
 						//The current network function is of a type not supported by the orchestator
 						next = false;
 						continue;
 					}
-					
+
 					if(!foundURI || !foundType)
 					{
 						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into an implementation description");
@@ -343,7 +343,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		if(!foundName || !foundImplementations
 #ifdef UNIFY_NFFG
 			|| !foundNports || !foundTextDescription
-#endif		
+#endif
 		)
 		{
 #ifdef UNIFY_NFFG
@@ -355,18 +355,18 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		}
 
 		NF *new_nf = new NF(nf_name
-#ifdef UNIFY_NFFG		
+#ifdef UNIFY_NFFG
 			,numports, text_description
-#endif	
+#endif
 		);
 		assert(possibleDescriptions.size() != 0);
-		
+
 		if(possibleDescriptions.size() == 0)
 		{
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Cannot find a supported implementation for the network function \"%s\"",nf.c_str());
 			return false;
-		}		
-		
+		}
+
 		for(list<Description*>::iterator impl = possibleDescriptions.begin(); impl != possibleDescriptions.end(); impl++)
 			new_nf->addDescription(*impl);
 
@@ -398,7 +398,7 @@ bool ComputeController::selectImplementation()
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select a Docker implementation if exists.");
 		selectImplementation(DOCKER);
-		
+
 		if(allSelected())
 			return true;
 	}
@@ -413,7 +413,7 @@ bool ComputeController::selectImplementation()
 	if(manager->isSupported())
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select DPDK implementation if exists.");
-	
+
 		selectImplementation(DPDK);
 		if(allSelected())
 			return true;
@@ -424,14 +424,14 @@ bool ComputeController::selectImplementation()
 
 #ifdef ENABLE_KVM
 	//Manage QEMU/KVM execution environment through libvirt
-	
+
 	manager = new Libvirt();
-	
+
 	if(manager->isSupported())
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select QEMU/KVM implementation if exists.");
 		selectImplementation(KVM);
-		
+
 		if(allSelected())
 			return true;
 	}
@@ -452,7 +452,7 @@ void ComputeController::selectImplementation(nf_t desiredType)
 	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 	{
 		NF *current = nf->second;
-		
+
 		//An descritpion is selected only for those functions that do not have a description yet
 		if(current->getSelectedDescription() == NULL)
 		{
@@ -487,10 +487,10 @@ void ComputeController::selectImplementation(nf_t desiredType)
 						default:
 							assert(0);
 					}
-					
-					manager->setDescription(*impl);					
+
+					manager->setDescription(*impl);
 					current->setSelectedDescription(manager);
-										
+
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s description has been selected for NF \"%s\".",NFType::toString(desiredType).c_str(),nf->first.c_str());
 					break;
 				}
@@ -522,9 +522,9 @@ unsigned int ComputeController::getNumPorts(string name)
 
 	NF *nf = nfs[name];
 	unsigned int np = nf->getNumPorts();
-	
+
 	assert(np != 0);
-	
+
 	return np;
 }
 #endif
@@ -564,8 +564,8 @@ bool ComputeController::startNF(string nf_name, list<string> namesOfPortsOnTheSw
 
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
-	
-	
+
+
 	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, calculateCoreMask(nfsManager->getCores()));
 
 	if(!nfsManager->startNF(sni))
@@ -600,15 +600,15 @@ bool ComputeController::stopNF(string nf_name)
 
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
-	
+
 	StopNFIn sni(lsiID,nf_name);
-	
+
 	if(!nfsManager->stopNF(sni))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while stopping the NF \"%s\"",nf_name.c_str());
 		return false;
 	}
-	
+
 	nf->setRunning(false);
 
 	return true;
@@ -651,7 +651,7 @@ void ComputeController::printInfo(int graph_id)
 	}
 }
 
-#ifdef UNIFY_NFFG	
+#ifdef UNIFY_NFFG
 nf_manager_ret_t ComputeController::retrieveAllAvailableNFs()
 {
 	set<string> NFsNames;
@@ -746,11 +746,11 @@ nf_manager_ret_t ComputeController::retrieveAllAvailableNFs()
 		}
 
 		translation.assign(&DataBuffer[i]);
-		
+
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Information on NFs:");
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",translation.c_str());
 
-		//Parse the answer		
+		//Parse the answer
 		try
 		{
 			Value value;
@@ -767,7 +767,7 @@ nf_manager_ret_t ComputeController::retrieveAllAvailableNFs()
 				if(name == "network-functions")
 				{
 					foundNFs = true;
-					
+
 					const Array& names_array = value.getArray();
 					if(names_array.size() == 0)
 					{
@@ -780,12 +780,12 @@ nf_manager_ret_t ComputeController::retrieveAllAvailableNFs()
 					{
 						//This is an implementation, with a type and an URI
 						Object nf_name = names_array[i].getObject();
-						
+
 						for( Object::const_iterator nfn = nf_name.begin(); nfn != nf_name.end(); ++nfn )
 						{
 							const string& the_name  = nfn->first;
 							const Value&  the_value = nfn->second;
-												
+
 							if(the_name == "name")
 							{
 								string vnfName = the_value.getString();

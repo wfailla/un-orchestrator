@@ -17,6 +17,7 @@ class AddVirtualLinkOut
 {
 
 friend class GraphManager;
+friend class ERFSManager;
 
 private:
 
@@ -24,7 +25,7 @@ private:
 	*	@brief: identifier of the virtual link on the lsi A
 	*/
 	uint64_t idA;
-	
+
 	/**
 	*	@brief: identifier of the virtual link on the lsi B
 	*/
@@ -36,7 +37,7 @@ protected:
 	{
 		return idA;
 	}
-	
+
 	uint64_t getIdB()
 	{
 		return idB;
@@ -47,7 +48,7 @@ public:
 		: idA(idA), idB(idB)
 	{
 	}
-	
+
 };
 
 
