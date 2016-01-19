@@ -35,6 +35,10 @@ map<uint64_t, string> port_id;
 map<uint64_t, uint64_t> vl_id;
 /*map use to obtain id of peer vlink from local vlink*/
 map<uint64_t, uint64_t> vl_p;
+/*map used to translate from port_name to DPDK Ring name*/
+map<string, string> dpdkr_from_uuid;
+/*map used to translate back from DPDK Ring name to port_id*/
+map<string, string> dpdkr_to_uuid;
 
 /**
  * Build name that is valid as UUID: no '-', no '_' ...
@@ -420,13 +424,13 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		{
 			list<struct nf_port_info> nfs_ports = cli.getNetworkFunctionsPortsInfo(*nf);
 			
-			list<string> port_name_on_switch;
+			list<string> port_names_on_switch;
 			
 			map<string,unsigned int> n_ports_1;
 			
 			/*for each network function port in the list of nfs_ports*/
 			for(list<struct nf_port_info>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++){
-				add_port(nfp->port_name, dnumber, true, s, nfp->port_type);
+				string name_on_switch = add_port(nfp->port_name, dnumber, true, s, nfp->port_type);
 
 				port2.push_back("named-uuid");
 
@@ -437,15 +441,12 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 				/*fill the map ports*/
 				n_ports_1[nfp->port_name] = rnumber-1;
 				
-				stringstream pnos;
-				pnos << dnumber << "_" << nfp->port_name;
-				port_name_on_switch.push_back(pnos.str());
-				
+				port_names_on_switch.push_back(name_on_switch);
 			}
 			
 			/*fill the network_functions_ports*/
 			network_functions_ports[(*nf)] = n_ports_1;
-			out_nf_ports_name_on_switch[*nf] = port_name_on_switch;
+			out_nf_ports_name_on_switch[*nf] = port_names_on_switch;
 		}
 	}
 	
@@ -577,7 +578,29 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	return clo;
 }
 
-void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type){
+#ifdef ENABLE_OVSDB_DPDK
+string find_free_dpdkr()
+{
+	int idx;
+	char name[] = "dpdkr9999";
+	for (idx = 1; idx < 9999; ++idx) {
+		sprintf(name, "dpdkr%d", idx);
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Checking presence of DPDK Ring %s", name);
+		if (dpdkr_to_uuid.find(name) == dpdkr_to_uuid.end())
+			break;
+	}
+
+	if (idx >= 9999) {
+		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Failed to find a free DPDK ring (dpdkr) name)");
+		throw OVSDBManagerException();
+	}
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Found unused DPDK Ring %s", name);
+
+	return name;
+}
+#endif
+
+string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type){
 	
 	string uuid_name;
 	
@@ -605,12 +628,19 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 
 	char ifac[64];
     string port_name;
+
+    //Default port name on the switch (may be overriden later for specific port types)
+	stringstream pnos;
+	pnos << dnumber << "_" << p;
+	string port_name_on_switch = pnos.str();
+
 		
 	//Create the current name of a interface
 	sprintf(ifac, "iface%d", rnumber);
 	if (!is_nf_port) {
 		uuid_name = p;
 		port_name = p;
+		port_name_on_switch = p;
 	} else {
 		uuid_name = build_port_uuid_name(p, dnumber);
 		
@@ -634,6 +664,12 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 		case DPDKR_PORT:
 #ifdef ENABLE_OVSDB_DPDK
 			row["type"] = "dpdkr";
+			port_name = find_free_dpdkr();
+			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Port %s maps to DPDK Ring %s", p.c_str(), port_name.c_str());
+			dpdkr_from_uuid.insert(map<string, string>::value_type(uuid_name, port_name));
+			dpdkr_to_uuid.insert(map<string, string>::value_type(port_name, uuid_name));
+
+			port_name_on_switch = port_name;
 #else
 			//XXX the next rows have to be removed when this plugin with support OvS-DPDK
 			logger(ORCH_WARNING, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Currently supported by the OvS-DPDK plugin");
@@ -926,6 +962,7 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 	}
 #endif
 
+    return port_name_on_switch;
 }
 
 void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
@@ -951,6 +988,17 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 	for(list<uint64_t>::iterator i = virtual_link_id[switch_id[dpi]].begin(); i != virtual_link_id[switch_id[dpi]].end(); i++){
 		cmd_delete_virtual_link(vl_id[(*i)], (*i), s);
 		cmd_delete_virtual_link(vl_id[vl_p[(*i)]], vl_p[(*i)], s);
+	}
+
+	// Delete DPDK Ring related entries of dpdkr ports
+	for(list<string>::iterator it = port_l[dpi].begin(); it != port_l[dpi].end(); ++it) {
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removal of port %s", (*it).c_str());
+		map<string, string>::iterator f_it = dpdkr_from_uuid.find(*it);
+		if (f_it != dpdkr_from_uuid.end()) {
+			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "\tRemoving entries for DPDK Ring %s", f_it->second.c_str());
+			dpdkr_to_uuid.erase(f_it->second);
+			dpdkr_from_uuid.erase(f_it);
+		}
 	}
 
 	port_l.erase(dpi);
@@ -1063,6 +1111,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
     cmd_disconnect(s);
 }
 
+// TODO - This probably needs adapting for dpdkr, ivshmem, usvhost ports (similar to add_port())
 AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 
 	AddNFportsOut *anf = NULL;
@@ -1158,7 +1207,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int s){
 			iface1.clear();
 			iface2.clear();
 
-			//insert this port name into port_n
+			//insert this port name into port_l
 			port_l[anpi.getDpid()].push_back(uuid_name);
 
 			ports[nfp->port_name] = rnumber;
