@@ -343,8 +343,10 @@ bool Libvirt::startNF(StartNFIn sni)
 	xmlCleanupParser();
 
 #ifdef DEBUG_KVM
-	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Dumping XML to %s", domain_name);
-	FILE* fp = fopen(domain_name, "w");
+	stringstream filename;
+	filename << domain_name << ".xml";
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Dumping XML to %s", filename.str().c_str());
+	FILE* fp = fopen(filename.str().c_str(), "w");
 	if (fp) {
 		fwrite(xmlconfig, 1, strlen(xmlconfig), fp);
 		fclose(fp);
