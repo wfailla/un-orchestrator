@@ -29,8 +29,8 @@ private:
 	*	@brief: NF			The match is expressed on a NF (and potentially
 	*						on other parameters)
 	*	@brief: ENDPOINT	The match is expressed on a graph end point, that is
-	*						a sort of virtual ports to be used to connect many
-	*						garphs together (and potentially on other parameters)
+	*						a gre tunnel to be used to connect many
+	*						universal node together
 	*	@brief: GENERIC		The match is neither expressed on a port, nor on
 	*						a network function (but potentially on other
 	*						parameters)

@@ -78,8 +78,8 @@ Object EndPointGre::toJSON()
 {
 	Object EndPointGre, iface;
 	
-	EndPointGre[EP_ID] = id.c_str();
-	EndPointGre[EP_NAME] = name.c_str();
+	EndPointGre[_ID] = id.c_str();
+	EndPointGre[_NAME] = name.c_str();
 	EndPointGre[EP_TYPE] = EP_GRE;
 	
 	iface[LOCAL_IP] = local_ip.c_str();

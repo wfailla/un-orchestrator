@@ -74,7 +74,7 @@ Object VNFs::toJSON()
 	Array portS;
 	
 	vnf[_ID] = id.c_str();
-	vnf[VNF_NAME] = name.c_str();
+	vnf[_NAME] = name.c_str();
 	vnf[VNF_TEMPLATE] = vnf_template.c_str();
 	if(strcmp(groups.c_str(), "") != 0)
 		vnf[VNF_GROUPS] = groups;
@@ -83,8 +83,8 @@ Object VNFs::toJSON()
 	{
 		Object pp;
 		
-		pp[PORT_ID] = p->first.c_str();
-		pp[PORT_NAME] = p->second.c_str();
+		pp[_ID] = p->first.c_str();
+		pp[_NAME] = p->second.c_str();
 		
 		portS.push_back(pp);
 	}

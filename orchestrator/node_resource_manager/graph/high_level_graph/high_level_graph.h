@@ -45,7 +45,8 @@ private:
 	map<string, list<unsigned int> > networkFunctions;
 	
 	/**
-	*	@brief: for each end point attached to the graph specifies a list of params
+	*	@brief: for each endpoint attached to the graph specifies a list of params 
+	* 		(gre key, local ip, remote ip)
 	*/
 	map<string, list<string> > endpoints;
 
@@ -140,10 +141,10 @@ public:
 	*	@brief: Add an end point to the graph, to be used to connect the graph itself with
 	*		other graphs.
 	*
-	*	@param: ep			Identifier of the graph defining the end point
-	*	@param: p			List of three elements (local ip, remote ip and key)
+	*	@param: ep			Name of the endpoint to de added
+	*	@param: p			List of three elements (key, local ip and remote ip)
 	*
-	*	@return: true if the endpoint is defined in the current graph; false otherwise
+	*	@return: true
 	*/
 	bool addEndPoint(string ep, list<string> p);
 	
@@ -152,12 +153,6 @@ public:
 	*		multiple graphs together.
 	*/
 	map<string, list<string> > getEndPoints();
-	
-	/**
-	*	@brief: given a graph endpoint (in the form graphID:epID), return true if it is defined
-	*		in this graph
-	*/
-	bool isDefinedHere(string endpoint);
 
 	/**
 	*	@brief: Return the ID of the graph
@@ -293,20 +288,6 @@ public:
 	*	@param: flowID	Identifier of the flow that could contain an endpoint
 	*/
 	string getEndpointInvolved(string flowID);
-	
-	/**
-	*	@brief: check if an endpoint is used in some action of the graph
-	*
-	*	@param: endpoint	Idenfier of the endpoint to be checked
-	*/
-	bool endpointIsUsedInAction(string endpoint);
-	
-	/**
-	*	@brief: check if an endpoint is used in some match of the graph
-	*
-	*	@param: endpoint	Idenfier of the endpoint to be checked
-	*/
-	bool endpointIsUsedInMatch(string endpoint);
 	
 	/**
 	*	@brief: Return the number of flows in the graph

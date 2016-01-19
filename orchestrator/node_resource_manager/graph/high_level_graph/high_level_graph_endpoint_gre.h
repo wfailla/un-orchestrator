@@ -23,12 +23,12 @@ class EndPointGre
 {
 private:
 	/**
-	*	@brief: the name of the endpoint (e.g., 00000003)
+	*	@brief: the id of the endpoint (e.g., 00000003)
 	*/
 	string id;
 	
 	/**
-	*	@brief: name of the endpoint port (e.g., ingress)
+	*	@brief: the name of the endpoint port (e.g., ingress)
 	*/
 	string name;
 	
@@ -38,12 +38,12 @@ private:
 	string local_ip;
 	
 	/**
-	*	@brief: the remote ip of the gre tunnel (e.g., 10.0.0.1)
+	*	@brief: the remote ip of the gre tunnel (e.g., 10.0.0.2)
 	*/
 	string remote_ip;
 	
 	/**
-	*	@brief: the interface of the gre tunnel (e.g., 10.0.0.2)
+	*	@brief: the interface of the gre tunnel (e.g., 10.0.0.3)
 	*/
 	string interface;
 	

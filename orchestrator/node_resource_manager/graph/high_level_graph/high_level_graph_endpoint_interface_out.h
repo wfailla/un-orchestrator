@@ -24,27 +24,27 @@ class EndPointInterfaceOut
 {
 private:
 	/**
-	*	@brief: the name of the NF (e.g., 00000003)
+	*	@brief: the id of the endpoint port (e.g., 00000003)
 	*/
 	string id;
 	
 	/**
-	*	@brief: name of the endpoint port (e.g., ingress)
+	*	@brief: the name of the endpoint port (e.g., ingress)
 	*/
 	string name;
 	
 	/**
-	*	@brief: the port of the NF (e.g., 10.0.0.1)
+	*	@brief: the id of the port (e.g., 10.0.0.1)
 	*/
 	string node_id;
 	
 	/**
-	*	@brief: the port of the NF (e.g., 1)
+	*	@brief: the switch id of the port (e.g., 1)
 	*/
 	string sw_id;
 	
 	/**
-	*	@brief: the port of the NF (e.g., eth0)
+	*	@brief: the interface of the port (e.g., eth0)
 	*/
 	string interface;
 	

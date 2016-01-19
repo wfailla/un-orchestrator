@@ -58,12 +58,15 @@ private:
 	map<string,map<string, unsigned int> >  network_functions;
 	
 	/**
-	*	@brief: The map is <endpoint name, list params>. It contains endpoint ports
+	*	@brief: endpoints connected to the LSI 
+	*		The map is
+	*  			<endpoint name, list params>
+	*				list params: gre key, local ip, remote ip
 	*/
 	map<string,list<string> > endpoints_ports;
 	
 	/**
-	*	@brief: The map is <endpoint name, endpoint id>. It contains endpoint id
+	*	@brief: the pair is <endpoint name, endpoint id>
 	*/
 	map<string,unsigned int > endpoints_ports_id;
 	

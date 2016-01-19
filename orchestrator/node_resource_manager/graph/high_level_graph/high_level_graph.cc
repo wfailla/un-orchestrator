@@ -321,8 +321,8 @@ Object Graph::toJSON()
 		vnf.push_back(v->toJSON());
 	}
 	
-	forwarding_graph[F_ID] = id;
-	forwarding_graph[F_NAME] = name;
+	forwarding_graph[_ID] = id;
+	forwarding_graph[_NAME] = name;
 	if(end_points.size() != 0)
 		forwarding_graph[END_POINTS] = end_points;
 	if(vnf.size() != 0)
@@ -370,12 +370,7 @@ bool Graph::stillExistEndpoint(string endpoint)
 {
 	if(endpoints.count(endpoint) == 0)
 		return false;
-
-	if(endpointIsUsedInMatch(endpoint))
-		return true;
-		
-	if(endpointIsUsedInAction(endpoint))
-		return true;
+	return true;
 			
 	endpoints.erase(endpoint);
 	return false;
@@ -429,19 +424,6 @@ map<string, list<string> > Graph::getEndPoints()
 	return endpoints;
 }
 
-bool Graph::isDefinedHere(string endpoint)
-{
-	for(map<string, list<string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
-	{
-			string ep = mep->first;
-			
-			if(ep.compare(endpoint) == 0)
-				return true;
-	}
-
-	return false;
-}
-
 string Graph::getEndpointInvolved(string flowID)
 {
 	highlevel::Rule r = getRuleFromID(flowID);
@@ -459,40 +441,6 @@ string Graph::getEndpointInvolved(string flowID)
 	}
 	
 	return "";
-}
-
-bool Graph::endpointIsUsedInMatch(string endpoint)
-{
-	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
-	{
-		Match match = r->getMatch();		
-		if(match.matchOnEndPoint())
-		{
-			stringstream ss;
-			ss << match.getEndPoint();
-			if(ss.str() == endpoint)
-				//The endpoint is used in a match
-				return true;
-		}		
-	}
-	return false;
-}
-
-bool Graph::endpointIsUsedInAction(string endpoint)
-{
-	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
-	{
-		Action *action = r->getAction();		
-		action_t actionType = action->getType();
-		
-		if(actionType == ACTION_ON_ENDPOINT)
-		{
-			if(action->toString() == endpoint)
-				//The port is used in an action
-				return true;
-		}
-	}
-	return false;
 }
 
 }

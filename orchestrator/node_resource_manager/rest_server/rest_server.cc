@@ -618,7 +618,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	map<string, string> gre_id;
 
 	//for each endpoint (vlan), contains the id
-	map<string, string> vlan_id;
+	map<string, string> vlan_id; //XXX: currently, this information is ignored
 
 	try
 	{
@@ -639,40 +639,41 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 			{
 		    	foundFlowGraph = true;
 		    	
-		    	bool foundVNFs = false;
-				bool foundEP = false;
-				bool foundGRE = false;
-		    	bool foundFlowRules = false;
+		    	bool foundVNFs = false, foundEP = false, foundGRE = false, foundFlowRules = false;
 		    	string id_gre;
 		    	
 		  		Object forwarding_graph = value.getObject();
-		    	for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
+		    		
+				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
 		    	{
-		        	const string& fg_name  = fg->first;
-			       	const Value&  fg_value = fg->second;
-				
 					bool e_if = false, e_if_out = false;
 								
 					string id, node, iface, e_name, node_id, sw_id, interface;
+
+		        	const string& fg_name  = fg->first;
+			       	const Value&  fg_value = fg->second;
 				
-					if(fg_name == F_ID)
+					if(fg_name == _ID)
 		         	{
-		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,F_ID,fg_value.getString().c_str());
+		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
 		         	
-						//set graph id
+						//set id of the graph
 						graph.setId(fg_value.getString());
 					}
-					else if(fg_name == F_NAME)
+					else if(fg_name == _NAME)
 					{
-		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,F_NAME,fg_value.getString().c_str());
+		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_NAME,fg_value.getString().c_str());
 					
 						//set name of the graph
 						graph.setName(fg_value.getString());
 					}
 					else if(fg_name == F_DESCR)
 					{
+		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,F_DESCR,fg_value.getString().c_str());
+
 						//XXX: currently, this information is ignored
 					}
+					//Identify the VNFs
 					else if(fg_name == VNFS)
 					{
 						const Array& vnfs_array = fg_value.getArray();
@@ -698,9 +699,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
 							string id, name, vnf_template, groups, port_id, port_name;
+							//list of pair port id, port name related by the VNF
 							list<pair<string, string> > portS;
-
-							portS.clear();
 
 							//Parse the network function
 							for(Object::const_iterator nf = network_function.begin(); nf != network_function.end(); nf++)
@@ -708,9 +708,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								const string& nf_name  = nf->first;
 								const Value&  nf_value = nf->second;
 									
-								if(nf_name == VNF_NAME)
+								if(nf_name == _NAME)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_NAME,nf_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,_NAME,nf_value.getString().c_str());
 									foundName = true;
 									if(!graph.addNetworkFunction(nf_value.getString()))
 									{
@@ -731,11 +731,11 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									foundTemplate = true;
 	#endif
 								}
-								else if(nf_name == VNF_ID)
+								else if(nf_name == _ID)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_ID,nf_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,_ID,nf_value.getString().c_str());
 									
-									//store id value
+									//store value of VNF id
 									id.assign(nf_value.getString().c_str());
 								}
 								else if(nf_name == VNF_PORTS)
@@ -754,15 +754,15 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											const string& p_name  = p->first;
 											const Value&  p_value = p->second;
 											
-											if(p_name == PORT_ID)
+											if(p_name == _ID)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_PORTS,p_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,_ID,p_value.getString().c_str());
 												
 												port_id = p_value.getString();
 											}
-											else if(p_name == PORT_NAME)
+											else if(p_name == _NAME)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_PORTS,p_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,_NAME,p_value.getString().c_str());
 												
 												port_name = p_value.getString();
 											}
@@ -794,17 +794,18 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 #endif							
 							!foundName)
 							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or both not found in an element of \"%s\"",VNF_NAME,VNF_TEMPLATE,VNFS);
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or both not found in an element of \"%s\"",_NAME,VNF_TEMPLATE,VNFS);
 								return false;
 							}
-							
-							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "+++\"%s\"---\"%s\"+++\"%s\"---\"%s\"+++\"%s\"---\"%s\"+++", id.c_str(),name.c_str(),groups.c_str(),vnf_template.c_str(),port_id.c_str(),port_name.c_str());
 							
 							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS);
 
 							graph.addVNF(vnfs);
+
+							portS.clear();
 						}					
-				    }
+				    	}
+					//Identify the end-points
 					else if(fg_name == END_POINTS)
 				    {
 				    	const Array& end_points_array = fg_value.getArray();
@@ -813,7 +814,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",END_POINTS);
 
-				    	//Iterate on the endpoints
+				    	//Iterate on the end-points
 				    	for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
 						{
 							//This is a endpoints, with a name, a type, and an interface
@@ -824,18 +825,18 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								const string& ep_name  = aep->first;
 								const Value&  ep_value = aep->second;
 									
-								if(ep_name == EP_ID)
+								if(ep_name == _ID)
 								{	
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_ID,ep_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,_ID,ep_value.getString().c_str());
 									
 									if(!foundGRE)
 										id = ep_value.getString();
 									else
 										id_gre = ep_value.getString();
 								}
-								else if(ep_name == EP_NAME)
+								else if(ep_name == _NAME)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_NAME,ep_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,_NAME,ep_value.getString().c_str());
 									
 									e_name = ep_value.getString();
 								} 
@@ -847,13 +848,18 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}
 								else if(ep_name == EP_REM)
 								{
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_REM,ep_value.getString().c_str());
+
 									//XXX: currently, this information is ignored
 								} 
 								else if(ep_name == EP_PR)
 								{
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_PR,ep_value.getString().c_str());
+
 									//XXX: currently, this information is ignored
 								}
-								else if(ep_name == EP_IFACE)
+								//identify interface end-points 
+								else if(ep_name == IFACE)
 								{
 									Object ep_iface = ep_value.getObject();
 						
@@ -866,18 +872,20 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										
 										if(epi_name == NODE_ID)
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_IFACE,epi_value.getString().c_str());
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,NODE_ID,epi_value.getString().c_str());
 											
 											node_id = epi_value.getString();	
 										}
 										else if(epi_name == SW_ID)
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_IFACE,epi_value.getString().c_str());
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,SW_ID,epi_value.getString().c_str());
 											
 											sw_id = epi_value.getString();	
 										}
 										else if(epi_name == IFACE)
 										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,IFACE,epi_value.getString().c_str());
+
 											interface = epi_value.getString();
 										
 											iface_id[id] = epi_value.getString();
@@ -885,6 +893,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 									}
 								}
+								//identify interface-out end-points 
 								else if(ep_name == EP_IFACE_OUT)
 								{
 									Object ep_iface = ep_value.getObject();
@@ -898,19 +907,19 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										
 										if(epi_name == NODE_ID)
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_IFACE_OUT,epi_value.getString().c_str());
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,NODE_ID,epi_value.getString().c_str());
 										
 											node_id = epi_value.getString();
 										}
 										else if(epi_name == SW_ID)
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_IFACE_OUT,epi_value.getString().c_str());
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,SW_ID,epi_value.getString().c_str());
 										
 											sw_id = epi_value.getString();	
 										}
 										else if(epi_name == IFACE)
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_IFACE_OUT,epi_value.getString().c_str());
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,IFACE,epi_value.getString().c_str());
 										
 											interface = epi_value.getString();
 										
@@ -919,8 +928,11 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 									}
 								}
+								//identify vlan end-points 
 								else if(ep_name == VLAN)
 								{
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",END_POINTS,VLAN);
+
 									Object ep_vlan = ep_value.getObject();
 							
 									for(Object::const_iterator epi = ep_vlan.begin(); epi != ep_vlan.end(); epi++)
@@ -930,7 +942,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										
 										if(epi_name == VLAN_ID)
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,VLAN,epi_value.getInt());
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,VLAN_ID,epi_value.getString().c_str());
 										
 											vlan_id[id] = epi_value.getString();
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), vlan_id[id].c_str());
@@ -938,14 +950,20 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 										else if(epi_name == IFACE)
 										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,IFACE,epi_value.getString().c_str());
+
 											//XXX: currently, this information is ignored
 										}
 										else if(epi_name == SW_ID)
 										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,SW_ID,epi_value.getString().c_str());
+
 											//XXX: currently, this information is ignored	
 										}
 										else if(epi_name == NODE_ID)
 										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,NODE_ID,epi_value.getString().c_str());
+
 											//XXX: currently, this information is ignored	
 										}
 									}									
@@ -959,7 +977,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								else
 									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());			
 							}
-							
+							//Add interface end-points
 							if(e_if)
 							{
 								highlevel::EndPointInterface ep_if(id, e_name, node_id, sw_id, interface);
@@ -968,6 +986,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								
 								e_if = false;
 							}
+							//Add interface-out end-points
 							else if(e_if_out)
 							{
 								highlevel::EndPointInterfaceOut ep_if_out(id, e_name, node_id, sw_id, interface);
@@ -978,6 +997,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							}
 						}
 					}
+					//Identify the big-switch
 					else if(fg_name == BIG_SWITCH)
 					{
 						big_switch = fg_value.getObject();
@@ -987,10 +1007,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",fg_name.c_str(),FORWARDING_GRAPH);
 						return false;
 					}
-					/*reads big switch object*/
 					if(foundEP)
 					{
-						//reads gre array
+						//Iterate on the gre-tunnel
 						if(foundGRE)
 						{
 							list<string> gre_param;
@@ -1004,7 +1023,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		
 								if(epi_name == LOCAL_IP)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,GRE,epi_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,LOCAL_IP,epi_value.getString().c_str());
 
 									local_ip = epi_value.getString();
 
@@ -1012,7 +1031,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}
 								else if(epi_name == REMOTE_IP)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,GRE,epi_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,REMOTE_IP,epi_value.getString().c_str());
 
 									remote_ip = epi_value.getString();
 
@@ -1020,7 +1039,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}
 								else if(epi_name == IFACE)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,GRE,epi_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,IFACE,epi_value.getString().c_str());
 										
 									interface = epi_value.getString();
 										
@@ -1029,13 +1048,13 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}
 								else if(epi_name == TTL)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,GRE,epi_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,TTL,epi_value.getString().c_str());
 								
 									ttl = epi_value.getString();
 								}
 								else if(epi_name == GRE_KEY)
 								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,GRE,epi_value.getString().c_str());
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,GRE_KEY,epi_value.getString().c_str());
 									
 									gre_key = epi_value.getString();
 									
@@ -1043,17 +1062,18 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}
 							}
 							
+							//Add gre-tunnel end-points
 							highlevel::EndPointGre ep_gre(id_gre, e_name, local_ip, remote_ip, interface, gre_key, ttl);
 										
 							graph.addEndPointGre(ep_gre);
 							
-							/*add this new gre endpoint*/
 							graph.addEndPoint(id_gre,gre_param);
 						}
 					
 						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",BIG_SWITCH);
 						foundEP = false;
 
+						/*Iterate on the big-switch*/
 						for(Object::const_iterator bs = big_switch.begin(); bs != big_switch.end(); bs++)
 						{
 							const string& bs_name  = bs->first;
@@ -1099,6 +1119,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 										else if(fr_name == F_DESCR)
 										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FLOW_RULES,F_DESCR,fr_value.getString().c_str());
+
 											//XXX: currently, this information is ignored	
 										}
 										else if(fr_name == PRIORITY)
@@ -1155,12 +1177,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															switch(i)
 															{
 																case 0:
-																	//VNF port
+																	//VNFss port type
 																	if(strcmp(pnt,VNF) == 0)
 																	{
 																		p_type = 0;
 																	}
-																	//ENDPOINT type
+																	//end-points port type
 																	else if (strcmp(pnt,ENDPOINT) == 0)
 																	{
 																		p_type = 1;
@@ -1183,7 +1205,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															pnt = strtok( NULL, delimiter );
 															i++;
 														}
-														//NF port 
+														//VNFs port type 
 														if(p_type == 0)
 														{
 															if(foundOne)
@@ -1221,7 +1243,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															ports_found.insert(port);
 															nfs_ports_found[name] = ports_found;
 														}
-														//ENDPOINT type
+														//end-points port type
 														else if(p_type == 1) 
 														{
 															if(foundOne)
@@ -1235,7 +1257,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 						
 															char *s_a_value = new char[BUFFER_SIZE];
 															strcpy(s_a_value, (char *)a_value.getString().c_str());
-															string eP = MatchParser::epPort(a_value.getString());
+															string eP = MatchParser::epName(a_value.getString());
 															if(eP != ""){
 																map<string,string>::iterator it = iface_id.find(eP);
 																map<string,string>::iterator it1 = iface_out_id.find(eP);
@@ -1252,7 +1274,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															}
 															if(!iface_found)
 															{
-																unsigned int endPoint = MatchParser::graphEndPoint(string(s_a_value));
+																unsigned int endPoint = MatchParser::epPort(string(s_a_value));
 																if(endPoint == 0)
 																{
 																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
@@ -1284,10 +1306,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 													}
 													else if(a_name == SET_VLAN_ID)
 													{
+														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_VLAN_ID,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == SET_VLAN_PRIORITY)
 													{
+														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_VLAN_PRIORITY,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == VLAN_PUSH)
@@ -1343,42 +1369,82 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 													}//end if(a_name == VLAN_POP)
 													else if(a_name == SET_ETH_SRC_ADDR)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_ETH_SRC_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_ETH_SRC_ADDR,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == SET_ETH_DST_ADDR)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_ETH_DST_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_ETH_DST_ADDR,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == SET_IP_SRC_ADDR)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_SRC_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_SRC_ADDR,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == SET_IP_DST_ADDR)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_DST_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_DST_ADDR,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == SET_IP_TOS)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_TOS);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_TOS,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == SET_L4_SRC_PORT)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_L4_SRC_PORT);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_L4_SRC_PORT,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == SET_L4_DST_PORT)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_L4_DST_PORT);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_L4_DST_PORT,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == OUT_TO_QUEUE)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,OUT_TO_QUEUE);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,OUT_TO_QUEUE,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == DROP)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,DROP);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,DROP,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else if(a_name == OUTPUT_TO_CTRL)
 													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,OUTPUT_TO_CTRL);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,OUTPUT_TO_CTRL,a_value.getString().c_str());
+
 														//XXX: currently, this information is ignored	
 													}
 													else
@@ -1390,7 +1456,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	
 												if(!foundOne)
 												{
-													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Neither Key \"%s\", nor key \"%s\" found in \"%s\"",PORT_IN,VNF_ID,ACTIONS);
+													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Neither Key \"%s\", nor key \"%s\" found in \"%s\"",PORT_IN,_ID,ACTIONS);
 													return false;
 												}
 									

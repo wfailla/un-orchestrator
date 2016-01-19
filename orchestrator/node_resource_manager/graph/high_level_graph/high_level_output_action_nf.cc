@@ -52,7 +52,7 @@ Object ActionNetworkFunction::toJSON()
 	Object action;
 	stringstream network_function;
 	network_function << nf << ":" << port;
-	action[OUTPUT] = /*network_function.str().c_str()*/nf_endpoint_port.c_str();
+	action[OUTPUT] = nf_endpoint_port.c_str();
 	
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		(*ga)->toJSON(action);

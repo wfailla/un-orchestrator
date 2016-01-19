@@ -21,7 +21,7 @@ private:
 	string nf;
 	
 	/**
-	*	@brief: name of the endpoint port (e.g., vnf:00000001:inout:0)
+	*	@brief: the name of the endpoint port (e.g., vnf:00000001:inout:0)
 	*/
 	string nf_endpoint_port;
 	

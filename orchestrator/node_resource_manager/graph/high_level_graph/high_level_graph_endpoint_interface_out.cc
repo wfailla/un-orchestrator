@@ -66,8 +66,8 @@ Object EndPointInterfaceOut::toJSON()
 {
 	Object EndPointInterfaceOut, iface;
 	
-	EndPointInterfaceOut[EP_ID] = id.c_str();
-	EndPointInterfaceOut[EP_NAME] = name.c_str();
+	EndPointInterfaceOut[_ID] = id.c_str();
+	EndPointInterfaceOut[_NAME] = name.c_str();
 	EndPointInterfaceOut[EP_TYPE] = EP_IFACE_OUT;
 	
 	iface[NODE_ID] = node_id.c_str();

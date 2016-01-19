@@ -13,75 +13,147 @@ WP3.**
 Deploy an NF-FG called ``myGraph'' (the NF-FG description must be based on the
 formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 
-    PUT /graph/myGraph HTTP/1.1
+    PUT /NF-FG/myGraph HTTP/1.1
     Content-Type : application/json
 
     {
-        "flow-graph":
-        {
-            "VNFs": [
-		    {
-				"id": "firewall"
-			}
-		    ],
-		    "flow-rules": [
-		    {
-			    "id": "00000001",
-    			"match":
-				{
-					"port" : "eth0"
-				},
-				"action":
-				{
-					"VNF_id": "firewall:1"
+		"forwarding-graph": {
+			"id": "00000001",
+			"name": "Forwarding graph",
+			"VNFs": [
+			  {
+				"vnf_template": "client.json",
+				"id": "00000001",
+				"name": "ubuntu",
+				"ports": [
+				  {
+					"id": "inout:0",
+					"name": "data-port"
+				  },
+				  {
+					"id": "inout:1",
+					"name": "data-port"
+				  }
+				]
+			  }
+			],
+			"end-points": [
+			  {
+				"id": "00000002",
+				"name": "ingress",
+				"type": "interface",
+				"interface": {
+				  "node-id": "10.0.0.1",
+				  "interface": "eth3"
 				}
+			  },
+			  {
+				"id": "00000003",
+				"name": "egress",
+				"type": "interface",
+				"interface": {
+				  "node-id": "10.0.0.1",
+				  "interface": "eth4"
+				}
+			  }
+			],
+			"big-switch": {
+			  "flow-rules": [
+				{
+				  "id": "000000001",
+				  "priority": 1,
+				  "match": {
+					"port_in": "endpoint:00000002"
+				  },
+				  "actions": [
+					{
+					  "output_to_port": "vnf:00000001:inout:0"
+					}
+				  ]
+				}
+			  ]
 			}
-		    ]
-    	}
-    }
+		}
+	}
 
 The same message used to create a new graph can be used to add "parts" (i.e.,
 network functions and flows) to an existing graph. For instance, it is possible
 to add a new flow to the NF-FG called ``myGraph'' as follows
 
-    PUT /graph/myGraph HTTP/1.1
+    PUT /NF-FG/myGraph HTTP/1.1
     Content-Type : application/json
 
     {
-        "flow-graph":
-        {
-            "VNFs": [
-		    {
-				"id": "firewall"
-			}
-		    ],
-		    "flow-rules": [
-			{
+		"forwarding-graph": {
+			"id": "00000001",
+			"name": "Forwarding graph",
+			"VNFs": [
+			  {
+				"vnf_template": "client.json",
+				"id": "00000001",
+				"name": "ubuntu",
+				"ports": [
+				  {
+					"id": "inout:0",
+					"name": "data-port"
+				  },
+				  {
+					"id": "inout:1",
+					"name": "data-port"
+				  }
+				]
+			  }
+			],
+			"end-points": [
+			  {
 				"id": "00000002",
-				"match":
-				{
-					"VNF_id" : "firewall:2"
-				},
-				"action":
-				{
-					"port": "eth1"
+				"name": "ingress",
+				"type": "interface",
+				"interface": {
+				  "node-id": "10.0.0.1",
+				  "interface": "eth3"
 				}
+			  },
+			  {
+				"id": "00000003",
+				"name": "egress",
+				"type": "interface",
+				"interface": {
+				  "node-id": "10.0.0.1",
+				  "interface": "eth4"
+				}
+			  }
+			],
+			"big-switch": {
+			  "flow-rules": [
+				{
+				  "id": "000000001",
+				  "priority": 1,
+				  "match": {
+					"port_in": "vnf:00000001:inout:0"
+				  },
+				  "actions": [
+					{
+					  "output_to_port": "endpoint:00000003"
+					}
+				  ]
+				}
+			  ]
 			}
-		    ]
-    	}
-    }
+		}
+	}
 
 Retrieve the description of the graph with name "myGraph":
 
-	GET /graph/myGraph HTTP/1.1
+	GET /NF-FG/myGraph HTTP/1.1
 
 Delete the graph with name "myGraph"
 
-	DELETE /graph/myGraph HTTP/1.1
+	DELETE /NF-FG/myGraph HTTP/1.1
 
 Delete the flow with ID "flow_id" from the graph with name "myGraph":
 
-	DELETE /graph/myGraph/flow_id HTTP/1.1
+	DELETE /NF-FG/myGraph/flow_id HTTP/1.1
 
 Retrieve information on the available physical interfaces:
 
@@ -95,6 +167,6 @@ also use the CURL command line tool, such as in the following example (where the
 NF-FG to be instantiated is stored in the file 'myGraph.json'):
 
 	curl -i -H "Content-Type: application/json" -d "@myGraph.json" \
-		-X PUT  http://un-orchestrator-address:port/graph/myGraph
+		-X PUT  http://un-orchestrator-address:port/NF-FG/myGraph
 		
 

@@ -77,32 +77,6 @@ private:
 	map<string, unsigned int > availableEndPoints;
 	
 	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the action of another graph (hence, the
-	*	"current" graph uses this end point in the match).
-	*	
-	*	Example: the graph defining the endpoint "ep" has the rule
-	*		match: nf:1 - action: ep
-	*	ep originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g., 2). This structure contains the entry: <ep, 1>
-	*/
-	map<string, unsigned int> endPointsDefinedInActions;
-	
-	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the match of another graph (hence, the
-	*	"current" graph uses this end point in the action).
-	*	This port ID is the remote part of the vlink connecting the LSI to the NF
-	*	defined in the action of the rule whose match defines the endpoint iself.
-	*
-	*   Example: the graph defining the endpoint "ep" has the rule
-	*		match: ep - action: nf:1
-	*	nf:1 originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g.. 2). This structure contains the entry: <ep, 1>
-	*/
-	map<string, unsigned int> endPointsDefinedInMatches;
-	
-	/**
 	*	The LSI in common with all the tenants, which
 	*	access to the physical interfaces
 	*/

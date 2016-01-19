@@ -29,11 +29,11 @@ to configure/test the un-orchestrator.
     simple graph that implements a simple passthrough function, i.e., traffic is 
     received from a first physical port and sent out from a second physical port, 
     after having been handled to the vswitch. This graph is written according to 
-    the original NF-FG definition (WP5-based);
+    the original NF-FG definition;
   * [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json): 
     graph that includes a VNF. Traffic is received from a first physical port, provided
     to a network function, and then sent out from a second physical port. This graph 
-    is written according to the original NF-FG definition (WP5-based).
+    is written according to the original NF-FG definition.
 
 The same graphs of [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json) 
 and [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json) are described 
