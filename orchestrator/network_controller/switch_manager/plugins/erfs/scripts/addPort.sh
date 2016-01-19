@@ -40,8 +40,15 @@ fi
 
 if [ "$LCORE" = "auto" ]
 then
-    MASK=`ps ax | grep dof | awk '{for (i=1; i<10; i++) if ($i=="-c") print $(i+1)}'` | awk -F x '{print $2}'
-    BINMASK=`echo "ibase=16; obase=2; ${MASK^^}" | bc`
+    MASK=`ps ax | grep dof | awk '{for (i=1; i<10; i++) if ($i=="-c") print $(i+1)}' | awk -F x '{print $2}'`
+    if [ "$MASK" = "" ]
+    then
+        CORES=`ps ax | grep dof | awk '{for (i=1; i<10; i++) if ($i=="-c") print $(i+1)}'`
+        echo "CORES = $CORES"
+    else
+        BINMASK=`echo "ibase=16; obase=2; ${MASK^^}" | bc`
+        echo "MASK = $MASK, BINMASK = $BINMASK"
+    fi
     LCORE=`expr $PORT_ID + 1` # FIXME
     echo "[$0] Selected core $LCORE automatically"
 fi
