@@ -58,26 +58,6 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
 ENDIF()
 
-##############################################################################################################
-
-## Rather complicated CMake code for selecting the type of virtual machines supported by the UN
-#SET(ENABLE_KVM "NONE" CACHE STRING "KVM-based VMs supported: NONE, KVM, KVM-IVSHMEM")
-#SET(ENABLE_KVM_VALUES "NONE" "KVM" "KVM-IVSHMEM") #Add here other implementations
-#SET_PROPERTY(CACHE ENABLE_KVM PROPERTY STRINGS ${ENABLE_KVM_VALUES})
-#LIST(FIND ENABLE_KVM_VALUES ${ENABLE_KVM} ENABLE_KVM_INDEX)
-#
-#IF(${ENABLE_KVM_INDEX} EQUAL -1)
-#	message(FATAL_ERROR "Option ${ENABLE_KVM} not supported, valid entries are ${ENABLE_KVM_VALUES}")
-#ENDIF()
-#IF(${ENABLE_KVM_INDEX} EQUAL 1)
-#	ADD_DEFINITIONS(-DENABLE_KVM)
-#ENDIF()
-#IF(${ENABLE_KVM_INDEX} EQUAL 2)
-#	ADD_DEFINITIONS(-DENABLE_KVM_IVSHMEM -DENABLE_KVM)
-#ENDIF()
-
-#IVANO: added to support both IVSHMEM and other ports at the same time.
-
 OPTION(
 	ENABLE_KVM
 	"Turn on to support NFs implemented in KVM-based virtual machines"
@@ -320,7 +300,7 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 
-IF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
+IF(ENABLE_KVM)
     SET(SOURCES3
     ${SOURCES2}
 	compute_controller/plugins/kvm-libvirt/libvirt.cc
@@ -332,7 +312,7 @@ ELSE()
      SET(SOURCES3
          ${SOURCES2}
     	)
-ENDIF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
+ENDIF(ENABLE_KVM)
 
 IF(ENABLE_DOCKER)
     SET(SOURCES4
@@ -359,19 +339,6 @@ ELSE()
     	${SOURCES4}
 	)
 ENDIF(VIRTUALIZER_NFFG)
-
-#IF(ENABLE_KVM-IVSHMEM OR ENABLE_KVM)
-#	SET(SOURCES6
-#	${SOURCES5}
-#	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
-#	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
-#	)
-#ELSE()
-#	SET(SOURCES6
-#	${SOURCES5}
-#	)
-#ENDIF(ENABLE_KVM-IVSHMEM OR ENABLE_KVM)
-
 
 IF(ENABLE_DPDK_PROCESSES)
     SET(SOURCES6
@@ -444,11 +411,11 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
 #Links specific for KVM
-IF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
+IF(ENABLE_KVM)
 	TARGET_LINK_LIBRARIES( node-orchestrator
 		libvirt.so
 	)
-ENDIF(ENABLE_KVM OR ENABLE_KVM-IVSHMEM)
+ENDIF(ENABLE_KVM)
 
 #Links specific for the virtualizer NF-FG model defined in WP3
 IF(VIRTUALIZER_NFFG)
@@ -497,8 +464,8 @@ IF(ENABLE_KVM-IVSHMEM AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
 	message(FATAL_ERROR "xDPd not supported with KVM-IVSHMEM")
 ENDIF(ENABLE_KVM-IVSHMEM AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
 
-IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) AND (NOT ENABLE_KVM-IVSHMEM) )
+IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
 	#No execution environment is selected
 	message(FATAL_ERROR "At least one execution environmnet must be enabled")
-ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) AND (NOT ENABLE_KVM-IVSHMEM) )
+ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
 

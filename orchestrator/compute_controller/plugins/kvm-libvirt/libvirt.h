@@ -21,8 +21,9 @@
 #include "../../nfs_manager.h"
 #include "../../startNF_in.h"
 
-	#include "ivshmem_cmdline_generator.h"
-#ifdef ENABLE_KVM_IVSHMEM
+#include "ivshmem_cmdline_generator.h"
+
+#ifdef DIRECT_KVM_IVSHMEM
 	#include "../../../utils/sockutils.h"
 #endif
 
