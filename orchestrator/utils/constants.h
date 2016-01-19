@@ -146,6 +146,7 @@
 #define VIRTUALIZED_ELEMENT		"virtualized"
 #define AS_ATTRIBUTE			"as"
 #define PORT_TYPE_ATTRIBUTE		"port-type"
+#define SAP_ATTRIBUTE			"sap"
 
 #define TYPE_ETHERNET			"ethernet"
 #define TYPE_WIFI				"wifi"

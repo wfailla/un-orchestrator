@@ -83,6 +83,7 @@
 										<xsd:complexType>
 											<xsd:attribute name="as" type="xsd:string" use="required"/>
 											<xsd:attribute ref="port-type" use="required"/>
+											<xsd:attribute name="sap" type="xsd:string"/>
 										</xsd:complexType>
 									</xsd:element> <!-- End <virtualized> -->
 																		

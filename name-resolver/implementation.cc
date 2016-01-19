@@ -77,7 +77,7 @@ KVMImplementation::KVMImplementation(nf_t type, xmlNodePtr xmlDetails) : Impleme
 	for(xmlNodePtr elem = xmlDetails->xmlChildrenNode; elem != NULL; elem = elem->next) {
 
 		if ((elem->type == XML_ELEMENT_NODE) && (!xmlStrcmp(elem->name, (const xmlChar*)"port"))) {
-			xmlChar* attr_id = xmlGetProp(elem, (const xmlChar*)"id");
+			xmlChar* attr_id = xmlGetProp(elem, (const xmlChar*)"port-id");
 			if (attr_id == NULL) {
 				throw string("Missing port id attribute for KVM NF implementation");
 			}

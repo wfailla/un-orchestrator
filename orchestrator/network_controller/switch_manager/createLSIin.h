@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../../compute_controller/nf_type.h"
+#include "../../compute_controller/description.h"
 
 #include <string>
 #include <list>
@@ -60,7 +61,7 @@ private:
 	/**
 	*	@brief: map of network functions, list of network function ports
 	*/
-	map<string,list<string> > netFunctionsPortsName;
+	map<string,list<struct nf_port_info> > netFunctionsPortsInfo;
 	
 	/**
 	*	@brief: list of lsis with which the new one must be connected
@@ -113,10 +114,10 @@ public:
 	{
 		return endpointsPortsName;
 	}
-
-	list<string> getNetworkFunctionsPortNames(string nf)
+	
+	list<struct nf_port_info> getNetworkFunctionsPortsInfo(string nf)
 	{
-		return netFunctionsPortsName[nf];
+		return netFunctionsPortsInfo[nf];
 	}
 	
 	list<uint64_t> getVirtualLinksRemoteLSI()

@@ -155,6 +155,13 @@ public:
 	nf_t getNFType(string name);
 	
 	/**
+	 *	@brief: Returns the description of the selected NF implementation.
+	 *
+	 *	@param: name	Name of the network function
+	 */
+	const Description* getNFSelectedImplementation(string name);
+
+	/**
 	*	@brief: Set the identifier of the identifier of the LSI attached to the NFs
 	*
 	*	@param:	lsiID	Identifier of an LSI
@@ -167,9 +174,9 @@ public:
 	*
 	*
 	*	@param:	nf_name					Name of the network function to be started
-	*	@param: namesOfPortsOnTheSwitch	List of names of ports on the vSwitch that are related to the network function to be started
+	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started
 	*/
-	bool startNF(string nf_name, list<string> namesOfPortsOnTheSwitch);
+	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch);
 	
 	/**
 	*	@brief: Stop all the running NFs

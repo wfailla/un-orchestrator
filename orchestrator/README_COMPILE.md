@@ -57,7 +57,7 @@ In order to install xDPd with DPDK support, you have to follow the steps below.
 	$ cd xdpd/
 
 	;Install all the libraries required by the README provided in this folder
-	$ bash autogen
+	$ bash autogen.sh
 	$ cd build
 	$ ../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"
 	$ make
@@ -190,21 +190,13 @@ Two flavors of virtual machines are supported:
 
   * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes within the virtual machines. In this case, the host backend for the virtual NICs is implemented through `vhost` in case OvS and xDPd as vSwitches, and through `vhost-user` when OvS-DPDK is used as vSwitch;
   * virtual machines that exchange packets with the vSwitch through shared memory (`ivshmem`). This configuration is oriented to performance, and only supports DPDK-based processes within the virtual machine.
-	
-#### Standard QEMU/KVM (without `ivshmem` or `vhost-user` support)
 
-To install the standard QEMU/KVM/Libvirt execution environment, execute the
-following command:
+#### Libvirt
 
-	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system
+In order to start/stop virtual machines, a recent version of Libvirt must be used. 
+You can build it from sources using the following commands:
 
-##### Libvirt with support to `vhost-user` ports
-
-If you intend to use (DPDK) `vhost-user` ports, a recent version of Libvirt must
-be used that supports configuration of this type of ports. You can build it from
-sources using the following commands:
-
-	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev
+	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev python-dev xsltproc autopoint
 	$ git clone git://libvirt.org/libvirt.git
 	; select the commit that is known to work and have the necessary support
 	$ cd libvirt
@@ -213,19 +205,9 @@ sources using the following commands:
 	$ make
 	$ sudo make install
 
-In case you already had libvirt installed on the system, this will install an
-alternative version which must then be used instead of the default one:
+#### QEMU/KVM
 
-	; Stop any running libvirtd instance and run the alternative version just installed:
-	$ sudo service libvirt-bin stop
-	$ sudo /usr/local/sbin/libvirtd --daemon
-
-Similarly, if you use `virsh`, you would have to use the version from `/usr/local/bin`.
-
-#### QEMU for `ivshmem` and `vhost-user` support
-
-To compile and install the QEMU/KVM execution environment with the support to `ivshmem`,
-or the support for the way the un-orchestrator sets up `vhost-user`, you need a recent qemu
+To compile and install the QEMU/KVM execution environment, you need a recent QEMU 
 version.
 
 Additionally, for `ivshmem` support, a patch (`[un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch`) 
@@ -234,9 +216,11 @@ version included in OVDK (Intel DPDK vSwitch).
 
 Here there are the required steps:
 
+	$ sudo apt-get install libperl-dev libgtk2.0-dev bridge-utils
 	$ git clone https://github.com/qemu/qemu.git
 	$ cd qemu
 	$ git checkout v2.2.1
+	; The next step is only required to support `ivshmem`
 	$ git apply [un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch
 	$ ./configure --target-list=x86_64-softmmu
 	$ make
