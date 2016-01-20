@@ -74,11 +74,6 @@
 		<dpdk uri="../NFs/dpdk/dpi/build/dpi" cores="1" location="local"/>
 	</network-function>
 	
-	<network-function name="of_bridge" num-ports="6"  summary="OpenFlow bridge that receives rules from a controller that is in the network">
-		<!-- Only a native implementation is available for this network function -->
-		<native uri="../NFs/native/openflow-bridge/openflow_bridge.tar.gz" dependencies="openvswitch" location="local"/>
-	</network-function>
-	
 	<network-function name="vpn_sec" num-ports="2"  summary="Creates a tunnel IPsec">
 		<!-- Only a native implementation is available for this network function -->
 		<native uri="../NFs/native/vpn_security/vpn_sec.tar.gz" dependencies="ipsec-tools iptables" location="local"/>
