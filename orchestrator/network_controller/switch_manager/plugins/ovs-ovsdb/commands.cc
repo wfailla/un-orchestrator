@@ -27,6 +27,8 @@ map<string, list<uint64_t> > virtual_link_id; //switch name, list of virtual lin
 map<uint64_t, string> port_id; //port id, port name
 map<uint64_t, uint64_t> vl_id; //virtual link id, switch id
 map<uint64_t, uint64_t> vl_p; //virtual link local id, virtual link remote id
+map<string, string> dpdkr_from_uuid; //map used to translate from port_name to DPDK Ring name
+map<string, string> dpdkr_to_uuid; //map used to translate back from DPDK Ring name to port_id
 
 /**
  * Build name that is valid as UUID: no '-', no '_' ...
@@ -1309,7 +1311,6 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
 	}
 #endif
-    return port_name_on_switch;
 }
 
 void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
