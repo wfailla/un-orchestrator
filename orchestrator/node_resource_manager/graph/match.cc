@@ -5,7 +5,7 @@ namespace graph
 
 Match::Match() :
 	eth_src(NULL), eth_dst(NULL), isEthType(false),
-	isVlanID(false),isNoVlan(false),isAnyVlan(false),
+	isVlanID(false),isNoVlan(false),isAnyVlan(false),isEndpointVlanID(false),
 	ipv4_src(NULL),
 	ipv4_dst(NULL),
 	isTcpSrc(false), isTcpDst(false),
@@ -150,7 +150,7 @@ void Match::setAllCommonFields(Match match)
 	/*
 	*	VLAN
 	*/
-	if(match.isVlanID)
+	if(match.isVlanID || match.isEndpointVlanID)
 		setVlanID(match.vlanID);
 	else if(match.isAnyVlan)
 		setVlanIDAnyVlan();
@@ -230,6 +230,12 @@ void Match::setVlanIDAnyVlan()
 	isAnyVlan = true;
 }
 
+void Match::setEndpointVlanID(uint16_t vlanID)
+{
+	this->vlanID = vlanID;
+	isEndpointVlanID = true;
+}
+
 void Match::setIpv4Src(char *ipv4_src)
 {
 	this->ipv4_src = (char*)malloc(sizeof(char)*(strlen(ipv4_src)+1));
@@ -295,7 +301,7 @@ void Match::print()
 		/*
 		*	VLAN
 		*/
-		if(isVlanID)
+		if(isVlanID || isEndpointVlanID)
 			cout << "\t\t\tVLAN ID: " << hex << "0x" << vlanID << endl;
 		else if(isAnyVlan)
 			cout << "\t\t\tVLAN ID: ANY" << endl;
