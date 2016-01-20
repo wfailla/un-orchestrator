@@ -20,9 +20,17 @@ then
     exit 0
 fi
 
-echo -ne "sudo docker run -d --name $1_$2 "   > $tmp_file
+echo -ne "sudo docker run -d --name $1_$2 -e NAME=$2 "   > $tmp_file
 
-echo --net=\"none\"  --privileged=true  $3 >> $tmp_file
+#check if NF name contains ctrl, then it needs Cf-Or interface (leave out --net=none option to create interface to docker0 on localhost)
+#TODO: cf-or connection should be defined in nffg
+if [[ $2 == *"ovs"* ]] || [[ $2 == *"ctrl"* ]]
+then
+	echo  --privileged=true  $3 >> $tmp_file
+else
+	echo --net=\"none\"  --privileged=true  $3 >> $tmp_file
+fi
+
 
 echo [`date`]"[$0] Executing command: '"`cat $tmp_file`"'"
 
@@ -57,15 +65,33 @@ sudo ln -s /proc/$PID/ns/net /var/run/netns/$PID
 	
 current=5
 
+# rename cf_or interface
+#if [[ $2 == *"ctrl"* ]]
+#then
+#	ip netns exec $PID ip link set eth0 down
+#	ip netns exec $PID ip link set dev eth0 name cf_or
+#	ip netns exec $PID ip link set cf_or up
+#fi
+
 for (( c=0; c<$4; c++ ))
 do	
 	ip link set ${!current} netns $PID
 	
-	echo "[$0] Inserting port ${!current} inside a container. It will have name eth$c"
+	# elastic router use case specific hack:
+	# if deploying ovs type of Dockers, name the interfaces differently so ctrl_app can detect them 
+	# if deploying ctrl app, eth0 already exists from cfor interface
+	# this hack could be solved if interface names are directly imported from the nffg (together with ip addresses)
+	if [[ $2 == *"ovs"* ]] || [[ $2 == *"ctrl"* ]]
+	then
+		eth_name="${2}_eth$c"
+	else
+		eth_name="eth$c"
+	fi
+	echo "[$0] Inserting port ${!current} inside a container. It will have name $eth_name"
 	
-	ip netns exec $PID ip link set dev ${!current} name eth$c
+	ip netns exec $PID ip link set dev ${!current} name $eth_name
 				
- 	ip netns exec $PID ip link set eth$c up
+ 	ip netns exec $PID ip link set $eth_name up
 	
 	current=`expr $current + 1`
 done
