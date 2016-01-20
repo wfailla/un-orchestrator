@@ -281,6 +281,12 @@ SET(SOURCES
 	node_resource_manager/rest_server/match_parser.h
 	node_resource_manager/rest_server/match_parser.cc
 
+	node_resource_manager/database_manager/SQLite/SQLiteManager.h
+	node_resource_manager/database_manager/SQLite/SQLiteManager.cc
+	node_resource_manager/database_manager/SQLite/SQLiteManager_constants.h
+	node_resource_manager/database_manager/SQLite/INIReader.cpp
+	node_resource_manager/database_manager/SQLite/ini.c
+
 	utils/logger.h
 	utils/logger.c
 	utils/constants.h
@@ -394,7 +400,6 @@ ELSE()
     	)
 ENDIF(ENABLE_DPDK_PROCESSES)
 
-
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
@@ -441,6 +446,8 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	libmicrohttpd.so
 	libboost_system.so
 	libxml2.so
+	libsqlite3.so
+	libcrypto.so
 	-lrt
 )
 

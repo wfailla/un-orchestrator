@@ -5,9 +5,21 @@ GraphManager *RestServer::gm = NULL;
 	bool RestServer::firstTime = true;
 #endif
 
-bool RestServer::init(char *nffg_filename,int core_mask, char *ports_file_name)
-{	
+/*
+*
+* SQLiteManager pointer
+*
+*/
+SQLiteManager *dbmanager = NULL;
+bool client_auth = false;
 
+bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
+{	
+	char *nffg_file_name = new char[BUFFER_SIZE];
+	if(nffg_filename != NULL && strcmp(nffg_filename, "") != 0)
+		strcpy(nffg_file_name, nffg_filename);
+	else
+		nffg_file_name = NULL;
 #ifdef UNIFY_NFFG
 	if(nffg_filename != NULL)
 	{
@@ -27,17 +39,22 @@ bool RestServer::init(char *nffg_filename,int core_mask, char *ports_file_name)
 	}
 
 	//Handle the file containing the first graph to be deployed
-	if(nffg_filename != NULL)
+	if(nffg_file_name != NULL)
 	{	
 		sleep(2); //XXX This give time to the controller to be initialized
-		
-		if(!readGraphFromFile(nffg_filename))
+
+		if(!readGraphFromFile(nffg_file_name))
 		{
 			delete gm;
 			return false;
 		}
 	}
-			
+	
+	client_auth = cli_auth;
+	
+	if(client_auth)
+		dbmanager = dbm;	
+	
 	return true;
 }
 
@@ -273,7 +290,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		if (NULL == con_info)
 			return MHD_NO;
 		
-		if ((0 == strcmp (method, PUT)) || (0 == strcmp (method, DELETE)) )
+		if ((0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)) )
 		{
 			con_info->message = (char*)malloc(REQ_SIZE * sizeof(char));
 			con_info->length = 0;
@@ -355,7 +372,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 #else
 	if (0 == strcmp (method, GET))
 		return doGet(connection,url);
-	else if( (0 == strcmp (method, PUT)) || (0 == strcmp (method, DELETE)) )
+	else if( (0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)))
 	{	
 		struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
 		assert(con_info != NULL);
@@ -369,7 +386,12 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		else if (NULL != con_info->message)
 		{
 			con_info->message[con_info->length] = '\0';
-			return (0 == strcmp (method, PUT))? doPut(connection,url,con_cls) : doDelete(connection,url,con_cls);
+			if(0 == strcmp (method, PUT))
+				return doPut(connection,url,con_cls);
+			else if(0 == strcmp (method, POST))
+				return doPost(connection,url,con_cls,client_auth);
+			else
+				return doDelete(connection,url,con_cls);
 		}
 	}
 	else
@@ -387,7 +409,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		else
 		{
 			con_info->message[con_info->length] = '\0';
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method \"%s\" not implemented",method);
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "++++Method \"%s\" not implemented",method);
 			struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 			int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
 			MHD_destroy_response (response);
@@ -405,6 +427,241 @@ int RestServer::print_out_key (void *cls, enum MHD_ValueKind kind, const char *k
 {
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "%s: %s", key, value);
 	return MHD_YES;
+}
+
+int RestServer::doPost(struct MHD_Connection *connection, const char *url, void **con_cls, bool client_auth)
+{
+	struct MHD_Response *response;
+
+	struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
+	assert(con_info != NULL);
+
+	//Check the URL
+	char delimiter[] = "/";
+ 	char * pnt;
+
+	int ret = 0, rc = 0;
+	unsigned char hash_token[HASH_SIZE], temp[BUFFER_SIZE];
+	
+	char hash_pwd[BUFFER_SIZE], nonce[BUFFER_SIZE], timestamp[BUFFER_SIZE];
+
+	char *user, *pass;
+	
+	char tmp[BUFFER_SIZE], user_tmp[BUFFER_SIZE];
+	strcpy(tmp,url);
+	pnt=strtok(tmp, delimiter);
+	int i = 0;
+	
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 0:
+				if(strcmp(pnt,BASE_URL_LOGIN) != 0)
+				{
+put_malformed_url:
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource \"%s\" does not exist", url);
+					response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+					int ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, response);
+					MHD_destroy_response (response);
+					return ret;
+				}
+				else
+				{
+					if(!client_auth)
+					{
+						con_info->message[con_info->length] = '\0';
+						logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource \"%s\" only exists if client authentication is required", url);
+						struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+						int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
+						MHD_destroy_response (response);
+						return ret;
+					}
+				}
+				break;
+		}
+		
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+	if(i != 1)
+	{
+		//the URL is malformed
+		goto put_malformed_url;
+	}
+	
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User login");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
+	
+	if(MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Host") == NULL)
+	{
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Host\" header not present in the request");
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
+	
+	if(!parsePostBody(*con_info,&user,&pass))
+	{
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Malformed content");
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
+	
+	try
+	{
+		if(user != NULL && pass != NULL){
+		
+			SHA256((const unsigned char*)pass, sizeof(pass) - 1, hash_token);
+		    
+		    	strcpy(tmp, "");
+		    	strcpy(hash_pwd, "");
+		    
+		    	for (int i = 0; i < HASH_SIZE; i++) {
+        			sprintf(tmp, "%x", hash_token[i]);
+        			strcat(hash_pwd, tmp);
+    			}
+
+			strcpy(user_tmp, user);
+
+			dbmanager->selectUsrPwd(user, (char *)hash_pwd);
+			
+			if(strcmp(dbmanager->getUser(), user_tmp) == 0 && strcmp(dbmanager->getPwd(), (char *)hash_pwd) == 0){
+				if(strcmp(dbmanager->getToken(), "") == 0){
+
+					rc = RAND_bytes(temp, sizeof(temp));
+					if(rc != 1)
+					{
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while generating nonce!");
+						response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+						ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+						MHD_destroy_response (response);
+						return ret;
+					}
+					
+					strcpy(tmp, "");
+					strcpy(hash_pwd, "");
+					
+					for (int i = 0; i < HASH_SIZE; i++) {
+        					sprintf(tmp, "%x", temp[i]);
+        					strcat(nonce, tmp);
+    					}
+					
+					/*
+					*
+					* Calculating a timestamp
+					*
+					*/
+					time_t now = time(0);
+
+					tm *ltm = localtime(&now);
+
+					strcpy(timestamp, "");
+					sprintf(timestamp, "%d/%d/%d %d:%d", ltm->tm_mday, 1 + ltm->tm_mon, 1900 + ltm->tm_year, ltm->tm_hour, 1 + ltm->tm_min);
+
+					dbmanager->updateTokenAndTimestamp(user_tmp, (char *)nonce, (char *)timestamp);
+				}
+				
+				response = MHD_create_response_from_buffer (strlen((char *)nonce),(void*) nonce, MHD_RESPMEM_PERSISTENT);
+				MHD_add_response_header (response, "Content-Type",TOKEN_TYPE);
+				MHD_add_response_header (response, "Cache-Control",NO_CACHE);
+				ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+				MHD_destroy_response (response);
+				
+				return ret;
+			} 
+			
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Client unauthorized");
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+			ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
+			MHD_destroy_response (response);
+			
+			return ret;
+		}else{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Client unauthorized");
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+			ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
+			MHD_destroy_response (response);
+			return ret;
+		}
+	}catch (...)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during user login!");
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
+	
+	//TODO: put the proper content in the answer
+	response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+	stringstream absolute_url;
+	absolute_url << REST_URL << ":" << REST_PORT << url;
+	MHD_add_response_header (response, "Location", absolute_url.str().c_str());
+	ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+
+	MHD_destroy_response (response);
+	return ret;	
+}
+
+bool RestServer::parsePostBody(struct connection_info_struct &con_info,char **user, char **pwd)
+{
+	Value value;
+	read(con_info.message, value);
+	return parseLoginForm(value, user, pwd);
+}
+
+bool RestServer::parseLoginForm(Value value, char **user, char **pwd)
+{
+	try
+	{
+		Object obj = value.getObject();
+		
+	  	bool foundUser = false, foundPwd = false;
+		
+		//Identify the flow rules
+		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
+		{
+	 	    const string& name  = i->first;
+		    const Value&  value = i->second;
+		
+		    if(name == USER)
+		    {
+		  		foundUser = true;
+		  		(*user) = (char *)value.getString().c_str();
+		    }
+		    else if(name == PASS)
+		    {
+				foundPwd = true;
+		    		(*pwd) = (char *)value.getString().c_str();
+		    }
+		    else
+		    {
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",name.c_str());
+				return false;
+		    }
+		}
+		if(!foundUser)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found",USER);
+			return false;
+		}
+		else if(!foundPwd)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found",PASS);
+			return false;
+		}
+	}catch(exception& e)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: ",e.what());
+		return false;
+	}
+	
+	return true;
 }
 
 int RestServer::doPut(struct MHD_Connection *connection, const char *url, void **con_cls)
@@ -452,10 +709,6 @@ put_malformed_url:
 		goto put_malformed_url;
 	}
 	
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
-	
 	if(MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Host") == NULL)
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Host\" header not present in the request");
@@ -492,6 +745,23 @@ put_malformed_url:
 		graph->print();
 	try
 	{
+		//if client authentication is required
+		if(dbmanager != NULL){
+			const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
+	
+			if(!checkAuthentication(connection, token, dbmanager))
+			{
+				//User unauthenticated!
+				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+				MHD_destroy_response (response);
+				return ret;
+			}
+		}
+
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
 
 		if(newGraph)
 		{
@@ -1561,7 +1831,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 	struct MHD_Response *response;
 	int ret;
 	
-	bool request = false; //false->graph - true->interfaces
+	bool request = 0; //false->graph - true->interfaces
 	
 	//Check the URL
 	char delimiter[] = "/";
@@ -1598,7 +1868,7 @@ get_malformed_url:
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	if( (!request && i != 2) || (request && i != 1) )
+	if( (!request && i != 2) || (request == 1 && i != 1) )
 	{
 		//the URL is malformed
 		goto get_malformed_url;
@@ -1613,12 +1883,27 @@ get_malformed_url:
 		return ret;
 	}
 	
+	//if client authentication is required
+	if(dbmanager != NULL)
+	{
+		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
+	
+		if(!checkAuthentication(connection, token, dbmanager))
+		{
+			//User unauthenticated!
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+			int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+			MHD_destroy_response (response);
+			return ret;
+		}
+	}
+
 	if(!request)
 		//request for a graph description
 		return doGetGraph(connection,graphID);
 	else
 		//request for interfaces description
-		return doGetInterfaces(connection);
+		return doGetInterfaces(connection);	
 }
 
 int RestServer::doGetGraph(struct MHD_Connection *connection,char *graphID)
@@ -1760,6 +2045,20 @@ delete_malformed_url:
 		return ret;
 	}
 	
+	//if client authentication is required
+	if(dbmanager != NULL){
+		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
+	
+		if(!checkAuthentication(connection, token, dbmanager))
+		{
+			//User unauthenticated!
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+			int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+			MHD_destroy_response (response);
+			return ret;
+		}
+	}
+
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
 
 	if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
@@ -1801,7 +2100,7 @@ delete_malformed_url:
 			else
 				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
 		}
-		
+	
 		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);		
 		ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
 		MHD_destroy_response (response);
@@ -1813,6 +2112,31 @@ delete_malformed_url:
 		ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 		MHD_destroy_response (response);
 		return ret;
-	}	
+	}		
+}
+
+bool RestServer::checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbmanager)
+{
+
+	if(token == NULL)
+	{
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+		return false;
+	} 
+	else
+	{
+		dbmanager->selectToken((char *)token);
+		if(strcmp(dbmanager->getToken(), token) == 0){
+			//User authenticated!
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
+			return true;
+		}
+		else
+		{
+			//User unauthenticated!
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
+			return false;
+		}
+	}
 }
 

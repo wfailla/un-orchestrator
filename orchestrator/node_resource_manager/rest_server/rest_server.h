@@ -41,12 +41,17 @@
 #include <inttypes.h>
 #include <sstream>
 
+#include <openssl/sha.h>
+#include <openssl/rand.h>
+
 #include "../graph_manager/graph_manager.h"
 #include "../../utils/constants.h"
 #include "../graph/high_level_graph/high_level_output_action_port.h"
 #include "../graph/high_level_graph/high_level_output_action_endpoint.h"
 #include "../graph/vlan_action.h"
 #include "match_parser.h"
+
+#include "../database_manager/SQLite/SQLiteManager.h"
 
 #include <json_spirit/json_spirit.h>
 #include <json_spirit/value.h>
@@ -79,7 +84,11 @@ private:
 	static int doGet(struct MHD_Connection *connection,const char *url);
 	static int doGetGraph(struct MHD_Connection *connection,char *graphID);
 	static int doGetInterfaces(struct MHD_Connection *connection);
-	
+
+	static int doPost(struct MHD_Connection *connection, const char *url, void **con_cls, bool client_auth);
+	static bool parsePostBody(struct connection_info_struct &con_info,char **user, char **pwd);
+	static bool parseLoginForm(Value value, char **user, char **pwd);
+
 	static int doPut(struct MHD_Connection *connection, const char *url, void **con_cls);
 	static bool parsePutBody(struct connection_info_struct &con_info,highlevel::Graph &graph, bool newGraph);
 	
@@ -94,9 +103,11 @@ private:
 #ifdef UNIFY_NFFG
 	static bool toBeRemovedFromFile(char *filename);
 #endif
+
+	static bool checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbm);
 	
 public:
-	static bool init(char *nffg_filename,int core_mask, char *ports_file_name);
+	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name);
 	
 	static void terminate();
 

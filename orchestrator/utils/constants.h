@@ -12,6 +12,7 @@
 #define REST_PORT 				8080
 #define BASE_URL_GRAPH			"NF-FG"
 #define BASE_URL_IFACES			"interfaces"
+#define BASE_URL_LOGIN			"login"
 #define REST_URL 				"http://localhost"
 #define REQ_SIZE 				2*1024*1024
 
@@ -24,6 +25,8 @@
 #ifdef UNIFY_NFFG
 	#define POST				"POST"
 #endif
+
+#define POST				"POST"
 
 /*
 *	HTTP headers
@@ -212,5 +215,13 @@ extern ofp_version_t OFP_VERSION;
 #ifdef LOG_ON_FILE
 	#define LOG_FILE			"node-orchestrator.log"
 #endif
+
+#define ADMIN				"admin"
+#define USER				"username"
+#define PASS				"password"
+#define HASH_SIZE			20
+#define TOKEN_TYPE			"application/token"
+#define DB_NAME				"users.db"
+#define DEFAULT_FILE			"config/default-config.ini"
 
 #endif //CONSTANTS_H_
