@@ -104,7 +104,7 @@ ENDIF(ENABLE_DOCKER)
 OPTION(
 	ENABLE_NATIVE
 	"Turn on the support of NFs implemented in native form"
-	ON
+	OFF
 )
 IF(ENABLE_NATIVE)
 	ADD_DEFINITIONS(-DENABLE_NATIVE)
