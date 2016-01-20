@@ -13,6 +13,9 @@ Implementation* Implementation::create(const char* type, xmlNodePtr xmlDetails)
 	else if(strcmp(type, "kvm") == 0) {
 		return new KVMImplementation(KVM, xmlDetails);
 	}
+	else if(strcmp(type, "native") == 0) {
+			return new NativeImplementation(NATIVE, xmlDetails);
+	}
 	return NULL;
 }
 
@@ -112,4 +115,32 @@ void KVMImplementation::toJSON(Object& impl)
 		ports_ary.push_back(port);
 	}
 	impl["ports"] = ports_ary;
+}
+
+NativeImplementation::NativeImplementation(nf_t type, xmlNodePtr xmlDetails) : Implementation(type, xmlDetails)
+{
+	xmlChar* attr_dependencies = xmlGetProp(xmlDetails, (const xmlChar*)DEPENDENCIES_ATTRIBUTE);
+	xmlChar* attr_location = xmlGetProp(xmlDetails, (const xmlChar*)LOCATION_ATTRIBUTE);
+
+	//the attributes "dependencies" and "location" must be present
+	if (attr_dependencies == NULL)
+		throw string("Native implementation missing 'dependencies' attribute");
+	if (attr_location == NULL)
+		throw string("Native implementation missing 'location' attribute");
+
+	dependencies = (char *)attr_dependencies;
+	location = (char *)attr_location;
+
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\t\tdependencies: %s", dependencies.c_str());
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\t\tlocation: %s", location.c_str());
+}
+
+void NativeImplementation::toJSON(Object& impl)
+{
+	Implementation::toJSON(impl);
+
+	impl["type"] = "native";
+
+	impl["dependencies"] = dependencies;
+	impl["location"] = location;
 }

@@ -6,6 +6,8 @@
 #include "startNF_in.h"
 #include "stopNF_in.h"
 #include "description.h"
+//#include "plugins/dpdk/dpdk_description.h"
+#include <typeinfo>
 
 /**
 * @file nfs_manager.h
@@ -27,12 +29,12 @@ protected:
 
 public:
 
-	virtual ~NFsManager() {}
+	virtual ~NFsManager();
 
 	/**
 	*	@brief: check whether the execution environment is supported or not
 	*/
-	virtual bool isSupported() = 0;
+	virtual bool isSupported(Description& description) = 0;
 
 	/**
 	*	@brief:	Retrieve and start the network function
@@ -67,8 +69,9 @@ public:
 	*	@brief: returns the number of cores to be associated with the network function
 	*			handled by the manager. "" means that no core has to be bound to the
 	*			network function.
+	*			If an execution environment needs this information this method must be overridden
 	*/
-	string getCores();
+	virtual string getCores();
 };
 
 class NFsManagerException: public exception

@@ -54,7 +54,7 @@ public:
 #else
 	NF(string name);
 #endif
-	
+
 	void addDescription(Description *description);
 	list<Description*> getAvailableDescriptions();
 	

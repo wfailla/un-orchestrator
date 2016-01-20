@@ -78,7 +78,7 @@ bool RestServer::init(string fileName)
 			{
 				xmlChar* attr_name = xmlGetProp(cur_root_child, (const xmlChar*)NAME_ATTRIBUTE);
 				xmlChar* attr_nports = xmlGetProp(cur_root_child, (const xmlChar*)NUM_PORTS_ATTRIBUTE);
-				xmlChar* attr_description = xmlGetProp(cur_root_child, (const xmlChar*)DESCRIPTION_ATTRIBUTE);
+				xmlChar* attr_summary = xmlGetProp(cur_root_child, (const xmlChar*)SUMMARY_ATTRIBUTE);
 
 				int nports = 0;
 
@@ -88,25 +88,17 @@ bool RestServer::init(string fileName)
 
 				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Network function: %s",attr_name);
 				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Number of ports: %d",nports);
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Description: %s",attr_description);
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Summary: %s",attr_summary);
 
 				string name((const char*)attr_name);
-				string description((const char*)attr_description);
-				NF *nf = new NF(name,nports,description);
-
+				string summary((const char*)attr_summary);
+				NF *nf = new NF(name,nports,summary);
+	
 				xmlNodePtr nf_elem = cur_root_child;
-				for(xmlNodePtr cur_impl = nf_elem->xmlChildrenNode; cur_impl != NULL; cur_impl = cur_impl->next)
+				for(xmlNodePtr cur_descr = nf_elem->xmlChildrenNode; cur_descr != NULL; cur_descr = cur_descr->next)
 				{
-					if ((cur_impl->type == XML_ELEMENT_NODE) && (!xmlStrcmp(cur_impl->name, (const xmlChar*)IMPLEMENTATION_ELEMENT)))
-					{
-						xmlChar* attr_type = xmlGetProp(cur_impl, (const xmlChar*)TYPE_ATTRIBUTE);
-						if (attr_type == NULL) {
-							throw string(string("Missing NF implementation type for NF ") +  (char*)attr_name);
-						}
-
-						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\ttype:%s", attr_type);
-
-						nf->addImplementation(Implementation::create((char*)attr_type, cur_impl));
+					if ((cur_descr->type == XML_ELEMENT_NODE)){
+						nf->addImplementation(Implementation::create((char*)cur_descr->name, cur_descr));
 					}
 				}
 				nfs.insert(nf);

@@ -15,11 +15,13 @@
 					<id>1</id>
 					<name>OVS-north external port</name>
 					<port_type>port-sap</port_type>
+					<sap>sap1</sap>
 				</port>
 				<port>
 					<id>2</id>
 					<name>OVS-south external port</name>
 					<port_type>port-sap</port_type>
+					<sap>sap2</sap>
 				</port>
 			</ports>
 			<resources>

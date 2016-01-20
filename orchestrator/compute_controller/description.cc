@@ -5,14 +5,16 @@ bool operator==(const nf_port_info& lhs, const nf_port_info& rhs)
     return (lhs.port_name.compare(rhs.port_name) == 0) && (lhs.port_type == rhs.port_type);
 }
 
-Description::Description(nf_t type, string uri, string cores, string location, std::map<unsigned int, PortType>& port_types) :
-	type(type), uri(uri), cores(cores), location(location), port_types(port_types)
+Description::Description(nf_t type, string uri, std::map<unsigned int, PortType>& port_types) :
+	type(type), uri(uri), port_types(port_types)
 {
+	supported = false;
 }
 
-Description::Description(string type, string uri, string cores, string location, std::map<unsigned int, PortType>& port_types) :
-	 uri(uri), cores(cores), location(location), port_types(port_types)
+Description::Description(string type, string uri, std::map<unsigned int, PortType>& port_types) :
+	 uri(uri) , port_types(port_types)
 {
+	supported = false;
 
 	if(type == "dpdk")
 	{
@@ -31,6 +33,13 @@ Description::Description(string type, string uri, string cores, string location,
 	{
 		this->type = KVM;
 		return;
+	} 
+#endif
+#ifdef ENABLE_NATIVE
+	else if(type == "native")
+	{
+		this->type = NATIVE;
+		return;
 	}
 #endif	
 
@@ -39,6 +48,8 @@ Description::Description(string type, string uri, string cores, string location,
 	assert(0);
 	return;
 }
+
+Description::~Description(){}
 
 nf_t Description::getType() const
 {
@@ -50,20 +61,12 @@ string Description::getURI() const
 	return uri;
 }
 
-string Description::getCores() const
-{
-	return cores;
+bool Description::isSupported() {
+	return supported;
 }
 
-string Description::getLocation() const
-{
-	assert(type == DPDK
-#ifdef ENABLE_KVM
-	|| type == KVM
-#endif
-	);
-
-	return location;
+void Description::setSupported(bool supported) {
+	this->supported = supported;
 }
 
 PortType Description::getPortType(unsigned int port_id) const

@@ -9,7 +9,8 @@ using namespace std;
 typedef enum{
 	DPDK,
 	DOCKER,
-	KVM
+	KVM,
+	NATIVE
 	//[+] Add here other implementations for the execution environment
 	}nf_t;
 
@@ -29,6 +30,10 @@ public:
 #ifdef ENABLE_KVM
 		if(type == KVM)
 			return string("kvm");
+#endif
+#ifdef ENABLE_NATIVE
+		if(type == NATIVE)
+			return string("native");
 #endif		
 
 		//[+] Add here other implementations for the execution environment
@@ -49,6 +54,10 @@ public:
 #endif		
 #ifdef ENABLE_KVM
 		if(type == "kvm")
+			return true;
+#endif
+#ifdef ENABLE_NATIVE
+		if(type == "native")
 			return true;
 #endif
 	

@@ -36,6 +36,9 @@
 #ifdef ENABLE_KVM
 	#include "plugins/kvm-libvirt/libvirt.h"
 #endif
+#ifdef ENABLE_NATIVE
+	#include "plugins/native/native.h"
+#endif
 //[+] Add here other implementations for the execution environment
 
 using namespace std;
@@ -113,6 +116,13 @@ private:
 	*	case the return value is true, otherwise it is false
 	*/
 	bool allSelected();
+
+	/**
+	 * 	@brief: Check if each description is supported or not
+	 */
+	void checkSupportedDescriptions();
+
+	NFsManager* selectNFImplementation(list<Description*> descriptions);
 
 public:
 	ComputeController();
