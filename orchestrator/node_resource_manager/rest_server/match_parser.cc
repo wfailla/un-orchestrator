@@ -170,7 +170,7 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 	return true;
 }
 
-bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, highlevel::Graph &graph)
+bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, highlevel::Graph &graph)
 {
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
@@ -199,6 +199,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 
 			string port_in_name = value.getString();
 			string realName;
+			string v_id;
 			const char *port_in_name_tmp = port_in_name.c_str();
 			char vnf_name_tmp[BUFFER_SIZE];
 
@@ -279,26 +280,59 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			//end-points port type
 			else if(p_type == 1)
 			{
-				bool iface_found = false;
+				bool iface_found = false, vlan_found = false;
 				char *s_value = new char[BUFFER_SIZE];
 				strcpy(s_value, (char *)value.getString().c_str());
 				string eP = epName(value.getString());
 				if(eP != ""){
 					map<string,string>::iterator it = iface_id.find(eP);
 					map<string,string>::iterator it1 = iface_out_id.find(eP);
-					if(it != iface_id.end()){
-						//Physical port		
+					map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
+					if(it != iface_id.end())
+					{
+						//physical port		
 						realName.assign(iface_id[eP]);
 						iface_found = true;		
 					}
-					else if(it1 != iface_out_id.end()){
-						//Physical port		
+					else if(it1 != iface_out_id.end())
+					{
+						//physical port		
 						realName.assign(iface_out_id[eP]);	
 						iface_found = true;	
 					}
+					else if(it2 != vlan_id.end())
+					{
+						//vlan		
+						v_id.assign(vlan_id[eP].first);
+						vlan_found = true;	
+					}
+				}
+				/*physical endpoint*/
+				if(iface_found)
+				{
+#ifdef UNIFY_NFFG
+					realName = Virtualizer::getRealName(port_in_name);		
+#endif	
+					match.setInputPort(realName);
+					graph.addPort(realName);
+				}
+				/*vlan endpoint*/
+				else if(vlan_found)
+				{
+					uint32_t vlanID;
+				
+					match.setInputPort(vlan_id[eP].second);
+					graph.addPort(vlan_id[eP].second);
+					
+					if((sscanf(v_id.c_str(),"%"SCNd32,&vlanID) != 1) && (vlanID > 4094))
+					{
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_ID,value.getString().c_str());
+						return false;
+					}
+					match.setEndpointVlanID(vlanID & 0xFFFF);
 				}
 				/*gre-tunnel endpoint*/
-				if(!iface_found)
+				else
 				{
 					unsigned int endPoint = epPort(string(s_value));
 					if(endPoint == 0)
@@ -310,15 +344,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			
 					stringstream ss;
 					ss << match.getEndPoint();
-				}
-				/*physical endpoint*/
-				else
-				{
-#ifdef UNIFY_NFFG
-					realName = Virtualizer::getRealName(port_in_name);		
-#endif	
-					match.setInputPort(realName);
-					graph.addPort(realName);
 				}
 			} 
 #ifdef UNIFY_NFFG

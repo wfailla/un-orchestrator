@@ -887,8 +887,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	//for each endpoint (gre), contains the id
 	map<string, string> gre_id;
 
-	//for each endpoint (vlan), contains the id
-	map<string, string> vlan_id; //XXX: currently, this information is ignored
+	//for each endpoint (vlan), contains the pair vlan id, interface
+	map<string, pair<string, string> > vlan_id; //XXX: currently, this information is ignored
 
 	try
 	{
@@ -916,9 +916,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		    		
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
 		    	{
-					bool e_if = false, e_if_out = false;
+					bool e_if = false, e_if_out = false, e_vlan = false;
 								
-					string id, node, iface, e_name, node_id, sw_id, interface;
+					string id, v_id, node, iface, e_name, node_id, sw_id, interface;
 
 		        	const string& fg_name  = fg->first;
 			       	const Value&  fg_value = fg->second;
@@ -1201,42 +1201,43 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								//identify vlan end-points 
 								else if(ep_name == VLAN)
 								{
-									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",END_POINTS,VLAN);
-
 									Object ep_vlan = ep_value.getObject();
+							
+									e_vlan = true;
 							
 									for(Object::const_iterator epi = ep_vlan.begin(); epi != ep_vlan.end(); epi++)
 									{
 										const string& epi_name  = epi->first;
 										const Value&  epi_value = epi->second;
 										
-										if(epi_name == VLAN_ID)
+										if(epi_name == V_ID)
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,VLAN_ID,epi_value.getString().c_str());
 										
-											vlan_id[id] = epi_value.getString();
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), vlan_id[id].c_str());
-	
+											v_id = epi_value.getString();
 										}
 										else if(epi_name == IFACE)
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,IFACE,epi_value.getString().c_str());
 
-											//XXX: currently, this information is ignored
+											interface = epi_value.getString();
 										}
 										else if(epi_name == SW_ID)
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,SW_ID,epi_value.getString().c_str());
 
-											//XXX: currently, this information is ignored	
+											sw_id = epi_value.getString();
 										}
 										else if(epi_name == NODE_ID)
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,NODE_ID,epi_value.getString().c_str());
 
-											//XXX: currently, this information is ignored	
+											node_id = epi_value.getString();
 										}
-									}									
+									}
+									
+									vlan_id[id] = make_pair(v_id, interface);
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\":\"%s\"",id.c_str(),vlan_id[id].first.c_str(),vlan_id[id].second.c_str());									
 								}
 								else if(ep_name == EP_GRE)
 								{
@@ -1247,7 +1248,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								else
 									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());			
 							}
-							//Add interface end-points
+							//add interface end-points
 							if(e_if)
 							{
 								highlevel::EndPointInterface ep_if(id, e_name, node_id, sw_id, interface);
@@ -1256,7 +1257,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								
 								e_if = false;
 							}
-							//Add interface-out end-points
+							//add interface-out end-points
 							else if(e_if_out)
 							{
 								highlevel::EndPointInterfaceOut ep_if_out(id, e_name, node_id, sw_id, interface);
@@ -1264,6 +1265,15 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								graph.addEndPointInterfaceOut(ep_if_out);
 								
 								e_if_out = false;
+							}
+							//add vlan end-points
+							else if(e_vlan)
+							{
+								highlevel::EndPointVlan ep_vlan(id, e_name, v_id, node_id, sw_id, interface);
+
+								graph.addEndPointVlan(ep_vlan);
+								
+								e_vlan = false;
 							}
 						}
 					}
@@ -1402,7 +1412,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										else if(fr_name == MATCH)
 										{
 											foundMatch = true;
-											if(!MatchParser::parseMatch(fr_value.getObject(), match,nfs_ports_found,nfs_id,iface_id,iface_out_id,graph))
+											if(!MatchParser::parseMatch(fr_value.getObject(),match,nfs_ports_found,nfs_id,iface_id,iface_out_id,vlan_id,graph))
 											{
 												return false;
 											}
@@ -1523,26 +1533,72 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															}
 															foundOne = true;
 										
-															bool iface_found = false;
+															bool iface_found = false, vlan_found = false;
 						
 															char *s_a_value = new char[BUFFER_SIZE];
 															strcpy(s_a_value, (char *)a_value.getString().c_str());
 															string eP = MatchParser::epName(a_value.getString());
-															if(eP != ""){
+															if(eP != "")
+															{
 																map<string,string>::iterator it = iface_id.find(eP);
 																map<string,string>::iterator it1 = iface_out_id.find(eP);
-																if(it != iface_id.end()){
-																	//Physical port		
+																map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
+																if(it != iface_id.end())
+																{
+																	//physical port		
 																	realName.assign(iface_id[eP]);
 																	iface_found = true;		
 																}
-																else if(it1 != iface_out_id.end()){
-																	//Physical port		
+																else if(it1 != iface_out_id.end())
+																{
+																	//physical port		
 																	realName.assign(iface_out_id[eP]);	
 																	iface_found = true;	
 																}
+																else if(it2 != vlan_id.end())
+																{
+																	//vlan		
+																	vlan_found = true;	
+																}
 															}
-															if(!iface_found)
+															//physical endpoint
+															if(iface_found)
+															{
+#ifdef UNIFY_NFFG
+																//In this case, the virtualized port name must be translated into the real one.
+																try
+																{
+		realName = Virtualizer::getRealName(port_in_name);											
+#endif
+																	action = new highlevel::ActionPort(realName, string(s_a_value));
+																	
+																	graph.addPort(realName);
+#ifdef UNIFY_NFFG
+																}catch(exception e)
+																{
+																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error while translating the virtualized port '%s': %s",port_in_name.c_str(),e.what());
+																	return false;
+																}
+#endif
+															}
+															//vlan endpoint
+															else if(vlan_found)
+															{
+																vlan_action_t actionType;
+																unsigned int vlanID = 0;
+														
+																actionType = ACTION_ENDPOINT_VLAN;
+														
+																sscanf(vlan_id[eP].first.c_str(),"%u",&vlanID);
+											
+																action = new highlevel::ActionPort(vlan_id[eP].second, string(s_a_value));
+																graph.addPort(vlan_id[eP].second);
+											
+																GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
+																genericActions.push_back(ga);
+															}
+															//gre-tunnel endpoint
+															else
 															{
 																unsigned int endPoint = MatchParser::epPort(string(s_a_value));
 																if(endPoint == 0)
@@ -1551,26 +1607,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																	return false;	
 																}
 																action = new highlevel::ActionEndPoint(endPoint, string(s_a_value));
-															}
-															else
-															{
-	#ifdef UNIFY_NFFG
-																//In this case, the virtualized port name must be translated into the real one.
-																try
-																{
-		realName = Virtualizer::getRealName(port_in_name);											
-	#endif
-	
-																	action = new highlevel::ActionPort(realName, string(s_a_value));
-																	
-																	graph.addPort(realName);
-	#ifdef UNIFY_NFFG
-																}catch(exception e)
-																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error while translating the virtualized port '%s': %s",port_in_name.c_str(),e.what());
-																	return false;
-																}
-	#endif
 															}
 														}
 													}
@@ -1607,7 +1643,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 														}
 														//Finally, we are sure that the command is correct!
 											
-														GenericAction *ga = new VlanAction(actionType,vlanID);
+														GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
 														genericActions.push_back(ga);
 											
 													}//end if(a_name == VLAN_PUSH)
@@ -1631,9 +1667,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found in \"%s\"",VLAN_ID,VLAN_POP);
 															return false;
 														}
+														
 														//Finally, we are sure that the command is correct!
-											
-														GenericAction *ga = new VlanAction(actionType,vlanID);
+														GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
 														genericActions.push_back(ga);
 											
 													}//end if(a_name == VLAN_POP)
@@ -1729,7 +1765,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Neither Key \"%s\", nor key \"%s\" found in \"%s\"",PORT_IN,_ID,ACTIONS);
 													return false;
 												}
-									
 												for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 												{
 													action->addGenericAction(*ga);

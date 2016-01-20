@@ -258,6 +258,8 @@ SET(SOURCES
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface_out.h
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.cc
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_vlan.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_vlan.h
 	node_resource_manager/graph/high_level_graph/high_level_graph_vnf.cc
 	node_resource_manager/graph/high_level_graph/high_level_graph_vnf.h
 	node_resource_manager/graph/high_level_graph/high_level_graph.h
@@ -311,7 +313,7 @@ SET(SOURCES
 IF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
     SET(SOURCES1
     ${SOURCES}
-		node_resource_manager/pub_sub_manager/PubSubClientManager.h
+		node_resource_manager/pub_sub_manager/PubSubManager.h
 		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
 		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
 		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
@@ -462,12 +464,6 @@ LINK_DIRECTORIES(
 	/usr/lib/x86_64-linux-gnu/
 	/usr/lib/python2.7/config-x86_64-linux-gnu/
 )
-
-IF(ENABLE_KVM-IVSHMEM)
-	LINK_DIRECTORIES(
-		$ENV{DPDK_PATH}/lib
-	)
-ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so

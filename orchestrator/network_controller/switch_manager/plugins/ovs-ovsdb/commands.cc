@@ -507,8 +507,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			sprintf(ptemp, "%d", pnumber);
 			strcat(vrt, ptemp);
 			
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "------%s++++++", ptemp);
-			
 			pnumber++;
 			
 			sprintf(ptemp, "%d", pnumber);
@@ -591,8 +589,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 				
 			sprintf(ptemp, "%d", pnumber);
 			strcat(vrt, ptemp);
-				
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "+++++%s-----", ptemp);
 				
 			pnumber++;
 				

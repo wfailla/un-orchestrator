@@ -71,6 +71,7 @@
 			#define TTL				"ttl"
 			#define GRE_KEY			"gre-key"
 		#define VLAN			"vlan"
+			#define V_ID			"vlan-id"
 						
 	#define BIG_SWITCH		"big-switch"
 		#define FLOW_RULES		"flow-rules"

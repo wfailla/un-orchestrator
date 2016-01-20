@@ -43,8 +43,10 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	}
 	if(isEthType)
 		message.set_match().set_eth_type(ethType);
-	if(isVlanID)
+	if(isVlanID || isEndpointVlanID)
+	{
 		message.set_match().set_vlan_vid(vlanID);
+	}
 	else if(isAnyVlan)
 		message.set_match().set_vlan_present();
 	else if(isNoVlan)

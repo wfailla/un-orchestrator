@@ -12,6 +12,7 @@
 #include "high_level_graph_endpoint_interface.h"
 #include "high_level_graph_endpoint_interface_out.h"
 #include "high_level_graph_endpoint_gre.h"
+#include "high_level_graph_endpoint_vlan.h"
 #include "high_level_graph_vnf.h"
 #include "high_level_rule.h"
 #include "high_level_output_action_nf.h"
@@ -76,6 +77,11 @@ private:
 	*	@brief: List of endPointsGRE describing the graph
 	*/
 	list<EndPointGre> endPointsGre;
+	
+	/**
+	*	@brief: List of endPointsVlan describing the graph
+	*/
+	list<EndPointVlan> endPointsVlan;
 	
 	/**
 	*	@brief: List of VNFs describing the graph
@@ -210,6 +216,16 @@ public:
 	*	@brief: Return the endpointsGre of the graph
 	*/
 	list<EndPointGre> getEndPointsGre();
+	
+	/**
+	*	@brief: Add a new endpointVlan to the graph
+	*/
+	bool addEndPointVlan(EndPointVlan endpoint);
+	
+	/**
+	*	@brief: Return the endpointsVlan of the graph
+	*/
+	list<EndPointVlan> getEndPointsVlan();
 	
 	/**
 	*	@brief: Add a new vnf to the graph

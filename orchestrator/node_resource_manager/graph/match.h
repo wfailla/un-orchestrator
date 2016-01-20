@@ -56,6 +56,7 @@ protected:
 	uint16_t vlanID;
 	bool isNoVlan;
 	bool isAnyVlan;
+	bool isEndpointVlanID;
 	
 	/*
 	*	IPv4
@@ -97,6 +98,7 @@ public:
 	void setVlanID(uint16_t vlanID);
 	void setVlanIDNoVlan();
 	void setVlanIDAnyVlan();
+	void setEndpointVlanID(uint16_t vlanID);
 	void setIpv4Src(char *ipv4_src);
 	void setIpv4Dst(char *ipv4_dst);
 	void setTcpSrc(uint16_t tcp_src);

@@ -69,8 +69,8 @@ void singint_handler(int sig)
 #ifdef UNIFY_NFFG
 	terminateVirtualizer();
 #endif
-	
-	dbm->eraseAllToken();
+	if(dbm != NULL)
+		dbm->eraseAllToken();
 
 #ifdef ENABLE_DOUBLE_DECKER
 	client->terminateClient();

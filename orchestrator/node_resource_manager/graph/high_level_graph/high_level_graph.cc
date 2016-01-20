@@ -87,6 +87,24 @@ list<EndPointGre> Graph::getEndPointsGre()
 	return endPointsGre;
 }
 
+bool Graph::addEndPointVlan(EndPointVlan endpoint)
+{
+	for(list<EndPointVlan>::iterator e = endPointsVlan.begin(); e != endPointsVlan.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsVlan.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointVlan> Graph::getEndPointsVlan()
+{
+	return endPointsVlan;
+}
+
 bool Graph::addVNF(VNFs vnf)
 {
 	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end(); v++)
@@ -316,6 +334,11 @@ Object Graph::toJSON()
 	}
 	
 	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+	
+	for(list<EndPointVlan>::iterator e = endPointsVlan.begin(); e != endPointsVlan.end();e++)
 	{
 		end_points.push_back(e->toJSON());
 	}
