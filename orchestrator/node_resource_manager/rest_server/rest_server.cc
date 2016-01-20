@@ -901,7 +901,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									e_if_out = true;
 							
 									for(Object::const_iterator epi = ep_iface.begin(); epi != ep_iface.end(); epi++)
-
+									{
 										const string& epi_name  = epi->first;
 										const Value&  epi_value = epi->second;
 										

@@ -124,21 +124,14 @@ private:
 
 public:
 
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string,list<string> > endpoints_ports, vector<VLink> virtual_links,map<string,nf_t>  nf_types);
+	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string,list<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
-
-	list<string> getPhysicalPortsName();
-
-	set<string> getNetworkFunctionsName();
-	list<string> getNetworkFunctionsPortNames(string nf);
 	
 	map<string,list<string> > getEndpointsPorts();
 
 	map<string,unsigned int > getEndpointsPortsId();
-
-	list<uint64_t> getVirtualLinksRemoteLSI();
 
 	uint64_t getDpid();
 

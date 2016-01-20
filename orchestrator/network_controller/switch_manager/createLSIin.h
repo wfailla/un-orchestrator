@@ -70,12 +70,12 @@ private:
 
 protected:
 
-	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<string> > netFunctionsPortsName, map<string,list<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi)
+	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<struct nf_port_info> > netFunctionsPortsInfo, map<string,list<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi)
 		: controllerAddress(controllerAddress), controllerPort(controllerPort),
 		physicalPortsName(physicalPortsName.begin(),physicalPortsName.end()),
 		nf_types(nf_types.begin(),nf_types.end()),
 		endpointsPortsName(endpointsPortsName.begin(),endpointsPortsName.end()),
-		netFunctionsPortsName(netFunctionsPortsName.begin(),netFunctionsPortsName.end()),
+		netFunctionsPortsInfo(netFunctionsPortsInfo.begin(),netFunctionsPortsInfo.end()),
 		vlinksRemoteLsi(vlinksRemoteLsi.begin(),vlinksRemoteLsi.end())
 	{
 		map<string,nf_t>::iterator it = nf_types.begin();

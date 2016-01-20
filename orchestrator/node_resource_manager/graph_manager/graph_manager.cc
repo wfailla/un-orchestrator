@@ -56,18 +56,19 @@ GraphManager::GraphManager(int core_mask,string portsFileName) :
 
 	//The three following structures are empty. No NF and no virtual link is attached.
 	map<string, list<unsigned int> > dummy_network_functions;
+	map<string, map<unsigned int, PortType> > dummy_nfs_ports_type;
 	map<string, list<string> > dummy_endpoints;
 	vector<VLink> dummy_virtual_links;
 	map<string,nf_t>  nf_types;
 	
-	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions,dummy_endpoints,dummy_virtual_links,nf_types);
+	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions,dummy_endpoints,dummy_virtual_links,dummy_nfs_ports_type);
 	
 	try
 	{
 		//Create a new LSI, which is the LSI-0 of the node
 		
-		map<string,list<string> > netFunctionsPortsName;		
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsName,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI());
+		map<string,list<nf_port_info> > netFunctionsPortsInfo;
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI());
 
 		CreateLsiOut *clo = switchManager.createLsi(cli);
 		
@@ -666,7 +667,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	}
 
 	//Prepare the structure representing the new tenant-LSI
-	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), dummyPhyPorts, network_functions,endpoints,virtual_links,nf_types);
+	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), dummyPhyPorts, network_functions,endpoints,virtual_links,nfs_ports_type);
 	
 	CreateLsiOut *clo = NULL;
 	try
@@ -678,7 +679,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			netFunctionsPortsName[nf->first] = lsi->getNetworkFunctionsPortNames(nf->first);
 		}
 		
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsName,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI());
+CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), lsi->getEndpointsPorts(), lsi->getVirtualLinksRemoteLSI());
 
 		clo = switchManager.createLsi(cli);
 

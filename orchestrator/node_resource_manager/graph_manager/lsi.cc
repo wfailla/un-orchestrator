@@ -1,6 +1,6 @@
 #include "lsi.h"
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions,map<string,list<string> > endpoints_ports, vector<VLink> virtual_links, map<string,nf_t>  nf_types) :
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string,list<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
@@ -60,11 +60,6 @@ map<string, list<string> > LSI::getEndpointsPorts()
 map<string,unsigned int > LSI::getEndpointsPortsId()
 {
 	return endpoints_ports_id;
-}
-
-map<string,nf_t> LSI::getNetworkFunctionsType()
-{
-	return nf_types;
 }
 
 list<string> LSI::getNetworkFunctionsPortNames(string nf)

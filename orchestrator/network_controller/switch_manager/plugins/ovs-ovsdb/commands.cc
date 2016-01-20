@@ -9,7 +9,7 @@ char ErrBuf[BUFFER_SIZE];
 int rnumber = 1;
 uint64_t dnumber = 1;
 
-int pnumber = 1, nfnumber = 0;
+int pnumber = 1, nfnumber = 0, gnumber = 0;
 
 /* Transaction ID */
 static int tid = 0;
@@ -961,28 +961,29 @@ void commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Port
 	params.clear();
 			
 	//Increment transaction id
-	id++;
+	tid++;
 	
 	rnumber++;
 
 	//disconnect socket
     cmd_disconnect(s);
 
+#if 0
     //XXX: this code is a trick that activates a VNF ports through ifconfig. In fact, we noted that on some system
     //this operation has not done by OVSDB
-    if(nf != 0)
+    if(is_nf_port && (port_type != USVHOST_PORT) && (port_type != IVSHMEM_PORT))
     {
     	stringstream command;
-		command << ACTIVATE_INTERFACE << " " << p_n;
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+		command << ACTIVATE_INTERFACE << " " << port_name;
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 		int retVal = system(command.str().c_str());
 		retVal = retVal >> 8;
 		
 		assert(retVal == 0);
-
 		if(retVal != 0)
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
+			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
 	}
+#endif
 }
 
 void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64], char key[64], char gre[64], char ifac[64], int s)
@@ -1188,7 +1189,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	port2.clear();
 	root["params"] = params;
 
-	root["id"] = id;
+	root["id"] = tid;
 
 	stringstream ss;
  	write_formatted(root, ss );
@@ -1885,7 +1886,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		port2.clear();
 		root["params"] = params;
 
-		root["id"] = id;
+		root["id"] = tid;
 
 		stringstream ss;
  		write_formatted(root, ss );
@@ -1916,7 +1917,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		params.clear();
 			
 		//Increment transaction id
-		id++;
+		tid++;
 		
 		cmd_disconnect(s);
 	}
