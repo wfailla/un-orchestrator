@@ -153,13 +153,35 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		list<Description*> possibleDescriptions;
 		string nf_name;
+
+		bool foundNports = false;
+		unsigned int numports = 0;		
+
 #ifdef UNIFY_NFFG
-		unsigned int numports = 0;
 		string text_description;
-		
-		bool foundNports = false, foundTextDescription = false;
+		bool foundTextDescription = false;
 #endif
 
+		//A first sacan of the json is done in order to read the number of ports of the VNF.
+		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
+		{
+	 	    const string& name  = i->first;
+		    const Value&  value = i->second;
+			if(name == "nports")
+		    {
+				foundNports = true;
+		    	numports = value.getInt();
+		    	break;
+		    }
+		}
+		if(!foundNports)
+		{
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"num-ports\" not found in the answer");
+			return false;
+		}
+
+		//Now let's do a second scan in order to retrieve all the other information received from
+		//the name-resolver
 		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
 		{
 	 	    const string& name  = i->first;
@@ -177,10 +199,8 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		    }
 		    else if(name == "nports")
 		    {
-#ifdef UNIFY_NFFG
-				foundNports = true;
-		    	numports = value.getInt();
-#endif
+		    	//Information already retrieved
+		    	continue;
 		    }
 		    else if(name == "summary")
 		    {
@@ -189,7 +209,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		    	text_description = value.getString();
 #endif
 		    }
-		    else if(name == "descriptions")
+		    else if(name == "implementations")
 		    {
 		    	foundImplementations = true;
 		    	const Array& impl_array = value.getArray();
@@ -199,12 +219,13 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					return false;
 		    	}
 
+				bool foundPorts = false; //Mandatory only in case of KVM
 				bool next = false;
-		    	//Iterate on the descriptions
+		    	//Iterate on the implementations
 		    	for( unsigned int impl = 0; impl < impl_array.size(); ++impl)
 				{
 					//This is an implementation, with a type and an URI
-					Object description = impl_array[impl].getObject();
+					Object implementation = impl_array[impl].getObject();
 					bool foundURI = false;
 					bool foundType = false;
 					bool foundCores = false;
@@ -212,52 +233,101 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					bool foundDependencies = false;
 
 					string type;
-			    		string uri;
+			    	string uri;
 					string cores;
 					string location;
 					string dependencies;
+					std::map<unsigned int, PortType> port_types; // port_id -> port_type
 
-					for( Object::const_iterator im = description.begin(); im != description.end(); ++im )
+					for( Object::const_iterator impl_el = implementation.begin(); impl_el != implementation.end(); ++impl_el )
 					{
-				 	    const string& impl_name  = im->first;
-						const Value&  impl_value = im->second;
+				 	    const string& el_name  = impl_el->first;
+						const Value&  el_value = impl_el->second;
 
-						if(impl_name == "type")
+						if(el_name == "type")
 						{
 							foundType = true;
-							type = impl_value.getString();
-
+							type = el_value.getString();
 							if(!NFType::isValid(type))
 							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid description type \"%s\". Skip it.",type.c_str());
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid implementation type \"%s\". Skip it.", type.c_str());
 								//return false;
 								next = true;
 								break;
 							}
 						}
-						else if(impl_name == "uri")
+						else if(el_name == "uri")
 						{
 							foundURI = true;
-							uri = impl_value.getString();
+							uri = el_value.getString();
 						}
-						else if(impl_name == "cores")
+						else if(el_name == "cores")
 						{
 							foundCores = true;
-							cores = impl_value.getString();
+							cores = el_value.getString();
 						}
-						else if(impl_name == "location")
+						else if(el_name == "location")
 						{
 							foundLocation = true;
-							location = impl_value.getString();
+							location = el_value.getString();
 						}
-						else if(impl_name == "dependencies")
+						else if(el_name == "ports")
+						{
+							foundPorts = true;
+							
+					    	const Array& ports_array = el_value.getArray();
+
+					    	if (ports_array.size() == 0)
+					    	{
+						    	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Empty ports list in implementation");
+								return false;
+					    	}
+					    	for( unsigned int p = 0; p < ports_array.size(); ++p)
+							{
+								Object port = ports_array[p].getObject();
+								int port_id = -1;
+								PortType port_type = UNDEFINED_PORT;
+
+								for( Object::const_iterator port_el = port.begin(); port_el != port.end(); ++port_el )
+								{
+							 	    const string& pel_name  = port_el->first;
+									const Value&  pel_value = port_el->second;
+									if (pel_name == "id") {
+										port_id = pel_value.getInt();
+									}
+									else if (pel_name == "type") {
+										port_type = portTypeFromString(pel_value.getString());
+										if (port_type == INVALID_PORT) {
+											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid port type \"%s\" for implementation port", pel_value.getString().c_str());
+											return false;
+										}
+									}
+									else {
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within an implementation port", pel_name.c_str());
+										return false;
+									}
+								}
+								if (port_id == -1) {
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Missing port \"ïd\" attribute for implementation");
+									return false;
+								}
+								if (port_type == UNDEFINED_PORT) {
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Missing port \"type\" attribute for implementation");
+									return false;
+								}
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Port %d id=%d type=%s", p, port_id, portTypeToString(port_type).c_str());
+
+								port_types.insert(std::map<unsigned int, PortType>::value_type(port_id, port_type));
+							}
+						}
+						else if(el_name == "dependencies")
 						{
 							foundDependencies = true;
-							dependencies = impl_value.getString();
+							dependencies = el_value.getString();
 						}
 						else
 						{
-							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within a description",impl_name.c_str());
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within an implementation", el_name.c_str());
 							return false;
 						}
 					}
@@ -271,9 +341,17 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					
 					if(!foundURI || !foundType)
 					{
-						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into a description");
+						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into an implementation description");
 						return false;
 					}
+
+
+					//The port types are not specified in the message coming from the name-resolver.
+					//We set the port type as follows:
+					//	* VETH_PORT in case of Docker container or Native functions
+					//	* DPDKR_PORT in case of DPDK process
+
+
 					if(type == "dpdk")
 					{
 #ifdef ENABLE_DPDK_PROCESSES
@@ -283,13 +361,19 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							return false;
 						}
 
-						possibleDescriptions.push_back(dynamic_cast<Description*>(new DPDKDescription(type,uri,cores,location)));
+						assert(!foundPorts);
+
+						for(unsigned int i = 0; i < numports; i++)
+							port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, DPDKR_PORT));
+
+						possibleDescriptions.push_back(dynamic_cast<Description*>(new DPDKDescription(type,uri,cores,location,port_types)));
 #endif
 						continue;
 					}
 					else if(type == "native")
 					{
 #ifdef ENABLE_NATIVE
+						assert(!foundPorts);
 						if(!foundLocation || !foundDependencies)
 						{
 							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"dependencies\" attribute, \"location\" attribute, or both",type.c_str());
@@ -301,7 +385,11 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						while(stream >> s){
 							dep_list->push_back(s);
 						}
-						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,location,dep_list)));
+
+						for(unsigned int i = 0; i < numports; i++)
+							port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, VETH_PORT));
+
+						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,location,dep_list,port_types)));
 #endif
 						continue;
 					}
@@ -311,9 +399,27 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						return false;
 					}
 
-					possibleDescriptions.push_back(new Description(type,uri));
+					if(!foundPorts)
+					{
+						if(type == "docker")
+						{
+							for(unsigned int i = 0; i < numports; i++)
+								port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, VETH_PORT));
+						}
+						else
+						{
+							assert(type == "kvm");
+							//In case of KVM, the port type must be specified by the name-resolver.
+							assert(0 && "Probably there is a BUG in the name resover!");
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the element \"ports\"",type.c_str());
+							return false;
+						}
+					}
+
+					Description* descr = new Description(type, uri, port_types);
+					possibleDescriptions.push_back(descr);
 				}
-		    } //end if(name == "descriptions")
+		    } //end if(name == "implementations")
 		    else
 			{
 				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\"",name.c_str());
@@ -323,12 +429,12 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		if(!foundName || !foundImplementations
 #ifdef UNIFY_NFFG
-			|| !foundNports || !foundTextDescription
+			 || !foundTextDescription
 #endif		
 		)
 		{
 #ifdef UNIFY_NFFG
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", and/or key \"implementations\", and/or key \"num-ports\", and/or key \"description\" not found in the answer");
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", and/or key \"implementations\", and/or key \"description\" not found in the answer");
 #else
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", or key \"implementations\", or both not found in the answer");
 #endif
@@ -344,7 +450,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		
 		if(possibleDescriptions.size() == 0)
 		{
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Cannot find a supported description for the network function \"%s\"",nf.c_str());
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Cannot find a supported implementation for the network function \"%s\"",nf.c_str());
 			return false;
 		}		
 		
@@ -353,7 +459,12 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		nfs[nf_name] = new_nf;
 
-	}catch(...)
+	}
+	catch (std::runtime_error& e) {
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "JSON parse error: %s", e.what());
+		return false;
+	}
+	catch(...)
 	{
 		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax");
 		return false;
@@ -485,8 +596,6 @@ NFsManager* ComputeController::selectNFImplementation(list<Description*> descrip
 			break;
 #endif
 
-
-//TODO: add ifdef also in the other functions
 #ifdef ENABLE_DPDK_PROCESSES
 				//Manage DPDK execution environment
 			case DPDK:{
@@ -502,7 +611,6 @@ NFsManager* ComputeController::selectNFImplementation(list<Description*> descrip
 			}
 			break;
 #endif
-
 
 #ifdef ENABLE_KVM
 				//Manage QEMU/KVM execution environment through libvirt
@@ -639,19 +747,32 @@ nf_t ComputeController::getNFType(string name)
 	return impl->getNFType();
 }
 
+const Description* ComputeController::getNFSelectedImplementation(string name)
+{
+	map<string, NF*>::iterator nf_it = nfs.find(name);
+	if (nf_it == nfs.end()) { // Not found
+		return NULL;
+	}
+
+	NFsManager *impl = (nf_it->second)->getSelectedDescription();
+	if (impl == NULL)
+		return NULL;
+
+	return impl->getDescription();
+}
+
 void ComputeController::setLsiID(uint64_t lsiID)
 {
 	this->lsiID = lsiID;
 }
 
-//FIXME: I'm assuming that the first element of namesOfPortsOnTheSwitch corresponds to the first port of the network function,
-//the second element corresponds to the second port of the network function, and so on...
-bool ComputeController::startNF(string nf_name, list<string> namesOfPortsOnTheSwitch)
+bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch)
 {
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"",nf_name.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"", nf_name.c_str());
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
-	for(list<string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*it).c_str());
+	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %s", it->first, it->second.c_str());
+	}
 
 	if(nfs.count(nf_name) == 0)
 	{

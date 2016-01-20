@@ -11,12 +11,12 @@
 
 #include "constants.h"
 
-#include "description.h"
-#include "descriptions/native_description.h"
-#include "descriptions/dpdk_description.h"
+#include "implementation.h"
 
 using namespace std;
 using namespace json_spirit;
+
+class Implementation;
 
 class NF
 {
@@ -34,16 +34,16 @@ private:
 	/**
 	*	@brief: text describing the network function
 	*/
-	string description;
+	string summary;
 		
 	/**
 	*	@brief: list of possible implementations for the network function
 	*/
-	list<Description*> descriptions;
+	list<Implementation*> implementations;
 	
 public:
 	NF(string name, int nports, string description);
-	void addImplementation(Description *description);
+	void addImplementation(Implementation *implementation);
 	
 	string getName();
 	

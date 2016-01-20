@@ -11,6 +11,24 @@
 	</xsd:simpleType>
 </xsd:attribute>
 
+<xsd:attribute name="port-type">	
+	<xsd:simpleType>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="ivshmem" />
+			<xsd:enumeration value="usvhost" />
+			<xsd:enumeration value="vhost" />
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:attribute>
+
+<xsd:attribute name="port-id">
+	<xsd:simpleType>
+		<xsd:restriction base="xsd:integer">
+			 <xsd:minInclusive value="1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:attribute>
+
 <xsd:attribute name="location">	
 	<xsd:simpleType>
 		<xsd:restriction base="xsd:string">
@@ -35,7 +53,22 @@
 				<xsd:complexType>
 					<xsd:choice minOccurs="1" maxOccurs="unbounded">
 						<xsd:element name="docker" type="implementationType"/>
-						<xsd:element name="kvm" type="implementationType"/>	
+						<xsd:element name="kvm">
+							<xsd:complexType>
+								<xsd:complexContent>
+									<xsd:extension base="implementationType">
+										<xsd:sequence>
+											<xsd:element name="port" minOccurs="0" maxOccurs="unbounded">
+												<xsd:complexType>
+													<xsd:attribute ref="port-id" use="required"/>
+													<xsd:attribute ref="port-type" use="required"/>
+												</xsd:complexType>
+											</xsd:element>	
+										</xsd:sequence>
+									</xsd:extension>
+								</xsd:complexContent>
+							</xsd:complexType>							
+						</xsd:element>	
 						<xsd:element name="dpdk">
 							<xsd:complexType>
 								<xsd:complexContent>
@@ -58,8 +91,7 @@
 						</xsd:element>
 					</xsd:choice>
 					<xsd:attribute ref="name" use="required"/>
-					<!-- TODO: put num-ports mandatory! -->
-					<xsd:attribute name="num-ports" type="xsd:integer"/>
+					<xsd:attribute name="num-ports" type="xsd:integer" use="required"/>
 					<xsd:attribute name="summary" type="xsd:string" use="required"/>
 				</xsd:complexType>
 			</xsd:element> 
@@ -73,3 +105,4 @@
 
 
 </xsd:schema>
+

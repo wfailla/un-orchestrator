@@ -13,158 +13,111 @@ bool RestServer::init(string fileName)
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Reading configuration file: %s",fileName.c_str());
 
-	//Validate the configuration file with the schema
-	schema_doc = xmlReadFile(NETWORK_FUNCTIONS_XSD, NULL, XML_PARSE_NONET);
-	if (schema_doc == NULL)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The schema cannot be loaded or is not well-formed.");
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
-	
-	parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
-	if (parser_ctxt == NULL)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a parser context for the schema.");
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
-
-	schema = xmlSchemaParse(parser_ctxt);
-	if (schema == NULL)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The XML schema is not valid.");
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
-
-	valid_ctxt = xmlSchemaNewValidCtxt(schema);
-	if (valid_ctxt == NULL)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a validation context for the XML schema.");
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
-	
-	doc = xmlParseFile(fileName.c_str()); /*Parse the XML file*/
-	if (doc==NULL)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "XML file '%s' parsing failed.", fileName.c_str());
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
-
-	if(xmlSchemaValidateDoc(valid_ctxt, doc) != 0)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", fileName.c_str());
-		/*Free the allocated resources*/
-		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
-		return false;
-	}
-	
-	///Retrieve the names of the NFs
-	xmlNodePtr root = xmlDocGetRootElement(doc);
-
-	//Load the file describing NFs
-	for(xmlNodePtr cur_root_child=root->xmlChildrenNode; cur_root_child!=NULL; cur_root_child=cur_root_child->next)
-	{
-		if ((cur_root_child->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(cur_root_child->name, (const xmlChar*)NETWORK_FUNCTION_ELEMENT)))
+	try {
+		//Validate the configuration file with the schema
+		schema_doc = xmlReadFile(NETWORK_FUNCTIONS_XSD, NULL, XML_PARSE_NONET);
+		if (schema_doc == NULL)
 		{
-			xmlChar* attr_name = xmlGetProp(cur_root_child, (const xmlChar*)NAME_ATTRIBUTE);
-			xmlChar* attr_nports = xmlGetProp(cur_root_child, (const xmlChar*)NUM_PORTS_ATTRIBUTE);
-			xmlChar* attr_summary = xmlGetProp(cur_root_child, (const xmlChar*)SUMMARY_ATTRIBUTE);
-		
-			int nports = 0;
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The schema cannot be loaded or is not well-formed.");
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			return false;
+		}
 
-			assert(attr_name != NULL);
-			if(attr_nports != NULL)
-				sscanf((const char*)attr_nports,"%d",&nports);
-
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Network function: %s",attr_name);
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Number of ports: %d",nports);
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Summary: %s",attr_summary);
-
-			string name((const char*)attr_name);
-			string summary((const char*)attr_summary);
-			NF *nf = new NF(name,nports,summary);
+		parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
+		if (parser_ctxt == NULL)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a parser context for the schema.");
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			return false;
+		}
 	
-			xmlNodePtr nf_elem = cur_root_child;
-			for(xmlNodePtr cur_descr = nf_elem->xmlChildrenNode; cur_descr != NULL; cur_descr = cur_descr->next)
+		schema = xmlSchemaParse(parser_ctxt);
+		if (schema == NULL)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The XML schema is not valid.");
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			return false;
+		}
+	
+		valid_ctxt = xmlSchemaNewValidCtxt(schema);
+		if (valid_ctxt == NULL)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unable to create a validation context for the XML schema.");
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			return false;
+		}
+
+		doc = xmlParseFile(fileName.c_str()); /*Parse the XML file*/
+		if (doc==NULL)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "XML file '%s' parsing failed.", fileName.c_str());
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			return false;
+		}
+	
+		if(xmlSchemaValidateDoc(valid_ctxt, doc) != 0)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Configuration file '%s' is not valid", fileName.c_str());
+			/*Free the allocated resources*/
+			freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+			return false;
+		}
+		
+		///Retrieve the names of the NFs
+		xmlNodePtr root = xmlDocGetRootElement(doc);
+	
+		//Load the file describing NFs
+		for(xmlNodePtr cur_root_child=root->xmlChildrenNode; cur_root_child!=NULL; cur_root_child=cur_root_child->next)
+		{
+			if ((cur_root_child->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(cur_root_child->name, (const xmlChar*)NETWORK_FUNCTION_ELEMENT)))
 			{
-				if ((cur_descr->type == XML_ELEMENT_NODE)){
+				xmlChar* attr_name = xmlGetProp(cur_root_child, (const xmlChar*)NAME_ATTRIBUTE);
+				xmlChar* attr_nports = xmlGetProp(cur_root_child, (const xmlChar*)NUM_PORTS_ATTRIBUTE);
+				xmlChar* attr_summary = xmlGetProp(cur_root_child, (const xmlChar*)SUMMARY_ATTRIBUTE);
 
-					xmlChar* attr_uri = xmlGetProp(cur_descr, (const xmlChar*)URI_ATTRIBUTE);
+				int nports = 0;
 
-					assert(attr_uri != NULL);
+				assert(attr_name != NULL);
+				if(attr_nports != NULL)
+					sscanf((const char*)attr_nports,"%d",&nports);
 
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tURI: %s",attr_uri);
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Network function: %s",attr_name);
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Number of ports: %d",nports);
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Summary: %s",attr_summary);
 
-					string uri((const char*)attr_uri);
-
-					if(!strcmp((const char*)cur_descr->name, DPDK_DESCRIPTION)){
-						xmlChar* attr_cores = xmlGetProp(cur_descr, (const xmlChar*)CORES_ATTRIBUTE);
-						xmlChar* attr_location = xmlGetProp(cur_descr, (const xmlChar*)LOCATION_ATTRIBUTE);
-
-						assert(attr_cores != NULL);
-						assert(attr_location != NULL);
-
-						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tcores: %s",attr_cores);
-						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tlocation: %s",attr_location);
-
-						stringstream cores, location;
-						cores << attr_cores;
-						location << attr_location;
-
-						nf->addImplementation(new DPDKDescription(DPDK,uri,cores.str(),location.str()));
-					} else
-
-					if(!strcmp((const char*)cur_descr->name, DOCKER_DESCRIPTION)){
-
-						nf->addImplementation(new Description(DOCKER,uri));
-					} else
-
-					if(!strcmp((const char*)cur_descr->name, KVM_DESCRIPTION)){
-
-						nf->addImplementation(new Description(KVM,uri));
-					} else
-
-					if(!strcmp((const char*)cur_descr->name, NATIVE_DESCRIPTION)){
-						xmlChar* attr_dependencies = xmlGetProp(cur_descr, (const xmlChar*)DEPENDENCIES_ATTRIBUTE);
-						xmlChar* attr_location = xmlGetProp(cur_descr, (const xmlChar*)LOCATION_ATTRIBUTE);
-
-						assert(attr_dependencies != NULL);
-						assert(attr_location != NULL);
-
-						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tdependencies: %s",attr_dependencies);
-						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tlocation: %s",attr_location);
-
-						stringstream dependencies, location;
-
-						location << attr_location;
-						dependencies << attr_dependencies;
-
-						nf->addImplementation(new NativeDescription(NATIVE,uri,dependencies.str(),location.str()));
-					}
-					//[+] Add here other implementations for the execution environment
-					else
-					{
-						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Unknown implementation %s in configuration file %s", (const char*) cur_descr->name, fileName.c_str());
-						assert(0);
+				string name((const char*)attr_name);
+				string summary((const char*)attr_summary);
+				NF *nf = new NF(name,nports,summary);
+	
+				xmlNodePtr nf_elem = cur_root_child;
+				for(xmlNodePtr cur_descr = nf_elem->xmlChildrenNode; cur_descr != NULL; cur_descr = cur_descr->next)
+				{
+					if ((cur_descr->type == XML_ELEMENT_NODE)){
+						nf->addImplementation(Implementation::create((char*)cur_descr->name, cur_descr));
 					}
 				}
+				nfs.insert(nf);
 			}
-			nfs.insert(nf);
 		}
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Configuration file read!");
+		return true;
+
+	}
+	catch (string errStr) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while loading configuration: %s", errStr.c_str());
+	}
+	catch (...) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while loading configuration");
 	}
 	
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Configuration file read!");
-
-	return true;
+	freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
+	return false;
 }
 
 void RestServer::request_completed (void *cls, struct MHD_Connection *connection,

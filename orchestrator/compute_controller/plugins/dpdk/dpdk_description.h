@@ -8,10 +8,10 @@ private:
 	std::string cores;
 	std::string location;
 public:
-	std::string getLocation();
-	std::string getCores();
-	DPDKDescription(nf_t type, std::string uri, std::string cores, std::string location);
-	DPDKDescription(std::string type, std::string uri, std::string cores, std::string location);
+	std::string getLocation() const;
+	std::string getCores() const;
+	DPDKDescription(nf_t type, std::string uri, std::string cores, std::string location, std::map<unsigned int, PortType>& port_types);
+	DPDKDescription(std::string type, std::string uri, std::string cores, std::string location, std::map<unsigned int, PortType>& port_types);
 	~DPDKDescription();
 };
 

@@ -66,8 +66,6 @@ public:
 	
 	string getName();
 	
-
-
 #ifdef UNIFY_NFFG
 	unsigned int getNumPorts();
 	string getTextDescription();

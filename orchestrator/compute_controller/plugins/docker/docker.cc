@@ -7,15 +7,15 @@ bool Docker::isSupported(Description&)
 	retVal = system(CHECK_DOCKER);
 	retVal = retVal >> 8;
 
-	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Script returned: %d\n",retVal);
+	logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Script returned: %d\n",retVal);
 
 	if(retVal > 0)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker deamon is running.");
+		logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Docker deamon is running.");
 		return true;
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker deamon is not running (at least, it is not running with the LXC implementation).");
+	logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Docker deamon is not running (at least, it is not running with the LXC implementation).");
 	return false;
 }
 
@@ -26,16 +26,16 @@ bool Docker::startNF(StartNFIn sni)
 	
 	string uri_image = description->getURI();
 	
-	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
 	stringstream command;
 	command << PULL_AND_RUN_DOCKER_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
 		
-	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
-		command << " "  << *pn;
+	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
+		command << " "  << pn->second;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -54,7 +54,7 @@ bool Docker::stopNF(StopNFIn sni)
 	stringstream command;
 	command << STOP_DOCKER_NF << " " << lsiID << " " << nf_name;
 	
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
 

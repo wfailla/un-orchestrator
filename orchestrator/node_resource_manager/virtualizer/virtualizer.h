@@ -61,9 +61,10 @@ public:
 	*
 	*	@param:	physicalName	Real name of the port
 	*	@param:	name			Name of the port as to be exported by the virtualizer
-	*	@param:	memory			Type of the port
+	*	@param:	type			Type of the port
+	*	@param: sap				Service access point identifier associated with the port
 	*/
-	static bool addPort(char *physicalName, char *name, char *type);
+	static bool addPort(char *physicalName, char *name, char *type, char *sap);
 	
 	/**
 	*	@brief: Edit the port ID of a specific port in the virtualizer

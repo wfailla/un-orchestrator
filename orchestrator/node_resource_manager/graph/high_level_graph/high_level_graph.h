@@ -31,6 +31,8 @@ namespace highlevel
 */
 class Graph
 {
+public:
+	typedef map<string, list<unsigned int> > t_nfs_ports_list;
 
 private:	
 	/**
@@ -38,7 +40,7 @@ private:
 	*		instance, if in the graph there is NF:1 and NF:2,
 	*		an element of the map is <NF, <1,2> >
 	*/
-	map<string, list<unsigned int> > networkFunctions;
+	t_nfs_ports_list networkFunctions;
 
 	/**
 	*	@brief: physical ports to be attached to the graph
@@ -101,7 +103,7 @@ public:
 	/**
 	*	@brief: Return the NFs of the graph and the ports they require
 	*/
-	map<string, list<unsigned int> > getNetworkFunctions();
+	t_nfs_ports_list getNetworkFunctions();
 	
 	/**
 	*	@brief: Add an end point to the graph, to be used to connect the graph itself with

@@ -117,7 +117,7 @@ bool Native::startNF(StartNFIn sni) {
 
 	uint64_t lsiID = sni.getLsiID();
 	std::string nf_name = sni.getNfName();
-	std::list<std::string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
 	std::stringstream uri;
@@ -138,8 +138,8 @@ bool Native::startNF(StartNFIn sni) {
 	command << PULL_AND_RUN_NATIVE_NF << " " << lsiID << " " << nf_name << " " << uri.str() << " " << n_ports;
 	
 	//create the names of the ports
-	for(std::list<std::string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
-		command << " " << *pn;
+	for(std::map<unsigned int, std::string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
+		command << " " << pn->second;
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 

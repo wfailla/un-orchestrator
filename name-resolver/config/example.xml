@@ -36,20 +36,35 @@
 
 	<network-function name="example" num-ports="2" summary="Example VNF with several implementations">
 		<!-- Several implementations are available for this network function -->
+
 		<native uri="../NFs/native/example/nativeNF_example.tar.gz" dependencies="iptables ebtables" location="local"/>
 		<docker uri="example"/>
 		<dpdk uri="https://nf_repository.com/example" cores="1" location="remote"/>
 		<dpdk uri="../NFs/dpdk/example/build/example" cores="1" location="local"/>
-		<kvm uri="../NFs/kvm/example/example_vnf_template.xml"/>
+		<kvm uri="../NFs/kvm/example/example_vnf_template.xml">
+			<!--
+				KVM requires to specify, for each port of the VM, it's type.
+				Note that some types are not available with all the possibile vSwitches.
+				Possible values are:
+				*	vhost
+				*	usvhost
+				*	ivshmem
+			-->
+			<port port-id="1" port-type="vhost"/>
+			<port port-id="2" port-type="vhost"/>
+		</kvm>
 		
 	</network-function>
 
-	<network-function name="usvhost_example"  summary="Network function based on user space vhost">
+	<network-function name="usvhost_example" num-ports="2" summary="Network function based on user space vhost">
 		<!-- Point to a Libvirt XML domain template -->
-		<kvm uri="../NFs/kvm/example-dpdk-usvhost/kvm_usvhost_vnf.xml"/>
+		<kvm uri="../NFs/kvm/example-dpdk-usvhost/kvm_usvhost_vnf.xml">
+			<port port-id="1" port-type="usvhost"/>
+			<port port-id="2" port-type="usvhost"/>
+		</kvm>
 	</network-function>
 	
-	<network-function name="firewall"  num-ports="2" summary="iptables based firewall">
+	<network-function name="fw"  num-ports="2" summary="iptables based firewall">
 		<!-- Only a docker implementation is available for this network function -->
 		<docker uri="firewall"/>
 	</network-function>
@@ -59,12 +74,12 @@
 		<dpdk uri="../NFs/dpdk/dpi/build/dpi" cores="1" location="local"/>
 	</network-function>
 	
-	<network-function name="of_bridge" summary="OpenFlow bridge that receives rules from a controller that is in the network">
+	<network-function name="of_bridge" num-ports="6"  summary="OpenFlow bridge that receives rules from a controller that is in the network">
 		<!-- Only a native implementation is available for this network function -->
 		<native uri="../NFs/native/openflow-bridge/openflow_bridge.tar.gz" dependencies="openvswitch" location="local"/>
 	</network-function>
 	
-	<network-function name="vpn_sec" summary="Creates a tunnel IPsec">
+	<network-function name="vpn_sec" num-ports="2"  summary="Creates a tunnel IPsec">
 		<!-- Only a native implementation is available for this network function -->
 		<native uri="../NFs/native/vpn_security/vpn_sec.tar.gz" dependencies="ipsec-tools iptables" location="local"/>
 	</network-function>

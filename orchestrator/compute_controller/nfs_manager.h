@@ -6,7 +6,7 @@
 #include "startNF_in.h"
 #include "stopNF_in.h"
 #include "description.h"
-#include "plugins/dpdk/dpdk_description.h"
+//#include "plugins/dpdk/dpdk_description.h"
 #include <typeinfo>
 
 /**
@@ -55,6 +55,11 @@ public:
 	*/
 	void setDescription(Description *description);
 	
+	/**
+	*	@brief: set the description of the network function to be handled by the manager
+	*/
+	const Description* getDescription() { return description; }
+
 	/**
 	*	@brief: provide the type of the network function handled by the manager
 	*/

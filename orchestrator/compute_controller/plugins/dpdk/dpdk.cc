@@ -13,7 +13,7 @@ bool Dpdk::startNF(StartNFIn sni)
 	string nf_name = sni.getNfName();
 	uint64_t coreMask = sni.getCoreMask();
 	
-	list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 		
 	string uri_image = description->getURI();	
@@ -25,22 +25,19 @@ bool Dpdk::startNF(StartNFIn sni)
 		if(dpdkDescr.getLocation() == "local")
 			uri << "file://";
 	} catch (exception& e) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s", e.what());
+		logger(ORCH_DEBUG_INFO, DPDK_MODULE_NAME, __FILE__, __LINE__, "exception %s", e.what());
 		return false;
 	}
 
 	uri << uri_image;
 
 	stringstream command;
-	
 	command << PULL_AND_RUN_DPDK_NF << " " << lsiID << " " << nf_name << " " << uri.str() << " " << coreMask <<  " " << NUM_MEMORY_CHANNELS << " " << n_ports;
 		
-	for(list<string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
-		command << " "  << *pn;
+	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
+		command << " "  << pn->second;
 
-
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
-			"Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, DPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -60,8 +57,7 @@ bool Dpdk::stopNF(StopNFIn sni)
 		
 	command << STOP_DPDK_NF << " " << lsiID << " " << nf_name;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
-			"Executing command \"%s\"",command.str().c_str());
+	logger(ORCH_DEBUG_INFO, DPDK_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -87,7 +83,7 @@ string Dpdk::getCores() {
 		 * It is not a DPDK description
 		 */
 
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__,
+		logger(ORCH_WARNING, DPDK_MODULE_NAME, __FILE__, __LINE__,
 				"Exception %s raised! Wrong description treated as dpdk description", e.what());
 		return "";
 	}

@@ -86,9 +86,9 @@ are supported with the different vSwitches.
 
 |                            |   Docker      |    KVM   |   KVM-DPDK (ivshmem)   |     DPDK processes     |  Native  |
 |----------------------------|---------------|----------|------------------------|------------------------|----------|
-| **xDPd-DPDK**              |    **Yes***   | **Yes*** |          No            |         **Yes**        | **Yes**  |
+| **xDPd-DPDK**              |    **Yes***   | **Yes*** |          No            |         **Yes**        |    NO    |
 | **OvS (OVSDB / OFconfig)** |    **Yes**    | **Yes**  | No (requires OvS-DPDK) | No (requires OvS-DPDK) | **Yes**  |
-| **OvS-DPDK**               |    **Yes***   | **Yes**  |        **Yes**         |         **Yes**        | **Yes**  |
+| **OvS-DPDK**               |    **Yes***   | **Yes**  |        **Yes**         |         **Yes**        |    NO    |
 
 \* In this case the packet exchange between the virtual switch and the execution
 environment is not optimized.

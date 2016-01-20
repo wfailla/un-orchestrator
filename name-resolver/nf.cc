@@ -1,15 +1,15 @@
 #include "nf.h"
 
 
-NF::NF(string name, int nports, string description) :
-	name(name),nports(nports),description(description)
+NF::NF(string name, int nports, string summary) :
+	name(name),nports(nports),summary(summary)
 {
 
 }
 
-void NF::addImplementation(Description *description)
+void NF::addImplementation(Implementation *implementation)
 {
-	descriptions.push_back(description);
+	implementations.push_back(implementation);
 }
 
 string NF::getName()
@@ -23,15 +23,17 @@ Object NF::toJSON()
 	
 	nf["name"]  = name;
 	nf["nports"]  = nports;
-	nf["summary"] = description;
+	nf["summary"] = summary;
 	
-	Array descr;
-	for(list<Description*>::iterator i = descriptions.begin(); i != descriptions.end();i++)
+	Array impl_ary;
+	for(list<Implementation*>::iterator i = implementations.begin(); i != implementations.end();i++)
 	{
-		descr.push_back((*i)->toJSON());
+		Object impl;
+		(*i)->toJSON(impl);
+		impl_ary.push_back(impl);
 	}
 	
-	nf["descriptions"] = descr;
+	nf["implementations"] = impl_ary;
 	
 	return nf;
 }

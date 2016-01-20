@@ -50,7 +50,7 @@ typedef struct
 		unsigned int number_of_ports;
 		ComputeController *computeController;
 		
-		list<string> namesOfPortsOnTheSwitch;
+		map<unsigned int, string> namesOfPortsOnTheSwitch;
 	}to_thread_t;
 
 class GraphManager

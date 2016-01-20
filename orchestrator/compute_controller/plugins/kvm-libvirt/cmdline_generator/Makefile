@@ -32,7 +32,7 @@
 #  version: DPDK.L.1.2.1-3
 
 ifeq ($(RTE_SDK),)
-$(error "Please define RTE_SDK environment variable")
+$(error "Please define RTE_SDK environment variable (it must point to the DPDK folder)")
 endif
 
 # Default target, can be overriden by command line or environment

@@ -19,7 +19,7 @@ class NFType
 public:
 	static string toString(nf_t type)
 	{
-#ifdef ENABLE_DPDK_PROCESSES
+#if defined(ENABLE_DPDK_PROCESSES) || defined(VSWITCH_IMPLEMENTATION_XDPD)
 		if(type == DPDK)
 			return string("dpdk");
 #endif
@@ -41,7 +41,6 @@ public:
 		assert(0);
 		return "";
 	}
-	
 	
 	static bool isValid(string type)
 	{

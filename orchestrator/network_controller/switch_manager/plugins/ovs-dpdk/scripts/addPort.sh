@@ -35,9 +35,8 @@ then
     ip link set $port up
     ip link set $port.lxc up
 
-    # The veth pair peer given to the container is the one with the port_name as derived from the NF-FG.
-    # This avoids having to alter the Docker command line based on what this script does. As a result, the
-    # veth pair peer we add to OVS is the one with  a decorated name:
+    #The veth pair peer given to the container is the one with the port_name as derived from the NF-FG.
+	#As a result, the veth pair peer we add to OVS is the one with the decorated name: port_name.lxc
     port=$port.lxc
 
     type_cmd=""

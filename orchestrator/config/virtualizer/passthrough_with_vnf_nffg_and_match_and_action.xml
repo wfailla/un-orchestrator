@@ -86,8 +86,8 @@
 					<id>1</id>
 					<priority>100</priority>
 					<port>../../../ports/port[id=1]</port>
-					<match/>
-					<action/>
+					<match>dl_vlan=0x026</match>	<!-- Match the vlan tag -->
+					<action>strip_vlan</action>		<!-- Strip the vlan tag -->
 					<out>../../../NF_instances/node[id=NFa]/ports/port[id=1]</out>
 				</flowentry>
 				<flowentry>
@@ -95,7 +95,7 @@
 					<priority>100</priority>
 					<port>../../../NF_instances/node[id=NFa]/ports/port[id=2]</port>
 					<match/>
-					<action/>
+					<action>push_vlan:0x26</action>	<!-- Add the vlan tag -->
 					<out>../../../ports/port[id=2]</out>
 				</flowentry>
 				<flowentry>
