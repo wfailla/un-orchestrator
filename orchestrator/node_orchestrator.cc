@@ -7,6 +7,11 @@
 #include "utils/logger.h"
 #include "node_resource_manager/rest_server/rest_server.h"
 
+#ifdef ENABLE_DOUBLE_DECKER
+	#include "node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h"
+	#include "node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h"
+#endif
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +37,10 @@ struct MHD_Daemon *http_daemon = NULL;
 *
 */
 SQLiteManager *dbm = NULL;
+
+#ifdef ENABLE_DOUBLE_DECKER
+	DDClientManager *client = new DDClientManager();
+#endif
 
 /**
 *	Private prototypes
@@ -62,6 +71,10 @@ void singint_handler(int sig)
 #endif
 	
 	dbm->eraseAllToken();
+
+#ifdef ENABLE_DOUBLE_DECKER
+	client->terminateClient();
+#endif	
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Bye :D");
 	exit(EXIT_SUCCESS);
@@ -147,6 +160,19 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 #endif
+
+#ifdef ENABLE_DOUBLE_DECKER
+	/*Client pub/sub*/
+	if(!client->publishBoot())
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the Double Decker client. The %s cannot be run.",MODULE_NAME);
+		
+		client->terminateClient();
+		
+		exit(EXIT_FAILURE);	
+	}
+#endif
+
 	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);

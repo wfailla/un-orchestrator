@@ -3,11 +3,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings )
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings )
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
+
 
 
 # Rather complicated CMake code for setting the logging level
@@ -105,6 +106,19 @@ IF(ENABLE_OVSDB_DPDK)
 	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
 ENDIF(ENABLE_OVSDB_DPDK)
 #################################################################################################################
+
+# Rather complicated CMake code for selecting the PubSub implementation
+SET(ENABLE_DOUBLE_DECKER "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
+SET(ENABLE_DOUBLE_DECKER_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
+SET_PROPERTY(CACHE ENABLE_DOUBLE_DECKER PROPERTY STRINGS ${ENABLE_DOUBLE_DECKER_VALUES})
+LIST(FIND ENABLE_DOUBLE_DECKER_VALUES ${ENABLE_DOUBLE_DECKER} ENABLE_DOUBLE_DECKER_INDEX)
+
+IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL -1)
+	message(FATAL_ERROR "Option ${ENABLE_DOUBLE_DECKER} not supported, valid entries are ${ENABLE_DOUBLE_DECKER_VALUES}")
+ENDIF()
+IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL 1)
+	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER)
+ENDIF()
 
 OPTION(
 	RUN_NFS
@@ -294,9 +308,25 @@ SET(SOURCES
 	utils/sockutils.c
 )
 
+IF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
+    SET(SOURCES1
+    ${SOURCES}
+		node_resource_manager/pub_sub_manager/PubSubClientManager.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
+		              
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClient.h
+    )
+ELSE()
+     SET(SOURCES1
+         ${SOURCES}
+    	)
+ENDIF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
+
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/xdpd/xdpd_manager.h
 	network_controller/switch_manager/plugins/xdpd/xdpd_manager.cc
 	network_controller/switch_manager/plugins/xdpd/xdpd_constants.h
@@ -305,7 +335,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ofconfig/commands.h
 	network_controller/switch_manager/plugins/ovs-ofconfig/commands.cc
 	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_constants.h
@@ -316,7 +346,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.h
 	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.cc
 	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_constants.h
@@ -325,7 +355,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_constants.h
@@ -437,7 +467,7 @@ IF(ENABLE_KVM-IVSHMEM)
 	LINK_DIRECTORIES(
 		$ENV{DPDK_PATH}/lib
 	)
-ENDIF(ENABLE_KVM-IVSHMEM)
+ENDIF(${ENABLE_KVM_INDEX} EQUAL 2)
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
@@ -448,6 +478,12 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	libxml2.so
 	libsqlite3.so
 	libcrypto.so
+	liburcu.so
+	libzmq.so
+	libczmq.so
+	libsodium.so
+	libjson.so
+	libddclient.so
 	-lrt
 )
 
