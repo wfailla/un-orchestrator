@@ -16,5 +16,7 @@ This will create the Docker image starting from the base image specified in `Doc
 The script start.sh is executed at startup and sets an ip addres (10.0.10.1/24) to a control interface.
 This ip is hard coded for now, it should eventually be imported from the nffg.
 
+The control interface is out-of-band via a connection to the docker0 switch on the host.
+
 Currently no multiple instances of a VNF are allowed on the UN.
 So if multiple ovs containers are needed, they should be buiuld with a different tag (eg. ovs2, ovs3, ...) and deployed as such via the name-resolver/nffg file.
