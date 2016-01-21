@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Author: Sergio Nuccio
-#Date: November 7th 2015
+#Date: January 20th 2015
 #Brief: stop script for a VNF type 5 implemented with openvswitch
 
 
@@ -15,8 +15,8 @@
 
 if (( $EUID != 0 )) 
 then
-    echo "[$0] This script must be executed with ROOT privileges"
-    exit 0
+	echo "[$0] This script must be executed with ROOT privileges"
+	exit 1
 fi
 
 if [ $# -le 2 ]
@@ -36,22 +36,24 @@ br_name=$1_$2_ofb
 #db_name: <lsi_ID>_<NFname>.db
 db_name=$1_$2.db
 
-#kill ovsdb process???
-echo "to be implemented!!!"
+#kill ovsdb process
+pid1=`cat /var/run/openvswitch/$db_name.pid`
+pid2=`cat /var/run/openvswitch/vswitchd$db_name.pid`
+
+kill $pid1
+kill $pid2
+
 #remove ovs database
-#rm /usr/local/etc/openvswitch/$db_name
+rm /usr/local/etc/openvswitch/$db_name
 
 #remove log files
-#rm /var/log/openvswitch/ovs-vswitchd_$db_name.log
-#rm /var/log/openvswitch/ovsdb-server_$db_name.log
+rm /var/log/openvswitch/ovs-vswitchd_$db_name.log
+rm /var/log/openvswitch/ovsdb-server_$db_name.log
 
 #remove pid files
-#rm /var/run/openvswitch/$db_name.pid
-#rm /var/run/openvswitch/vswitchd$db_name.pid
+rm /var/run/openvswitch/$db_name.pid
+rm /var/run/openvswitch/vswitchd$db_name.pid
 
-#delete the ovs bridge
-#ovs-vsctl del-br $br_name
-
-echo "[nativeNF_OF_bridge_start] openflow_bridge stopped"
+echo "[$0] openflow_bridge stopped"
 
 exit 0

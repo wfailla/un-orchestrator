@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Author: Sergio Nuccio
-#Date: November 12th 2015
+#Date: January 20th 2015
 #Brief: start script for VNF type 5 implemented with openvswitch
 
 #command line: 
@@ -63,7 +63,8 @@ ovs-vsctl --db=tcp:127.0.0.1:2001 add-br $br_name
 ovs-vsctl --db=tcp:127.0.0.1:2001 set-controller $br_name tcp:10.0.0.1:6633
 
 #create virtual links between this bridge and the LSI
-#current=4 -> attach control port to the switch too -> in-band controller!
+#current=4 -> attach control port to the switch too -> in-band!
+#current=5 -> control port is detached from the switch -> out-of-band! 
 current=5
 for (( c=1; c < $3; c++ ))
 do
