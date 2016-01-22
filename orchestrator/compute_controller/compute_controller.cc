@@ -684,7 +684,7 @@ bool ComputeController::selectImplementation()
 
 			if(selectedImplementation == NULL) {
 
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available description for NF %s", nf->first.c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available description for NF \'%s\'", nf->first.c_str());
 				return false;
 				
 			}

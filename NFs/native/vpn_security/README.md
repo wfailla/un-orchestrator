@@ -5,7 +5,7 @@ realizes a site-to-site secure VPN exploiting IPsec.
 
 The overall service is depicted in the following figure.
 
-![vpnsec](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/native_function_support/images/vpn_sec_configuration.png)
+![vpnsec](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/vpn_sec_configuration.png)
 
 The public IP addresses `x.x.x.x` and `y.y.y.y` are the end points
 of the IPsec tunnel. All traffic sent between the networks `10.0.1.0/24` and

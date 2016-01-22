@@ -30,7 +30,7 @@ controller and the compute controller, which are exploited by the un-orchestrato
 respectively with the vSwitch and the hypervisor(s). These two modules are detailed in
 the following.
 
-![universal-node](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/native_function_support/images/universal-node.png)
+![universal-node](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/master/images/universal-node.png)
 
 
 ### The network controller
