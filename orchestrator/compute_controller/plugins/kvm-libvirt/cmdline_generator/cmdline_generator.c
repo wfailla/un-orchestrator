@@ -152,7 +152,7 @@ int expose_port_cmdline(const char * port_name, const char * metadata)
 	}
 
 	/* look for the reception ring (OVS variant, then xDPd variant) */
-	snprintf(ring_name, 20, DPDKR_RX_FORMAT, port_name);
+	snprintf(ring_name, RING_NAME_MAXLEN, DPDKR_RX_FORMAT, port_name);
 	rx = rte_ring_lookup(ring_name);
 	if(rx == NULL)
 	{
