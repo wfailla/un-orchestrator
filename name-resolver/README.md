@@ -47,7 +47,7 @@ and type the following commands:
 The full list of command line parameters for the name-resolver can be
 retrieved by the following command:
 
-    $ sudo ./name-resolver --h
+	$ sudo ./name-resolver --h
 
 Please refer to the help provided by the name-resolver itself in order to
 understand how to use the different options.
