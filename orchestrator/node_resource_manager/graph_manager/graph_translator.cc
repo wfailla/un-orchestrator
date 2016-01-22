@@ -188,36 +188,35 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" still used %d times",ss.str().c_str(), availableEndPoints[ss.str()]);
 			}
 		
+			//Translate the match
+			lowlevel::Match lsi0Match;
+			string action_info = action->getInfo();
+		
 			highlevel::ActionNetworkFunction *action_nf = (highlevel::ActionNetworkFunction*)action;
 		
 			map<string, uint64_t> ep_vlinks = tenantLSI->getEndPointsVlinks();
 			if(ep_vlinks.count(ss.str()) == 0)
 			{
 				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a endpoint match \"%s:%d\" which has not been translated into a virtual link",ss.str().c_str(),ss.str().c_str());
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tEndpoint translated to virtual links are the following:");
-				for(map<string, uint64_t>::iterator vl = ep_vlinks.begin(); vl != ep_vlinks.end(); vl++)
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s",(vl->first).c_str());
-				assert(0);
 			}
-		
-			uint64_t vlink_id = ep_vlinks.find(ss.str())->second;
-			vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
-			for(;vlink != tenantVirtualLinks.end(); vlink++)
+			else
 			{
-				if(vlink->getID() == vlink_id)
-					break;
-			}
-			assert(vlink != tenantVirtualLinks.end());
+				uint64_t vlink_id = ep_vlinks.find(ss.str())->second;
+				vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
+				for(;vlink != tenantVirtualLinks.end(); vlink++)
+				{
+					if(vlink->getID() == vlink_id)
+						break;
+				}
+				assert(vlink != tenantVirtualLinks.end());
 		
-			//Al the traffic for a NF is sent on the same virtual link
-			stringstream action_port;
-			string action_info = action->getInfo();
-			action_port << action_info << "_" << action_nf->getPort();
+				//Al the traffic for a NF is sent on the same virtual link
+				stringstream action_port;
+				action_port << action_info << "_" << action_nf->getPort();
 			
-			//Translate the match
-			lowlevel::Match lsi0Match;
-			lsi0Match.setAllCommonFields(match);		
-			lsi0Match.setInputPort(vlink->getRemoteID());
+				lsi0Match.setAllCommonFields(match);		
+				lsi0Match.setInputPort(vlink->getRemoteID());
+			}
 
 			if(action->getType() == highlevel::ACTION_ON_PORT)
 			{

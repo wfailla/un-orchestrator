@@ -793,36 +793,38 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 	//associate the vlinks to the NFs ports
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF port is virtual link ID:");
 	map<string, uint64_t> nfs_vlinks;
-	vector<VLink>::iterator vl1 = vls.begin();
-	for(set<string>::iterator nf = vlNFs.begin(); nf != vlNFs.end(); nf++, vl1++)
+	if(vls.size() != 0)
 	{
-		nfs_vlinks[*nf] = vl1->getID();
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*nf).c_str(),vl1->getID());
-	}
-	lsi->setNFsVLinks(nfs_vlinks);
+		vector<VLink>::iterator vl1 = vls.begin();
+		for(set<string>::iterator nf = vlNFs.begin(); nf != vlNFs.end(); nf++, vl1++)
+		{
+			nfs_vlinks[*nf] = vl1->getID();
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*nf).c_str(),vl1->getID());
+		}
+		lsi->setNFsVLinks(nfs_vlinks);
+		//associate the vlinks to the physical ports
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Physical port is virtual link ID:");
+		map<string, uint64_t> ports_vlinks;
+		vector<VLink>::iterator vl2 = vls.begin();
+		for(set<string>::iterator p = vlPhyPorts.begin(); p != vlPhyPorts.end(); p++, vl2++)
+		{
+			ports_vlinks[*p] = vl2->getID();
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*p).c_str(),vl2->getID());
+		}
+		lsi->setPortsVLinks(ports_vlinks);
 	
-	//associate the vlinks to the physical ports
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Physical port is virtual link ID:");
-	map<string, uint64_t> ports_vlinks;
-	vector<VLink>::iterator vl2 = vls.begin();
-	for(set<string>::iterator p = vlPhyPorts.begin(); p != vlPhyPorts.end(); p++, vl2++)
-	{
-		ports_vlinks[*p] = vl2->getID();
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*p).c_str(),vl2->getID());
-	}
-	lsi->setPortsVLinks(ports_vlinks);
+		//associate the vlinks to the endpoints
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint is virtual link ID:");
+		map<string, uint64_t> endpoints_vlinks;
+		vector<VLink>::iterator vl3 = vls.begin();
 	
-	//associate the vlinks to the endpoints
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint is virtual link ID:");
-	map<string, uint64_t> endpoints_vlinks;
-	vector<VLink>::iterator vl3 = vls.begin();
-	
-	for(set<string>::iterator ep = vlEndPoints.begin(); ep != vlEndPoints.end(); ep++, vl3++)
-	{			
-		endpoints_vlinks[*ep] = vl3->getID();
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*ep).c_str(),vl3->getID());
+		for(set<string>::iterator ep = vlEndPoints.begin(); ep != vlEndPoints.end(); ep++, vl3++)
+		{			
+			endpoints_vlinks[*ep] = vl3->getID();
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*ep).c_str(),vl3->getID());
+		}
+		lsi->setEndPointsVLinks(endpoints_vlinks);
 	}
-	lsi->setEndPointsVLinks(endpoints_vlinks);
 
 	/**
 	*	4) Start the network functions
