@@ -1,17 +1,18 @@
-## KVM-based example VNF
+## KVM-based example VNF implemented using DPDK
 
-This folder contains the libvirt template of a virtual machine that will run a VNF.
+This folder contains the libvirt template of a virtual machine that will run a VNF implemented as a DPDK application in the guest. This applies to both a VM communcating over IVSHMEM (DPDK Rings) or using user-space Virtio vHost (but only if DPDK is used in the guests for packet processing).
+
 In the template it is possible to specify the VM requirements in terms of memory and virtual CPUs,
 the devices to be attached to the VM itself (e.g., the disk image), and more.
 
 Note that the template describes **the VM that runs the network function**, and not the network function itself.
-In fact, the disk imege to be connected to the VM must be already created and configured to run the desired virtual network function.
+In fact, the disk image to be connected to the VM must be already created and configured to run the desired virtual network function.
 
 ### Creating your own template
 
-In the template, you have to specify the `<name>` of the VM, the amount of `<memory>` required and the number of virtual CPUs (`<vcpu>`).
-Since the VM will run a DPDK process that will interact with the virtual switch through DPDK rings, it needs a number of huge pages.
-The following example specifies that each huge page must have size of 1 GB.
+In the template, you have to specify the the amount of `<memory>` required and the number of virtual CPUs (`<vcpu>`).
+Since the VM will run a DPDK process, it needs a number of huge pages.
+The following example specifies that each huge page must have a size of 1 GB. This should match the host huge pages configuration.
 
 	<memoryBacking>
 		<hugepages>
@@ -35,5 +36,4 @@ in `qcow` format and is at `/var/lib/libvirt/images/ubuntu.qcow`.
 		<address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
 	</disk>
 
-It is worth noting that it is not necessary to specify the virtual network interfaces (vNICs). In fact, the number of vNICs will be decided by the
-orchestrator, according to the graph to be implemented.
+It is worth noting that it is not necessary to specify the virtual network interfaces (vNICs). In fact, the number of vNICs and their types (vhost, ivshmem, usvhost) is derived from the NF implementation description in the name-resolver.
