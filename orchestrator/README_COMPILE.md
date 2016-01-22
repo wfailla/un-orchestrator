@@ -20,7 +20,12 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; - libboost-all-dev: nice c++ library with tons of useful functions
 	; - libmicrohttpd-dev: embedded micro http server
 	; - libxml2-dev: nice library to parse and create xml
-	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev libssl-dev
+	; - sqlite3: command line interface for SQLite 3
+	; - libsqlite3-dev: SQLite 3 development files
+	: - libssl-dev: SSL development libraries, header files and documentation
+	; - libjson0-dev: JSON manipulation library
+	; - liburcu-dev: userspace RCU (read-copy-update) library - development files
+	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev sqlite3 libsqlite3-dev libssl-dev libjson0-dev liburcu-dev
 
 	; Install JSON Spirit (nice library to parse JSON files)
 	$ git clone https://github.com/sirikata/json-spirit
@@ -42,14 +47,44 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; Now install the above library according to the description provided
 	; in the cloned folder
 
-	; Install sqlite3
-	$ sudo apt-get install sqlite3 libsqlite3-dev
-
 	; Install inih
 	; a copy of inih is provided in `[un-orchestrator]/contrib/inih.zip`
 
 	; Now install the above library according to the description provided
 	; in the cloned folder
+	
+	; Install libsodium (a modern and easy-to-use crypto library)
+	$ git clone git://github.com/jedisct1/libsodium.git
+    $ cd libsodium
+    $ ./autogen.sh
+    $ ./configure && make check
+    $ sudo make install
+    $ sudo ldconfig
+    $ cd ..
+    
+    ; Install libzmq (ZeroMQ core engine in C++, implements ZMTP/3.0)
+    $ git clone git://github.com/zeromq/libzmq.git
+    $ cd libzmq
+    $ ./autogen.sh
+    $ ./configure && make check
+    $ sudo make install
+    $ sudo ldconfig
+    $ cd ..
+    
+    ; Install czmq (High-level C binding for ØMQ)
+    $ git clone git://github.com/zeromq/czmq.git
+    $ cd czmq
+    $ ./autogen.sh
+    $ ./configure && make check
+    $ sudo make install
+    $ sudo ldconfig
+    $ cd ..
+    
+    ; Install DoubleDecker (Hierarchical messaging system)
+    ; a copy of DoubleDecker is provided in `[un-orchestrator]/contrib/double-decker-client-library.zip`
+
+	; Now install the above library according to the description provided
+	; in the cloned folder 
 
 ## Install the proper virtual switch
 
