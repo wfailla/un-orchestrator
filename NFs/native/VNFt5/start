@@ -42,17 +42,19 @@ db_name=$1_$2.db
 
 ifconfig lo up	#really needed?
 
-ovsdb-tool create /usr/local/etc/openvswitch/$db_name /usr/share/openvswitch/vswitch.ovsschema
+temp_dir="$1_$1_$2_tmp_$2"
 
-ovsdb-server /usr/local/etc/openvswitch/$db_name --remote=ptcp:2001:127.0.0.1 \
+ovsdb-tool create $temp_dir/$db_name $temp_dir/vswitch.ovsschema
+
+ovsdb-server $temp_dir/$db_name --remote=ptcp:2001:127.0.0.1 \
 		--remote=db:Open_vSwitch,Open_vSwitch,manager_options \
-		--log-file=/var/log/openvswitch/ovsdb-server_$db_name.log \
+		--log-file=$temp_dir/ovsdb-server_$db_name.log \
 		--pidfile=/var/run/openvswitch/$db_name.pid --detach
 		
 ovs-vsctl --db=tcp:127.0.0.1:2001 --no-wait init
 
 ovs-vswitchd tcp:127.0.0.1:2001 --pidfile=/var/run/openvswitch/vswitchd$db_name.pid \
-		--log-file=/var/log/openvswitch/ovs-vswitchd_$db_name.log --detach
+		--log-file=$temp_dir/ovs-vswitchd_$db_name.log --detach
 
 #control interface
 ifconfig $4 10.0.0.2/24 up
@@ -84,8 +86,8 @@ ovs-vsctl --db=tcp:127.0.0.1:2001 set bridge $br_name other_config:disable-in-ba
 ovs-vsctl --db=tcp:127.0.0.1:2001 set controller $br_name connection_mode=out-of-band
 
 #set local ip address and netmask on the bridge
-ovs-vsctl --db=tcp:127.0.0.1:2001 set controller $1 local_ip=10.0.0.2
-ovs-vsctl --db=tcp:127.0.0.1:2001 set controller $1 local_netmask=255.0.0.0
+ovs-vsctl --db=tcp:127.0.0.1:2001 set controller $br_name local_ip=10.0.0.2
+ovs-vsctl --db=tcp:127.0.0.1:2001 set controller $br_name local_netmask=255.0.0.0
 
 echo "[$0] openflow_bridge started"
 

@@ -30,6 +30,8 @@ fi
 #debug
 set -x
 
+temp_dir="$1_$1_$2_tmp_$2"
+
 #bridge name: <lsi_ID>_<NFname>_ofb
 br_name=$1_$2_ofb
 
@@ -44,15 +46,15 @@ kill $pid1
 kill $pid2
 
 #remove ovs database
-rm /usr/local/etc/openvswitch/$db_name
+rm $temp_dir/$db_name
 
 #remove log files
-rm /var/log/openvswitch/ovs-vswitchd_$db_name.log
-rm /var/log/openvswitch/ovsdb-server_$db_name.log
+rm $temp_dir/ovs-vswitchd_$db_name.log
+rm $temp_dir/ovsdb-server_$db_name.log
 
-#remove pid files
-rm /var/run/openvswitch/$db_name.pid
-rm /var/run/openvswitch/vswitchd$db_name.pid
+#remove pid files (automatically performed)
+#rm /var/run/openvswitch/$db_name.pid
+#rm /var/run/openvswitch/vswitchd$db_name.pid
 
 echo "[$0] openflow_bridge stopped"
 
