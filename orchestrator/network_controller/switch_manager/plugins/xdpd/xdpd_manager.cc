@@ -283,18 +283,22 @@ string XDPDManager::prepareCreateLSIrequest(CreateLsiIn cli)
 
 			switch (port_type) {
 				case VETH_PORT:
-					assert(nft == DOCKER);
+					assert(nft == DOCKER || nft == NATIVE);
+					if(nft == NATIVE){
+						//XXX xDPd does not expect the port type, but the VNF type
+						nft = DOCKER;
+					}
 					continue;
 				case DPDKR_PORT:
 					assert(nft == DPDK);
 					continue;
 				case VHOST_PORT:
-					//XXX xDPd does not exepct the port type, but the VNF type
+					//XXX xDPd does not expect the port type, but the VNF type
 					nft = DOCKER;
 					logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" (that is a VM) is handled in xDPd as a \"%s\"",(*nf).c_str(),(NFType::toString(nft)).c_str());
 					continue;
 				case IVSHMEM_PORT:				
-					//XXX xDPd does not exepct the port type, but the VNF type
+					//XXX xDPd does not expect the port type, but the VNF type
 					nft = DPDK;
 					logger(ORCH_DEBUG_INFO, XDPD_MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" (that is a VM) is handled in xDPd as a \"%s\"",(*nf).c_str(),(NFType::toString(nft)).c_str());
 					continue;
@@ -724,7 +728,11 @@ string XDPDManager::prepareCreateNFPortsRequest(AddNFportsIn anpi)
 
 		switch (port_type) {
 			case VETH_PORT:
-				assert(type == DOCKER);
+				assert(type == DOCKER || type == NATIVE);
+				if(type == NATIVE){
+					//XXX xDPd does not expect the port type, but the VNF type
+					type = DOCKER;
+				}
 				continue;
 			case DPDKR_PORT:
 				assert(type == DPDK);

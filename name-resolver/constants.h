@@ -34,14 +34,18 @@
 *	NFs configuration file
 */
 #define NETWORK_FUNCTION_ELEMENT	"network-function"
-#define IMPLEMENTATION_ELEMENT		"implementation"
 #define NAME_ATTRIBUTE				"name"
-#define DESCRIPTION_ATTRIBUTE		"description"
+#define SUMMARY_ATTRIBUTE			"summary"
 #define NUM_PORTS_ATTRIBUTE			"num-ports"
 #define TYPE_ATTRIBUTE				"type"
 #define URI_ATTRIBUTE				"uri"
 #define CORES_ATTRIBUTE				"cores"
 #define LOCATION_ATTRIBUTE			"location"
+#define DEPENDENCIES_ATTRIBUTE		"dependencies"
+#define DPDK_DESCRIPTION			"dpdk"
+#define DOCKER_DESCRIPTION			"docker"
+#define KVM_DESCRIPTION				"kvm"
+#define NATIVE_DESCRIPTION			"native"
 
 /*
 *	Name of the file used to print log information

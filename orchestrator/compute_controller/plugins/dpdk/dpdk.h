@@ -5,6 +5,7 @@
 
 #include "../../nfs_manager.h"
 #include "dpdk_constants.h"
+#include "dpdk_description.h"
 
 #include <string>
 #include <sstream>
@@ -16,10 +17,13 @@ class Dpdk : public NFsManager
 {
 public:
 	
-	bool isSupported();
+	bool isSupported(Description&);
+
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
+
+	string getCores();
 };
 
 #endif //DPDK_H_

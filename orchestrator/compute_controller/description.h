@@ -42,32 +42,24 @@ bool operator==(const nf_port_info& lhs, const nf_port_info& rhs);
 
 class Description
 {
-friend NFsManager;
-
-public:
 
 private:
 	nf_t type;
 	string uri;
-	//The next attribute are meningful only for DPDK VNFs
-	//FIXME: this is bad.. The same description should be valid for all the NFs. Then, it is up to the proper
-	//plugin to decide wheter an information has to be used or not.
-	string cores;
-	string location;
+	bool supported;
 	std::map<unsigned int, PortType> port_types;
-	
+
 public:
-	Description(nf_t type, string uri, string cores, string location, std::map<unsigned int, PortType>& port_types);
-	Description(string type, string uri, string cores, string location, std::map<unsigned int, PortType>& port_types);
+	Description(nf_t type, string uri, std::map<unsigned int, PortType>& port_types);
+	Description(string type, string uri, std::map<unsigned int, PortType>& port_types);
+	virtual ~Description();
 	
 	string getURI() const;
-	string getLocation() const;
 	nf_t getType() const;
+	void setSupported(bool supported);
+	bool isSupported();
 	const std::map<unsigned int, PortType>& getPortTypes() const { return port_types; }
 	PortType getPortType(unsigned int port_id) const;
-	
-protected:
-	string getCores() const;
 };
 
 #endif //DESCRIPTION_H_

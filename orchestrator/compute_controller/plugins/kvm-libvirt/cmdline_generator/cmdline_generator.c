@@ -16,9 +16,11 @@
 
 #define RTE_LOGTYPE_APP RTE_LOGTYPE_USER1
 
-#define DPDKR_FORMAT "dpdkr%d"
-#define DPDKR_TX_FORMAT DPDKR_FORMAT"_tx"
-#define DPDKR_RX_FORMAT DPDKR_FORMAT"_rx"
+#define DPDKR_TX_FORMAT "%s_tx"
+#define DPDKR_RX_FORMAT "%s_rx"
+
+#define XDPD_TX_FORMAT "%s-to-nf"
+#define XDPD_RX_FORMAT "%s-to-xdpd"
 
 #define MEMPOOL_METADATA_NAME "OVSMEMPOOL"
 
@@ -129,31 +131,38 @@ error:
 
 int expose_port_cmdline(const char * port_name, const char * metadata)
 {
-	char ring_name[20];
-	int port_no;
+	const int RING_NAME_MAXLEN = 60;
+	char ring_name[RING_NAME_MAXLEN + 1];
+
 	struct rte_ring * rx;
 	struct rte_ring * tx;
 
-	/* it has to read just one integer that is the port name */
-	if(sscanf(port_name, DPDKR_FORMAT, &port_no) != 1)
-	{
-		return -1;
-	}
-
-	/* look for the transmission ring */
-	snprintf(ring_name, 20, DPDKR_TX_FORMAT, port_no);
+	/* look for the transmission ring (OVS variant, then xDPd variant) */
+	snprintf(ring_name, RING_NAME_MAXLEN, DPDKR_TX_FORMAT, port_name);
 	tx = rte_ring_lookup(ring_name);
 	if(tx == NULL)
 	{
-		return -1;
+		/* Try xDPd variant */
+		snprintf(ring_name, RING_NAME_MAXLEN, XDPD_TX_FORMAT, port_name);
+		tx = rte_ring_lookup(ring_name);
+		if(tx == NULL)
+		{
+			return -1;
+		}
 	}
 
-	/* look for the reception ring */
-	snprintf(ring_name, 20, DPDKR_RX_FORMAT, port_no);
+	/* look for the reception ring (OVS variant, then xDPd variant) */
+	snprintf(ring_name, RING_NAME_MAXLEN, DPDKR_RX_FORMAT, port_name);
 	rx = rte_ring_lookup(ring_name);
 	if(rx == NULL)
 	{
-		return -1;
+		/* Try xDPd variant */
+		snprintf(ring_name, RING_NAME_MAXLEN, XDPD_RX_FORMAT, port_name);
+		rx = rte_ring_lookup(ring_name);
+		if(rx == NULL)
+		{
+			return -1;
+		}
 	}
 
 	if(rte_ivshmem_metadata_add_ring(tx, metadata) < 0)

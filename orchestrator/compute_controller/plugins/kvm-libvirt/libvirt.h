@@ -91,7 +91,7 @@ public:
 	Libvirt();
 	~Libvirt();
 	
-	bool isSupported();
+	bool isSupported(Description&);
 	
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);

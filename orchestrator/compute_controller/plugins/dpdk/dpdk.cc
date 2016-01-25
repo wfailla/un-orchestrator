@@ -1,6 +1,6 @@
 #include "dpdk.h"
 
-bool Dpdk::isSupported()
+bool Dpdk::isSupported(Description&)
 {
 	//TODO: we are assuming that, if dpdk is enabled by compilation,
 	//it is supported
@@ -19,8 +19,16 @@ bool Dpdk::startNF(StartNFIn sni)
 	string uri_image = description->getURI();	
 		
 	stringstream uri;
-	if(description->getLocation() == "local")
-		uri << "file://";
+
+	try {
+		DPDKDescription& dpdkDescr = dynamic_cast<DPDKDescription&>(*description);
+		if(dpdkDescr.getLocation() == "local")
+			uri << "file://";
+	} catch (exception& e) {
+		logger(ORCH_DEBUG_INFO, DPDK_MODULE_NAME, __FILE__, __LINE__, "exception %s", e.what());
+		return false;
+	}
+
 	uri << uri_image;
 
 	stringstream command;
@@ -59,5 +67,26 @@ bool Dpdk::stopNF(StopNFIn sni)
 
 	return true;
 
+}
+
+string Dpdk::getCores() {
+	string cores;
+	try {
+
+		DPDKDescription& dpdkDescr = dynamic_cast<DPDKDescription&>(*description);
+		cores = dpdkDescr.getCores();
+
+	} catch (exception& e) {
+
+		/*
+		 * Bad cast
+		 * It is not a DPDK description
+		 */
+
+		logger(ORCH_WARNING, DPDK_MODULE_NAME, __FILE__, __LINE__,
+				"Exception %s raised! Wrong description treated as dpdk description", e.what());
+		return "";
+	}
+	return cores;
 }
 

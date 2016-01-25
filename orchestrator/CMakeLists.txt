@@ -102,7 +102,16 @@ IF(ENABLE_DOCKER)
 ENDIF(ENABLE_DOCKER)
 
 OPTION(
-	ENABLE_DPDK_PROCESSES
+	ENABLE_NATIVE
+	"Turn on the support of NFs implemented in native form"
+	OFF
+)
+IF(ENABLE_NATIVE)
+	ADD_DEFINITIONS(-DENABLE_NATIVE)
+ENDIF(ENABLE_NATIVE)
+
+
+OPTION(ENABLE_DPDK_PROCESSES
 	"Turn on the support of NFs implemented in as DPDK processes"
 	OFF
 )
@@ -343,12 +352,31 @@ IF(ENABLE_DPDK_PROCESSES)
 	compute_controller/plugins/dpdk/dpdk.h
 	compute_controller/plugins/dpdk/dpdk.cc
 	compute_controller/plugins/dpdk/dpdk_constants.h
+	compute_controller/plugins/dpdk/dpdk_description.cc
+	compute_controller/plugins/dpdk/dpdk_description.h
 	)
 ELSE()
      SET(SOURCES6
          ${SOURCES5}
     	)
 ENDIF(ENABLE_DPDK_PROCESSES)
+
+IF(ENABLE_NATIVE)
+    SET(SOURCES7
+    ${SOURCES6}
+	compute_controller/plugins/native/native.cc
+	compute_controller/plugins/native/native.h
+	compute_controller/plugins/native/native_constants.h
+	compute_controller/plugins/native/capability.h
+	compute_controller/plugins/native/capability.cc
+	compute_controller/plugins/native/native_description.h
+	compute_controller/plugins/native/native_description.cc
+	)
+ELSE()
+     SET(SOURCES7
+         ${SOURCES6}
+    	)
+ENDIF(ENABLE_NATIVE)
 
 
 INCLUDE_DIRECTORIES (
@@ -373,7 +401,7 @@ ENDIF(VIRTUALIZER_NFFG)
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES6}
+	${SOURCES7}
 )
 
 LINK_DIRECTORIES(
@@ -461,8 +489,8 @@ IF(ENABLE-DPDK-CMDLINE-GENERATOR AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) 
 	message(FATAL_ERROR "xDPd not supported with KVM-IVSHMEM")
 ENDIF(ENABLE-DPDK-CMDLINE-GENERATOR AND  (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 0) )
 
-IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
+IF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_NATIVE) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
 	#No execution environment is selected
 	message(FATAL_ERROR "At least one execution environmnet must be enabled")
-ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
+ENDIF( (NOT ENABLE_DOCKER) AND (NOT ENABLE_NATIVE) AND (NOT ENABLE_DPDK_PROCESSES) AND (NOT ENABLE_KVM) )
 

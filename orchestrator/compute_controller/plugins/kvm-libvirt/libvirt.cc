@@ -31,6 +31,7 @@ Libvirt::Libvirt()
 {
 #ifndef DIRECT_KVM_IVSHMEM
 	virSetErrorFunc(NULL, customErrorFunc);
+	connect();
 #endif
 }
 
@@ -42,7 +43,7 @@ Libvirt::~Libvirt()
 #endif
 }
 
-bool Libvirt::isSupported()
+bool Libvirt::isSupported(Description&)
 {
 #ifndef DIRECT_KVM_IVSHMEM
 	connect();
