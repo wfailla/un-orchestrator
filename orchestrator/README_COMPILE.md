@@ -44,6 +44,8 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 ## Install the proper virtual switch
 
+
+
 The current un-orchestrator supports different types of virtual switches.
 You have to install the one that you want to use, choosing from the
 possibilities listed in this section.
@@ -54,9 +56,13 @@ possibilities listed in this section.
 In order to install xDPd with DPDK support, you have to follow the steps below.
 
 	$ git clone https://github.com/bisdn/xdpd
+	$ git checkout stable
 	$ cd xdpd/
 
 	;Install all the libraries required by the README provided in this folder
+	;Edit config/dpdk.m4 and
+	; change DPDK_TARGET="x86_64-native-${OS}app-${TARGET_CC}"
+	;     to DPDK_TARGET="x86_64-ivshmem-${OS}app-${TARGET_CC}"
 	$ bash autogen.sh
 	$ cd build
 	$ ../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"
@@ -245,7 +251,18 @@ Finally, remember to select the proper `cmake` option when compiling the `un-orc
 
 ## Compile the un-orchestrator
 
-We are now ready to compile the un-orchestrator.
+We are now ready to compile the un-orchestrator. If you intend to enable support for DPDK IVSHMEM-based ports, you'll need to define environment variables pointing to your build of DPDK.
+If you are using xDPd (which includes its own DPDK tree and builds it), this would be:
+
+	$ export RTE_SDK=$XDPD_DIR/build/libs/dpdk
+	$ export RTE_TARGET=build
+
+Otherwise use:
+
+	$ export RTE_SDK=$DPDK_DIR
+	$ export RTE_TARGET=x86_64-ivshmem-linuxapp-gcc
+
+You can then build the un-orchestrator:
 
 	$ cd orchestrator
 
