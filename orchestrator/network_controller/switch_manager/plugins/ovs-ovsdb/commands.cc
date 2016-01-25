@@ -31,10 +31,18 @@ map<uint64_t, list<string> > vport_uuid;
 map<string, list<uint64_t> > virtual_link_id;
 /*map use to obtain name of port from port_id*/
 map<uint64_t, string> port_id;
-/*map use to id of switch from vport_id*/
-map<uint64_t, uint64_t> vl_id;
-/*map use to obtain id of peer vlink from local vlink*/
-map<uint64_t, uint64_t> vl_p;
+/*
+*	Map the port ID of the vlink on a switch ID
+*	There are two entries per vlink (an entry on the 'local LSI', one
+*	entry on the 'remote LSI'.
+*/
+map<uint64_t, uint64_t> vl_PortIDtoSwitchID;
+/*
+*	Map the port ID of the vlink on the 'local LSI' to the port ID of
+*	the vlink on the 'remote LSI'. 
+*	There is one entry per vlink.
+*/
+map<uint64_t, uint64_t> vl_LocalPortIDtoRemotePortID;
 /*map used to translate from port_name to DPDK Ring name*/
 map<string, string> dpdkr_from_uuid;
 /*map used to translate back from DPDK Ring name to port_id*/
@@ -402,7 +410,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 
 	//store the switch-uuid
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "A %d",switch_uuid.size());
     switch_uuid[dnumber] = strr[i-2];
+    logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "A2 %d",switch_uuid.size());
 
 	/*create physical ports ports*/
 	if(ports.size() !=0){
@@ -485,10 +495,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			
 			vport_l[dnumber].push_back(vrt);
 				
-			vl_id[rnumber-1] = dnumber;
-			vl_id[rnumber+vport.size()-1] = (*nf);
+			vl_PortIDtoSwitchID[rnumber-1] = dnumber;
+			vl_PortIDtoSwitchID[rnumber+vport.size()-1] = (*nf);
 				
-			vl_p[rnumber-1] = rnumber+vport.size()-1;	
+			vl_LocalPortIDtoRemotePortID[rnumber-1] = rnumber+vport.size()-1;	
 				
 			pnumber++;
 			
@@ -787,7 +797,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	third_object.push_back("==");
 		
 	fourth_object.push_back("uuid");
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "B %d",switch_uuid.size());
 	fourth_object.push_back(switch_uuid[dnumber].c_str());
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "B2 %d",switch_uuid.size());
 		
 	third_object.push_back(fourth_object);
 	where.push_back(third_object);
@@ -965,7 +977,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
     return port_name_on_switch;
 }
 
-void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
+void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
+{
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Deleting LSI with DPI '%d' switch '%s'",dpi, switch_id[dpi].c_str());
 	
     ssize_t nwritten = 0;
 	
@@ -985,14 +999,18 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 	Array fourth_object;
 
 	/*for all virtual link ports, destroy it*/
-	for(list<uint64_t>::iterator i = virtual_link_id[switch_id[dpi]].begin(); i != virtual_link_id[switch_id[dpi]].end(); i++){
-		cmd_delete_virtual_link(vl_id[(*i)], (*i), s);
-		cmd_delete_virtual_link(vl_id[vl_p[(*i)]], vl_p[(*i)], s);
+	for(list<uint64_t>::iterator i = virtual_link_id[switch_id[dpi]].begin(); i != virtual_link_id[switch_id[dpi]].end(); i++)
+	{	
+		//*i -> the port on the bridge we are deleting (is it in vl_PortIDtoSwitchID? )
+	
+	//	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Considering virtual link ID %d", *i);
+
+		cmd_delete_virtual_link(vl_PortIDtoSwitchID[(*i)], (*i), s);
+		cmd_delete_virtual_link(vl_PortIDtoSwitchID[vl_LocalPortIDtoRemotePortID[(*i)]], vl_LocalPortIDtoRemotePortID[(*i)], s);
 	}
 
 	// Delete DPDK Ring related entries of dpdkr ports
 	for(list<string>::iterator it = port_l[dpi].begin(); it != port_l[dpi].end(); ++it) {
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removal of port %s", (*it).c_str());
 		map<string, string>::iterator f_it = dpdkr_from_uuid.find(*it);
 		if (f_it != dpdkr_from_uuid.end()) {
 			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "\tRemoving entries for DPDK Ring %s", f_it->second.c_str());
@@ -1018,8 +1036,11 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 	first_obj["table"] = "Open_vSwitch";
 			
 	first_obj["where"] = where;
-	
+
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removing dpi: %d", dpi);		
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "C %d",switch_uuid.size());
 	switch_uuid.erase(dpi);
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "C2 %d",switch_uuid.size());
 	
 	for(map<uint64_t, string>::iterator sww = switch_uuid.begin(); sww != switch_uuid.end(); sww++)
 	{
@@ -1096,10 +1117,10 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s){
 		throw commandsException();
 	}
 			
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	root.clear();
 	params.clear();
@@ -1170,8 +1191,10 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		third_object.push_back("==");
 		
 		fourth_object.push_back("uuid");
+		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "D %d",switch_uuid.size());
 		fourth_object.push_back(switch_uuid[dnpi.getDpid()].c_str());
-		
+		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "D2 %d",switch_uuid.size());		
+	
 		third_object.push_back(fourth_object);
 		where.push_back(third_object);
 		
@@ -1338,16 +1361,19 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 
 	/*store the information [bridge name, list of peer port]*/
 	virtual_link_id[switch_id[avli.getDpidA()]].push_back(rnumber-2);
-	
-	/*store the information [bridge name, list of peer port]*/
-	virtual_link_id[switch_id[avli.getDpidB()]].push_back(rnumber-1);
 
 	port_id[rnumber-2] = vrt;
 	port_id[rnumber-1] = trv;
 
 	/*store the information [switch_id, port_id]*/
-	vl_id[rnumber-2] = avli.getDpidA();
-	vl_id[rnumber-1] = avli.getDpidB();
+	
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Creating the following virtual link:");
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, " Port ID '%d' on switch ID '%d'",rnumber-2,avli.getDpidA());
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, " Port ID '%d' on switch ID '%d'",rnumber-1,avli.getDpidB());
+	vl_PortIDtoSwitchID[rnumber-2] = avli.getDpidA();
+	vl_PortIDtoSwitchID[rnumber-1] = avli.getDpidB();
+	
+	vl_LocalPortIDtoRemotePortID[rnumber-2] = rnumber-1;
 	
 	//insert this port name into port_n
 	vport_l[avli.getDpidA()].push_back(vrt);
@@ -1461,7 +1487,9 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 	third_object.push_back("==");
 		
 	fourth_object.push_back("uuid");
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "E %d",switch_uuid.size());
 	fourth_object.push_back(switch_uuid[dpi].c_str());
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "E2 %d",switch_uuid.size());
 		
 	third_object.push_back(fourth_object);
 	where.push_back(third_object);
@@ -1632,8 +1660,8 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s){
 	cmd_delete_virtual_link(dvli.getDpidB(), dvli.getIdB(), s);
 
 	/*erase information*/
-	vl_id.erase(dvli.getIdA());
-	vl_id.erase(dvli.getIdB());
+	vl_PortIDtoSwitchID.erase(dvli.getIdA());
+	vl_PortIDtoSwitchID.erase(dvli.getIdB());
 	
 	//remove this port name from port_n
 	vport_l[dvli.getDpidA()].remove(vrt);
@@ -1645,8 +1673,10 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s){
 	
 }
 
-void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s){
-
+void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s)
+{
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "cmd_delete_virtual_link(dpi=%d, ipd=%d)",dpi,idp);
+	
     ssize_t nwritten;
 	
 	char read_buf[4096] = "";
@@ -1678,7 +1708,9 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s){
 	third_object.push_back("==");
 		
 	fourth_object.push_back("uuid");
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "F %d dpi=%d",switch_uuid.size(),dpi);
 	fourth_object.push_back(switch_uuid[dpi].c_str());
+	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "F2 %d",switch_uuid.size());
 		
 	third_object.push_back(fourth_object);
 	where.push_back(third_object);
