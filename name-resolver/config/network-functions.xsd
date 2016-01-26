@@ -1,21 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	elementFormDefault="qualified">
 
 <!-- definition of attributes -->
 <xsd:attribute name="name">
 	<xsd:simpleType>
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="([a-z]|[A-Z]|[0-9]|_|-)+"/>
-		</xsd:restriction>
-	</xsd:simpleType>
-</xsd:attribute>
-
-<xsd:attribute name="type">	
-	<xsd:simpleType>
-		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="dpdk" />
-			<xsd:enumeration value="docker" />
-			<xsd:enumeration value="kvm" />
 		</xsd:restriction>
 	</xsd:simpleType>
 </xsd:attribute>
@@ -30,6 +21,13 @@
 	</xsd:simpleType>
 </xsd:attribute>
 
+<xsd:attribute name="port-id">
+	<xsd:simpleType>
+		<xsd:restriction base="xsd:integer">
+			 <xsd:minInclusive value="1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:attribute>
 
 <xsd:attribute name="location">	
 	<xsd:simpleType>
@@ -40,39 +38,61 @@
 	</xsd:simpleType>
 </xsd:attribute>
 
+<!-- definition of types -->
+
+<xsd:complexType name="implementationType">
+	<xsd:attribute name="uri" type="xsd:string" use="required"/>
+</xsd:complexType>
+
+
 <!-- definition of elements -->
 <xsd:element name="network-functions">
 	<xsd:complexType>
 		<xsd:sequence>
 			<xsd:element name="network-function" maxOccurs="unbounded">
 				<xsd:complexType>
-					<xsd:sequence>
-						<xsd:element name="implementation" minOccurs="1" maxOccurs="unbounded">
+					<xsd:choice minOccurs="1" maxOccurs="unbounded">
+						<xsd:element name="docker" type="implementationType"/>
+						<xsd:element name="kvm">
 							<xsd:complexType>
-								<xsd:sequence>
-									<xsd:element name="port" minOccurs="0" maxOccurs="unbounded">
-										<xsd:complexType>
-											<xsd:attribute name="id" type="xsd:integer" use="required"/>
-											<!--<xsd:attribute name="type" type="xsd:string"/>-->
-											<xsd:attribute ref="port-type"/>
-										</xsd:complexType>
-									</xsd:element>	
-								</xsd:sequence>
-								<xsd:attribute ref="type" use="required"/>
-								<xsd:attribute name="uri" type="xsd:string" use="required"/>
-								<xsd:attribute name="cores" type="xsd:string"/> <!-- required for DPDK -->
-								<xsd:attribute ref="location"/> <!-- required for DPDK -->
-								<!-- 
-									FIXME: is it possible to specify "cores" and "location" only if "type"
-									is DPDK?
-								-->
-							</xsd:complexType>
+								<xsd:complexContent>
+									<xsd:extension base="implementationType">
+										<xsd:sequence>
+											<xsd:element name="port" minOccurs="0" maxOccurs="unbounded">
+												<xsd:complexType>
+													<xsd:attribute ref="port-id" use="required"/>
+													<xsd:attribute ref="port-type" use="required"/>
+												</xsd:complexType>
+											</xsd:element>	
+										</xsd:sequence>
+									</xsd:extension>
+								</xsd:complexContent>
+							</xsd:complexType>							
 						</xsd:element>	
-					</xsd:sequence>
+						<xsd:element name="dpdk">
+							<xsd:complexType>
+								<xsd:complexContent>
+									<xsd:extension base="implementationType">
+										<xsd:attribute name="cores" type="xsd:string" use="required"/>
+										<xsd:attribute ref="location" use="required"/>
+									</xsd:extension>
+								</xsd:complexContent>
+							</xsd:complexType>
+						</xsd:element>
+						<xsd:element name="native">
+							<xsd:complexType>
+								<xsd:complexContent>
+									<xsd:extension base="implementationType">
+										<xsd:attribute ref="location" use="required"/>
+										<xsd:attribute name="dependencies" type="xsd:string" use="required"/>
+									</xsd:extension>
+								</xsd:complexContent>
+							</xsd:complexType>
+						</xsd:element>
+					</xsd:choice>
 					<xsd:attribute ref="name" use="required"/>
-					<!-- TODO: put num-ports mandatory! -->
-					<xsd:attribute name="num-ports" type="xsd:integer"/>
-					<xsd:attribute name="description" type="xsd:string" use="required"/>
+					<xsd:attribute name="num-ports" type="xsd:integer" use="required"/>
+					<xsd:attribute name="summary" type="xsd:string" use="required"/>
 				</xsd:complexType>
 			</xsd:element> 
 		</xsd:sequence>
@@ -85,3 +105,4 @@
 
 
 </xsd:schema>
+

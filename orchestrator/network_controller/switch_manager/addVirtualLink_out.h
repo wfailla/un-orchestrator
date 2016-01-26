@@ -15,40 +15,33 @@ using namespace std;
 
 class AddVirtualLinkOut
 {
-
-friend class GraphManager;
-friend class ERFSManager;
-
 private:
-
 	/**
 	*	@brief: identifier of the virtual link on the lsi A
 	*/
 	uint64_t idA;
-
+	
 	/**
 	*	@brief: identifier of the virtual link on the lsi B
 	*/
 	uint64_t idB;
 
-protected:
-
+public:
 	uint64_t getIdA()
 	{
 		return idA;
 	}
-
+	
 	uint64_t getIdB()
 	{
 		return idB;
 	}
 
-public:
 	AddVirtualLinkOut(uint64_t idA, uint64_t idB)
 		: idA(idA), idB(idB)
 	{
 	}
-
+	
 };
 
 

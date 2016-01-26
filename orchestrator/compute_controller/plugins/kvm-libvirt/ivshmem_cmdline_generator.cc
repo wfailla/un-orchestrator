@@ -30,7 +30,7 @@ bool IvshmemCmdLineGenerator::get_mempool_cmdline(char * cmdline, int size)
 {
 	int r;
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+	logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 			"Generating command line for memory pool");
 
 	pthread_mutex_lock(&memory_pool_mutex);
@@ -40,17 +40,17 @@ bool IvshmemCmdLineGenerator::get_mempool_cmdline(char * cmdline, int size)
 	//unlink(MEMPOOL_METADATA_NAME);
 	//if(mkfifo(MEMPOOL_METADATA_NAME, 0666) == -1)
 	//{
-	//	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+	//	logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 	//		"Error creating named pipe: %s", strerror(errno));
 	//	goto error;
 	//}
 
 	r = system("./compute_controller/plugins/kvm-libvirt/cmdline_generator/build/cmdline_generator -m");
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+	logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 			"Command line executed");
 	if(r == -1 || WEXITSTATUS(r) == -1)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+		logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 			"Error executing command line generator");
 		//unlink(MEMPOOL_METADATA_NAME);
 		goto error;
@@ -62,7 +62,7 @@ bool IvshmemCmdLineGenerator::get_mempool_cmdline(char * cmdline, int size)
 		goto error;
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+	logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 			"Command line ready");
 
 
@@ -83,7 +83,7 @@ error:
 bool
 IvshmemCmdLineGenerator::get_port_cmdline(const char * port_name, char * cmdline, int size)
 {
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+	logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 			"Generating command line for port '%s'", port_name);
 
 	char c[100];
@@ -93,7 +93,7 @@ IvshmemCmdLineGenerator::get_port_cmdline(const char * port_name, char * cmdline
 
 	//if(mkfifo(port_name, 0666) == -1)
 	//{
-	//	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+	//	logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 	//		"Error creating named pipe");
 	//	goto error;
 	//}
@@ -101,7 +101,7 @@ IvshmemCmdLineGenerator::get_port_cmdline(const char * port_name, char * cmdline
 	r = system(c);
 	if(r == -1 || WEXITSTATUS(r) == -1)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+		logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 			"Error executing command line generator");
 		//unlink(MEMPOOL_METADATA_NAME);
 		goto error;
@@ -130,13 +130,13 @@ bool IvshmemCmdLineGenerator::get_single_cmdline(char * cmdline, int size, const
     for (vector<string>::iterator it = port_names.begin(); it != port_names.end(); ++it) {
         oss << " -p " << (*it);
     }
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+    logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
             "Generating IVSHMEM QEMU command line using: %s", oss.str().c_str());
 
     r = system(oss.str().c_str());
     if(r == -1 || WEXITSTATUS(r) == -1)
     {
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+        logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
             "Error executing command line generator");
         //unlink(MEMPOOL_METADATA_NAME);
         goto error;
@@ -161,7 +161,7 @@ bool IvshmemCmdLineGenerator::read_from_pipe(const char *name, char *buf, size_t
 	int fd = open(name, O_RDONLY);
 	if(fd == -1)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+		logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 				"Error opening pipe");
 		return false;
 	}
@@ -175,7 +175,7 @@ bool IvshmemCmdLineGenerator::read_from_pipe(const char *name, char *buf, size_t
 		n = read(fd, p, len - total);
 		if(n == -1)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+			logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 				"Error reading from pipe");
 			return false;
 		}
@@ -192,14 +192,14 @@ bool IvshmemCmdLineGenerator::read_from_file(const char *name, char *buf, size_t
 	FILE * f = fopen(name, "r");
 	if(f == NULL)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+		logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,
 				"Error opening file");
 		return false;
 	}
 
 	if(fgets(buf, len, f) == NULL)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"Error in reading file");
+		logger(ORCH_DEBUG_INFO, CMDGENERATOR_MODULE_NAME, __FILE__, __LINE__,"Error in reading file");
 		return false;
 	}
 	return true;

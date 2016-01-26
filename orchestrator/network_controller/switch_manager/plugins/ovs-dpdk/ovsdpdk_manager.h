@@ -31,9 +31,7 @@ private:
 	unsigned int m_NextLsiId;
 	unsigned int m_NextPortId;
 	
-#if defined(ENABLE_KVM_IVSHMEM) || defined(ENABLE_DPDK_PROCESSES)
-	static int nextportname;	
-#endif
+	static int next_dpdkr_port;
 
 public:
 	OVSDPDKManager();

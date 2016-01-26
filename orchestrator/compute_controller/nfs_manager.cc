@@ -12,5 +12,9 @@ nf_t NFsManager::getNFType()
 
 string NFsManager::getCores()
 {
-	return description->getCores();
+	return "";
+}
+
+NFsManager::~NFsManager(){
+
 }

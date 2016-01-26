@@ -1,13 +1,20 @@
 #include "description.h"
 
-Description::Description(nf_t type, string uri, string cores, string location, std::vector<PortType>& port_types) :
-	type(type), uri(uri), cores(cores), location(location), port_types(port_types)
+bool operator==(const nf_port_info& lhs, const nf_port_info& rhs)
 {
+    return (lhs.port_name.compare(rhs.port_name) == 0) && (lhs.port_type == rhs.port_type);
 }
 
-Description::Description(string type, string uri, string cores, string location, std::vector<PortType>& port_types) :
-	 uri(uri), cores(cores), location(location), port_types(port_types)
+Description::Description(nf_t type, string uri, std::map<unsigned int, PortType>& port_types) :
+	type(type), uri(uri), port_types(port_types)
 {
+	supported = false;
+}
+
+Description::Description(string type, string uri, std::map<unsigned int, PortType>& port_types) :
+	 uri(uri) , port_types(port_types)
+{
+	supported = false;
 
 	if(type == "dpdk")
 	{
@@ -26,6 +33,13 @@ Description::Description(string type, string uri, string cores, string location,
 	{
 		this->type = KVM;
 		return;
+	} 
+#endif
+#ifdef ENABLE_NATIVE
+	else if(type == "native")
+	{
+		this->type = NATIVE;
+		return;
 	}
 #endif	
 
@@ -35,30 +49,33 @@ Description::Description(string type, string uri, string cores, string location,
 	return;
 }
 
-nf_t Description::getType()
+Description::~Description(){}
+
+nf_t Description::getType() const
 {
 	return type;
 }
 
-string Description::getURI()
+string Description::getURI() const
 {
 	return uri;
 }
 
-string Description::getCores()
-{
-	return cores;
+bool Description::isSupported() {
+	return supported;
 }
 
-string Description::getLocation()
-{
-	assert(type == DPDK
-#ifdef ENABLE_KVM
-	|| type == KVM
-#endif
-	);
+void Description::setSupported(bool supported) {
+	this->supported = supported;
+}
 
-	return location;
+PortType Description::getPortType(unsigned int port_id) const
+{
+	std::map<unsigned int, PortType>::const_iterator it = port_types.find(port_id);
+	if (it != port_types.end()) {
+		return it->second;
+	}
+	return UNDEFINED_PORT;  // TODO: Should we make this INVALID_PORT to notify an error? Question is also: do we make the port specification in the NF description mandatory?
 }
 
 PortType portTypeFromString(const std::string& s)
@@ -70,5 +87,32 @@ PortType portTypeFromString(const std::string& s)
 	else if (s.compare("vhost") == 0)
 		return VHOST_PORT;
 
-	return UNDEFINED_PORT;
+	return INVALID_PORT;
+}
+
+std::string portTypeToString(PortType t)
+{
+	switch (t) {
+	case IVSHMEM_PORT:
+		return "ivshmem";
+		break;
+	case USVHOST_PORT:
+		return "usvhost";
+		break;
+	case VHOST_PORT:
+		return "vhost";
+		break;
+	case VETH_PORT:
+		return "veth";
+		break;
+	case DPDKR_PORT:
+		return "dpdkr";
+		break;
+	case UNDEFINED_PORT:
+		return "undefined";
+		break;
+	default:
+		break;
+	}
+	return "INVALID";
 }

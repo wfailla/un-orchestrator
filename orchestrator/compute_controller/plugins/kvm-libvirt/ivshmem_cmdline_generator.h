@@ -10,6 +10,8 @@
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
 
+#define CMDGENERATOR_MODULE_NAME		"Command-Line-Generator"
+
 class IvshmemCmdLineGenerator
 {
 private:

@@ -62,7 +62,7 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
     set<string> nfs = cli.getNetworkFunctionsName();
     for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++) {
 //        list<string> port_name_on_switch;
-        AddNFportsIn anfpi(dpid, *nf, nf_types[*nf], cli.getNetworkFunctionsPortNames(*nf));
+        AddNFportsIn anfpi(dpid, *nf, nf_types[*nf], cli.getNetworkFunctionsPortsInfo(*nf));
         AddNFportsOut *anfpo = addNFPorts(anfpi);
         if (anfpo == NULL) logger(ORCH_WARNING, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "error in nfport add");
         out_nf_ports.insert(NfPortsMapMap::value_type(*nf, anfpo->getPorts()));
@@ -95,15 +95,15 @@ AddNFportsOut *ERFSManager::addNFPorts(AddNFportsIn anpi)
     string nf = anpi.getNFname();
     nf_t nf_type = anpi.getNFtype();
     logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "addNFPorts(dpid: %" PRIu64 " NF:%s NFType:%d)", anpi.getDpid(), anpi.getNFname().c_str(), anpi.getNFtype());
-    list<string> nfs_ports = anpi.getNetworkFunctionsPorts();
+    list<struct nf_port_info> nfs_ports = anpi.getNetworkFunctionsPorts();
     list<string> port_name_on_switch;
     PortsNameIdMap nf_ports_ids;
 
-    for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++) {
-        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "\tport: %s", (*nfp).c_str());
+    for(list<struct nf_port_info>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++) {
+        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "\tport: %s", nfp->port_name.c_str());
         unsigned int port_id = nextPort[dpid]++;
-        const char* port_type = "ivshmem";
-        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf.c_str(), nfp->c_str(), port_id, nf_type);
+        const char* port_type = "ivshmem"; // TODO: Use nfp->port_type and act accordingly
+        logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, " NF port \"%s.%s\" = %d (type=%d)", nf.c_str(), nfp->port_name.c_str(), port_id, nf_type);
         stringstream cmd_add;
         cmd_add << CMD_ADD_PORT << " " << dpid << " " << numa_node << " " << port_type << " " << port_id << " auto";
         logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_add.str().c_str());
@@ -113,11 +113,10 @@ AddNFportsOut *ERFSManager::addNFPorts(AddNFportsIn anpi)
             throw ERFSManagerException();
         }
         // TODO - Really check result!
-        nf_ports_ids.insert(PortsNameIdMap::value_type(*nfp, port_id));
+        nf_ports_ids.insert(PortsNameIdMap::value_type(nfp->port_name, port_id));
         stringstream pid;
         pid << port_id;
         port_name_on_switch.push_back(pid.str());
-//        port_name_on_switch.push_back();
     }
     anpo = new AddNFportsOut(anpi.getNFname(), nf_ports_ids, port_name_on_switch);
     return anpo;
