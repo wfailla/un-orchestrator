@@ -78,5 +78,20 @@
 		<!-- Only a native implementation is available for this network function -->
 		<native uri="../NFs/native/vpn_security/vpn_sec.tar.gz" dependencies="ipsec-tools iptables" location="local"/>
 	</network-function>
+
+	<network-function name="ivshmem-nat" num-ports="2" summary="Network function based on IVSHMEM">
+		<!-- Point to a Libvirt XML domain template -->
+		<implementation type="kvm" uri="../NFs/kvm/example-ivshmem/nat-ivshmem.xml"/>
+	</network-function>
+
+	<network-function name="lsi-bng" num-ports="1" summary="Type 5 BNG">
+		<!-- Point to a Libvirt XML domain template -->
+		<implementation type="docker" uri="bng-cp"/>
+	</network-function>
+
+	<network-function name="lsi-router" num-ports="3" summary="Type 5 router">
+		<!-- Point to a Libvirt XML domain template -->
+		<implementation type="docker" uri="router-cp"/>
+	</network-function>
 	
 </network-functions>

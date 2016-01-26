@@ -179,9 +179,7 @@ public:
 	void setLsiID(uint64_t lsiID);
 	
 	/**
-	*	@brief: Start the NF with a specific name, with a proper number of ports. The name of these ports
-	*	is calculated by this function starting from the LSI identifier and the name of the NF to be started.
-	*
+	*	@brief: Start the NF with a specific name, with a proper number of ports. 
 	*
 	*	@param:	nf_name					Name of the network function to be started
 	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started

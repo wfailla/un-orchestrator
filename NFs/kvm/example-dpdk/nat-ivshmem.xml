@@ -1,0 +1,33 @@
+<domain type="kvm" xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+	<name>NAT</name>
+	<memory>4194304</memory>
+	<vcpu placement="static">2</vcpu>
+	<cpu mode='host-passthrough'>
+		<topology sockets='1' cores='2' threads='1'/>
+		<numa>
+			<cell id='0' cpus='0-1' memory='4194304' memAccess='shared'/>
+		</numa>
+	</cpu>
+	<os>
+		<type arch="x86_64" machine="pc-i440fx-2.2">hvm</type>
+		<boot dev="hd"/>
+	</os>
+	<features>
+		<acpi/><apic/>
+		<pae/>
+	</features>
+	<memoryBacking>    <!-- TODO? Have this inserted automatically by orchestrator? -->
+		<hugepages>
+			<page size="1" unit="G" nodeset="0"/>
+		</hugepages>
+	</memoryBacking>
+
+	<devices>
+		<disk type="file" device="disk">
+			<source file="/home/sdn/VEE/virtual-machines/ubuntu1.img"/>
+			<driver name="qemu" type="raw"/>
+			<target dev="vda" bus="virtio"/>
+		</disk>
+		<graphics type="vnc" port="-1" autoport="yes" listen="0.0.0.0"/>
+	</devices>
+</domain>
