@@ -410,9 +410,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 
 	//store the switch-uuid
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "A %d",switch_uuid.size());
     switch_uuid[dnumber] = strr[i-2];
-    logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "A2 %d",switch_uuid.size());
 
 	/*create physical ports ports*/
 	if(ports.size() !=0){
@@ -797,9 +795,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	third_object.push_back("==");
 		
 	fourth_object.push_back("uuid");
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "B %d",switch_uuid.size());
 	fourth_object.push_back(switch_uuid[dnumber].c_str());
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "B2 %d",switch_uuid.size());
 		
 	third_object.push_back(fourth_object);
 	where.push_back(third_object);
@@ -1038,9 +1034,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 	first_obj["where"] = where;
 
 	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removing dpi: %d", dpi);		
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "C %d",switch_uuid.size());
 	switch_uuid.erase(dpi);
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "C2 %d",switch_uuid.size());
 	
 	for(map<uint64_t, string>::iterator sww = switch_uuid.begin(); sww != switch_uuid.end(); sww++)
 	{
@@ -1191,9 +1185,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		third_object.push_back("==");
 		
 		fourth_object.push_back("uuid");
-		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "D %d",switch_uuid.size());
 		fourth_object.push_back(switch_uuid[dnpi.getDpid()].c_str());
-		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "D2 %d",switch_uuid.size());		
 	
 		third_object.push_back(fourth_object);
 		where.push_back(third_object);
@@ -1487,9 +1479,7 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 	third_object.push_back("==");
 		
 	fourth_object.push_back("uuid");
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "E %d",switch_uuid.size());
 	fourth_object.push_back(switch_uuid[dpi].c_str());
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "E2 %d",switch_uuid.size());
 		
 	third_object.push_back(fourth_object);
 	where.push_back(third_object);
@@ -1708,9 +1698,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s)
 	third_object.push_back("==");
 		
 	fourth_object.push_back("uuid");
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "F %d dpi=%d",switch_uuid.size(),dpi);
 	fourth_object.push_back(switch_uuid[dpi].c_str());
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "F2 %d",switch_uuid.size());
 		
 	third_object.push_back(fourth_object);
 	where.push_back(third_object);

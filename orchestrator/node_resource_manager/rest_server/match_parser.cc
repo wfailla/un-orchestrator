@@ -260,7 +260,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 		{
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,ETH_TYPE,value.getString().c_str());
 			uint32_t ethType;
-			if((sscanf(value.getString().c_str(),"%x",&ethType) != 1) || (ethType > 65535))
+			if((sscanf(value.getString().c_str(),"%"SCNi32,&ethType) != 1) || (ethType > 65535))
 			{
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",ETH_TYPE,value.getString().c_str());
 				return false;
@@ -279,7 +279,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			else
 			{
 				uint32_t vlanID;
-				if((sscanf(value.getString().c_str(),"%"SCNd32,&vlanID) != 1) && (vlanID > 4094))
+				if((sscanf(value.getString().c_str(),"%"SCNi32,&vlanID) != 1) && (vlanID > 4094))
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_ID,value.getString().c_str());
 					return false;
