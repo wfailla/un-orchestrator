@@ -38,8 +38,10 @@ needed for the connection to the controller.
 
 ## Deployment example
 
-In this folder you can find the file `nf-fg_vnft5_example.json` that is an 
-example of NF-FG with the deployment of the VNF type 5.
+
+Among the configuration file examples of the orchestrator you can find the file 
+[nf-fg_vnft5_example.json](../../../orchestrator/config/nf-fg_vnft5_example.json) 
+that is an example of NF-FG with the deployment of the VNF type 5.
 The graph contains two VNFs: an OpenFlow controller called `ctrl` and the VNF
 type 5 called `vnft5`. These two VNFs are connected through the rules with id 5 
 and 6. Note that the controller has only one port, which is connected to the 
