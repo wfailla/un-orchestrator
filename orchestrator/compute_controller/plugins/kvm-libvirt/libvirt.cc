@@ -451,7 +451,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	dom = virDomainCreateXML(connection, xmlconfig, 0);
 	if (!dom) {
-		virDomainFree(dom);
+//		virDomainFree(dom);
     		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Domain definition failed");
     		return false;
 	}
