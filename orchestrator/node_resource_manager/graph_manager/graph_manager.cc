@@ -886,8 +886,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "4) start the network functions");
 	
 	computeController->setLsiID(dpid);
-		
+	#ifndef STARTVNF_SINGLE_THREAD	
 	pthread_t some_thread[network_functions.size()];
+	#endif
 	to_thread_t thr[network_functions.size()];
 	int i = 0;
 
@@ -913,6 +914,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	}
 	
 	bool ok = true;
+	#ifndef STARTVNF_SINGLE_THREAD
 	for(int j = 0; j < i;j++)
 	{
 		void *returnValue;
@@ -922,6 +924,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		if(c == 0)
 			ok = false;
 	}
+	#endif
 	
 	if(!ok)
 	{
