@@ -46,7 +46,7 @@ SQLiteManager *dbm = NULL;
 *	Private prototypes
 */
 bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file, bool *init_db, char **pwd);
-bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **dealer_name);
+bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address);
 bool usage(void);
 bool doChecks(void);
 void terminateRestServer(void);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	char *nffg_file_name = new char[BUFFER_SIZE], *t_nffg_file_name = NULL;
 	char *descr_file_name = new char[BUFFER_SIZE], *t_descr_file_name = NULL;
 	char *client_name = new char[BUFFER_SIZE], *t_client_name = NULL;
-	char *dealer_name = new char[BUFFER_SIZE], *t_dealer_name = NULL;
+	char *broker_address = new char[BUFFER_SIZE], *t_broker_address = NULL;
 	char *pwd = new char[BUFFER_SIZE];
 
 	strcpy(config_file_name, DEFAULT_FILE);
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 	if(!parse_command_line(argc,argv,&core_mask,&config_file_name,&init_db,&pwd))
 		exit(EXIT_FAILURE);
 
-	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name,&t_descr_file_name,&t_client_name,&t_dealer_name))
+	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name,&t_descr_file_name,&t_client_name,&t_broker_address))
 		exit(EXIT_FAILURE);
 
 	strcpy(ports_file_name, t_ports_file_name);
@@ -131,10 +131,10 @@ int main(int argc, char *argv[])
 		strcpy(client_name, t_client_name);
 	else	
 		client_name = NULL;
-	if(strcmp(t_dealer_name, "UNKNOWN") != 0)
-		strcpy(dealer_name, t_dealer_name);
+	if(strcmp(t_broker_address, "UNKNOWN") != 0)
+		strcpy(broker_address, t_broker_address);
 	else	
-		dealer_name = NULL;
+		broker_address = NULL;
 	
 	rest_port = t_rest_port;
 	cli_auth = t_cli_auth;
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 
 #ifdef ENABLE_DOUBLE_DECKER
 	/*Client pub/sub*/
-	if(!client->publishBoot(descr_file_name, client_name, dealer_name))
+	if(!client->publishBoot(descr_file_name, client_name, broker_address))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the Double Decker client. The %s cannot be run.",MODULE_NAME);
 		
@@ -304,7 +304,7 @@ static struct option lgopts[] = {
 	return true;
 }
 
-bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **dealer_name)
+bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address)
 {
 	ports_file_name[0] = '\0';
 	nffg_file_name[0] = '\0';
@@ -353,8 +353,8 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	*client_name = temp_cli;
 	
 	/* dealer name of Double Decker */
-	char *temp_dealer = (char *)reader.Get("publisher/subscriber", "dealer_name", "UNKNOWN").c_str();
-	*dealer_name = temp_dealer;
+	char *temp_dealer = (char *)reader.Get("publisher/subscriber", "broker_address", "UNKNOWN").c_str();
+	*broker_address = temp_dealer;
 
 	return true;
 }
