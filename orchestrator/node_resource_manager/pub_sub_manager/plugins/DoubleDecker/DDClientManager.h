@@ -37,7 +37,7 @@ public:
 	
 	~DDClientManager();
 	
-	bool publishBoot();
+	bool publishBoot(char *descr_file, char *client_name, char *dealer_name);
 	
 	bool publishUpdating();
 	

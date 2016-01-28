@@ -15,7 +15,7 @@ public:
 	/**
 	*	@brief: Publish domain information at the boot time
 	*/
-	virtual bool publishBoot() = 0;
+	virtual bool publishBoot(char *, char *, char *) = 0;
 	
 	/**
 	*	@brief: Publish updating domain information
