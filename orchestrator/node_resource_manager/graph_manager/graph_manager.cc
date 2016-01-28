@@ -890,19 +890,25 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	pthread_t some_thread[network_functions.size()];
 	to_thread_t thr[network_functions.size()];
 	int i = 0;
+
 		
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
+		
+
 		thr[i].nf_name = nf->first;
 		thr[i].computeController = computeController;
 		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
-			
+		#ifdef STARTVNF_SINGLE_THREAD
+		startNF((void *) &thr[i]);
+		#else	
 		if (pthread_create(&some_thread[i], NULL, &startNF, (void *)&thr[i]) != 0)
 		{
 			assert(0);
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while creating a new thread");
 			throw GraphManagerException();	
 		}
+		#endif
 		i++;
 	}
 	
