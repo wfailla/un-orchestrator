@@ -44,13 +44,11 @@ private:
 	*/
 	list<struct nf_port_info> nf_ports;
 
-protected:
+public:
 	AddNFportsIn(uint64_t dpid, string nf_name, nf_t type, list<struct nf_port_info> nf_ports)
 		: dpid(dpid), nf_name(nf_name), type(type), nf_ports(nf_ports)
 	{
 	}
-	
-public:
 	
 	uint64_t getDpid()
 	{
