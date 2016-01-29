@@ -63,6 +63,22 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 4)
 ENDIF()
 
 OPTION(
+
+	STARTVNF_SINGLE_THREAD
+
+	"Turn on to start the VNF sequentially"
+
+	OFF
+
+)
+
+IF(STARTVNF_SINGLE_THREAD)
+
+	ADD_DEFINITIONS(-DSTARTVNF_SINGLE_THREAD)
+
+ENDIF(STARTVNF_SINGLE_THREAD)
+
+OPTION(
 	ENABLE_KVM
 	"Turn on to support NFs implemented in KVM-based virtual machines"
 	ON
