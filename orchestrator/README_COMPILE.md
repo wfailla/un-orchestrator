@@ -10,17 +10,9 @@ In order to execute the un-orchestrator, we need to setup different components, 
 
 ## Required libraries
 
-Several libraries are required to compile the un-orchestrator.
+In addition to the libraries already listed in the main [un-orchestrator]/README_COMPILE.md,
+some more components required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
-
-	; Install required libraries
-	; - build-essential: it includes GCC, basic libraries, etc
-	; - cmake: to create cross-platform makefiles
-	; - cmake-curses-gui: nice 'gui' to edit cmake files
-	; - libboost-all-dev: nice c++ library with tons of useful functions
-	; - libmicrohttpd-dev: embedded micro http server
-	; - libxml2-dev: nice library to parse and create xml
-	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev
 
 	; Install JSON Spirit (nice library to parse JSON files)
 	$ git clone https://github.com/sirikata/json-spirit
@@ -42,9 +34,8 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; Now install the above library according to the description provided
 	; in the cloned folder
 
+
 ## Install the proper virtual switch
-
-
 
 The current un-orchestrator supports different types of virtual switches.
 You have to install the one that you want to use, choosing from the

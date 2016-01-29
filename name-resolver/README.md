@@ -3,26 +3,12 @@
 The name-resolver is a module that provides information for all the possible
 implementations for a network function.
 
-## Required libraries
-
-Several libraries are required to compile the name-resolver.
-In the following we list the steps required on an **Ubuntu 14.04**.
-
-	; Install required libraries
-	; - build-essential: it includes GCC, basic libraries, etc
-	; - cmake: to create cross-platform makefiles
-	; - cmake-curses-gui: nice 'gui' to edit cmake files
-	; - libboost-all-dev: nice c++ library with tons of useful functions
-	; - libmicrohttpd-dev: embedded micro http server
-	; - libxml2-dev: nice library to parse and create xml
-	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev
-	
-	; Install JSON Spirit (nice library to parse JSON files)
-	$ git clone https://github.com/sirikata/json-spirit
-	; alternatively, a copy of JSON Spirit is provided in [un-orchestrator]/contrib/json-spirit.zip
-	$ cd json-spirit/
 
 ## Compile the name-resolver
+
+We assume here that you already followed the general steps (e.g., required 
+libraries) that are detailed in the general [un-orchestrator]/README_COMPILE.MD
+page.
 
 We are now ready to compile the name-resolver.
 
