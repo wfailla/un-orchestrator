@@ -952,23 +952,37 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	//disconnect socket
     cmd_disconnect(s);
 
-#if 0
-    //XXX: this code is a trick that activates a VNF ports through ifconfig. In fact, we noted that on some system
-    //this operation has not done by OVSDB
-    if(is_nf_port && (port_type != USVHOST_PORT) && (port_type != IVSHMEM_PORT))
+	/**
+	*	Considerations:
+	*
+	*	On some systems, ports created by OvS are down, although we esplicitly say that they must be created up.
+	*	We noted that the same proplem appears outside of the universal node, if directly use the ovs-vsctl command.
+	*
+	*	The port in OvS appears sometime after that the port is created to OVSDB. Than it may happen (and we experienced
+	*	it) that, when the VNF has to created, the port is still not there.
+	*
+	*	The segmentation offload and something else must be disabled on ports for VNFs.
+	*
+	*	What we do here:
+	*	
+	*	Call a bash script that brings up the interface and disebled offloads on it. The script pools untill such interface
+	*	is created, thus ensuring that, when the VNF will be created, the ports are already attached to OvS.
+	*/
+    if(is_nf_port && ((port_type == VHOST_PORT) || (port_type == VETH_PORT)))
     {
     	stringstream command;
 		command << ACTIVATE_INTERFACE << " " << port_name;
 		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 		int retVal = system(command.str().c_str());
 		retVal = retVal >> 8;
-		
-		assert(retVal == 0);
 
+		assert(retVal == 0);		
 		if(retVal != 0)
+		{
 			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
+			assert(0);
+		}
 	}
-#endif
 
     return port_name_on_switch;
 }

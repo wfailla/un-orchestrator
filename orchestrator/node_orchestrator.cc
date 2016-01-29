@@ -63,8 +63,11 @@ int main(int argc, char *argv[])
 	if(!doChecks())
 		exit(EXIT_FAILURE);	
 	
-	//XXX: change this line to use different versions of Openflow
-	OFP_VERSION = OFP_12;	
+#ifdef VSWITCH_IMPLEMENTATION_ERFS
+	OFP_VERSION = OFP_13;
+#else
+	OFP_VERSION = OFP_12;
+#endif
 	
 	int core_mask;
 	int rest_port;
