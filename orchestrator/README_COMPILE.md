@@ -2,7 +2,7 @@
 
 In order to execute the un-orchestrator, we need to setup different components, namely:
 
-  * a set of libraries needed to compile the un-orchestrator code
+  * a set of libraries and tools needed to compile and execute the un-orchestrator code
   * a virtual switch (either xDPd, ERFS or OpenvSwitch) as a base switch for
     our platform
   * one or more execution environments for virtual network functions, e.g., KVM for
@@ -10,7 +10,7 @@ In order to execute the un-orchestrator, we need to setup different components, 
 
 ## Required libraries
 
-In addition to the libraries already listed in the main [un-orchestrator]/README_COMPILE.md,
+In addition to the libraries already listed in the main [../README_COMPILE.md](../README_COMPILE.md),
 some more components required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
 
@@ -26,7 +26,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	; Please note that you have to use version 0.6; newer versions have a different API that
 	; is not compatible with our code.
-	;
+	
 	$ git clone https://github.com/bisdn/rofl-common
 	$ cd rofl-common/
 	$ git checkout stable-0.6
