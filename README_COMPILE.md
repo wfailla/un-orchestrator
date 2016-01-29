@@ -32,7 +32,7 @@ The UN source code can be downloaded in two ways, depending on whether
 you would like to be in sync with the UN main GIT repository or just 
 download the sources, without being syncronized with the repository.
 
-In the first case if would be easy to get new updates from the repository
+In the first case it would be easy to get new updates from the repository
 and possibly commit your changes back in the main branch; in the second
 case you will have to syncronize the code manually.
 
