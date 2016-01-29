@@ -11,7 +11,7 @@ In order to execute the un-orchestrator, we need to setup different components, 
 ## Required libraries
 
 In addition to the libraries already listed in the main [../README_COMPILE.md](../README_COMPILE.md),
-some more components required to compile the un-orchestrator.
+some more components are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
