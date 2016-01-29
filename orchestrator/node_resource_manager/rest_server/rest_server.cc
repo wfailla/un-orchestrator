@@ -939,11 +939,26 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							
 							if(!graph.addRule(rule))
 							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",ruleID.c_str());
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s");
 								return false;
 							}
 					
 						}//for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
+						
+						bool same_priority = false;
+						list<highlevel::Rule> rules = graph.getRules();
+						for(list<highlevel::Rule>::iterator r = rules.begin(); r != rules.end(); r++)
+						{
+							uint64_t priority = (*r).getPriority();
+							for(list<highlevel::Rule>::iterator r1 = r; r1!=rules.end(); r1++)
+							{
+								if((*r1).getPriority() == priority)
+									same_priority = true;
+							}
+						}
+						
+						if(same_priority)
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "One or more flow rule with the same priority, switch can delete one of this rules");
 				    }// end  if (fg_name == FLOW_RULES)
 				    else
 					{
