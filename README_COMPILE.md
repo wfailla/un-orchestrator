@@ -20,11 +20,10 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; Alternatively, a copy of JSON Spirit is provided in [un-orchestrator]/contrib/json-spirit.zip
 	
 	$ git clone https://github.com/sirikata/json-spirit
-	
-	; Now you have to enter in the new folder and follow the install
-	; instructions that are contained there
-	
 	$ cd json-spirit/
+
+	; Now install the above library according to the description provided
+	; in the cloned folder
 
 
 ## Getting the code
