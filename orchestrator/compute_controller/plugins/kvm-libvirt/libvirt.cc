@@ -434,7 +434,13 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	/* Final XML Cleanup */
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
+	
+	/**
+	*	IVANO: the following function MUST not be called here. In fact, according to the documentation
+	*	"If your application is multithreaded or has a plugin support calling this may crash the application has
+	*	another thread or plugin is still using libxml2."
+	*/
+	// xmlCleanupParser();
 
 #ifdef DEBUG_KVM
 	stringstream filename;
@@ -452,8 +458,8 @@ bool Libvirt::startNF(StartNFIn sni)
 	dom = virDomainCreateXML(connection, xmlconfig, 0);
 	if (!dom) {
 //		virDomainFree(dom);
-    		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Domain definition failed");
-    		return false;
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Domain definition failed");
+		return false;
 	}
 
 	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Boot guest");
