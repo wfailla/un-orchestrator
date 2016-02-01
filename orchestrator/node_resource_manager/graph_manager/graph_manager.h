@@ -178,7 +178,7 @@ public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
 
-	GraphManager(int core_mask,string portsFileName, bool of_controller_lsi0);
+	GraphManager(int core_mask,string portsFileName);
 	~GraphManager();
 		
 	/**

@@ -17,7 +17,7 @@ class OVSDBManager : public SwitchManager
 private:
 
 public:
-	OVSDBManager(bool of_controller_lsi0);
+	OVSDBManager();
 
 	~OVSDBManager();
 

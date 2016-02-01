@@ -14,8 +14,6 @@ int pnumber = 1, nfnumber = 0, gnumber = 0;
 /* Transaction ID */
 static int tid = 0;
 
-bool of_ctrl_lsi0 = false;
-
 /*switch id, switch name*/
 map<uint64_t, string> switch_id;
 /*switch name, switch uuid*/
@@ -74,8 +72,7 @@ string build_port_uuid_name(const string& port_name, uint64_t bridge_no)
 }
 
 //Constructor
-commands::commands(bool of_controller_lsi0){
-	of_ctrl_lsi0 = of_controller_lsi0;
+commands::commands(){
 }
 
 //Destroyer
@@ -216,30 +213,26 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	strcat(tcp_s, cli.getControllerPort().c_str());
 	strcpy(temp, tcp_s);
 	
-	//LSI0 enough controller
-	if(of_ctrl_lsi0/* || dnumber != 1*/)
-	{
-		first_obj["op"] = "insert";
+	first_obj["op"] = "insert";
     	first_obj["table"] = "Controller";
     
-		/*insert a Controller*/
-		row["target"] = temp;
-		row["local_ip"] = "127.0.0.1";
-		row["connection_mode"] = "out-of-band";
-		row["is_connected"] = true;
+	/*insert a Controller*/
+	row["target"] = temp;
+	row["local_ip"] = "127.0.0.1";
+	row["connection_mode"] = "out-of-band";
+	row["is_connected"] = true;
 	
     	first_obj["row"] = row;
 
-		//create the current name of a controller --> ctrl+dnumber
-		sprintf(temp, "%s%" PRIu64, ctr, dnumber);
+	//create the current name of a controller --> ctrl+dnumber
+	sprintf(temp, "%s%" PRIu64, ctr, dnumber);
 
-		first_obj["uuid-name"] = temp;
+	first_obj["uuid-name"] = temp;
 
-		params.push_back(first_obj);
+	params.push_back(first_obj);
 		
-		row.clear();
+	row.clear();
     	first_obj.clear();
-    }
 
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Interface";
@@ -256,11 +249,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	first_obj["row"] = row;
 		
-	if(dnumber == 1)
-	{
-		first_obj["uuid-name"] = "iface0";
-		params.push_back(first_obj);
-	}
+	first_obj["uuid-name"] = "iface0";
+	params.push_back(first_obj);
 		
 	row.clear();
 	first_obj.clear();
@@ -277,10 +267,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	iface.push_back("set");
 	
 	iface2.push_back("named-uuid");
-	if(dnumber == 1)
-		iface2.push_back("iface0");
-	/*else
-		iface2.push_back("iface01");*/
+	iface2.push_back("iface0");
 	
 	iface1.push_back(iface2);
 	iface.push_back(iface1);
@@ -289,30 +276,23 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	first_obj["row"] = row;
 		
-	if(dnumber == 1)
-	{
-		first_obj["uuid-name"] = "Port1";
-		params.push_back(first_obj);
-	}
+	first_obj["uuid-name"] = "Port1";
+	params.push_back(first_obj);
+
 	row.clear();
 
-	//physical_ports[string("Port1")] = rnumber-1;
-
 	first_obj["op"] = "insert";
-    first_obj["table"] = "Bridge";
+	first_obj["table"] = "Bridge";
 
-    /*insert a bridge*/
-    row["name"] = sw;
+    	/*insert a bridge*/
+    	row["name"] = sw;
 
-    Array port;
+    	Array port;
 	Array port1;
 	Array port2;
 	
 	port2.push_back("named-uuid");
-	if(dnumber == 1)
-		port2.push_back("Port1");
-	/*else
-		port2.push_back("Port10");*/
+	port2.push_back("Port1");
 	
 	port1.push_back(port2);
 	
@@ -331,26 +311,23 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	port1.clear();
 	port.clear();
 
-	if(of_ctrl_lsi0/* || dnumber != 1*/)
-	{
-	   	Array ctrl;
-	   	ctrl.push_back("set");
+   	Array ctrl;
+   	ctrl.push_back("set");
 
-		Array ctrl1;
-		Array ctrl2;
+	Array ctrl1;
+	Array ctrl2;
 
-		//create the current name of a controller
-		sprintf(tmp, "%s%" PRIu64, ctr, dnumber);
+	//create the current name of a controller
+	sprintf(tmp, "%s%" PRIu64, ctr, dnumber);
 
-		ctrl2.push_back("named-uuid");
-		ctrl2.push_back(tmp);
+	ctrl2.push_back("named-uuid");
+	ctrl2.push_back(tmp);
 
-		ctrl1.push_back(ctrl2);
+	ctrl1.push_back(ctrl2);
 
-		ctrl.push_back(ctrl1);
+	ctrl.push_back(ctrl1);
 
-	   	row["controller"] = ctrl;
-   	}
+   	row["controller"] = ctrl;
 
 	peer.push_back("map");
 	
@@ -364,35 +341,35 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	row["datapath_type"] = "netdev";
 #endif
 
-    row["other_config"] = peer;
+    	row["other_config"] = peer;
 
-    row["protocols"] = of_version;
+    	row["protocols"] = of_version;
 
-    first_obj["row"] = row;
+    	first_obj["row"] = row;
 
-    first_obj["uuid-name"] = sw;
+    	first_obj["uuid-name"] = sw;
 
-    params.push_back(first_obj);
+    	params.push_back(first_obj);
 
-    row.clear();
-    first_obj.clear();
-    port.clear();
-    port1.clear();
-    port2.clear();
-    peer.clear();
-    peer1.clear();
-    peer2.clear();
+    	row.clear();
+    	first_obj.clear();
+    	port.clear();
+    	port1.clear();
+    	port2.clear();
+	peer.clear();
+    	peer1.clear();
+    	peer2.clear();
 
-    dnumber_new = dnumber;
+    	dnumber_new = dnumber;
 
-    /*Object with four items [op, table, where, mutations]*/
-    Object second_obj;
-    second_obj["op"] = "mutate";
-    second_obj["table"] = "Open_vSwitch";
+    	/*Object with four items [op, table, where, mutations]*/
+    	Object second_obj;
+    	second_obj["op"] = "mutate";
+    	second_obj["table"] = "Open_vSwitch";
 
-    /*Empty array [where]*/
-    Array where;
-    second_obj["where"] = where;
+    	/*Empty array [where]*/
+   	Array where;
+    	second_obj["where"] = where;
 
     /*Array with one element*/
     Array w_array;
@@ -457,9 +434,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 
  	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-    logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
     logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-    logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	//parse json response
 	Value value;
@@ -485,19 +462,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		    			
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
-						//if(dnumber == 1)
-						//{
-							if(of_ctrl_lsi0)
-							{
-								if(i == 2)
-									port_uuid[dnumber].push_back(stuff1[1].getString());
-							}
-							else
-							{
-								if(i == 1)
-									port_uuid[dnumber].push_back(stuff1[1].getString());
-							}
-						//}
+						if(i == 2)
+							port_uuid[dnumber].push_back(stuff1[1].getString());
 		 				strr[i] = stuff1[1].getString();
 					} else if(name1 == "details"){
 						logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());

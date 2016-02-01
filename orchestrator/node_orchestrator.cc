@@ -46,7 +46,7 @@ SQLiteManager *dbm = NULL;
 *	Private prototypes
 */
 bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file, bool *init_db, char **pwd);
-bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, bool *of_controller_lsi0);
+bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address);
 bool usage(void);
 bool doChecks(void);
 void terminateRestServer(void);
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	
 	int core_mask;
 	int rest_port, t_rest_port;
-	bool cli_auth, t_cli_auth, of_controller_lsi0, t_of_controller_lsi0, init_db = false;
+	bool cli_auth, t_cli_auth, init_db = false;
 	char *config_file_name = new char[BUFFER_SIZE];	
 	char *ports_file_name = new char[BUFFER_SIZE], *t_ports_file_name = NULL;
 	char *nffg_file_name = new char[BUFFER_SIZE], *t_nffg_file_name = NULL;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 	if(!parse_command_line(argc,argv,&core_mask,&config_file_name,&init_db,&pwd))
 		exit(EXIT_FAILURE);
 
-	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name,&t_descr_file_name,&t_client_name,&t_broker_address, &t_of_controller_lsi0))
+	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name,&t_descr_file_name,&t_client_name,&t_broker_address))
 		exit(EXIT_FAILURE);
 
 	strcpy(ports_file_name, t_ports_file_name);
@@ -138,7 +138,6 @@ int main(int argc, char *argv[])
 	
 	rest_port = t_rest_port;
 	cli_auth = t_cli_auth;
-	of_controller_lsi0 = t_of_controller_lsi0;
 
 	//test if client authentication is required and if true initialize database
 	if(cli_auth)
@@ -193,7 +192,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	if(!RestServer::init(dbm,of_controller_lsi0,cli_auth,nffg_file_name,core_mask,ports_file_name))
+	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 #ifdef UNIFY_NFFG
@@ -305,7 +304,7 @@ static struct option lgopts[] = {
 	return true;
 }
 
-bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, bool *of_controller_lsi0)
+bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address)
 {
 	ports_file_name[0] = '\0';
 	nffg_file_name[0] = '\0';
@@ -319,12 +318,13 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	INIReader reader(config_file_name);
 
 	if (reader.ParseError() < 0) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't load a universal-node-config.ini file");
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Can't load a default-config.ini file");
 		return false;
 	}
 	
 	/* physical ports file name */
-	char *temp_config_file = (char *)reader.Get("rest server", "configuration_file", "UNKNOWN").c_str();
+	char *temp_config_file = new char[64];
+	strcpy(temp_config_file, (char *)reader.Get("rest server", "configuration_file", "UNKNOWN").c_str());
 	if(strcmp(temp_config_file, "UNKNOWN") != 0 && strcmp(temp_config_file, "") != 0)
 		*ports_file_name = temp_config_file;
 	else
@@ -341,23 +341,24 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	/* client authentication */
 	*cli_auth = reader.GetBoolean("user authentication", "user_authentication", true);		
 
-	/* openflow controller on lsi0 */
-	*of_controller_lsi0 = reader.GetBoolean("GRE tunnel", "of_controller_lsi0", true);
-
 	/* first nf-fg file name */
-	char *temp_nf_fg = (char *)reader.Get("rest server", "nf-fg", "UNKNOWN").c_str();
+	char *temp_nf_fg = new char[64];
+	strcpy(temp_nf_fg, (char *)reader.Get("rest server", "nf-fg", "UNKNOWN").c_str());
 	*nffg_file_name = temp_nf_fg;
 	
 	/* description file to export*/
-	char *temp_descr = (char *)reader.Get("publisher/subscriber", "description_file", "UNKNOWN").c_str();
+	char *temp_descr = new char[64];
+	strcpy(temp_descr, (char *)reader.Get("publisher/subscriber", "description_file", "UNKNOWN").c_str());
 	*descr_file_name = temp_descr;
 	
 	/* client name of Double Decker */
-	char *temp_cli = (char *)reader.Get("publisher/subscriber", "client_name", "UNKNOWN").c_str();
+	char *temp_cli = new char[64];
+	strcpy(temp_cli, (char *)reader.Get("publisher/subscriber", "client_name", "UNKNOWN").c_str());
 	*client_name = temp_cli;
 	
 	/* dealer name of Double Decker */
-	char *temp_dealer = (char *)reader.Get("publisher/subscriber", "broker_address", "UNKNOWN").c_str();
+	char *temp_dealer = new char[64];
+	strcpy(temp_dealer, (char *)reader.Get("publisher/subscriber", "broker_address", "UNKNOWN").c_str());
 	*broker_address = temp_dealer;
 
 	return true;
