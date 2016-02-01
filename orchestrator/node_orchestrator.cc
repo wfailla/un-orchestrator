@@ -63,8 +63,11 @@ int main(int argc, char *argv[])
 	if(!doChecks())
 		exit(EXIT_FAILURE);	
 	
-	//XXX: change this line to use different versions of Openflow
-	OFP_VERSION = OFP_12;	
+#ifdef VSWITCH_IMPLEMENTATION_ERFS
+	OFP_VERSION = OFP_13;
+#else
+	OFP_VERSION = OFP_12;
+#endif
 	
 	int core_mask;
 	int rest_port;
@@ -234,8 +237,10 @@ static struct option lgopts[] = {
 
 bool usage(void)
 {
-	char message[]=	\
-	"Usage:                                                                                   \n" \
+
+	stringstream message;
+	
+	message << "Usage:                                                                        \n" \
 	"  sudo ./name-orchestrator --f file_name                                                 \n" \
 	"                                                                                         \n" \
 	"Parameters:                                                                              \n" \
@@ -243,10 +248,14 @@ bool usage(void)
 	"        Name of the file describing the Universal Node in terms of resources and ports   \n" \
 	"        orchestrator                                                                     \n" \
 	"                                                                                         \n" \
-	"Options:                                                                                 \n" \
-	"  --i file_name                                                                          \n" \
-	"        Name of the file describing the firtst NF-FG to be deployed on the node          \n" \
-	"  --p tcp_port                                                                           \n" \
+	"Options:                                                                                 \n";
+	
+#ifndef UNIFY_NFFG
+	message << "  --i file_name                                                               \n" \
+	"        Name of the file describing the firtst NF-FG to be deployed on the node          \n";
+#endif	
+	
+	message << "  --p tcp_port                                                                \n" \
 	"        TCP port used by the REST server to receive commands (default is 8080)           \n" \
 	"  --c core_mask                                                                          \n" \
 	"        Mask that specifies which cores must be used for DPDK network functions. These   \n" \
@@ -258,7 +267,7 @@ bool usage(void)
 	"Example:                                                                                 \n" \
 	"  sudo ./node-orchestrator --f config/example.xml                                        \n\n";
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\n\n%s",message);
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\n\n%s",message.str().c_str());
 	
 	return false;
 }

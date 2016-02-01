@@ -138,7 +138,7 @@ def addResources(cpu, memory, memory_unit, storage, storage_unit):
 
 	return 1
 	
-def addNodePort(name, ptype):
+def addNodePort(name, ptype, psap):
 	'''
 	Adds the description of a port of the node
 	'''
@@ -161,7 +161,7 @@ def addNodePort(name, ptype):
 		
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
 	
-	port = Port(id=name, name=name, port_type=ptype)
+	port = Port(id=name, name=name, port_type=ptype, sap=psap)
 	universal_node.ports.add(port)
 
 	if(ptype == 'port-abstract'):
@@ -531,20 +531,26 @@ def extractRules(content):
 		match = {}
 		if flowentry.match is not None:
 			if type(flowentry.match.data) is str:
-				#FIXME: I guess this cannot happen! But never say never...
-				#Then I let it here
-				error = True
-				return
-			elif type(flowentry.match.data) is ET.Element:
-				for node in flowentry.match.data:
-					if not supportedMatch(node.tag):
+				#The tag <match> contains a sequence of matches separated by " "
+				matches = flowentry.match.data.split(" ")
+				for m in matches:
+					tokens = m.split("=")
+					elements = len(tokens)
+					if elements != 2:
 						error = True
 						return
-					match[node.tag] = node.text
+					#The match is in the form "name=value"
+					if not supportedMatch(tokens[0]):
+						error = True
+						return
+					#We have to convert the virtualizer match into the UN equivalent match
+					match[equivalentMatch(tokens[0])] = tokens[1]
+
+			#We ignore the element in case it's not a string. It is possible that it is simply empty
 					
 		#The content of <port> must be added to the match
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
-		
+
 		portPath = flowentry.port.get_target().get_path()
 		port = flowentry.port.get_target()	
 		tokens = portPath.split('/');
@@ -572,21 +578,22 @@ def extractRules(content):
 		action = {}
 		if flowentry.action is not None:
 			if type(flowentry.action.data) is str:
-				#FIXME: I guess this cannot happen! But never say never...
-				#Then I let it here
-				error = True
-				return
-			elif type(flowentry.action.data) is ET.Element:
-				for node in flowentry.action.data:
-					if not supportedAction(node.tag):
+				#The tag <action> contains a sequence of actions separated by " "
+				actions = flowentry.action.data.split(" ")
+				for a in actions:
+					tokens = a.split(":")
+					elements = len(tokens)
+					if not supportedAction(tokens[0],elements-1):
 						error = True
+						print "Returning because action is not supported"
 						return
-					#At this point, we have to go more in deep with the analysis					
-					action[node.tag] = handleSpecificAction(node.tag,node)					
+					action[equivalentAction(tokens[0])] = handleSpecificAction(tokens)
+
+			# We ignore the element in case it's not a string. It could be simply empty.
 							
 		#The content of <out> must be added to the action
 		#XXX: the following code is quite dirty, but it is a consequence of the nffg library
-		
+
 		portPath = flowentry.out.get_target().get_path()
 		port = flowentry.out.get_target()	
 		tokens = portPath.split('/');
@@ -742,22 +749,36 @@ def supportedMatch(tag):
 	else:
 		LOG.error("'%s' is not a supported match!",tag)
 		return False
-	
-def supportedAction(tag):
+		
+def equivalentMatch(tag):
 	'''
-	Given an element within an action, this function checks whether such an element is supported or node
+	Given an element within match, this function return the element with equivalent meaning in native orchestrator NF-FG
+	'''
+	return constants.supported_matches[tag]
+	
+def supportedAction(tag,elements):
+	'''
+	Given an element within an action, this function checks whether such an element is supported or not
 	'''
 	
 	if tag in constants.supported_actions:
-		LOG.debug("'%s' is supported!",tag)
-		return True
+		LOG.debug("'%s' is supported with %d elements!",tag,constants.supported_actions[tag])
+		if constants.supported_actions[tag] == elements:
+			return True
+		else:
+			LOG.debug("The action specifies has a wrong number of elements: %d",elements)
+			return False
 	else:
-		LOG.error("'%s' is not a supported match!",tag)
+		LOG.error("'%s' is not a supported action!",tag)
 		return False
-	
-def vlan_action():
-	LOG.debug("!!!!!!!!!!!!!!!!")
-	
+		
+def equivalentAction(tag):
+	'''
+	Given an element within action, this function return the element with equivalent meaning in native orchestrator NF-FG
+	'''
+	return constants.equivalent_actions[tag]
+
+		
 def toBeAddedToFile(flowRules,vnfs,fileName):
 	'''
 	Given a set (potentially empty) of flow rules and NFs, write it in a file respecting the syntax expected by the Univeral Node

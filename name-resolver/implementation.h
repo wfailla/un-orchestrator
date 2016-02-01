@@ -19,7 +19,7 @@
 using namespace std;
 using namespace json_spirit;
 
-typedef enum { DPDK, DOCKER, KVM } nf_t;
+typedef enum { DPDK, DOCKER, KVM, NATIVE } nf_t;
 
 class Implementation
 {
@@ -74,6 +74,19 @@ public:
 	virtual void toJSON(Object& impl);
 
 private:
+};
+
+class NativeImplementation : public Implementation
+{
+public:
+	NativeImplementation(nf_t type, xmlNodePtr xmlDetails);
+
+	virtual void toJSON(Object& impl);
+
+private:
+	std::string location;
+	std::string dependencies;
+
 };
 
 #endif //IMPLEMENTATION_H_

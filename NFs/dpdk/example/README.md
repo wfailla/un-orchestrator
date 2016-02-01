@@ -16,15 +16,15 @@ The pcre library can be installed with the command:
 To compile the DPI to be used with xDPd, run the following commands:
 
 	$ export RTE_SDK=absolute_path_dpdk
-	; e.g., export RTE_SDK=~/Desktop/dpdk-dev
-	$ RTE_TARGET=x86_64-native-linuxapp-gcc
+	; e.g., export RTE_SDK=~/Desktop/xdpd/libs/dpdk
+	$ export RTE_TARGET=x86_64-native-linuxapp-gcc
 	$ make
 	
 To compile the DPI to be used with OvS-DPDK, run the following commands:
 
 	$ export RTE_SDK=absolute_path_dpdk
-	; e.g., export RTE_SDK=~/Desktop/dpdk-dev
-	$ RTE_TARGET=x86_64-ivshmem-linuxapp-gcc
+	; e.g., export RTE_SDK=~/Desktop/dpdk-2.1.0
+	$ export RTE_TARGET=x86_64-ivshmem-linuxapp-gcc
 	$ make
 
 **Note:** the network function has been written to work with xDPd. If you want to use it with

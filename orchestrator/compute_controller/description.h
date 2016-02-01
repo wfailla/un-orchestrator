@@ -18,42 +18,48 @@ using namespace std;
 class NFsManager;
 
 enum PortType {
-	UNDEFINED_PORT,
-	USVHOST_PORT,
-	IVSHMEM_PORT,
-	VHOST_PORT
+	INVALID_PORT = -1,
+	UNDEFINED_PORT = 0,
+	//Ports used for virtual machines
+	USVHOST_PORT,			//user space vhost port
+	IVSHMEM_PORT,			//ivshmem port
+	VHOST_PORT,				//(in kernel) vhost port
+	//Ports used fro Docker containers 
+	VETH_PORT,				//veth pair port
+	//Ports used for DPDK processes executed in the host
+	DPDKR_PORT				//dpdkr port
 };
 
 PortType portTypeFromString(const std::string& s);
+std::string portTypeToString(PortType t);
 
+struct nf_port_info
+{
+	string port_name;
+	PortType port_type;
+};
+bool operator==(const nf_port_info& lhs, const nf_port_info& rhs);
 
 class Description
 {
-friend NFsManager;
-
-public:
 
 private:
 	nf_t type;
 	string uri;
-	//The next attribute are meningful only for DPDK VNFs
-	//FIXME: this is bad.. The same description should be valid for all the NFs. Then, it is up to the proper
-	//plugin to decide wheter an information has to be used or not.
-	string cores;
-	string location;
-	std::vector<PortType> port_types;
-	
+	bool supported;
+	std::map<unsigned int, PortType> port_types;
+
 public:
-	Description(nf_t type, string uri, string cores, string location, std::vector<PortType>& port_types);
-	Description(string type, string uri, string cores, string location, std::vector<PortType>& port_types);
+	Description(nf_t type, string uri, std::map<unsigned int, PortType>& port_types);
+	Description(string type, string uri, std::map<unsigned int, PortType>& port_types);
+	virtual ~Description();
 	
-	string getURI();
-	string getLocation();
-	nf_t getType();
-	const std::vector<PortType>& getPortTypes() { return port_types; }
-	
-protected:
-	string getCores();
+	string getURI() const;
+	nf_t getType() const;
+	void setSupported(bool supported);
+	bool isSupported();
+	const std::map<unsigned int, PortType>& getPortTypes() const { return port_types; }
+	PortType getPortType(unsigned int port_id) const;
 };
 
 #endif //DESCRIPTION_H_

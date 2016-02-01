@@ -40,8 +40,12 @@ bool Graph::addPort(string port)
 
 bool Graph::addNetworkFunction(string nf)
 {
-	if(networkFunctions.count(nf) != 0)
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunction(\"%s\")",nf.c_str());
+
+	if(networkFunctions.count(nf) != 0) {
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunction(\"%s\") NF already present!",nf.c_str());
 		return false;
+	}
 
 	list<unsigned int> ports;
 	networkFunctions[nf] = ports;

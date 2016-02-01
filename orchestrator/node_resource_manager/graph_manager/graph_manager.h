@@ -32,6 +32,10 @@
 	#include "../../network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h"
 	#define SWITCH_MANAGER_IMPLEMENTATION OVSDBManager
 #endif
+#ifdef VSWITCH_IMPLEMENTATION_ERFS
+	#include "../../network_controller/switch_manager/plugins/erfs/manager.h"
+	#define SWITCH_MANAGER_IMPLEMENTATION ERFSManager
+#endif
 //[+] Add here other implementations for the virtual switch
 
 #include <list>
@@ -50,7 +54,7 @@ typedef struct
 		unsigned int number_of_ports;
 		ComputeController *computeController;
 		
-		list<string> namesOfPortsOnTheSwitch;
+		map<unsigned int, string> namesOfPortsOnTheSwitch;
 	}to_thread_t;
 
 class GraphManager

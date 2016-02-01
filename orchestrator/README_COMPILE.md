@@ -2,45 +2,30 @@
 
 In order to execute the un-orchestrator, we need to setup different components, namely:
 
-  * a set of libraries needed to compile the un-orchestrator code
-  * a virtual switch (either xDPd or OpenvSwitch) as a base switch for
+  * a set of libraries and tools needed to compile and execute the un-orchestrator code
+  * a virtual switch (either xDPd, ERFS or OpenvSwitch) as a base switch for
     our platform
   * one or more execution environments for virtual network functions, e.g., KVM for
     executing VM, Docker, or other.
 
 ## Required libraries
 
-Several libraries are required to compile the un-orchestrator.
+In addition to the libraries already listed in the main [../README_COMPILE.md](../README_COMPILE.md),
+some more components are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
-
-	; Install required libraries
-	; - build-essential: it includes GCC, basic libraries, etc
-	; - cmake: to create cross-platform makefiles
-	; - cmake-curses-gui: nice 'gui' to edit cmake files
-	; - libboost-all-dev: nice c++ library with tons of useful functions
-	; - libmicrohttpd-dev: embedded micro http server
-	; - libxml2-dev: nice library to parse and create xml
-	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev
-
-	; Install JSON Spirit (nice library to parse JSON files)
-	$ git clone https://github.com/sirikata/json-spirit
-	; alternatively, a copy of JSON Spirit is provided in `[un-orchestrator]/contrib/json-spirit.zip`
-	$ cd json-spirit/
-
-	; Now install the above library according to the description provided
-	; in the cloned folder
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
 	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	; Please note that you have to use version 0.6; newer versions have a different API that
 	; is not compatible with our code.
-	;
+	
 	$ git clone https://github.com/bisdn/rofl-common
 	$ cd rofl-common/
 	$ git checkout stable-0.6
 
 	; Now install the above library according to the description provided
 	; in the cloned folder
+
 
 ## Install the proper virtual switch
 
@@ -54,10 +39,14 @@ possibilities listed in this section.
 In order to install xDPd with DPDK support, you have to follow the steps below.
 
 	$ git clone https://github.com/bisdn/xdpd
+	$ git checkout stable
 	$ cd xdpd/
 
 	;Install all the libraries required by the README provided in this folder
-	$ bash autogen
+	;Edit config/dpdk.m4 and
+	; change DPDK_TARGET="x86_64-native-${OS}app-${TARGET_CC}"
+	;     to DPDK_TARGET="x86_64-ivshmem-${OS}app-${TARGET_CC}"
+	$ bash autogen.sh
 	$ cd build
 	$ ../configure --with-hw-support=gnu-linux-dpdk --with-plugins="node_orchestrator rest"
 	$ make
@@ -86,7 +75,7 @@ as the OF-CONFIG support in OpenvSwitch is rather primitive).
 OvS with the OFCONFIG support can be installed as follows:
 
 	$ sudo apt-get install autoconf automake gcc libtool libxml2 libxml2-dev m4 make openssl dbus
-	
+
 	; Download LIBSSH from
 	;       https://red.libssh.org/projects/libssh/files
 	; Now install the above library following the INSTALL file provided in the root directory
@@ -106,7 +95,7 @@ OvS with the OFCONFIG support can be installed as follows:
     $ ./configure --prefix=/ --datarootdir=/usr/share --with-linux=/lib/modules/$(uname -r)/build
     $ make
     $ sudo make install
-	
+
 	; Clone the of-config repository
 	$ git clone https://github.com/openvswitch/of-config
 
@@ -132,7 +121,7 @@ Before installing OvS with DPDK, you must download and compile the DPDK library.
 the source code from:
 
 	http://dpdk.org/browse/dpdk/snapshot/dpdk-2.1.0.tar.gz
-	
+
 Then execute the following commands:
 
     $ tar -xf dpdk-2.1.0.tar.gz
@@ -161,9 +150,9 @@ Then execute the following commands:
 	$ ./configure --with-dpdk=$DPDK_BUILD
 	$ make
 	$ sudo make install
-	
-Now create the ovsdb database:	
-	
+
+Now create the ovsdb database:
+
 	$ mkdir -p /usr/local/etc/openvswitch
 	$ mkdir -p /usr/local/var/run/openvswitch
 	$ sudo rm /usr/local/etc/openvswitch/conf.db
@@ -190,21 +179,13 @@ Two flavors of virtual machines are supported:
 
   * virtual machines that exchange packets with the vSwitch through the `virtio` driver. This configuration allows you to run both traditional processes and DPDK-based processes within the virtual machines. In this case, the host backend for the virtual NICs is implemented through `vhost` in case OvS and xDPd as vSwitches, and through `vhost-user` when OvS-DPDK is used as vSwitch;
   * virtual machines that exchange packets with the vSwitch through shared memory (`ivshmem`). This configuration is oriented to performance, and only supports DPDK-based processes within the virtual machine.
-	
-#### Standard QEMU/KVM (without `ivshmem` or `vhost-user` support)
 
-To install the standard QEMU/KVM/Libvirt execution environment, execute the
-following command:
+#### Libvirt
 
-	$ sudo apt-get install libvirt-dev qemu-kvm libvirt-bin bridge-utils qemu-system
+In order to start/stop virtual machines, a recent version of Libvirt must be used. 
+You can build it from sources using the following commands:
 
-##### Libvirt with support to `vhost-user` ports
-
-If you intend to use (DPDK) `vhost-user` ports, a recent version of Libvirt must
-be used that supports configuration of this type of ports. You can build it from
-sources using the following commands:
-
-	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev
+	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev python-dev xsltproc autopoint
 	$ git clone git://libvirt.org/libvirt.git
 	; select the commit that is known to work and have the necessary support
 	$ cd libvirt
@@ -213,19 +194,9 @@ sources using the following commands:
 	$ make
 	$ sudo make install
 
-In case you already had libvirt installed on the system, this will install an
-alternative version which must then be used instead of the default one:
+#### QEMU/KVM
 
-	; Stop any running libvirtd instance and run the alternative version just installed:
-	$ sudo service libvirt-bin stop
-	$ sudo /usr/local/sbin/libvirtd --daemon
-
-Similarly, if you use `virsh`, you would have to use the version from `/usr/local/bin`.
-
-#### QEMU for `ivshmem` and `vhost-user` support
-
-To compile and install the QEMU/KVM execution environment with the support to `ivshmem`,
-or the support for the way the un-orchestrator sets up `vhost-user`, you need a recent qemu
+To compile and install the QEMU/KVM execution environment, you need a recent QEMU 
 version.
 
 Additionally, for `ivshmem` support, a patch (`[un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch`) 
@@ -234,9 +205,11 @@ version included in OVDK (Intel DPDK vSwitch).
 
 Here there are the required steps:
 
+	$ sudo apt-get install libperl-dev libgtk2.0-dev bridge-utils
 	$ git clone https://github.com/qemu/qemu.git
 	$ cd qemu
 	$ git checkout v2.2.1
+	; The next step is only required to support `ivshmem`
 	$ git apply [un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch
 	$ ./configure --target-list=x86_64-softmmu
 	$ make
@@ -261,7 +234,18 @@ Finally, remember to select the proper `cmake` option when compiling the `un-orc
 
 ## Compile the un-orchestrator
 
-We are now ready to compile the un-orchestrator.
+We are now ready to compile the un-orchestrator. If you intend to enable support for DPDK IVSHMEM-based ports, you'll need to define environment variables pointing to your build of DPDK.
+If you are using xDPd (which includes its own DPDK tree and builds it), this would be:
+
+	$ export RTE_SDK=$XDPD_DIR/build/libs/dpdk
+	$ export RTE_TARGET=build
+
+Otherwise use:
+
+	$ export RTE_SDK=$DPDK_DIR
+	$ export RTE_TARGET=x86_64-ivshmem-linuxapp-gcc
+
+You can then build the un-orchestrator:
 
 	$ cd orchestrator
 

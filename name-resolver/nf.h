@@ -1,8 +1,6 @@
 #ifndef NF_H_
 #define NF_H_ 1
 
-#pragma once
-
 #include <string>
 #include <assert.h>
 #include <list>
@@ -36,10 +34,10 @@ private:
 	/**
 	*	@brief: text describing the network function
 	*/
-	string description;
+	string summary;
 		
 	/**
-	*	@brief: list of implementations for the network function
+	*	@brief: list of possible implementations for the network function
 	*/
 	list<Implementation*> implementations;
 	

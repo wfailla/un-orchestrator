@@ -7,6 +7,8 @@
 #include <list>
 #include <inttypes.h>
 
+#include "../../compute_controller/description.h"
+
 /**
 * @file addNFports_in.h
 *
@@ -40,15 +42,13 @@ private:
 	/**
 	*	@brief: list of ports of the network function to be attached to the lsi
 	*/
-	list<string> nf_ports;
+	list<struct nf_port_info> nf_ports;
 
-protected:
-	AddNFportsIn(uint64_t dpid, string nf_name, nf_t type, list<string> nf_ports)
+public:
+	AddNFportsIn(uint64_t dpid, string nf_name, nf_t type, list<struct nf_port_info> nf_ports)
 		: dpid(dpid), nf_name(nf_name), type(type), nf_ports(nf_ports)
 	{
 	}
-	
-public:
 	
 	uint64_t getDpid()
 	{
@@ -65,7 +65,7 @@ public:
 		return type;
 	}
 	
-	list<string> getNetworkFunctionsPorts()
+	list<struct nf_port_info> getNetworkFunctionsPorts()
 	{
 		return nf_ports;
 	}

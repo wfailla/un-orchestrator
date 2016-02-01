@@ -1,6 +1,8 @@
 #ifndef OVSDKDK_CONSTANTS_H_
 #define OVSDKDK_CONSTANTS_H_ 1
 
+#define OVSDPDK_MODULE_NAME	"OvS-DPDK-Manager"
+
 /**
 *	@brief: Scripts to manage OVS bridges
 */

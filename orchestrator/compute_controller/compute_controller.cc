@@ -153,13 +153,35 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		list<Description*> possibleDescriptions;
 		string nf_name;
+
+		bool foundNports = false;
+		unsigned int numports = 0;		
+
 #ifdef UNIFY_NFFG
-		unsigned int numports = 0;
 		string text_description;
-		
-		bool foundNports = false, foundTextDescription = false;
+		bool foundTextDescription = false;
 #endif
 
+		//A first sacan of the json is done in order to read the number of ports of the VNF.
+		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
+		{
+	 	    const string& name  = i->first;
+		    const Value&  value = i->second;
+			if(name == "nports")
+		    {
+				foundNports = true;
+		    	numports = value.getInt();
+		    	break;
+		    }
+		}
+		if(!foundNports)
+		{
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"num-ports\" not found in the answer");
+			return false;
+		}
+
+		//Now let's do a second scan in order to retrieve all the other information received from
+		//the name-resolver
 		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
 		{
 	 	    const string& name  = i->first;
@@ -177,12 +199,10 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		    }
 		    else if(name == "nports")
 		    {
-#ifdef UNIFY_NFFG
-				foundNports = true;
-		    	numports = value.getInt();
-#endif
+		    	//Information already retrieved
+		    	continue;
 		    }
-		    else if(name == "description")
+		    else if(name == "summary")
 		    {
 #ifdef UNIFY_NFFG
 				foundTextDescription = true;
@@ -199,8 +219,9 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					return false;
 		    	}
 
+				bool foundPorts = false; //Mandatory only in case of KVM
 				bool next = false;
-		    	//Itearate on the implementations
+		    	//Iterate on the implementations
 		    	for( unsigned int impl = 0; impl < impl_array.size(); ++impl)
 				{
 					//This is an implementation, with a type and an URI
@@ -209,12 +230,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					bool foundType = false;
 					bool foundCores = false;
 					bool foundLocation = false;
+					bool foundDependencies = false;
 
 					string type;
 			    	string uri;
 					string cores;
 					string location;
-					std::vector<PortType> port_types;
+					string dependencies;
+					std::map<unsigned int, PortType> port_types; // port_id -> port_type
 
 					for( Object::const_iterator impl_el = implementation.begin(); impl_el != implementation.end(); ++impl_el )
 					{
@@ -250,8 +273,9 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						}
 						else if(el_name == "ports")
 						{
+							foundPorts = true;
+							
 					    	const Array& ports_array = el_value.getArray();
-					    	logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "%d ports in implementation", ports_array.size());
 
 					    	if (ports_array.size() == 0)
 					    	{
@@ -273,6 +297,10 @@ bool ComputeController::parseAnswer(string answer, string nf)
 									}
 									else if (pel_name == "type") {
 										port_type = portTypeFromString(pel_value.getString());
+										if (port_type == INVALID_PORT) {
+											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid port type \"%s\" for implementation port", pel_value.getString().c_str());
+											return false;
+										}
 									}
 									else {
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" within an implementation port", pel_name.c_str());
@@ -287,12 +315,15 @@ bool ComputeController::parseAnswer(string answer, string nf)
 									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Missing port \"type\" attribute for implementation");
 									return false;
 								}
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %d id=%d type=%d", p, port_id, port_type);
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Port %d id=%d type=%s", p, port_id, portTypeToString(port_type).c_str());
 
-								if ((size_t)port_id >= port_types.size())
-									port_types.resize(port_id + 1);
-								port_types[port_id] = port_type;
+								port_types.insert(std::map<unsigned int, PortType>::value_type(port_id, port_type));
 							}
+						}
+						else if(el_name == "dependencies")
+						{
+							foundDependencies = true;
+							dependencies = el_value.getString();
 						}
 						else
 						{
@@ -303,7 +334,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					
 					if(next)
 					{
-						//The current network function is of a type not supported by the orchestator
+						//The current network function is of a type not supported by the orchestrator
 						next = false;
 						continue;
 					}
@@ -313,23 +344,79 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into an implementation description");
 						return false;
 					}
+
+
+					//The port types are not specified in the message coming from the name-resolver.
+					//We set the port type as follows:
+					//	* VETH_PORT in case of Docker container or Native functions
+					//	* DPDKR_PORT in case of DPDK process
+
+
 					if(type == "dpdk")
 					{
+#ifdef ENABLE_DPDK_PROCESSES
 						if(!foundCores || !foundLocation)
 						{
 							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"cores\" attribute, \"location\" attribute, or both",type.c_str());
 							return false;
 						}
+
+						assert(!foundPorts);
+
+						for(unsigned int i = 0; i < numports; i++)
+							port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, DPDKR_PORT));
+
+						possibleDescriptions.push_back(dynamic_cast<Description*>(new DPDKDescription(type,uri,cores,location,port_types)));
+#endif
+						continue;
 					}
-					else if(foundCores || foundLocation)
+					else if(type == "native")
 					{
-						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received with a wrong attribute (\"cores\", \"location\", or both)",type.c_str());
+#ifdef ENABLE_NATIVE
+						assert(!foundPorts);
+						if(!foundLocation || !foundDependencies)
+						{
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the \"dependencies\" attribute, \"location\" attribute, or both",type.c_str());
+							return false;
+						}
+						std::stringstream stream(dependencies);
+						std::string s;
+						std::list<std::string>* dep_list = new std::list<std::string>;
+						while(stream >> s){
+							dep_list->push_back(s);
+						}
+
+						for(unsigned int i = 0; i < numports; i++)
+							port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, VETH_PORT));
+
+						possibleDescriptions.push_back(dynamic_cast<Description*>(new NativeDescription(type,uri,location,dep_list,port_types)));
+#endif
+						continue;
+					}
+					else if(foundCores || foundLocation || foundDependencies)
+					{
+						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received with a wrong attribute (\"cores\", \"location\" or \"dependencies\")",type.c_str());
 						return false;
 					}
 
-					Description* descr = new Description(type, uri, cores, location, port_types);
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Description has %d PortTypes (ref %d)", descr->getPortTypes().size(), port_types.size());
+					if(!foundPorts)
+					{
+						if(type == "docker")
+						{
+							for(unsigned int i = 0; i < numports; i++)
+								port_types.insert(std::map<unsigned int, PortType>::value_type(i+1, VETH_PORT));
+						}
+						else
+						{
+							assert(type == "kvm");
+							//In case of KVM, the port type must be specified by the name-resolver.
+							assert(0 && "Probably there is a BUG in the name resover!");
+							logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Description of a NF of type \"%s\" received without the element \"ports\"",type.c_str());
+							return false;
+						}
+					}
 
+					Description* descr = new Description(type, uri, port_types);
 					possibleDescriptions.push_back(descr);
 				}
 		    } //end if(name == "implementations")
@@ -342,12 +429,12 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		if(!foundName || !foundImplementations
 #ifdef UNIFY_NFFG
-			|| !foundNports || !foundTextDescription
+			 || !foundTextDescription
 #endif		
 		)
 		{
 #ifdef UNIFY_NFFG
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", and/or key \"implementations\", and/or key \"num-ports\", and/or key \"description\" not found in the answer");
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", and/or key \"implementations\", and/or key \"description\" not found in the answer");
 #else
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", or key \"implementations\", or both not found in the answer");
 #endif
@@ -386,117 +473,236 @@ bool ComputeController::parseAnswer(string answer, string nf)
 	return true;
 }
 
-bool ComputeController::selectImplementation()
-{
-	NFsManager *manager = NULL;
+void ComputeController::checkSupportedDescriptions() {
+
+	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++){
+
+		NF *current = nf->second;
+
+		list<Description*> descriptions = current->getAvailableDescriptions();
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d descriptions available for NF \"%s\".", descriptions.size(), nf->first.c_str());
+
+		list<Description*>::iterator descr;
+		for(descr = descriptions.begin(); descr != descriptions.end(); descr++){
+
+			switch((*descr)->getType()){
 
 #ifdef ENABLE_DOCKER
-	//Manage Docker execution environment
-
-	manager = new Docker();
-	if(manager->isSupported())
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select a Docker implementation if exists.");
-		selectImplementation(DOCKER);
-		
-		if(allSelected())
-			return true;
-	}
-	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker deamon is not running (at least, it is not running with the LXC implementation).");
+					//Manage Docker execution environment
+				case DOCKER:{
+					NFsManager *dockerManager = new Docker();
+					if(dockerManager->isSupported(**descr)){
+						(*descr)->setSupported(true);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is supported.",nf->first.c_str());
+					} else {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description of NF \"%s\" is not supported.",nf->first.c_str());
+					}
+					delete dockerManager;
+				}
+				break;
 #endif
 
 #ifdef ENABLE_DPDK_PROCESSES
-	//Manage DPDK execution environment
-
-	manager = new Dpdk();
-	if(manager->isSupported())
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select DPDK implementation if exists.");
-	
-		selectImplementation(DPDK);
-		if(allSelected())
-			return true;
-	}
-	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK is not supported.");
+					//Manage DPDK execution environment
+				case DPDK:{
+					NFsManager *dpdkManager = new Dpdk();
+					if(dpdkManager->isSupported(**descr)){
+						(*descr)->setSupported(true);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is supported.",nf->first.c_str());
+					} else {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description of NF \"%s\" is not supported.",nf->first.c_str());
+					}
+					delete dpdkManager;
+				}
+				break;
 #endif
 
 #ifdef ENABLE_KVM
-	//Manage QEMU/KVM execution environment through libvirt
-	
-	manager = new Libvirt();
-	
-	if(manager->isSupported())
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Select QEMU/KVM implementation if exists.");
-		selectImplementation(KVM);
-		
-		if(allSelected())
-			return true;
-	}
-	else
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "QEMU/KVM is not supported.");
-
+					//Manage QEMU/KVM execution environment through libvirt
+				case KVM:{
+					NFsManager *libvirtManager = new Libvirt();
+					if(libvirtManager->isSupported(**descr)){
+						(*descr)->setSupported(true);
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is supported.",nf->first.c_str());
+					} else {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description of NF \"%s\" is not supported.",nf->first.c_str());
+					}
+					delete libvirtManager;
+				}
+				break;
 #endif
 
-	//[+] Add here other implementations for the execution environment
+#ifdef ENABLE_NATIVE
+					//Manage NATIVE execution environment
+				case NATIVE:
+					NFsManager *nativeManager;
+					try{
+						nativeManager = new Native();
+						if(nativeManager->isSupported(**descr)){
+							(*descr)->setSupported(true);
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is supported.",nf->first.c_str());
+						} else {
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description of NF \"%s\" is not supported.",nf->first.c_str());
+						}
+						delete nativeManager;
+					} catch (exception& e) {
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
+						delete nativeManager;
+					}
+					break;
+#endif
+					//[+] Add here other implementations for the execution environment
 
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported implementation!");
-	return false;
+				default:
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available execution environments for description type %s", NFType::toString((*descr)->getType()).c_str());
+			}
+
+		}
+
+	}
+
 }
 
-void ComputeController::selectImplementation(nf_t desiredType)
-{
-	//Select an implmentation of the NF
-	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
-	{
-		NF *current = nf->second;
-		
-		//An descritpion is selected only for those functions that do not have a description yet
-		if(current->getSelectedDescription() == NULL)
-		{
-			list<Description*> descriptions = current->getAvailableDescriptions();
+NFsManager* ComputeController::selectNFImplementation(list<Description*> descriptions) {
 
-			list<Description*>::iterator impl;
-			for(impl = descriptions.begin(); impl != descriptions.end(); impl++)
-			{
-				if((*impl)->getType() == desiredType)
-				{
-					NFsManager *manager = NULL;
+	list<Description*>::iterator descr;
 
-					//Create the proper NFsManager according to the selected type
-					switch(desiredType)
-					{
-#ifdef ENABLE_DPDK_PROCESSES
-						case DPDK:
-							manager = new Dpdk();
-							break;
-#endif
+	/*
+	 * TODO: descriptions.sort({COMPARATOR})
+	 */
+
+	bool selected = false;
+
+	for(descr = descriptions.begin(); descr != descriptions.end() && !selected; descr++) {
+
+		if((*descr)->isSupported()){
+
+			switch((*descr)->getType()){
+
 #ifdef ENABLE_DOCKER
-						case DOCKER:
-							manager = new Docker();
-							break;
+				//Manage Docker execution environment
+			case DOCKER:{
+
+				NFsManager *dockerManager = new Docker();
+				dockerManager->setDescription(*descr);
+
+				selected = true;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Docker description has been selected.");
+
+				return dockerManager;
+
+			}
+			break;
 #endif
+
+#ifdef ENABLE_DPDK_PROCESSES
+				//Manage DPDK execution environment
+			case DPDK:{
+
+				NFsManager *dpdkManager = new Dpdk();
+				dpdkManager->setDescription(*descr);
+
+				selected = true;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "DPDK description has been selected.");
+
+				return dpdkManager;
+
+			}
+			break;
+#endif
+
 #ifdef ENABLE_KVM
-						case KVM:
-							manager = new Libvirt();
-							break;
+				//Manage QEMU/KVM execution environment through libvirt
+			case KVM:{
+
+				NFsManager *libvirtManager = new Libvirt();
+				libvirtManager->setDescription(*descr);
+
+				selected = true;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM description has been selected.");
+
+				return libvirtManager;
+
+			}
+			break;
 #endif
-						//[+] Add here other implementations for the execution environment
-						default:
-							assert(0);
-					}
-					
-					manager->setDescription(*impl);					
-					current->setSelectedDescription(manager);
-										
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s description has been selected for NF \"%s\".",NFType::toString(desiredType).c_str(),nf->first.c_str());
-					break;
+
+#ifdef ENABLE_NATIVE
+				//Manage NATIVE execution environment
+			case NATIVE:
+
+				NFsManager *nativeManager;
+				try{
+
+					nativeManager = new Native();
+					nativeManager->setDescription(*descr);
+
+					selected = true;
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Native description has been selected.");
+
+					return nativeManager;
+
+				} catch (exception& e) {
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "exception %s has been thrown", e.what());
+					delete nativeManager;
 				}
+				break;
+#endif
+				//[+] Add here other implementations for the execution environment
+
+			default:
+				assert(0);
 			}
 		}
 	}
+	return NULL;
+}
+
+
+bool ComputeController::selectImplementation()
+{
+	/**
+	 * set boolean `supported` in each supported network function
+	 */
+	checkSupportedDescriptions();
+
+
+	/**
+	 * Select an implementation of the NF
+	 */
+	for(map<string, NF*>::iterator nf = nfs.begin(); nf != nfs.end(); nf++){
+
+		NF *current = nf->second;
+
+		//A description is selected only for those functions that do not have a description yet
+		if(current->getSelectedDescription() == NULL){
+
+			list<Description*> descriptions = current->getAvailableDescriptions();
+
+			NFsManager *selectedImplementation = selectNFImplementation(descriptions);
+
+			if(selectedImplementation == NULL) {
+
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available description for NF \'%s\'", nf->first.c_str());
+				return false;
+				
+			}
+
+			current->setSelectedDescription(selectedImplementation);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Implementation has been selected for NF \"%s\".",nf->first.c_str());
+
+		}
+	}
+
+	if(allSelected()){
+		return true;
+	}
+	
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported description!");
+
+	return false;
+
 }
 
 bool ComputeController::allSelected()
@@ -541,19 +747,32 @@ nf_t ComputeController::getNFType(string name)
 	return impl->getNFType();
 }
 
+const Description* ComputeController::getNFSelectedImplementation(string name)
+{
+	map<string, NF*>::iterator nf_it = nfs.find(name);
+	if (nf_it == nfs.end()) { // Not found
+		return NULL;
+	}
+
+	NFsManager *impl = (nf_it->second)->getSelectedDescription();
+	if (impl == NULL)
+		return NULL;
+
+	return impl->getDescription();
+}
+
 void ComputeController::setLsiID(uint64_t lsiID)
 {
 	this->lsiID = lsiID;
 }
 
-//FIXME: I'm assuming that the first element of namesOfPortsOnTheSwitch corresponds to the first port of the network function,
-//the second element corresponds to the second port of the network function, and so on...
-bool ComputeController::startNF(string nf_name, list<string> namesOfPortsOnTheSwitch)
+bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch)
 {
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"",nf_name.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"", nf_name.c_str());
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
-	for(list<string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*it).c_str());
+	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %s", it->first, it->second.c_str());
+	}
 
 	if(nfs.count(nf_name) == 0)
 	{

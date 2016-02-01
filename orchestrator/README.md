@@ -3,11 +3,11 @@
 The Universal Node orchestrator (un-orchestrator) is the main component of the
 Universal Node (UN). It handles the orchestration of compute and network
 resources within a UN, hence managing the complete lifecycle of computing
-containers (e.g., VMs, Docker, DPDK processes) and networking primitives
-(e.g., OpenFlow rules, logical switching instances, etc).
-It receives commands through a REST API according to the Network Functions
-Forwarding Graph (NF-FG) formalism, and takes care of implementing them on
-the physical node.
+containers (e.g., VMs, Docker, DPDK processes, native environment) and
+networking primitives (e.g., OpenFlow rules, logical switching instances, etc).
+It receives commands through a REST API according to the Network Functions 
+Forwarding Graph (NF-FG) formalism, and takes care of implementing them on 
+the physical node. 
 
 More in detail, when it receives a command to deploy a new NF-FG, it does all
 the operations required to actually implement the forwarding graph:
@@ -66,28 +66,30 @@ handles the packets already processed in a graph.
 
 ### The compute controller
 
-The compute controller is the sub-module that interacts with the virtual execution
-environment(s) (i.e., the hypervisor) and handles the lifecycle of a Virtual Network 
-Function (i.e., creating, updating, destroying a VNF), including the operations 
-needed to attach VNF ports already created on the vSwitch, to the VNF itself. 
-Each execution environment may require a different implementation for the compute 
+The compute controller is the sub-module that interacts with the hypervisor
+and handles the lifecycle of a virtual network function (i.e., creating,
+updating, destroying a VNF), including the operations needed to attach
+VNF ports (already created on the the vSwitch) to the VNF itself. Each
+execution environment may require a different implementation for the compute
 controller, according to the commands supported by the hypervisor itself.
 
-Currently the prototype supports virtual network functions as (KVM) VMs, Docker and DPDK
-processes, although only a subset of them can be available depending on
-the chosen vSwitch. If you are interested to add the support for a new
-hypervisor, please check the file [compute_controller/README.md](compute_controller/README.md).
+Currently the prototype supports virtual network functions as (KVM) VMs, Docker,
+DPDK processes and native functions, although only a subset of them can be
+available depending on the chosen vSwitch.
+If you are interested to add the support for a new hypervisor, please check the
+file [compute_controller/README.md](compute_controller/README.md).
 
 ### Compute and network controllers: supported combinations
 
 The following table shows which execution environments
 are supported with the different vSwitches.
 
-|                            |   Docker      |    KVM   |   KVM-DPDK (ivshmem)   |     DPDK processes     |
-|----------------------------|---------------|----------|------------------------|------------------------|
-| **xDPd-DPDK**              |    **Yes***   | **Yes*** |          No            |         **Yes**        |
-| **OvS (OVSDB / OFconfig)** |    **Yes**    | **Yes**  | No (requires OvS-DPDK) | No (requires OvS-DPDK) |
-| **OvS-DPDK**               |    **Yes***   | **Yes**  |        **Yes**         |         **Yes**        |
+|                            |   Docker      |    KVM   |   KVM-DPDK (ivshmem)   |     DPDK processes     |  Native  |
+|----------------------------|---------------|----------|------------------------|------------------------|----------|
+| **xDPd-DPDK**              |    **Yes***   | **Yes*** |          No            |         **Yes**        | **Yes**  |
+| **OvS (OVSDB / OFconfig)** |    **Yes**    | **Yes**  | No (requires OvS-DPDK) | No (requires OvS-DPDK) | **Yes**  |
+| **OvS-DPDK**               |    **Yes***   | **Yes**  |        **Yes**         |         **Yes**        | **Yes**  |
+| **ERFS**                   |    **Yes***   | **No**   |        **Yes**         |         **Yes**        | **No**   |
 
 \* In this case the packet exchange between the virtual switch and the execution
 environment is not optimized.
