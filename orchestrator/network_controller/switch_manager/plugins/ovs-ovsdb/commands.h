@@ -43,7 +43,7 @@ class commands
 private:
 
 public:
-	commands();
+	commands(bool of_controller_lsi0);
 
 	~commands();
 	

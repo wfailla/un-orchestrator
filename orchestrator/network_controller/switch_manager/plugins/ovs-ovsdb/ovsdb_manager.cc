@@ -6,9 +6,9 @@ int s = 0;
 commands *c = NULL;
 
 //Constructor
-OVSDBManager::OVSDBManager()
+OVSDBManager::OVSDBManager(bool of_controller_lsi0)
 {
-	c = new commands();/*create a new object commands*/
+	c = new commands(of_controller_lsi0);/*create a new object commands*/
 }
 
 //Destroyer

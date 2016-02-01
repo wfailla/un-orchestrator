@@ -13,7 +13,7 @@ GraphManager *RestServer::gm = NULL;
 SQLiteManager *dbmanager = NULL;
 bool client_auth = false;
 
-bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
+bool RestServer::init(SQLiteManager *dbm, bool of_controller_lsi0, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
 {	
 	char *nffg_file_name = new char[BUFFER_SIZE];
 	if(nffg_filename != NULL && strcmp(nffg_filename, "") != 0)
@@ -31,7 +31,7 @@ bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int
 
 	try
 	{
-		gm = new GraphManager(core_mask,string(ports_file_name));
+		gm = new GraphManager(core_mask,string(ports_file_name),of_controller_lsi0);
 		
 	}catch (...)
 	{

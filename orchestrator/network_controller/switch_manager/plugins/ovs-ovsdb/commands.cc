@@ -14,6 +14,8 @@ int pnumber = 1, nfnumber = 0, gnumber = 0;
 /* Transaction ID */
 static int tid = 0;
 
+bool of_ctrl_lsi0 = false;
+
 /*switch id, switch name*/
 map<uint64_t, string> switch_id;
 /*switch name, switch uuid*/
@@ -72,7 +74,8 @@ string build_port_uuid_name(const string& port_name, uint64_t bridge_no)
 }
 
 //Constructor
-commands::commands(){
+commands::commands(bool of_controller_lsi0){
+	of_ctrl_lsi0 = of_controller_lsi0;
 }
 
 //Destroyer
@@ -213,26 +216,81 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	strcat(tcp_s, cli.getControllerPort().c_str());
 	strcpy(temp, tcp_s);
 	
+	//LSI0 enough controller
+	if(of_ctrl_lsi0 || dnumber != 1)
+	{
+		first_obj["op"] = "insert";
+    	first_obj["table"] = "Controller";
+    
+		/*insert a Controller*/
+		row["target"] = temp;
+		row["local_ip"] = "127.0.0.1";
+		row["connection_mode"] = "out-of-band";
+		row["is_connected"] = true;
+	
+    	first_obj["row"] = row;
+
+		//create the current name of a controller --> ctrl+dnumber
+		sprintf(temp, "%s%" PRIu64, ctr, dnumber);
+
+		first_obj["uuid-name"] = temp;
+
+		params.push_back(first_obj);
+		
+		row.clear();
+    	first_obj.clear();
+    }
+
 	first_obj["op"] = "insert";
-    first_obj["table"] = "Controller";
+	first_obj["table"] = "Interface";
+		
+	/*Insert an Interface*/
+	row["type"] = "internal";
 
-    /*insert a Controller*/
-    row["target"] = temp;
-    row["local_ip"] = "127.0.0.1";
-    row["connection_mode"] = "out-of-band";
-    row["is_connected"] = true;
+	row["name"] = sw;
+	
+	row["admin_state"] = "up";
+	row["link_state"] = "up";
+	row["ofport"] = rnumber;
+	row["ofport_request"] = rnumber;
+		
+	first_obj["row"] = row;
+		
+	first_obj["uuid-name"] = "iface0";
+		
+	params.push_back(first_obj);
+		
+	row.clear();
+	first_obj.clear();
 
-    first_obj["row"] = row;
+	rnumber++;
 
-    //create the current name of a controller --> ctrl+dnumber
-    sprintf(temp, "%s%" PRIu64, ctr, dnumber);
+	/*Insert a port*/
+	first_obj["op"] = "insert";
+	first_obj["table"] = "Port";
+		
+	/*Insert a port*/
+	row["name"] = sw;
+		
+	iface.push_back("set");
+	
+	iface2.push_back("named-uuid");
+	iface2.push_back("iface0");
+	
+	iface1.push_back(iface2);
+	iface.push_back(iface1);
+		
+	row["interfaces"] = iface;
+		
+	first_obj["row"] = row;
+		
+	first_obj["uuid-name"] = "Port1";
 
-    first_obj["uuid-name"] = temp;
+	params.push_back(first_obj);
 
-    params.push_back(first_obj);
+	row.clear();
 
-    row.clear();
-    first_obj.clear();
+	//physical_ports[string("Port1")] = rnumber-1;
 
 	first_obj["op"] = "insert";
     first_obj["table"] = "Bridge";
@@ -244,32 +302,45 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	Array port1;
 	Array port2;
 	
-	port.push_back("set");
-
-	port.push_back(port1);
+	port2.push_back("named-uuid");
+	port2.push_back("Port1");
 	
-	row["ports"] = port;
+	port1.push_back(port2);
 	
+	port2.clear();
+		
+	/*Array with two elements*/
+	 Array i_array;
+	i_array.push_back("set");
+		
+	i_array.push_back(port1);
+		
+	row["ports"] = i_array;
+	
+	i_array.clear();
 	port1.clear();
 	port.clear();
 
-   	Array ctrl;
-   	ctrl.push_back("set");
+	if(of_ctrl_lsi0 || dnumber != 1)
+	{
+	   	Array ctrl;
+	   	ctrl.push_back("set");
 
-	Array ctrl1;
-	Array ctrl2;
+		Array ctrl1;
+		Array ctrl2;
 
-	//create the current name of a controller
-	sprintf(tmp, "%s%" PRIu64, ctr, dnumber);
-	
-	ctrl2.push_back("named-uuid");
-	ctrl2.push_back(tmp);
-	
-	ctrl1.push_back(ctrl2);
-	
-	ctrl.push_back(ctrl1);
+		//create the current name of a controller
+		sprintf(tmp, "%s%" PRIu64, ctr, dnumber);
 
-   	row["controller"] = ctrl;
+		ctrl2.push_back("named-uuid");
+		ctrl2.push_back(tmp);
+
+		ctrl1.push_back(ctrl2);
+
+		ctrl.push_back(ctrl1);
+
+	   	row["controller"] = ctrl;
+   	}
 
 	peer.push_back("map");
 	
@@ -298,9 +369,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     port.clear();
     port1.clear();
     port2.clear();
-    ctrl.clear();
-    ctrl1.clear();
-    ctrl2.clear();
     peer.clear();
     peer1.clear();
     peer2.clear();
@@ -325,7 +393,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     m_array.push_back("insert");
 
     /*Array with two elements*/
-    Array i_array;
     i_array.push_back("set");
 
     /*Array with one element*/
@@ -365,14 +432,14 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
    	stringstream ss;
  	write_formatted(root, ss);
 
-    	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+    nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
 	if (nwritten == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 		throw commandsException();
 	}
 
-    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -408,6 +475,16 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		    			
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
+						if(of_ctrl_lsi0)
+						{
+							if(i == 2)
+								port_uuid[dnumber].push_back(stuff1[1].getString());
+						}
+						else
+						{
+							if(i == 1)
+								port_uuid[dnumber].push_back(stuff1[1].getString());
+						}
 		 				strr[i] = stuff1[1].getString();
 					} else if(name1 == "details"){
 						logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
@@ -638,6 +715,16 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			cmd_disconnect(s);
 		}
 	}
+
+	/*stringstream prep_ifconfig_cmd;
+	prep_ifconfig_cmd << ASSIGN_IP_TEP << " " << sw << " " << "192.168.1.10" << " " << "netmask " << "255.255.255.0";
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", prep_usvhost_cmd.str().c_str());
+	int retVal = system(prep_usvhost_cmd.str().c_str());
+	retVal = retVal >> 8;
+	if(retVal == 0) {
+		logger(ORCH_WARNING, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Failed to prepare 'usvhost' port %s", port_name.c_str());
+		throw OVSDBManagerException();
+	}*/
 
     clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
     	
@@ -1094,7 +1181,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	row["ofport"] = rnumber;
 	row["ofport_request"] = rnumber;
 		
-	/*Add options remote_ip and key*/
+	/*Add options local_ip, remote_ip and key*/
 	peer.push_back("map");
 	
 	peer2.push_back("local_ip");
@@ -1114,7 +1201,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	
 	peer.push_back(peer1);
 
-    	row["options"] = peer;
+    row["options"] = peer;
 		
 	first_obj["row"] = row;
 		
