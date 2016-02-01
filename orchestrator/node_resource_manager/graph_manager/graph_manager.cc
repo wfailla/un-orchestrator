@@ -685,7 +685,7 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 		lsi->setDpid(clo->getDpid());
 
 		map<string,unsigned int> physicalPorts = clo->getPhysicalPorts();
-		if(!physicalPorts.empty())
+		if(physicalPorts.size() > 1)
 		{
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Non required physical ports have been attached to the tenant-lsi");
 			delete(clo);

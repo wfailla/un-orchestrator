@@ -170,7 +170,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	//Local variables
 	const char *peer_name = "";
 
-	char sw[64] = "Bridge", tcp_s[64] = "tcp:", ctr[64] = "ctrl", vrt[64] = "VirtualPort", trv[64] = "vport";
+	char sw[64] = "Bridge", tcp_s[64] = "tcp:", ctr[64] = "ctrl", vrt[64] = "VirtualPort", trv[64] = "vport", ifac[64] = "iface", prt[64] = "port";
 	char temp[64] = "", tmp[64] = "", of_version[64] = "";
 
 	/*force to use OpenFlow12*/
@@ -249,7 +249,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	first_obj["row"] = row;
 		
-	first_obj["uuid-name"] = "iface0";
+	//Create the current name of a interface
+	sprintf(ifac, "iface%d", rnumber);
+	first_obj["uuid-name"] = ifac;
 	params.push_back(first_obj);
 		
 	row.clear();
@@ -267,7 +269,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	iface.push_back("set");
 	
 	iface2.push_back("named-uuid");
-	iface2.push_back("iface0");
+	iface2.push_back(ifac);
 	
 	iface1.push_back(iface2);
 	iface.push_back(iface1);
@@ -276,8 +278,12 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	first_obj["row"] = row;
 		
-	first_obj["uuid-name"] = "Port1";
+	//Create the current name of a port
+	sprintf(prt, "port%d", rnumber-1);
+	first_obj["uuid-name"] = prt;
 	params.push_back(first_obj);
+
+	physical_ports["Bridge1"] = rnumber-1;
 
 	row.clear();
 
@@ -292,7 +298,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	Array port2;
 	
 	port2.push_back("named-uuid");
-	port2.push_back("Port1");
+	port2.push_back(prt);
 	
 	port1.push_back(port2);
 	
@@ -304,8 +310,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	i_array.push_back(port1);
 		
-	if(dnumber == 1)
-		row["ports"] = i_array;
+	row["ports"] = i_array;
 	
 	i_array.clear();
 	port1.clear();
@@ -481,10 +486,13 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	if(ports.size() !=0){
 		for(list<string>::iterator p = ports.begin(); p != ports.end(); p++)
 		{
-			add_port((*p), dnumber, false, s);
+			if(strcmp((*p).c_str(), "Bridge1") != 0)
+			{
+				add_port((*p), dnumber, false, s);
 			
-			port_l[dnumber].push_back((*p).c_str());
-			physical_ports[(*p)] = rnumber-1;
+				port_l[dnumber].push_back((*p).c_str());
+				physical_ports[(*p)] = rnumber-1;
+			}
 		}
 	}
 	
@@ -705,8 +713,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		throw OVSDBManagerException();
 	}*/
 
-    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
-    	
+    	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
+
 	return clo;
 }
 
