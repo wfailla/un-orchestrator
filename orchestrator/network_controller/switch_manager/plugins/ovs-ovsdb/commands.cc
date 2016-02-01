@@ -217,7 +217,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	strcpy(temp, tcp_s);
 	
 	//LSI0 enough controller
-	if(of_ctrl_lsi0 || dnumber != 1)
+	if(of_ctrl_lsi0/* || dnumber != 1*/)
 	{
 		first_obj["op"] = "insert";
     	first_obj["table"] = "Controller";
@@ -256,9 +256,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	first_obj["row"] = row;
 		
-	first_obj["uuid-name"] = "iface0";
-		
-	params.push_back(first_obj);
+	if(dnumber == 1)
+	{
+		first_obj["uuid-name"] = "iface0";
+		params.push_back(first_obj);
+	}
 		
 	row.clear();
 	first_obj.clear();
@@ -275,7 +277,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	iface.push_back("set");
 	
 	iface2.push_back("named-uuid");
-	iface2.push_back("iface0");
+	if(dnumber == 1)
+		iface2.push_back("iface0");
+	/*else
+		iface2.push_back("iface01");*/
 	
 	iface1.push_back(iface2);
 	iface.push_back(iface1);
@@ -284,10 +289,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	first_obj["row"] = row;
 		
-	first_obj["uuid-name"] = "Port1";
-
-	params.push_back(first_obj);
-
+	if(dnumber == 1)
+	{
+		first_obj["uuid-name"] = "Port1";
+		params.push_back(first_obj);
+	}
 	row.clear();
 
 	//physical_ports[string("Port1")] = rnumber-1;
@@ -303,7 +309,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	Array port2;
 	
 	port2.push_back("named-uuid");
-	port2.push_back("Port1");
+	if(dnumber == 1)
+		port2.push_back("Port1");
+	/*else
+		port2.push_back("Port10");*/
 	
 	port1.push_back(port2);
 	
@@ -315,13 +324,14 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		
 	i_array.push_back(port1);
 		
-	row["ports"] = i_array;
+	if(dnumber == 1)
+		row["ports"] = i_array;
 	
 	i_array.clear();
 	port1.clear();
 	port.clear();
 
-	if(of_ctrl_lsi0 || dnumber != 1)
+	if(of_ctrl_lsi0/* || dnumber != 1*/)
 	{
 	   	Array ctrl;
 	   	ctrl.push_back("set");
@@ -447,9 +457,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	}
 
  	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+    logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
     logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+    logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	//parse json response
 	Value value;
@@ -475,16 +485,19 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		    			
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
-						if(of_ctrl_lsi0)
-						{
-							if(i == 2)
-								port_uuid[dnumber].push_back(stuff1[1].getString());
-						}
-						else
-						{
-							if(i == 1)
-								port_uuid[dnumber].push_back(stuff1[1].getString());
-						}
+						//if(dnumber == 1)
+						//{
+							if(of_ctrl_lsi0)
+							{
+								if(i == 2)
+									port_uuid[dnumber].push_back(stuff1[1].getString());
+							}
+							else
+							{
+								if(i == 1)
+									port_uuid[dnumber].push_back(stuff1[1].getString());
+							}
+						//}
 		 				strr[i] = stuff1[1].getString();
 					} else if(name1 == "details"){
 						logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
