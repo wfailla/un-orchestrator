@@ -51,7 +51,7 @@ private:
 	*	@brief: for each endpoint attached to the graph specifies a list of params 
 	* 		(gre key, local ip, remote ip)
 	*/
-	map<string, list<string> > endpoints;
+	map<string, vector<string> > endpoints;
 
 	/**
 	*	@brief: physical ports to be attached to the graph
@@ -154,13 +154,13 @@ public:
 	*
 	*	@return: true
 	*/
-	bool addEndPoint(string ep, list<string> p);
+	bool addEndPoint(string ep, vector<string> p);
 	
 	/**
 	*	@brief: Return the end points of the graph, i.e. the ports to be used to connect
 	*		multiple graphs together.
 	*/
-	map<string, list<string> > getEndPoints();
+	map<string, vector<string> > getEndPoints();
 
 	/**
 	*	@brief: Return the ID of the graph

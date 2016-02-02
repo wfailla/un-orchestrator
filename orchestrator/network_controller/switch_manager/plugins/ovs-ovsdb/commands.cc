@@ -159,7 +159,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	map<string,nf_t> nf_type = cli.getNetworkFunctionsType(); 
 	
 	//list of endpoints	
-	map<string,list<string> > endpoints = cli.getEndpointsPortsName(); 	
+	map<string,vector<string> > endpoints = cli.getEndpointsPortsName(); 	
 
 	//list of remote LSI
 	list<uint64_t> vport = cli.getVirtualLinksRemoteLSI();
@@ -540,7 +540,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		i = 0;
 	
 		/*for each endpoint in the list of endpoints*/
-		for(map<string,list<string> >::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
+		for(map<string,vector<string> >::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
 		{
 			char gre[64] = "gre";
 		
@@ -549,20 +549,13 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			char remote_ip[64] = "";
 			char key[64] = "";
 
-			list<string> l_param = ep->second;
+			vector<string> l_param = ep->second;
+
 			/*save the params of gre tunnel*/
-			for(list<string>::iterator e = l_param.begin(); e != l_param.end(); e++)
-			{
-				if(i == 0)
-					strcpy(key, (*e).c_str());
-				else if(i == 1)
-		    			strcpy(local_ip, (*e).c_str());
-				else if(i == 2)
-		    			strcpy(remote_ip, (*e).c_str());
-		    	
-		    	i++;
-			}
-			
+			strcpy(key, l_param[0].c_str());
+		    strcpy(local_ip, l_param[1].c_str());
+		    strcpy(remote_ip, l_param[2].c_str());
+		    			
 	    	char ifac[64] = "iface";
 	    	
 			sprintf(temp, "%d", gnumber);
@@ -716,7 +709,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		throw OVSDBManagerException();
 	}*/
 
-    	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
+    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
 
 	return clo;
 }
@@ -1246,9 +1239,6 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	where.push_back(third_object);
 		
 	first_obj["where"] = where;
-
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removing dpi: %d", dpi);		
-	switch_uuid.erase(dpi);
 	
 	where.clear();
 	
@@ -1358,13 +1348,13 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 		throw commandsException();
 	}
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);	
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, read_buf);	
 		
 	Value value;
     read( read_buf, value );
@@ -1613,7 +1603,6 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int socketNum
 AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	AddEndpointOut *apf = NULL;
 	
-	int i = 0;
 	char gre[64] = "gre", temp[64];
 	
 	string id = aepi.getEPname();
@@ -1621,19 +1610,11 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	char remote_ip[64] = "";
 	char key[64] = "";
 
-	list<string> l_param = aepi.getEPparam();
+	vector<string> l_param = aepi.getEPparam();
 	/*save the params of gre tunnel*/
-	for(list<string>::iterator e = l_param.begin(); e != l_param.end(); e++)
-	{
-		if(i == 0)
-			strcpy(key, (*e).c_str());
-		else if(i == 1)
-		    strcpy(local_ip, (*e).c_str());
-		else if(i == 2)
-		    strcpy(remote_ip, (*e).c_str());
-		    	
-		i++;
-	}
+	strcpy(key, l_param[1].c_str());
+	strcpy(local_ip, l_param[0].c_str());
+	strcpy(remote_ip, l_param[2].c_str());
 	
 	char ifac[64] = "iface";
 	    	

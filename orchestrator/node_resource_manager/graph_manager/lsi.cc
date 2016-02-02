@@ -1,6 +1,6 @@
 #include "lsi.h"
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string,list<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
@@ -17,7 +17,7 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 	}
 	
 	//fill the map of endpoints
-	for(map<string,list<string> >::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
+	for(map<string,vector<string> >::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
 		this->endpoints_ports[ep->first] = ep->second;	
 }
 
@@ -52,7 +52,7 @@ set<string> LSI::getNetworkFunctionsName()
 	return names;
 }
 
-map<string, list<string> > LSI::getEndpointsPorts()
+map<string, vector<string> > LSI::getEndpointsPorts()
 {
 	return endpoints_ports;
 }
@@ -365,7 +365,7 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 	return true;
 }
 
-void LSI::addEndpoint(string name, list<string> param)
+void LSI::addEndpoint(string name, vector<string> param)
 {
 	endpoints_ports[name] = param;
 }
@@ -406,7 +406,7 @@ void LSI::removeEndpoint(string ep)
 {
 	assert(endpoints_ports.count(ep) == 0);
 
-	map<string,list<string> >::iterator it =  endpoints_ports.find(ep);
+	map<string,vector<string> >::iterator it =  endpoints_ports.find(ep);
 	endpoints_ports.erase(it);
 	
 	return;

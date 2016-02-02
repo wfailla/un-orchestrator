@@ -56,7 +56,7 @@ private:
 	/**
 	*	@brief: list of endpoints ports to be connected to the lsi
 	*/
-	map<string,list<string> > endpointsPortsName;
+	map<string,vector<string> > endpointsPortsName;
 
 	/**
 	*	@brief: map of network functions, list of network function ports
@@ -70,7 +70,7 @@ private:
 
 protected:
 
-	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<struct nf_port_info> > netFunctionsPortsInfo, map<string,list<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi)
+	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<struct nf_port_info> > netFunctionsPortsInfo, map<string,vector<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi)
 		: controllerAddress(controllerAddress), controllerPort(controllerPort),
 		physicalPortsName(physicalPortsName.begin(),physicalPortsName.end()),
 		nf_types(nf_types.begin(),nf_types.end()),
@@ -110,7 +110,7 @@ public:
 		return networkFunctionsName;
 	}
 
-	map<string,list<string> > getEndpointsPortsName()
+	map<string,vector<string> > getEndpointsPortsName()
 	{
 		return endpointsPortsName;
 	}

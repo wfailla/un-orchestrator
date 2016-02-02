@@ -436,7 +436,7 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::addEndPoint(string ep, list<string> p)
+bool Graph::addEndPoint(string ep, vector<string> p)
 {	
 	if(endpoints.count(ep) != 0)
 		return false;
@@ -446,7 +446,7 @@ bool Graph::addEndPoint(string ep, list<string> p)
 	return true;
 }
 
-map<string, list<string> > Graph::getEndPoints()
+map<string, vector<string> > Graph::getEndPoints()
 {
 	return endpoints;
 }

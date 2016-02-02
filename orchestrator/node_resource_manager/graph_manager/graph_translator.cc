@@ -310,7 +310,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 	
 	vector<VLink> tenantVirtualLinks = tenantLSI->getVirtualLinks();//FIXME: a map <emulated port name, vlink> would be better
 	set<string> tenantNetworkFunctions = tenantLSI->getNetworkFunctionsName();
-	map<string, list<string> > tenantEndpoints = tenantLSI->getEndpointsPorts();
+	map<string, vector<string> > tenantEndpoints = tenantLSI->getEndpointsPorts();
 	
 	lowlevel::Graph tenantGraph;
 	

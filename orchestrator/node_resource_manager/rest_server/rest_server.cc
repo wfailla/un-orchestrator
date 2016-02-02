@@ -894,9 +894,13 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	{
 		Object obj = value.getObject();
 		
+		vector<Object> gre_array(256);
+		
 		Object big_switch, ep_gre;
 
 	  	bool foundFlowGraph = false;
+	  	
+	  	int ii = 0;
 		
 		//Identify the flow rules
 		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
@@ -910,7 +914,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		    	foundFlowGraph = true;
 		    	
 		    	bool foundVNFs = false, foundEP = false, foundGRE = false, foundFlowRules = false;
-		    	string id_gre;
+		    	vector<string> id_gre (256);
 		    	
 		  		Object forwarding_graph = value.getObject();
 		    		
@@ -1084,6 +1088,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",END_POINTS);
 
+						int i = 0;
+
 				    	//Iterate on the end-points
 				    	for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
 						{
@@ -1102,7 +1108,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									if(!foundGRE)
 										id = ep_value.getString();
 									else
-										id_gre = ep_value.getString();
+										id_gre[i] = ep_value.getString();
+										
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "++++++++\"%s\"+++\"%d\"-------",id_gre[i].c_str(), i);
 								}
 								else if(ep_name == _NAME)
 								{
@@ -1242,11 +1250,15 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								else if(ep_name == EP_GRE)
 								{
 									ep_gre = ep_value.getObject();
+									
+									gre_array[i] = ep_gre;
 						
 									foundGRE = true;
+									
+									i++;
 								}
 								else
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());			
+									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());
 							}
 							//add interface end-points
 							if(e_if)
@@ -1276,6 +1288,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								e_vlan = false;
 							}
 						}
+						
+						ii = i;
 					}
 					//Identify the big-switch
 					else if(fg_name == BIG_SWITCH)
@@ -1292,62 +1306,79 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 						//Iterate on the gre-tunnel
 						if(foundGRE)
 						{
-							list<string> gre_param;
+							int j = 1;
 						
-							string local_ip, remote_ip, interface, ttl, gre_key;
-						
-							for(Object::const_iterator epi = ep_gre.begin(); epi != ep_gre.end(); epi++)
+							//Iterate on the gre object
+							for( int gre_obj = 0; gre_obj < ii; ++gre_obj )
 							{
-								const string& epi_name  = epi->first;
-								const Value&  epi_value = epi->second;
+								vector<string> gre_param (4);
+						
+								string local_ip, remote_ip, interface, ttl, gre_key;
+						
+								int i = 0;
+				
+								for(Object::const_iterator epi = gre_array[gre_obj].begin(); epi != gre_array[gre_obj].end(); epi++)
+								{
+									const string& epi_name  = epi->first;
+									const Value&  epi_value = epi->second;
 		
-								if(epi_name == LOCAL_IP)
-								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,LOCAL_IP,epi_value.getString().c_str());
+									if(epi_name == LOCAL_IP)
+									{
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,LOCAL_IP,epi_value.getString().c_str());
 
-									local_ip = epi_value.getString();
+										local_ip = epi_value.getString();
 
-									gre_param.push_back(epi_value.getString());
-								}
-								else if(epi_name == REMOTE_IP)
-								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,REMOTE_IP,epi_value.getString().c_str());
-
-									remote_ip = epi_value.getString();
-
-									gre_param.push_back(epi_value.getString());
-								}
-								else if(epi_name == IFACE)
-								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,IFACE,epi_value.getString().c_str());
+										gre_param[i] = epi_value.getString();
 										
-									interface = epi_value.getString();
+										i++;
+									}
+									else if(epi_name == REMOTE_IP)
+									{
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,REMOTE_IP,epi_value.getString().c_str());
+
+										remote_ip = epi_value.getString();
+										gre_param[i] = epi_value.getString();
+									
+										i++;
+									}
+									else if(epi_name == IFACE)
+									{
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,IFACE,epi_value.getString().c_str());
 										
-									gre_id[id_gre] = epi_value.getString();
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id_gre.c_str(), gre_id[id_gre].c_str());
-								}
-								else if(epi_name == TTL)
-								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,TTL,epi_value.getString().c_str());
+										interface = epi_value.getString();
+										
+										gre_id[id_gre[j]] = epi_value.getString();
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id_gre[i].c_str(), gre_id[id_gre[i]].c_str());
+									}
+									else if(epi_name == TTL)
+									{
+										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,TTL,epi_value.getString().c_str());
 								
-									ttl = epi_value.getString();
-								}
-								else if(epi_name == GRE_KEY)
-								{
-									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,GRE_KEY,epi_value.getString().c_str());
+										ttl = epi_value.getString();
+									}
+									else if(epi_name == GRE_KEY)
+									{
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,GRE_KEY,epi_value.getString().c_str());
 									
-									gre_key = epi_value.getString();
+										gre_key = epi_value.getString();
 									
-									gre_param.push_back(epi_value.getString());	
-								}
-							}
-							
-							//Add gre-tunnel end-points
-							highlevel::EndPointGre ep_gre(id_gre, e_name, local_ip, remote_ip, interface, gre_key, ttl);
+										gre_param[i] = epi_value.getString();
 										
-							graph.addEndPointGre(ep_gre);
+										i++;	
+									}
+								}
 							
-							graph.addEndPoint(id_gre,gre_param);
+								//Add gre-tunnel end-points
+								highlevel::EndPointGre ep_gre(id_gre[j], e_name, local_ip, remote_ip, interface, gre_key, ttl);
+								
+								graph.addEndPointGre(ep_gre);
+							
+								graph.addEndPoint(id_gre[j],gre_param);
+								
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "++++++\"%s\"--%d---",id_gre[j].c_str(), j);
+								
+								j++;
+							}	
 						}
 					
 						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",BIG_SWITCH);

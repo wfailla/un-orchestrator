@@ -84,7 +84,7 @@ private:
 	*  			<endpoint name, list params>
 	*				list params: gre key, local ip, remote ip
 	*/
-	map<string,list<string> > endpoints_ports;
+	map<string,vector<string> > endpoints_ports;
 	
 	/**
 	*	@brief: the pair is <endpoint name, endpoint id>
@@ -124,12 +124,12 @@ private:
 
 public:
 
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string,list<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
+	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
 	
-	map<string,list<string> > getEndpointsPorts();
+	map<string,vector<string> > getEndpointsPorts();
 
 	map<string,unsigned int > getEndpointsPortsId();
 
@@ -182,7 +182,7 @@ protected:
 	bool addNF(string name, list< unsigned int> ports, const map<unsigned int, PortType>& nf_ports_type);
 	void removeNF(string nf);
 	
-	void addEndpoint(string name, list<string> param);
+	void addEndpoint(string name, vector<string> param);
 	void removeEndpoint(string ep);
 };
 
