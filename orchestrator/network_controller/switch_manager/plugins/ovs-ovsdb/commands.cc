@@ -170,7 +170,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	//Local variables
 	const char *peer_name = "";
 
-	char sw[64] = "Bridge", tcp_s[64] = "tcp:", ctr[64] = "ctrl", vrt[64] = "VirtualPort", trv[64] = "vport", ifac[64] = "iface", prt[64] = "port";
+	char sw[64] = "Bridge", tcp_s[64] = "tcp:", ctr[64] = "ctrl", vrt[64] = "VirtualPort", trv[64] = "vport"/*, ifac[64] = "iface", prt[64] = "port"*/;
 	char temp[64] = "", tmp[64] = "", of_version[64] = "";
 
 	/*force to use OpenFlow12*/
@@ -214,15 +214,18 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	strcpy(temp, tcp_s);
 	
 	first_obj["op"] = "insert";
-    	first_obj["table"] = "Controller";
+    first_obj["table"] = "Controller";
     
 	/*insert a Controller*/
 	row["target"] = temp;
-	row["local_ip"] = "127.0.0.1";
+	if(dnumber == 1)
+		row["local_ip"] = "192.168.1.10";
+	else
+		row["local_ip"] = "127.0.0.1";
 	row["connection_mode"] = "out-of-band";
 	row["is_connected"] = true;
 	
-    	first_obj["row"] = row;
+    first_obj["row"] = row;
 
 	//create the current name of a controller --> ctrl+dnumber
 	sprintf(temp, "%s%" PRIu64, ctr, dnumber);
@@ -232,12 +235,12 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	params.push_back(first_obj);
 		
 	row.clear();
-    	first_obj.clear();
+    first_obj.clear();
 
-	first_obj["op"] = "insert";
+	/*first_obj["op"] = "insert";
 	first_obj["table"] = "Interface";
 		
-	/*Insert an Interface*/
+	//Insert an Interface
 	row["type"] = "internal";
 
 	row["name"] = sw;
@@ -259,11 +262,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 
 	rnumber++;
 
-	/*Insert a port*/
+	//Insert a port
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Port";
 		
-	/*Insert a port*/
+	//Insert a port
 	row["name"] = sw;
 		
 	iface.push_back("set");
@@ -283,29 +286,28 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	first_obj["uuid-name"] = prt;
 	params.push_back(first_obj);
 
-	physical_ports["Bridge1"] = rnumber-1;
+	physical_ports["Bridge1"] = rnumber-1;*/
 
 	row.clear();
 
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Bridge";
 
-    	/*insert a bridge*/
-    	row["name"] = sw;
+    /*insert a bridge*/
+    row["name"] = sw;
 
-    	Array port;
+    Array port;
 	Array port1;
 	Array port2;
 	
-	port2.push_back("named-uuid");
+	/*port2.push_back("named-uuid");
 	port2.push_back(prt);
 	
 	port1.push_back(port2);
 	
 	port2.clear();
 		
-	/*Array with two elements*/
-	 Array i_array;
+	//Array with two elements
 	i_array.push_back("set");
 		
 	i_array.push_back(port1);
@@ -314,8 +316,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	
 	i_array.clear();
 	port1.clear();
-	port.clear();
+	port.clear();*/
 
+	Array i_array;
    	Array ctrl;
    	ctrl.push_back("set");
 
@@ -346,35 +349,35 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	row["datapath_type"] = "netdev";
 #endif
 
-    	row["other_config"] = peer;
+    row["other_config"] = peer;
 
-    	row["protocols"] = of_version;
+    row["protocols"] = of_version;
 
-    	first_obj["row"] = row;
+    first_obj["row"] = row;
 
-    	first_obj["uuid-name"] = sw;
+    first_obj["uuid-name"] = sw;
 
-    	params.push_back(first_obj);
+    params.push_back(first_obj);
 
-    	row.clear();
-    	first_obj.clear();
-    	port.clear();
-    	port1.clear();
-    	port2.clear();
+    row.clear();
+    first_obj.clear();
+    //port.clear();
+    //port1.clear();
+    //port2.clear();
 	peer.clear();
-    	peer1.clear();
-    	peer2.clear();
+    peer1.clear();
+    peer2.clear();
 
-    	dnumber_new = dnumber;
+    dnumber_new = dnumber;
 
-    	/*Object with four items [op, table, where, mutations]*/
-    	Object second_obj;
-    	second_obj["op"] = "mutate";
-    	second_obj["table"] = "Open_vSwitch";
+    /*Object with four items [op, table, where, mutations]*/
+    Object second_obj;
+    second_obj["op"] = "mutate";
+    second_obj["table"] = "Open_vSwitch";
 
-    	/*Empty array [where]*/
+    /*Empty array [where]*/
    	Array where;
-    	second_obj["where"] = where;
+    second_obj["where"] = where;
 
     /*Array with one element*/
     Array w_array;
@@ -467,8 +470,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		    			
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
-						if(i == 2)
-							port_uuid[dnumber].push_back(stuff1[1].getString());
+						/*if(i == 2)
+							port_uuid[dnumber].push_back(stuff1[1].getString());*/
 		 				strr[i] = stuff1[1].getString();
 					} else if(name1 == "details"){
 						logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
@@ -486,13 +489,13 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	if(ports.size() !=0){
 		for(list<string>::iterator p = ports.begin(); p != ports.end(); p++)
 		{
-			if(strcmp((*p).c_str(), "Bridge1") != 0)
-			{
+			/*if(strcmp((*p).c_str(), "Bridge1") != 0)
+			{*/
 				add_port((*p), dnumber, false, s);
 			
 				port_l[dnumber].push_back((*p).c_str());
 				physical_ports[(*p)] = rnumber-1;
-			}
+			//}
 		}
 	}
 	
