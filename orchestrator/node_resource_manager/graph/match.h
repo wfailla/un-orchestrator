@@ -55,6 +55,8 @@ protected:
 	/*
 	*	IPv4
 	*/
+	bool isIpProto;
+	uint8_t ipProto;
 	char *ipv4_src;
 	char *ipv4_dst;
 	
@@ -98,6 +100,7 @@ public:
 	void setVlanIDNoVlan();
 	void setVlanIDAnyVlan();
 	void setEndpointVlanID(uint16_t vlanID);
+	void setIpProto(uint8_t ipProto);
 	void setIpv4Src(char *ipv4_src);
 	void setIpv4Dst(char *ipv4_dst);
 	void setTcpSrc(uint16_t tcp_src);

@@ -60,6 +60,8 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 		message.set_match().set_vlan_present();
 	else if(isNoVlan)
 		message.set_match().set_vlan_untagged();
+	if(isIpProto)
+		message.set_match().set_ip_proto(ipProto);
 	if(ipv4_src)
 	{
 		message.set_match().set_ipv4_src(caddress_in4(ipv4_src));

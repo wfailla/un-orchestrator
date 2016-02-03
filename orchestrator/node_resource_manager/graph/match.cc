@@ -6,6 +6,7 @@ namespace graph
 Match::Match() :
 	eth_src(NULL), eth_dst(NULL), isEthType(false),
 	isVlanID(false),isNoVlan(false),isAnyVlan(false),isEndpointVlanID(false),
+	isIpProto(false),
 	ipv4_src(NULL),
 	ipv4_dst(NULL),
 	isTcpSrc(false), isTcpDst(false),
@@ -63,6 +64,10 @@ bool Match::isEqual(const Match &other) const
 	/*
 	*	IPv4
 	*/
+	if((isIpProto && !other.isIpProto) || (!isIpProto && other.isIpProto))
+		return false;
+	if(isIpProto && ipProto != other.ipProto)
+		return false;
 	if((ipv4_src == NULL && other.ipv4_src != NULL) ||
 		(ipv4_src != NULL && other.ipv4_src == NULL))
 		return false;
@@ -258,6 +263,12 @@ void Match::setEndpointVlanID(uint16_t vlanID)
 	isEndpointVlanID = true;
 }
 
+void Match::setIpProto(uint8_t ipProto)
+{
+	this->ipProto = ipProto;
+	isIpProto = true;
+}
+
 void Match::setIpv4Src(char *ipv4_src)
 {
 	this->ipv4_src = (char*)malloc(sizeof(char)*(strlen(ipv4_src)+1));
@@ -339,6 +350,8 @@ void Match::print()
 		/*
 		*	IPv4
 		*/
+		if(isIpProto)
+			cout << "\t\t\tIPv4 proto: " << (ipProto & 0xF) << endl;
 		if(ipv4_src)
 			cout << "\t\t\tIPv4 src: " << ipv4_src << endl;
 		if(ipv4_dst)
@@ -409,6 +422,12 @@ void Match::toJSON(Object &match)
 		/*
 		*	IPv4
 		*/
+		if(isIpProto)
+		{
+			stringstream ipproto;
+			ipproto << (ipProto & 0xFF);
+			match[IP_PROTO] = ipproto.str().c_str();
+		}
 		if(ipv4_src)
 			match[IP_SRC] =  ipv4_src;
 		if(ipv4_dst)
@@ -490,6 +509,8 @@ string Match::prettyPrint()
 	/*
 	*	IPv4
 	*/
+	if(isIpProto)
+		ss << " # IPv4 proto: " << (ipProto & 0xF);
 	if(ipv4_src)
 		ss << " # IPv4 src: " << ipv4_src;
 	if(ipv4_dst)

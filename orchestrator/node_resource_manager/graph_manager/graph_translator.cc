@@ -13,12 +13,15 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 	lowlevel::Graph lsi0Graph;
 	
 	unsigned int i = 0;
-	for(map<string, vector<string> >::iterator it = eps.begin(); it != eps.end(); it++){
+	for(map<string, vector<string> >::iterator it = eps.begin(); it != eps.end(); it++)
+	{
 		//Translate the match
 		lowlevel::Match lsi0Match;
 		map<string,unsigned int>::iterator translation = ports_lsi0.find(it->second[3]);
-		lsi0Match.setInputPort(translation->second);
+		lsi0Match.setEthType(2048);
+		lsi0Match.setIpProto(47);
 		lsi0Match.setGreKey((char *)it->second[0].c_str());
+		lsi0Match.setInputPort(translation->second);
 		
 		lowlevel::Action lsi0Action(true);
 		

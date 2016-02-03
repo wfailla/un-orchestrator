@@ -92,6 +92,7 @@
 				#define VLAN_ID			"vlan_id"
 					#define ANY_VLAN		"ANY"
 					#define NO_VLAN			"NO_VLAN"
+				#define IP_PROTO	"ip_proto"
 				#define IP_SRC			"source_ip"
 				#define IP_DST			"dest_ip"
 				#define PORT_SRC		"source_port"
