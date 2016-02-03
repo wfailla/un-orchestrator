@@ -46,12 +46,6 @@ protected:
 	/*
 	*	VLAN
 	*/
-	//Only one of
-	//	isVlanID
-	// isNoVlan
-	// isAnyVlan
-	//can be set at the same time
-	
 	bool isVlanID;
 	uint16_t vlanID;
 	bool isNoVlan;
@@ -86,6 +80,11 @@ protected:
 	char *ipv6_src;
 	char *ipv6_dst;
 	
+	/*
+	*	GRE
+	*/
+	char *gre_key;
+	
 	Match();
 
 	bool isEqual(const Match &other) const;
@@ -107,6 +106,7 @@ public:
 	void setUdpDst(uint16_t udp_dst);
 	void setIpv6Src(char *ipv6_src);
 	void setIpv6Dst(char *ipv6_dst);
+	void setGreKey(char *gre_key);
 	
 	virtual void setAllCommonFields(Match match);
 	

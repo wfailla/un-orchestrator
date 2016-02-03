@@ -15,6 +15,7 @@ IVANO: these include should be useless
 
 //#include <rofl/common/ciosrv.h>
 #include <rofl/common/logging.h>
+#include <rofl/common/openflow/coxmatch.h>
 
 #include "../../../utils/logger.h"
 #include "../match.h"
@@ -32,9 +33,12 @@ private:
 
 	bool isInput_port;
 	unsigned int input_port;
+	bool is_local_port;
 	
 public:
 	Match();
+	
+	Match(bool is_local_port);
 	
 	bool operator==(const Match &other) const;
 

@@ -10,7 +10,8 @@ Match::Match() :
 	ipv4_dst(NULL),
 	isTcpSrc(false), isTcpDst(false),
 	isUdpSrc(false), isUdpDst(false),
-	ipv6_src(NULL), ipv6_dst(NULL)
+	ipv6_src(NULL), ipv6_dst(NULL),
+	gre_key(NULL)
 {
 
 }
@@ -130,6 +131,19 @@ bool Match::isEqual(const Match &other) const
 		if(strcmp(ipv6_dst,other.ipv6_dst) != 0)
 			return false;
 	}
+	
+	/*
+	*	GRE
+	*/
+	if((gre_key == NULL && other.gre_key != NULL) ||
+		(gre_key != NULL && other.gre_key == NULL))
+		return false;
+		
+	if(gre_key != NULL && other.gre_key != NULL)
+	{
+		if(strcmp(gre_key,other.gre_key) != 0)
+			return false;
+	}
 
 	return true;
 }
@@ -188,6 +202,14 @@ void Match::setAllCommonFields(Match match)
 		setIpv6Src(match.ipv6_src);
 	if(match.ipv6_dst)
 		setIpv6Dst(match.ipv6_dst);
+		
+	/*
+	*	GRE
+	*/
+	if(match.gre_key)
+		setGreKey(match.gre_key);
+	if(match.ipv6_dst)
+		setGreKey(match.gre_key);
 }
 
 void Match::setEthSrc(char *eth_src)
@@ -284,6 +306,12 @@ void Match::setIpv6Dst(char *ipv6_dst)
 	strcpy(this->ipv6_dst,ipv6_dst);
 }
 
+void Match::setGreKey(char *gre_key)
+{
+	this->gre_key = (char*)malloc(sizeof(char)*(strlen(gre_key)+1));
+	strcpy(this->gre_key,gre_key);
+}
+
 void Match::print()
 {
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
@@ -339,6 +367,12 @@ void Match::print()
 			cout << "\t\t\tIPv6 src: " << ipv6_src << endl;
 		if(ipv6_dst)
 			cout << "\t\t\tIPv6 dst: " << ipv6_dst << endl;
+			
+		/*
+		*	GRE
+		*/
+		if(gre_key)
+			cout << "\t\t\tGRE key: " << gre_key << endl;
 	}
 }
 
@@ -419,6 +453,12 @@ void Match::toJSON(Object &match)
 			match[IP_SRC] = ipv6_src;
 		if(ipv6_dst)
 			match[IP_DST] = ipv6_dst;
+			
+		/*
+		*	GRE
+		*/
+		if(gre_key)
+			match[GRE_KEY] = gre_key;
 }
 
 
@@ -478,6 +518,12 @@ string Match::prettyPrint()
 		ss << " # IPv6 src: " << ipv6_src;
 	if(ipv6_dst)
 		ss << " # IPv6 dst: " << ipv6_dst;
+		
+	/*
+	*	GRE
+	*/
+	if(gre_key)
+		ss << " # GRE key: " << gre_key;
 
 	return ss.str();
 }

@@ -1345,6 +1345,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										
 										interface = epi_value.getString();
 										
+										gre_param[3] = interface;
+										
 										gre_id[id_gre[j]] = epi_value.getString();
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id_gre[i].c_str(), gre_id[id_gre[i]].c_str());
 									}

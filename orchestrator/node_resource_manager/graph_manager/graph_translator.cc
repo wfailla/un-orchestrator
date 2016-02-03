@@ -8,7 +8,42 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 	
 	vector<VLink> tenantVirtualLinks = tenantLSI->getVirtualLinks();//FIXME: a map <emulated port name, vlink> would be better
 	
+	map<string,vector<string> > eps = tenantLSI->getEndpointsPorts();
+	
 	lowlevel::Graph lsi0Graph;
+	
+	unsigned int i = 0;
+	for(map<string, vector<string> >::iterator it = eps.begin(); it != eps.end(); it++){
+		//Translate the match
+		lowlevel::Match lsi0Match;
+		map<string,unsigned int>::iterator translation = ports_lsi0.find(it->second[3]);
+		lsi0Match.setInputPort(translation->second);
+		lsi0Match.setGreKey((char *)it->second[0].c_str());
+		
+		lowlevel::Action lsi0Action(true);
+		
+		//Create the rule and add it to the graph
+		//The rule ID is created as follows  highlevelGraphID_hlrID
+		stringstream newRuleID;
+		newRuleID << graph->getID() << "_" << i;
+		lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),65535);
+		lsi0Graph.addRule(lsi0Rule);
+		
+		i++;
+		
+		lowlevel::Match lsi0Match1(true);
+		
+		lowlevel::Action lsi0Action1(translation->second);
+		
+		//Create the rule and add it to the graph
+		//The rule ID is created as follows  highlevelGraphID_hlrID
+		stringstream newRuleID1;
+		newRuleID << graph->getID() << "_" << i;
+		lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action1,newRuleID1.str(),65535);
+		lsi0Graph.addRule(lsi0Rule1);
+		
+		i++;
+	}
 	
 	list<highlevel::Rule> highLevelRules = graph->getRules();
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "The high level graph contains %d rules",highLevelRules.size());
@@ -197,7 +232,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			map<string, uint64_t> ep_vlinks = tenantLSI->getEndPointsVlinks();
 			if(ep_vlinks.count(ss.str()) == 0)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a endpoint match \"%s:%d\" which has not been translated into a virtual link",ss.str().c_str(),ss.str().c_str());
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a endpoint \"%s\" which has not been translated into a virtual link",ss.str().c_str());
 			}
 			else
 			{
@@ -210,12 +245,12 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				}
 				assert(vlink != tenantVirtualLinks.end());
 		
-				//Al the traffic for a NF is sent on the same virtual link
+				//All the traffic for a endpoint is sent on the same virtual link
 				stringstream action_port;
 				action_port << action_info << "_" << action_nf->getPort();
 			
 				lsi0Match.setAllCommonFields(match);		
-				lsi0Match.setInputPort(vlink->getRemoteID());
+				lsi0Match.setInputPort(vlink->getRemoteID());				
 			}
 
 			if(action->getType() == highlevel::ACTION_ON_PORT)
@@ -250,52 +285,99 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		 else
 		 {
 		 	assert(match.matchOnNF());
-		 	assert(action->getType() == highlevel::ACTION_ON_PORT);
-		 	
-			//The entire match must be replaced with the virtual link associated with the port
-			//expressed in the OUTPUT action.
-			//The port in the OUTPUT action must be replaced with its port identifier
-		
-			string action_info = action->getInfo();
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on NF \"%s\", action is on port \"%s\"",match.getNF().c_str(),action_info.c_str());
-			if(ports_lsi0.count(action_info) == 0)
+			if(action->getType() == highlevel::ACTION_ON_PORT)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which is not attached to LSI-0",action_info.c_str());
-				throw GraphManagerException();
-			}
+				//The entire match must be replaced with the virtual link associated with the port
+				//expressed in the OUTPUT action.
+				//The port in the OUTPUT action must be replaced with its port identifier
 		
-			//Translate the match
-			lowlevel::Match lsi0Match;
+				string action_info = action->getInfo();
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on NF \"%s\", action is on port \"%s\"",match.getNF().c_str(),action_info.c_str());
+				if(ports_lsi0.count(action_info) == 0)
+				{
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which is not attached to LSI-0",action_info.c_str());
+					throw GraphManagerException();
+				}
+		
+				//Translate the match
+				lowlevel::Match lsi0Match;
 				
-			map<string, uint64_t> ports_vlinks = tenantLSI->getPortsVlinks();
-			if(ports_vlinks.count(action_info) == 0)
-			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which has not been translated into a virtual link",action_info.c_str());
-			}
-			uint64_t vlink_id = ports_vlinks.find(action_info)->second;
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tThe virtual link related to port \"%s\" has ID: %x",action_info.c_str(),vlink_id);
-			vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
-			for(;vlink != tenantVirtualLinks.end(); vlink++)
-			{
-				if(vlink->getID() == vlink_id)
-					break;
-			}
-			assert(vlink != tenantVirtualLinks.end());
-			lsi0Match.setInputPort(vlink->getRemoteID());
+				map<string, uint64_t> ports_vlinks = tenantLSI->getPortsVlinks();
+				if(ports_vlinks.count(action_info) == 0)
+				{
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which has not been translated into a virtual link",action_info.c_str());
+				}
+				uint64_t vlink_id = ports_vlinks.find(action_info)->second;
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tThe virtual link related to port \"%s\" has ID: %x",action_info.c_str(),vlink_id);
+				vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
+				for(;vlink != tenantVirtualLinks.end(); vlink++)
+				{
+					if(vlink->getID() == vlink_id)
+						break;
+				}
+				assert(vlink != tenantVirtualLinks.end());
+				lsi0Match.setInputPort(vlink->getRemoteID());
 
-			//Translate the action
-			map<string,unsigned int>::iterator translation = ports_lsi0.find(action_info);
-			unsigned int portForAction = translation->second;
+				//Translate the action
+				map<string,unsigned int>::iterator translation = ports_lsi0.find(action_info);
+				unsigned int portForAction = translation->second;
 			
-			lowlevel::Action lsi0Action(portForAction);			
-			//XXX The generic actions will be added to the tenant lsi.
+				lowlevel::Action lsi0Action(portForAction);			
+				//XXX The generic actions will be added to the tenant lsi.
 
-			//Create the rule and add it to the graph
-			//The rule ID is created as follows  highlevelGraphID_hlrID
-			stringstream newRuleID;
-			newRuleID << graph->getID() << "_" << hlr->getFlowID();
-			lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
-			lsi0Graph.addRule(lsi0Rule);
+				//Create the rule and add it to the graph
+				//The rule ID is created as follows  highlevelGraphID_hlrID
+				stringstream newRuleID;
+				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
+				lsi0Graph.addRule(lsi0Rule);
+			}
+			else if(action->getType() == highlevel::ACTION_ON_ENDPOINT)
+			{
+				//The entire match must be replaced with LOCAL
+				//The port in the OUTPUT action must be replaced with the port identifier related to physical port associated to endpoint
+		
+				string action_info = action->getInfo();
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on NF \"%s\", action is on port \"%s\"",match.getNF().c_str(),action_info.c_str());
+				if(ports_lsi0.count(action_info) == 0)
+				{
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which is not attached to LSI-0",action_info.c_str());
+					throw GraphManagerException();
+				}
+		
+				//Translate the match
+				lowlevel::Match lsi0Match;
+				
+				map<string, uint64_t> ports_vlinks = tenantLSI->getPortsVlinks();
+				if(ports_vlinks.count(action_info) == 0)
+				{
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which has not been translated into a virtual link",action_info.c_str());
+				}
+				uint64_t vlink_id = ports_vlinks.find(action_info)->second;
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tThe virtual link related to port \"%s\" has ID: %x",action_info.c_str(),vlink_id);
+				vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
+				for(;vlink != tenantVirtualLinks.end(); vlink++)
+				{
+					if(vlink->getID() == vlink_id)
+						break;
+				}
+				assert(vlink != tenantVirtualLinks.end());
+				lsi0Match.setInputPort(vlink->getRemoteID());
+
+				//Translate the action
+				map<string,unsigned int>::iterator translation = ports_lsi0.find(action_info);
+				unsigned int portForAction = translation->second;
+			
+				lowlevel::Action lsi0Action(portForAction);			
+				//XXX The generic actions will be added to the tenant lsi.
+
+				//Create the rule and add it to the graph
+				//The rule ID is created as follows  highlevelGraphID_hlrID
+				stringstream newRuleID;
+				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
+				lsi0Graph.addRule(lsi0Rule);
+			}
 		 }//end of match.matchOnNF()
 	}
 	

@@ -4,7 +4,13 @@ namespace lowlevel
 {
 
 Action::Action(uint32_t port_id)
-	: type(openflow::OFPAT_OUTPUT), port_id(port_id)
+	: type(openflow::OFPAT_OUTPUT), port_id(port_id), is_local_port(false)
+{
+
+}
+
+Action::Action(bool is_local_port)
+	: type(openflow::OFPAT_OUTPUT), is_local_port(is_local_port)
 {
 
 }
@@ -27,11 +33,17 @@ void Action::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	switch(OFP_VERSION)
 	{
 		case OFP_10:
-			message.set_actions().add_action_output(cindex(0)).set_port_no(port_id);
+			if(is_local_port)
+				message.set_actions().add_action_output(cindex(0)).set_port_no(rofl::openflow::OFPP_LOCAL);
+			else	
+				message.set_actions().add_action_output(cindex(0)).set_port_no(port_id);
 			break;
 		case OFP_12:
 		case OFP_13:
-			message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(0)).set_port_no(port_id);
+			if(is_local_port)
+				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(0)).set_port_no(rofl::openflow::OFPP_LOCAL);
+			else
+				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(0)).set_port_no(port_id);
 			break;	
 	}
 	
@@ -45,7 +57,10 @@ void Action::print()
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
 		cout << "\t\tAction:" << endl << "\t\t{" << endl;
-		cout << "\t\t\tOUTPUT: " << port_id << endl;
+		if(is_local_port)
+			cout << "\t\t\tOUTPUT: " << "LOCAL" << endl;
+		else
+			cout << "\t\t\tOUTPUT: " << port_id << endl;
 		for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 			(*ga)->print();		
 		cout << "\t\t}" << endl;
@@ -83,9 +98,14 @@ string Action::prettyPrint(LSI *lsi0,map<string,LSI *> lsis)
 		}
 	}
 	
-	//The code could be here only when a SIGINT is received and all the graph are going to be removed
-	ss << port_id << " (unknown graph)";
-
+	if(is_local_port)
+		ss << "LOCAL" << " (LOCAL graph)";
+	else
+	{
+		//The code could be here only when a SIGINT is received and all the graph are going to be removed
+		ss << port_id << " (unknown graph)";
+	}
+	
 conclude:
 	
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
