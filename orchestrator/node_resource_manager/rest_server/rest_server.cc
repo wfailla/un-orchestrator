@@ -13,7 +13,7 @@ GraphManager *RestServer::gm = NULL;
 SQLiteManager *dbmanager = NULL;
 bool client_auth = false;
 
-bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name)
+bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip)
 {	
 	char *nffg_file_name = new char[BUFFER_SIZE];
 	if(nffg_filename != NULL && strcmp(nffg_filename, "") != 0)
@@ -31,7 +31,7 @@ bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int
 
 	try
 	{
-		gm = new GraphManager(core_mask,string(ports_file_name));
+		gm = new GraphManager(core_mask,string(ports_file_name),local_ip);
 		
 	}catch (...)
 	{
@@ -1109,8 +1109,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										id = ep_value.getString();
 									else
 										id_gre[i] = ep_value.getString();
-										
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "++++++++\"%s\"+++\"%d\"-------",id_gre[i].c_str(), i);
 								}
 								else if(ep_name == _NAME)
 								{
@@ -1374,8 +1372,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								graph.addEndPointGre(ep_gre);
 							
 								graph.addEndPoint(id_gre[j],gre_param);
-								
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "++++++\"%s\"--%d---",id_gre[j].c_str(), j);
 								
 								j++;
 							}	

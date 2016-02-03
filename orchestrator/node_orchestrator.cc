@@ -108,6 +108,12 @@ int main(int argc, char *argv[])
 	char *client_name = new char[BUFFER_SIZE], *t_client_name = NULL;
 	char *broker_address = new char[BUFFER_SIZE], *t_broker_address = NULL;
 	char *pwd = new char[BUFFER_SIZE];
+	
+	char delimiter[] = ":";
+	char * pnt;
+	char tmp[BUFFER_SIZE];
+	char local_ip[BUFFER_SIZE];
+	int i = 0;
 
 	strcpy(config_file_name, DEFAULT_FILE);
 
@@ -138,6 +144,28 @@ int main(int argc, char *argv[])
 	
 	rest_port = t_rest_port;
 	cli_auth = t_cli_auth;
+
+	//search the local IP
+	strcpy(tmp,(char *)client_name);
+	pnt=strtok(tmp, delimiter);
+		
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 0:
+				//local IP
+				strcpy(local_ip, pnt);
+				break;
+		}
+
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+
+	string s_local_ip = string(local_ip);
+
+	s_local_ip.erase(0,1);
 
 	//test if client authentication is required and if true initialize database
 	if(cli_auth)
@@ -192,7 +220,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name))
+	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name,s_local_ip))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 #ifdef UNIFY_NFFG

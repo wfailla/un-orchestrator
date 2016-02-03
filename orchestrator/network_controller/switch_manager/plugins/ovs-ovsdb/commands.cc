@@ -72,7 +72,8 @@ string build_port_uuid_name(const string& port_name, uint64_t bridge_no)
 }
 
 //Constructor
-commands::commands(){
+commands::commands(string local_ip){
+	this->local_ip = local_ip;
 }
 
 //Destroyer
@@ -218,8 +219,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     
 	/*insert a Controller*/
 	row["target"] = temp;
+	/*for lsi0 set the given local ip*/
 	if(dnumber == 1)
-		row["local_ip"] = "192.168.1.10";
+		row["local_ip"] = this->local_ip.c_str();
 	else
 		row["local_ip"] = "127.0.0.1";
 	row["connection_mode"] = "out-of-band";
@@ -237,59 +239,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	row.clear();
     first_obj.clear();
 
-	/*first_obj["op"] = "insert";
-	first_obj["table"] = "Interface";
-		
-	//Insert an Interface
-	row["type"] = "internal";
-
-	row["name"] = sw;
-	
-	row["admin_state"] = "up";
-	row["link_state"] = "up";
-	row["ofport"] = rnumber;
-	row["ofport_request"] = rnumber;
-		
-	first_obj["row"] = row;
-		
-	//Create the current name of a interface
-	sprintf(ifac, "iface%d", rnumber);
-	first_obj["uuid-name"] = ifac;
-	params.push_back(first_obj);
-		
-	row.clear();
-	first_obj.clear();
-
-	rnumber++;
-
-	//Insert a port
-	first_obj["op"] = "insert";
-	first_obj["table"] = "Port";
-		
-	//Insert a port
-	row["name"] = sw;
-		
-	iface.push_back("set");
-	
-	iface2.push_back("named-uuid");
-	iface2.push_back(ifac);
-	
-	iface1.push_back(iface2);
-	iface.push_back(iface1);
-		
-	row["interfaces"] = iface;
-		
-	first_obj["row"] = row;
-		
-	//Create the current name of a port
-	sprintf(prt, "port%d", rnumber-1);
-	first_obj["uuid-name"] = prt;
-	params.push_back(first_obj);
-
-	physical_ports["Bridge1"] = rnumber-1;*/
-
-	row.clear();
-
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Bridge";
 
@@ -299,24 +248,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     Array port;
 	Array port1;
 	Array port2;
-	
-	/*port2.push_back("named-uuid");
-	port2.push_back(prt);
-	
-	port1.push_back(port2);
-	
-	port2.clear();
-		
-	//Array with two elements
-	i_array.push_back("set");
-		
-	i_array.push_back(port1);
-		
-	row["ports"] = i_array;
-	
-	i_array.clear();
-	port1.clear();
-	port.clear();*/
 
 	Array i_array;
    	Array ctrl;

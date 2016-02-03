@@ -8,8 +8,8 @@ void GraphManager::mutexInit()
 	pthread_mutex_init(&graph_manager_mutex, NULL);
 }
 
-GraphManager::GraphManager(int core_mask,string portsFileName) :
-	switchManager()
+GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip) :
+	switchManager(local_ip)
 {	
 	//Parse the file containing the description of the physical ports to be managed by the node orchestrator
 	set<CheckPhysicalPortsIn> phyPortsRequired;
