@@ -9,7 +9,7 @@ void GraphManager::mutexInit()
 }
 
 GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip) :
-	switchManager(local_ip)
+	local_ip(local_ip), switchManager()
 {	
 	//Parse the file containing the description of the physical ports to be managed by the node orchestrator
 	set<CheckPhysicalPortsIn> phyPortsRequired;
@@ -93,7 +93,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip) :
 		//Create a new LSI, which is the LSI-0 of the node
 		
 		map<string,list<nf_port_info> > netFunctionsPortsInfo;
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI());
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI(), this->local_ip);
 
 		CreateLsiOut *clo = switchManager.createLsi(cli);
 		
@@ -678,7 +678,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			netFunctionsPortsName[nf->first] = lsi->getNetworkFunctionsPortNames(nf->first);
 		}
 		
-CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), lsi->getEndpointsPorts(), lsi->getVirtualLinksRemoteLSI());
+CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), lsi->getEndpointsPorts(), lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS));
 
 		clo = switchManager.createLsi(cli);
 

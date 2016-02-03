@@ -89,6 +89,11 @@ private:
 	lowlevel::Graph graphLSI0lowLevel; //FIXME: this is a trick for the log
 	
 	/**
+	*	Local IP of the LSI0
+	*/
+	string local_ip;
+	
+	/**
 	*	Map containing the graph identifier of each tenant-LSI, and its desciption
 	*/
 	map<string,GraphInfo> tenantLSIs;

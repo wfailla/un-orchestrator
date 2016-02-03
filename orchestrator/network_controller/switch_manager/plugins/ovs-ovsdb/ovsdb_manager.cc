@@ -6,9 +6,9 @@ int s = 0;
 commands *c = NULL;
 
 //Constructor
-OVSDBManager::OVSDBManager(string local_ip)
+OVSDBManager::OVSDBManager()
 {
-	c = new commands(local_ip);/*create a new object commands*/
+	c = new commands();/*create a new object commands*/
 }
 
 //Destroyer

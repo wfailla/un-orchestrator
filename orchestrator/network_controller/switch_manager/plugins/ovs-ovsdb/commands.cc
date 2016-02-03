@@ -72,8 +72,7 @@ string build_port_uuid_name(const string& port_name, uint64_t bridge_no)
 }
 
 //Constructor
-commands::commands(string local_ip){
-	this->local_ip = local_ip;
+commands::commands(){
 }
 
 //Destroyer
@@ -219,11 +218,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
     
 	/*insert a Controller*/
 	row["target"] = temp;
-	/*for lsi0 set the given local ip*/
-	if(dnumber == 1)
-		row["local_ip"] = this->local_ip.c_str();
-	else
-		row["local_ip"] = "127.0.0.1";
+	
+	row["local_ip"] = cli.getLocalIP();
 	row["connection_mode"] = "out-of-band";
 	row["is_connected"] = true;
 	

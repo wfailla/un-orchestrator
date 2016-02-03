@@ -67,16 +67,22 @@ private:
 	*	@brief: list of lsis with which the new one must be connected
 	*/
 	list<uint64_t> vlinksRemoteLsi;
+	
+	/**
+	*	@brief: local IP of the lsi0
+	*/
+	string local_ip;
 
 protected:
 
-	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<struct nf_port_info> > netFunctionsPortsInfo, map<string,vector<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi)
+	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<struct nf_port_info> > netFunctionsPortsInfo, map<string,vector<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi, string local_ip)
 		: controllerAddress(controllerAddress), controllerPort(controllerPort),
 		physicalPortsName(physicalPortsName.begin(),physicalPortsName.end()),
 		nf_types(nf_types.begin(),nf_types.end()),
 		endpointsPortsName(endpointsPortsName.begin(),endpointsPortsName.end()),
 		netFunctionsPortsInfo(netFunctionsPortsInfo.begin(),netFunctionsPortsInfo.end()),
-		vlinksRemoteLsi(vlinksRemoteLsi.begin(),vlinksRemoteLsi.end())
+		vlinksRemoteLsi(vlinksRemoteLsi.begin(),vlinksRemoteLsi.end()),
+		local_ip(local_ip)
 	{
 		map<string,nf_t>::iterator it = nf_types.begin();
 		for(; it != nf_types.end(); it++)
@@ -123,6 +129,11 @@ public:
 	list<uint64_t> getVirtualLinksRemoteLSI()
 	{
 		return vlinksRemoteLsi;
+	}
+	
+	string getLocalIP()
+	{
+		return local_ip;
 	}
 };
 

@@ -41,12 +41,9 @@ using namespace json_spirit;
 class commands
 {
 private:
-	/*
-	*	Local IP of the universal node
-	*/
-	string local_ip;
+
 public:
-	commands(string local_ip);
+	commands();
 
 	~commands();
 	

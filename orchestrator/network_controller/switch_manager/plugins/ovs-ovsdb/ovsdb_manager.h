@@ -17,7 +17,7 @@ class OVSDBManager : public SwitchManager
 private:
 
 public:
-	OVSDBManager(string local_ip);
+	OVSDBManager();
 
 	~OVSDBManager();
 
