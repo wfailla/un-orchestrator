@@ -18,8 +18,8 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		//Translate the match
 		lowlevel::Match lsi0Match;
 		map<string,unsigned int>::iterator translation = ports_lsi0.find(it->second[3]);
-		lsi0Match.setEthType(2048);
-		lsi0Match.setIpProto(47);
+		lsi0Match.setEthType(2048 & 0xFFFF);
+		lsi0Match.setIpProto(47 & 0xFF);
 		lsi0Match.setGreKey((char *)it->second[0].c_str());
 		lsi0Match.setInputPort(translation->second);
 		
