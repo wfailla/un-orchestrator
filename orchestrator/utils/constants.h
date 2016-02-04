@@ -85,16 +85,33 @@
 					#define VNF 			"vnf"
 				#define PROTOCOL		"protocol"
 				#define ETH_SRC			"source_mac"
+				#define ETH_SRC_MASK	"eth_src_mask"
 				#define ETH_DST			"dest_mac"
+				#define ETH_DST_MASK "eth_dst_mask"
 				#define ETH_TYPE		"ether_type"
 				#define VLAN_ID			"vlan_id"
 					#define ANY_VLAN		"ANY"
 					#define NO_VLAN			"NO_VLAN"
+				#define VLAN_PCP	"vlan_pcp"
+				#define IP_DSCP			"ip_dscp"
+				#define IP_ECN			"ip_ecn"
 				#define IP_PROTO	"ip_proto"
 				#define IP_SRC			"source_ip"
+				#define IPv4_SRC_MASK	"ipv4_src_mask"
 				#define IP_DST			"dest_ip"
+				#define IPv4_DST_MASK	"ipv4_dst_mask"
+				#define IPv6_SRC_MASK	"ipv6_src_mask"
+				#define IPv6_DST_MASK	"ipv6_dst_mask"
+				#define IPv6_FLABEL		"ipv6_flabel"
+				#define IPv6_ND_TARGET	"ipv6_nd_target"
+				#define IPv6_ND_SLL		"ipv6_nd_sll"
+				#define IPv6_ND_TLL		"ipv6_nd_tll"
 				#define PORT_SRC		"source_port"
 				#define PORT_DST		"dest_port"
+				#define SCTP_SRC		"sctp_src"
+				#define SCTP_DST		"sctp_dst"
+				#define ICMPv4_TYPE		"icmpv4_type"
+				#define ICMPv4_CODE		"icmpv4_code"
 				#define ARP_OPCODE		"arp_opcode"
 				#define ARP_SPA			"arp_spa"
 				#define ARP_SPA_MASK	"arp_spa_mask"
@@ -102,7 +119,11 @@
 				#define ARP_TPA_MASK	"arp_tpa_mask"
 				#define ARP_SHA			"arp_sha"
 				#define ARP_THA			"arp_tha"
-			#define ACTIONS			"actions"
+				#define ICMPv6_TYPE		"icmpv6_type"
+				#define ICMPv6_CODE		"icmpv6_code"
+				#define MPLS_LABEL		"mpls_label"
+				#define MPLS_TC			"mpls_tc"
+				#define ACTIONS			"actions"
 				#define OUTPUT				"output_to_port"
 					#define	PORT				"port"
 					//#define	VNF_ID				"id"
@@ -235,5 +256,10 @@ extern ofp_version_t OFP_VERSION;
 *	OpenFlow
 */
 #define HIGH_PRIORITY 65535
+
+/*
+*	Misc
+*/
+#define DEFAULT_GRAPH "DEFAULT-GRAPH"
 
 #endif //CONSTANTS_H_

@@ -1,6 +1,6 @@
 #include "graph_translator.h"
 
-lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int > &availableEndPoints, bool creating)
+lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int > &availableEndPoints, bool is_control_in_band, bool creating)
 {
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating rules for LSI-0");
 	
@@ -12,75 +12,30 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 	
 	lowlevel::Graph lsi0Graph;
 	
-	unsigned int i = 0;
-	for(map<string, vector<string> >::iterator it = eps.begin(); it != eps.end(); it++)
+	//if control in bound install the default rule on LSI-0 otherwise skip this code
+	if(is_control_in_band)
 	{
-		//Translate the match
-		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
-		map<string,unsigned int>::iterator translation = ports_lsi0.find(it->second[3]);
-		lsi0Match.setArpSpa((char *)it->second[1].c_str());
-		lsi0Match.setEthType(/*2048*/2054 & 0xFFFF);
-		//lsi0Match.setIpProto(/*1*/47 & 0xFF);
-		//lsi0Match.setIpv4Src((char *)it->second[2].c_str());
-		//lsi0Match.setGreKey((char *)it->second[0].c_str());
-		lsi0Match.setInputPort(translation->second);
+		unsigned int i = 0;
+		for(map<string, vector<string> >::iterator it = eps.begin(); it != eps.end(); it++)
+		{
+			//Translate the match
+			lowlevel::Match lsi0Match;
+			map<string,unsigned int>::iterator translation = ports_lsi0.find(it->second[3]);
 		
-		lsi0Match0.setArpTpa((char *)it->second[1].c_str());
-		lsi0Match0.setEthType(/*2048*/2054 & 0xFFFF);
-		lsi0Match0.setInputPort(translation->second);
+			lsi0Match.setGreKey((char *)it->second[0].c_str());
+			lsi0Match.setInputPort(translation->second);
 		
-		lsi0Match1.setIpv4Dst((char *)it->second[1].c_str());
-		lsi0Match1.setEthType(2048/*2054*/ & 0xFFFF);
-		lsi0Match1.setInputPort(translation->second);
+			lowlevel::Action lsi0Action(true);
 		
-		lsi0Match2.setGreKey((char *)it->second[0].c_str());
-		//lsi0Match2.setEthType(2048/*2054*/ & 0xFFFF);
-		lsi0Match2.setInputPort(translation->second);
+			//Create the rule and add it to the graph
+			//The rule ID is created as follows  highlevelGraphID_hlrID
+			stringstream newRuleID;
+			newRuleID << graph->getID() << "_" << i;
+			lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+			lsi0Graph.addRule(lsi0Rule);
 		
-		lowlevel::Action lsi0Action(true);
-		
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows  highlevelGraphID_hlrID
-		stringstream newRuleID;
-		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		lsi0Graph.addRule(lsi0Rule);
-		
-		i++;
-		
-		newRuleID.str("");
-		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		lsi0Graph.addRule(lsi0Rule0);
-		
-		i++;
-		
-		newRuleID.str("");
-		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		lsi0Graph.addRule(lsi0Rule1);
-		
-		i++;
-		
-		newRuleID.str("");
-		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule2(lsi0Match2,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		lsi0Graph.addRule(lsi0Rule2);
-		
-		i++;
-		
-		lowlevel::Match lsi0Match3(true);
-		
-		lowlevel::Action lsi0Action1(translation->second);
-		
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows  highlevelGraphID_hlrID
-		newRuleID.str("");
-		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule3(lsi0Match3,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
-		lsi0Graph.addRule(lsi0Rule3);
-		
-		i++;
+			i++;
+		}
 	}
 	
 	list<highlevel::Rule> highLevelRules = graph->getRules();

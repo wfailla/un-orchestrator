@@ -8,8 +8,8 @@ void GraphManager::mutexInit()
 	pthread_mutex_init(&graph_manager_mutex, NULL);
 }
 
-GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip) :
-	local_ip(local_ip), switchManager()
+GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bool is_control_in_band,string control_interface) :
+	local_ip(local_ip), is_control_in_band(is_control_in_band), control_interface(control_interface), switchManager()
 {	
 	//Parse the file containing the description of the physical ports to be managed by the node orchestrator
 	set<CheckPhysicalPortsIn> phyPortsRequired;
@@ -55,7 +55,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip) :
 	//Create the openflow controller for the lsi-0
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating the openflow controller for LSI-0...");
 
-	lowlevel::Graph graph;
+	//lowlevel::Graph graph;
 
 	rofl::openflow::cofhello_elem_versionbitmap versionbitmap;
 	switch(OFP_VERSION)
@@ -85,6 +85,8 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip) :
 	map<string, vector<string> > dummy_endpoints;
 	vector<VLink> dummy_virtual_links;
 	map<string,nf_t>  nf_types;
+	
+	unsigned int i = 0;
 	
 	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions,dummy_endpoints,dummy_virtual_links,dummy_nfs_ports_type);
 	
@@ -159,6 +161,78 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip) :
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "LSI-0 and its controller are created");
 
 	ComputeController::setCoreMask(core_mask);
+
+	//if control is in band install the default rules on LSI-0 otherwise skip this code
+	if(is_control_in_band)
+	{
+		//remove first " character
+		control_interface.erase(0,1);
+		//remove last " character
+		control_interface.erase(control_interface.size()-1,1);
+		
+		//Install the default rules on LSI-0
+		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
+		map<string,unsigned int>::iterator translation = lsi_ports.find((char *)control_interface.c_str());
+		lsi0Match.setArpSpa((char *)local_ip.c_str());
+		lsi0Match.setEthType(2054 & 0xFFFF);
+		lsi0Match.setInputPort(translation->second);
+	
+		lsi0Match0.setArpTpa((char *)local_ip.c_str());
+		lsi0Match0.setEthType(2054 & 0xFFFF);
+		lsi0Match0.setInputPort(translation->second);
+	
+		lsi0Match1.setIpv4Dst((char *)local_ip.c_str());
+		lsi0Match1.setEthType(2048 & 0xFFFF);
+		lsi0Match1.setInputPort(translation->second);
+	
+		lowlevel::Action lsi0Action(true);
+	
+		//Create the rule and add it to the graph
+		//The rule ID is created as follows DEFAULT-GRAPH_ID
+		stringstream newRuleID;
+		newRuleID << DEFAULT_GRAPH << "_" << i;
+		lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+		graphLSI0lowLevel.addRule(lsi0Rule);
+	
+		i++;
+	
+		//Create the rule and add it to the graph
+		//The rule ID is created as follows DEFAULT-GRAPH_ID
+		newRuleID.str("");
+		newRuleID << DEFAULT_GRAPH << "_" << i;
+		lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+		graphLSI0lowLevel.addRule(lsi0Rule0);
+	
+		i++;
+	
+		//Create the rule and add it to the graph
+		//The rule ID is created as follows DEFAULT-GRAPH_ID
+		newRuleID.str("");
+		newRuleID << DEFAULT_GRAPH << "_" << i;
+		lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+		graphLSI0lowLevel.addRule(lsi0Rule1);
+	
+		i++;
+	
+		lowlevel::Match lsi0Match3(true);
+	
+		lowlevel::Action lsi0Action1(translation->second);
+	
+		//Create the rule and add it to the graph
+		//The rule ID is created as follows DEFAULT-GRAPH_ID
+		newRuleID.str("");
+		newRuleID << DEFAULT_GRAPH << "_" << i;
+		lowlevel::Rule lsi0Rule3(lsi0Match3,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
+		graphLSI0lowLevel.addRule(lsi0Rule3);
+	
+		graphLSI0lowLevel.print();
+	
+		//Insert new rules into the LSI-0
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
+		controller->installNewRules(graphLSI0lowLevel.getRules());
+	}
+	
+	//printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 
 #ifdef UNIFY_NFFG	
 	if(ComputeController::retrieveAllAvailableNFs() != NFManager_OK)
@@ -309,11 +383,11 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Remove the rules from the LSI-0");
 	
-	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(), availableEndPoints, false);	
-	graphLSI0lowLevel.removeRules(graphLSI0.getRules());
+	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),availableEndPoints,is_control_in_band,false);
+	graphLSI0lowLevel.removeRules(graphLSI0lowLevel.getRules());	
 		
 	//Remove rules from the LSI-0
-	graphInfoLSI0.getController()->removeRules(graphLSI0.getRules());
+	graphInfoLSI0.getController()->removeRules(graphLSI0lowLevel.getRules());
 	
 	/**
 	*		2) stop the NFs
@@ -779,6 +853,7 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tKey: %s", it->second[0].c_str());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tLocal ip: %s", it->second[1].c_str());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tRemote_ip: %s", it->second[2].c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPhysical port: %s", it->second[3].c_str());
 	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual links (%u): ",vls.size());
@@ -900,7 +975,7 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 	try
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(), availableEndPoints);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(),availableEndPoints,is_control_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New graph for LSI-0:");
 		graphLSI0.print();
 		
@@ -1331,7 +1406,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		//creates the new rules for LSI-0 and for the tenant-LSI
 		
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(newPiece,lsi,graphInfoLSI0.getLSI(), availableEndPoints);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(newPiece,lsi,graphInfoLSI0.getLSI(),availableEndPoints,is_control_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
 		graphLSI0.print();
 		graphLSI0lowLevel.addRules(graphLSI0.getRules());

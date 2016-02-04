@@ -87,11 +87,22 @@ private:
 	GraphInfo graphInfoLSI0;
 	uint64_t dpid0;
 	lowlevel::Graph graphLSI0lowLevel; //FIXME: this is a trick for the log
+	lowlevel::Graph graph; //FIXME: this is a trick for default rules
 	
 	/**
 	*	Local IP of the LSI0
 	*/
 	string local_ip;
+	
+	/**
+	*	Control can be in band (true) or out of band (false)
+	*/
+	bool is_control_in_band;
+	
+	/**
+	*	Control interface of the node
+	*/
+	string control_interface;
 	
 	/**
 	*	Map containing the graph identifier of each tenant-LSI, and its desciption
@@ -183,7 +194,7 @@ public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
 
-	GraphManager(int core_mask,string portsFileName,string local_ip);
+	GraphManager(int core_mask,string portsFileName,string local_ip,bool control,string control_interface);
 	~GraphManager();
 		
 	/**
