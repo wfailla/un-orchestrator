@@ -16,7 +16,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 	for(map<string, vector<string> >::iterator it = eps.begin(); it != eps.end(); it++)
 	{
 		//Translate the match
-		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1;
+		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
 		map<string,unsigned int>::iterator translation = ports_lsi0.find(it->second[3]);
 		lsi0Match.setArpSpa((char *)it->second[1].c_str());
 		lsi0Match.setEthType(/*2048*/2054 & 0xFFFF);
@@ -33,6 +33,10 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		lsi0Match1.setEthType(2048/*2054*/ & 0xFFFF);
 		lsi0Match1.setInputPort(translation->second);
 		
+		lsi0Match2.setGreKey((char *)it->second[0].c_str());
+		//lsi0Match2.setEthType(2048/*2054*/ & 0xFFFF);
+		lsi0Match2.setInputPort(translation->second);
+		
 		lowlevel::Action lsi0Action(true);
 		
 		//Create the rule and add it to the graph
@@ -46,19 +50,26 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		
 		newRuleID.str("");
 		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule1(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+		lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+		lsi0Graph.addRule(lsi0Rule0);
+		
+		i++;
+		
+		newRuleID.str("");
+		newRuleID << graph->getID() << "_" << i;
+		lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
 		lsi0Graph.addRule(lsi0Rule1);
 		
 		i++;
 		
 		newRuleID.str("");
 		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule2(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+		lowlevel::Rule lsi0Rule2(lsi0Match2,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
 		lsi0Graph.addRule(lsi0Rule2);
 		
 		i++;
 		
-		lowlevel::Match lsi0Match2(true);
+		lowlevel::Match lsi0Match3(true);
 		
 		lowlevel::Action lsi0Action1(translation->second);
 		
@@ -66,7 +77,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		//The rule ID is created as follows  highlevelGraphID_hlrID
 		newRuleID.str("");
 		newRuleID << graph->getID() << "_" << i;
-		lowlevel::Rule lsi0Rule3(lsi0Match2,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
+		lowlevel::Rule lsi0Rule3(lsi0Match3,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
 		lsi0Graph.addRule(lsi0Rule3);
 		
 		i++;
