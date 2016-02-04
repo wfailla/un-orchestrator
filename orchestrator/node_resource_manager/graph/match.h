@@ -77,6 +77,18 @@ protected:
 	uint16_t udp_dst;
 	
 	/*
+	*	ARP
+	*/
+	bool isArpOpcode;
+	uint16_t arpOpcode;
+	char *arp_spa;
+	char *arp_spa_mask;
+	char *arp_tpa;
+	char *arp_tpa_mask;
+	char *arp_sha;
+	char *arp_tha;
+	
+	/*
 	*	IPv6
 	*/
 	char *ipv6_src;
@@ -107,6 +119,13 @@ public:
 	void setTcpDst(uint16_t tcp_dst);
 	void setUdpSrc(uint16_t udp_src);
 	void setUdpDst(uint16_t udp_dst);
+	void setArpOpCode(uint16_t arpOpcode);
+	void setArpSpa(char *arp_spa);
+	void setArpSpaMask(char *arp_spa_mask);
+	void setArpTpa(char *arp_tpa);
+	void setArpTpaMask(char *arp_tpa_mask);
+	void setArpSha(char *arp_sha);
+	void setArpTha(char *arp_tha);
 	void setIpv6Src(char *ipv6_src);
 	void setIpv6Dst(char *ipv6_dst);
 	void setGreKey(char *gre_key);

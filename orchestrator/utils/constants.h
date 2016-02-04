@@ -83,8 +83,6 @@
 				#define TOS_BITS		"tos_bits"
 				#define	PORT_IN			"port_in"
 					#define VNF 			"vnf"
-				//#define	VNF_ID			"VNF_id"
-				//#define ENDPOINT_ID		"endpoint_id"
 				#define PROTOCOL		"protocol"
 				#define ETH_SRC			"source_mac"
 				#define ETH_DST			"dest_mac"
@@ -97,6 +95,13 @@
 				#define IP_DST			"dest_ip"
 				#define PORT_SRC		"source_port"
 				#define PORT_DST		"dest_port"
+				#define ARP_OPCODE		"arp_opcode"
+				#define ARP_SPA			"arp_spa"
+				#define ARP_SPA_MASK	"arp_spa_mask"
+				#define ARP_TPA			"arp_tpa"
+				#define ARP_TPA_MASK	"arp_tpa_mask"
+				#define ARP_SHA			"arp_sha"
+				#define ARP_THA			"arp_tha"
 			#define ACTIONS			"actions"
 				#define OUTPUT				"output_to_port"
 					#define	PORT				"port"
@@ -225,5 +230,10 @@ extern ofp_version_t OFP_VERSION;
 #define TOKEN_TYPE			"application/token"
 #define DB_NAME				"users.db"
 #define DEFAULT_FILE			"config/default-config.ini"
+
+/*
+*	OpenFlow
+*/
+#define HIGH_PRIORITY 65535
 
 #endif //CONSTANTS_H_

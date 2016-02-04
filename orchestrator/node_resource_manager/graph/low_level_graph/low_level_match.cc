@@ -77,7 +77,21 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	if(isUdpSrc)
 		message.set_match().set_udp_src(udp_src);
 	if(isUdpDst)
-		message.set_match().set_udp_dst(udp_dst);	
+		message.set_match().set_udp_dst(udp_dst);
+	if(arp_spa)	
+	{
+		if(arp_spa_mask)
+			message.set_match().set_arp_spa(caddress_in4(arp_spa),caddress_in4(arp_spa_mask));
+		else
+			message.set_match().set_arp_spa(caddress_in4(arp_spa));
+	}
+	if(arp_tpa)	
+	{
+		if(arp_tpa_mask)
+			message.set_match().set_arp_tpa(caddress_in4(arp_tpa),caddress_in4(arp_tpa_mask));
+		else
+			message.set_match().set_arp_tpa(caddress_in4(arp_tpa));
+	}	
 	if(ipv6_src)
 	{
 		message.set_match().set_ipv6_src(caddress_in6(ipv6_src));

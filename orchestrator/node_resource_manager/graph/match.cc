@@ -11,6 +11,7 @@ Match::Match() :
 	ipv4_dst(NULL),
 	isTcpSrc(false), isTcpDst(false),
 	isUdpSrc(false), isUdpDst(false),
+	arp_spa(NULL),arp_spa_mask(NULL), arp_tpa(NULL), arp_tpa_mask(NULL),
 	ipv6_src(NULL), ipv6_dst(NULL),
 	gre_key(NULL)
 {
@@ -115,6 +116,49 @@ bool Match::isEqual(const Match &other) const
 		return false;
 
 	/*
+	*	ARP
+	*/
+	if((arp_spa == NULL && other.arp_spa != NULL) ||
+		(arp_spa != NULL && other.arp_spa == NULL))
+		return false;
+		
+	if(arp_spa != NULL && other.arp_spa != NULL)
+	{
+		if(strcmp(arp_spa,other.arp_spa) != 0)
+			return false;
+	}
+	
+	if((arp_spa_mask == NULL && other.arp_spa_mask != NULL) ||
+		(arp_spa_mask != NULL && other.arp_spa_mask == NULL))
+		return false;
+		
+	if(arp_spa_mask != NULL && other.arp_spa_mask != NULL)
+	{
+		if(strcmp(arp_spa_mask,other.arp_spa_mask) != 0)
+			return false;
+	}
+
+	if((arp_tpa == NULL && other.arp_tpa != NULL) ||
+		(arp_tpa != NULL && other.arp_tpa == NULL))
+		return false;
+		
+	if(arp_tpa != NULL && other.arp_tpa != NULL)
+	{
+		if(strcmp(arp_tpa,other.arp_tpa) != 0)
+			return false;
+	}
+	
+	if((arp_tpa_mask == NULL && other.arp_tpa_mask != NULL) ||
+		(arp_tpa_mask != NULL && other.arp_tpa_mask == NULL))
+		return false;
+		
+	if(arp_tpa_mask != NULL && other.arp_tpa_mask != NULL)
+	{
+		if(strcmp(arp_tpa_mask,other.arp_tpa_mask) != 0)
+			return false;
+	}
+
+	/*
 	*	IPv6
 	*/
 	if((ipv6_src == NULL && other.ipv6_src != NULL) ||
@@ -199,6 +243,18 @@ void Match::setAllCommonFields(Match match)
 		setUdpSrc(match.udp_src);
 	if(match.isUdpDst)
 		setUdpDst(match.udp_dst);
+	
+	/*
+	*	ARP
+	*/
+	if(match.arp_spa)
+		setArpSpa(match.arp_spa);
+	if(match.arp_spa_mask)
+		setArpSpaMask(match.arp_spa_mask);
+	if(match.arp_tpa)
+		setArpTpa(match.arp_tpa);
+	if(match.arp_tpa_mask)
+		setArpTpaMask(match.arp_tpa_mask);
 	
 	/*
 	*	IPv6
@@ -305,6 +361,30 @@ void Match::setUdpDst(uint16_t udp_dst)
 	isUdpDst = true;
 }
 
+void Match::setArpSpa(char *arp_spa)
+{
+	this->arp_spa = (char*)malloc(sizeof(char)*(strlen(arp_spa)+1));
+	strcpy(this->arp_spa,arp_spa);
+}
+
+void Match::setArpSpaMask(char *arp_spa_mask)
+{
+	this->arp_spa_mask = (char*)malloc(sizeof(char)*(strlen(arp_spa_mask)+1));
+	strcpy(this->arp_spa_mask,arp_spa_mask);
+}
+
+void Match::setArpTpa(char *arp_tpa)
+{
+	this->arp_tpa = (char*)malloc(sizeof(char)*(strlen(arp_tpa)+1));
+	strcpy(this->arp_tpa,arp_tpa);
+}
+
+void Match::setArpTpaMask(char *arp_tpa_mask)
+{
+	this->arp_tpa_mask = (char*)malloc(sizeof(char)*(strlen(arp_tpa_mask)+1));
+	strcpy(this->arp_tpa_mask,arp_tpa_mask);
+}
+
 void Match::setIpv6Src(char *ipv6_src)
 {
 	this->ipv6_src = (char*)malloc(sizeof(char)*(strlen(ipv6_src)+1));
@@ -372,6 +452,18 @@ void Match::print()
 			cout << "\t\t\tUDP src port: " << udp_src << endl;
 		if(isUdpDst)
 			cout << "\t\t\tUDP dst port: " << udp_dst << endl;
+	
+		/*
+		*	ARP
+		*/
+		if(arp_spa)
+			cout << "\t\t\tARP spa: " << arp_spa << endl;
+		if(arp_spa_mask)
+		 	cout << "\t\t\tARP spa mask: " << arp_spa_mask << endl;
+		if(arp_tpa)
+			cout << "\t\t\tARP tpa: " << arp_tpa << endl;
+		if(arp_tpa_mask)
+			cout << "\t\t\tARP tpa mask: " << arp_tpa_mask << endl;
 	
 		/*
 		*	IPv6
@@ -466,6 +558,18 @@ void Match::toJSON(Object &match)
 		}
 	
 		/*
+		*	ARP
+		*/
+		if(arp_spa)
+			match[ARP_SPA] = arp_spa;
+		if(arp_spa_mask)
+		 	match[ARP_SPA_MASK] = arp_spa_mask;
+		if(arp_tpa)
+			match[ARP_TPA] = arp_tpa;
+		if(arp_tpa_mask)
+			match[ARP_TPA_MASK] = arp_tpa_mask;
+	
+		/*
 		*	IPv6
 		*/
 		if(ipv6_src)
@@ -531,6 +635,18 @@ string Match::prettyPrint()
 		ss << " # UDP src port: " << udp_src;
 	if(isUdpDst)
 		ss << " # UDP dst port: " << udp_dst;
+
+	/*
+	*	ARP
+	*/
+	if(arp_spa)
+		ss << " # ARP spa: " << arp_spa;
+	if(arp_spa_mask)
+	 	ss << " # ARP spa mask: " << arp_spa_mask;
+	if(arp_tpa)
+		ss << " # ARP tpa: " << arp_tpa;
+	if(arp_tpa_mask)
+		ss << " # ARP tpa mask: " << arp_tpa_mask;
 
 	/*
 	*	IPv6
