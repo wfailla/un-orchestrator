@@ -930,9 +930,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 					if(fg_name == _ID)
 		         	{
 		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
-		         	
-						//set id of the graph
-						graph.setId(fg_value.getString());
 					}
 					else if(fg_name == _NAME)
 					{

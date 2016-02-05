@@ -94,11 +94,6 @@ private:
 	string ID;
 	
 	/**
-	*	@brief: id of the graph
-	*/
-	string id;
-	
-	/**
 	*	@brief: Name of the graph
 	*/
 	string name;
@@ -166,16 +161,6 @@ public:
 	*	@brief: Return the ID of the graph
 	*/
 	string getID();
-	
-	/**
-	*	@brief: Set the id of the graph
-	*/
-	void setId(string id);
-	
-	/**
-	*	@brief: Return the id of the graph
-	*/
-	string getId();
 	
 	/**
 	*	@brief: Set the name of the graph

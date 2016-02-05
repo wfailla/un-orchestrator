@@ -256,11 +256,11 @@ extern ofp_version_t OFP_VERSION;
 /*
 *	OpenFlow
 */
-#define HIGH_PRIORITY 65535
+#define HIGH_PRIORITY 		65535
 
 /*
 *	Misc
 */
-#define DEFAULT_GRAPH "DEFAULT-GRAPH"
+#define DEFAULT_GRAPH 		"DEFAULT-GRAPH"
 
 #endif //CONSTANTS_H_

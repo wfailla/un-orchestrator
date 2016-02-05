@@ -13,16 +13,6 @@ string Graph::getID()
 	return ID;
 }
 
-void Graph::setId(string id)
-{
-	this->id = id;
-}
-
-string Graph::getId()
-{
-	return id;
-}
-
 void Graph::setName(string name)
 {
 	this->name = name;
@@ -348,7 +338,7 @@ Object Graph::toJSON()
 		vnf.push_back(v->toJSON());
 	}
 	
-	forwarding_graph[_ID] = id;
+	forwarding_graph[_ID] = ID;
 	forwarding_graph[_NAME] = name;
 	if(end_points.size() != 0)
 		forwarding_graph[END_POINTS] = end_points;
