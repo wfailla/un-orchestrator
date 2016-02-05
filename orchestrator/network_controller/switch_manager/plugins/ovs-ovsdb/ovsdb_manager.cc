@@ -1,6 +1,5 @@
 #include "ovsdb_manager.h"
 
-char *host = NULL, *user = NULL;	
 int s = 0;
 
 commands *c = NULL;

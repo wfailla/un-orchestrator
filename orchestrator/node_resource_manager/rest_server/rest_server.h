@@ -107,7 +107,7 @@ private:
 	static bool checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbm);
 	
 public:
-	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface);
+	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface, char *ipsec_certificate);
 	
 	static void terminate();
 

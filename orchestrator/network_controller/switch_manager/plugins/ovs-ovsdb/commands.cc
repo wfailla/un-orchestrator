@@ -133,15 +133,20 @@ int commands::cmd_disconnect(int s){
 /*
 *	@cli = struct CreateLsiIn
 */
-CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
-
+CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
+{
 	unsigned int i=0;	
 	int nwritten = 0;
 
 	ssize_t r = 0;
-	char read_buf[4096] = "";
+	char read_buf[BUFFER_SIZE];
+	//list of remote LSI
+	char rp[BUFFER_SIZE][BUF_SIZE];
+	//Local variables
+	const char *peer_name;
+	char sw[BUF_SIZE], tcp_s[BUF_SIZE], ctr[BUF_SIZE], vrt[BUF_SIZE], trv[BUF_SIZE];
+	char of_version[BUF_SIZE];
 
-	CreateLsiOut *clo = NULL;
 	map<string,unsigned int> physical_ports;
 	map<string,map<string, unsigned int> >  network_functions_ports;
 	map<string,unsigned int >  endpoints_ports;
@@ -151,27 +156,19 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 
 	//list of physical ports
 	list<string> ports = cli.getPhysicalPortsName();
-
 	//list of nf	
 	set<string> nfs = cli.getNetworkFunctionsName();
-
 	//list of nft	
 	map<string,nf_t> nf_type = cli.getNetworkFunctionsType(); 
-	
 	//list of endpoints	
 	map<string,vector<string> > endpoints = cli.getEndpointsPortsName(); 	
-
 	//list of remote LSI
 	list<uint64_t> vport = cli.getVirtualLinksRemoteLSI();
-	
-	//list of remote LSI
-	char rp[2048][64];
-	
-	//Local variables
-	const char *peer_name = "";
 
-	char sw[64] = "Bridge", tcp_s[64] = "tcp:", ctr[64] = "ctrl", vrt[64] = "VirtualPort", trv[64] = "vport"/*, ifac[64] = "iface", prt[64] = "port"*/;
-	char temp[64] = "", tmp[64] = "", of_version[64] = "";
+	CreateLsiOut *clo = NULL;
+
+	//save IPsec certificate
+	this->ipsec_certificate = cli.getIPsecCertificate();
 
 	/*force to use OpenFlow12*/
 	strcpy(of_version, "OpenFlow12");
@@ -194,8 +191,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	
 	//create Bridge
 	/*create current name of a bridge "Bridge+dnumber"*/
-	sprintf(temp, "%" PRIu64, dnumber);
-	strcat(sw, temp);
+	sprintf(sw, "Bridge%" PRIu64, dnumber);
 	
 	/*fill the map switch_id*/
 	switch_id[dnumber] = string(sw);
@@ -206,18 +202,14 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 
 	int l = 0;
 
-	//Create controller
 	/*Create the current target of a controller*/
-	strcat(tcp_s, cli.getControllerAddress().c_str());
-	strcat(tcp_s, ":");
-	strcat(tcp_s, cli.getControllerPort().c_str());
-	strcpy(temp, tcp_s);
+	sprintf(tcp_s, "tcp:%s:%s", cli.getControllerAddress().c_str(), cli.getControllerPort().c_str());
 	
+	/*insert Controller*/
 	first_obj["op"] = "insert";
     first_obj["table"] = "Controller";
     
-	/*insert a Controller*/
-	row["target"] = temp;
+	row["target"] = tcp_s;
 	
 	row["local_ip"] = cli.getLocalIP();
 	row["connection_mode"] = "out-of-band";
@@ -225,20 +217,20 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	
     first_obj["row"] = row;
 
-	//create the current name of a controller --> ctrl+dnumber
-	sprintf(temp, "%s%" PRIu64, ctr, dnumber);
+	//create the current name of controller --> ctrl+dnumber
+	sprintf(ctr, "ctrl%" PRIu64, dnumber);
 
-	first_obj["uuid-name"] = temp;
+	first_obj["uuid-name"] = ctr;
 
 	params.push_back(first_obj);
 		
 	row.clear();
     first_obj.clear();
 
+	/*insert a bridge*/
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Bridge";
 
-    /*insert a bridge*/
     row["name"] = sw;
 
     Array port;
@@ -252,11 +244,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	Array ctrl1;
 	Array ctrl2;
 
-	//create the current name of a controller
-	sprintf(tmp, "%s%" PRIu64, ctr, dnumber);
-
 	ctrl2.push_back("named-uuid");
-	ctrl2.push_back(tmp);
+	ctrl2.push_back(ctr);
 
 	ctrl1.push_back(ctrl2);
 
@@ -288,9 +277,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 
     row.clear();
     first_obj.clear();
-    //port.clear();
-    //port1.clear();
-    //port2.clear();
 	peer.clear();
     peer1.clear();
     peer2.clear();
@@ -397,8 +383,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		    			
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
-						/*if(i == 2)
-							port_uuid[dnumber].push_back(stuff1[1].getString());*/
 		 				strr[i] = stuff1[1].getString();
 					} else if(name1 == "details"){
 						logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
@@ -416,13 +400,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	if(ports.size() !=0){
 		for(list<string>::iterator p = ports.begin(); p != ports.end(); p++)
 		{
-			/*if(strcmp((*p).c_str(), "Bridge1") != 0)
-			{*/
-				add_port((*p), dnumber, false, s);
+			add_port((*p), dnumber, false, s);
 			
-				port_l[dnumber].push_back((*p).c_str());
-				physical_ports[(*p)] = rnumber-1;
-			//}
+			port_l[dnumber].push_back((*p).c_str());
+			physical_ports[(*p)] = rnumber-1;
 		}
 	}
 	
@@ -469,31 +450,28 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 		/*for each endpoint in the list of endpoints*/
 		for(map<string,vector<string> >::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
 		{
-			char gre[64] = "gre";
+			char local_ip[BUF_SIZE];
+			char remote_ip[BUF_SIZE];
+			char key[BUF_SIZE];
+			char port_name[BUF_SIZE];
+			char ifac[BUF_SIZE];
 		
 			string id = ep->first;
-			char local_ip[64] = "";
-			char remote_ip[64] = "";
-			char key[64] = "";
 
-			vector<string> l_param = ep->second;
+			vector<string> gre_param = ep->second;
 
 			/*save the params of gre tunnel*/
-			strcpy(key, l_param[0].c_str());
-		    strcpy(local_ip, l_param[1].c_str());
-		    strcpy(remote_ip, l_param[2].c_str());
-		    			
-	    	char ifac[64] = "iface";
+			strcpy(key, gre_param[0].c_str());
+		    strcpy(local_ip, gre_param[1].c_str());
+		    strcpy(remote_ip, gre_param[2].c_str());
 	    	
-			sprintf(temp, "%d", gnumber);
-			strcat(gre, temp);
+			sprintf(port_name, "gre%d", gnumber);
 			
-			sprintf(temp, "%d", rnumber);
-			strcat(ifac, temp);
+			sprintf(ifac, "iface%d", rnumber);
 			
 			gnumber++;
 			
-			add_endpoint(dnumber, local_ip, remote_ip, key, gre, ifac, s);
+			add_endpoint(dnumber, local_ip, remote_ip, key, port_name, ifac, s, cli.isSafe());
 			
 			endpoints_ports[id] = rnumber-1;
 			
@@ -508,25 +486,19 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	
 		for(list<uint64_t>::iterator nf = vport.begin(); nf != vport.end(); nf++)
 		{
-			char ifac[64] = "iface", ptemp[64];
-		
-			strcpy(vrt, "vport");
-			strcpy(trv, "vport");
+			char ifac[BUF_SIZE];
 	    	
-			sprintf(ptemp, "%d", pnumber);
-			strcat(vrt, ptemp);
+			sprintf(vrt, "vport%d", pnumber);
 			
 			pnumber++;
 			
-			sprintf(ptemp, "%d", pnumber);
-			strcat(trv, ptemp);
+			sprintf(trv, "vport%d", pnumber);
 
 			peer_n[trv] = vrt;
 				
 			strcpy(rp[l], trv);	
 			
-			sprintf(ptemp, "%d", rnumber);
-			strcat(ifac, ptemp);
+			sprintf(ifac, "iface%d", rnumber);
 		
 			cmd_add_virtual_link(vrt, trv, ifac, dnumber, s);
 			
@@ -583,7 +555,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 	{
 		for(list<uint64_t>::iterator nf = vport.begin(); nf != vport.end(); nf++)
 		{
-			char ifac[64] = "iface", ptemp[64];
+			char ifac[BUF_SIZE];
 		
 			//connect socket
 			s = cmd_connect();
@@ -592,17 +564,12 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			params.push_back("Open_vSwitch");
 		
 			pi = (*nf);
-			
-			strcpy(vrt, "vport");
-			strcpy(trv, "vport");
-				
-			sprintf(ptemp, "%d", pnumber);
-			strcat(vrt, ptemp);
+
+			sprintf(vrt, "vport%d", pnumber);
 				
 			pnumber++;
 				
-			sprintf(ptemp, "%d", rnumber);
-			strcat(ifac, ptemp);
+			sprintf(ifac, "iface%d", rnumber);
 		
 			//store this vport
 			vport_l[pi].push_back(rp[l]);
@@ -625,16 +592,6 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s){
 			cmd_disconnect(s);
 		}
 	}
-
-	/*stringstream prep_ifconfig_cmd;
-	prep_ifconfig_cmd << ASSIGN_IP_TEP << " " << sw << " " << "192.168.1.10" << " " << "netmask " << "255.255.255.0";
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", prep_usvhost_cmd.str().c_str());
-	int retVal = system(prep_usvhost_cmd.str().c_str());
-	retVal = retVal >> 8;
-	if(retVal == 0) {
-		logger(ORCH_WARNING, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Failed to prepare 'usvhost' port %s", port_name.c_str());
-		throw OVSDBManagerException();
-	}*/
 
     clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
 
@@ -663,15 +620,16 @@ string find_free_dpdkr()
 }
 #endif
 
-string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type){
-	
-	string uuid_name;
-	
+string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type)
+{
+	int r = 0;
     ssize_t nwritten;
 	
-	char read_buf[4096] = "";
+	char ifac[BUF_SIZE];
+	char read_buf[BUFFER_SIZE];
 	
-	int r = 0;
+	string uuid_name;
+	string port_name;
 	
 	map<string, unsigned int> ports;
 	
@@ -689,15 +647,11 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	//connect socket
     s = cmd_connect();
 
-	char ifac[64];
-    string port_name;
-
     //Default port name on the switch (may be overriden later for specific port types)
 	stringstream pnos;
 	pnos << dnumber << "_" << p;
 	string port_name_on_switch = pnos.str();
-
-		
+	
 	//Create the current name of a interface
 	sprintf(ifac, "iface%d", rnumber);
 	if (!is_nf_port) {
@@ -1053,11 +1007,11 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	return port_name_on_switch;
 }
 
-void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64], char key[64], char gre[64], char ifac[64], int s)
+void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, bool is_safe)
 {
     ssize_t nwritten;
 	
-	char read_buf[4096] = "";
+	char read_buf[BUFFER_SIZE] = "";
 	
 	int r = 0;
 	
@@ -1083,8 +1037,12 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	first_obj["table"] = "Interface";
 		
 	/*Insert an Interface*/
-	row["name"] = gre;
-	row["type"] = "gre";
+	row["name"] = port_name;
+	//test if gre tunnel required is safe or unsafe
+	if(is_safe)
+		row["type"] = "ipsec_gre";
+	else
+		row["type"] = "gre";
 	
 	row["admin_state"] = "up";
 	row["link_state"] = "up";
@@ -1093,6 +1051,25 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 		
 	/*Add options local_ip, remote_ip and key*/
 	peer.push_back("map");
+	
+	//test if GRE tunnel required is safe (true) or unsafe (false)
+	if(is_safe)
+	{
+		peer2.push_back("certificate");
+		peer2.push_back(this->ipsec_certificate);		
+		peer1.push_back(peer2);
+		peer2.clear();
+
+		peer2.push_back("pmtud");
+		peer2.push_back(false);		
+		peer1.push_back(peer2);
+		peer2.clear();
+	
+		peer2.push_back("psk");
+		peer2.push_back("test");		
+		peer1.push_back(peer2);
+		peer2.clear();
+	}
 	
 	peer2.push_back("local_ip");
 	peer2.push_back(local_ip);		
@@ -1126,7 +1103,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	first_obj["table"] = "Port";
 		
 	/*Insert a port*/
-	row["name"] = gre;
+	row["name"] = port_name;
 		
 	iface.push_back("set");
 	
@@ -1140,7 +1117,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 		
 	first_obj["row"] = row;
 		
-	first_obj["uuid-name"] = gre;
+	first_obj["uuid-name"] = port_name;
 		
 	params.push_back(first_obj);
 		
@@ -1203,7 +1180,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64],
 	}
 	
 	port2.push_back("named-uuid");
-	port2.push_back(gre);
+	port2.push_back(port_name);
 	
 	port1.push_back(port2);
 	
@@ -1530,31 +1507,28 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int socketNum
 AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	AddEndpointOut *apf = NULL;
 	
-	char gre[64] = "gre", temp[64];
+	char port_name[BUF_SIZE], ifac[BUF_SIZE];
+	char local_ip[BUF_SIZE];
+	char remote_ip[BUF_SIZE];
+	char key[BUF_SIZE];
 	
 	string id = aepi.getEPname();
-	char local_ip[64] = "";
-	char remote_ip[64] = "";
-	char key[64] = "";
 
-	vector<string> l_param = aepi.getEPparam();
 	/*save the params of gre tunnel*/
+	vector<string> l_param = aepi.getEPparam();
+	
 	strcpy(key, l_param[1].c_str());
 	strcpy(local_ip, l_param[0].c_str());
 	strcpy(remote_ip, l_param[2].c_str());
-	
-	char ifac[64] = "iface";
 	    	
-	sprintf(temp, "%d", gnumber);
-	strcat(gre, temp);
+	sprintf(port_name, "gre%d", gnumber);
 			
-	sprintf(temp, "%d", rnumber);
-	strcat(ifac, temp);
+	sprintf(ifac, "iface%d", rnumber);
 			
 	gnumber++;
 
 	//create endpoint
-	add_endpoint(aepi.getDpid(), local_ip, remote_ip, key, gre, ifac, s);
+	add_endpoint(aepi.getDpid(), local_ip, remote_ip, key, port_name, ifac, s);
 	
 	endpoint_l[aepi.getDpid()].push_back(id);
 	
@@ -1567,7 +1541,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 	
     ssize_t nwritten;
 	
-	char read_buf[4096] = "";
+	char read_buf[BUFFER_SIZE];
 	
 	int r = 0;
 	
@@ -1918,39 +1892,34 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 	}
 }
 
-AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
+AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s)
+{
 	/*struct to return*/
 	AddVirtualLinkOut *avlo = NULL;
 	
-	char temp[64] = "", vrt[64] = "", trv[64] = "";
+	char vrt[BUF_SIZE], trv[BUF_SIZE];
+	char ifac[BUF_SIZE];
 	
 	list<pair<unsigned int, unsigned int> > virtual_links;
 	
 	strcpy(vrt, "vport");
-	char ifac[64] = "iface";
-	strcpy(trv, "vport");
 	    	
 	/*create virtual link*/
-	sprintf(temp, "%d", pnumber);
-	strcat(vrt, temp);
+	sprintf(vrt, "vport%d", pnumber);
 		
 	pnumber++;
 			
 	/*create virtual link*/
-	sprintf(temp, "%d", pnumber);
-	strcat(trv, temp);
-		
+	sprintf(trv, "vport%d", pnumber);
+			
 	//Create the current name of a interface
-	sprintf(temp, "%d", rnumber);
-	strcat(ifac, temp);
+	sprintf(ifac, "iface%d", rnumber);
 
 	//create first endpoint
 	cmd_add_virtual_link(vrt, trv, ifac, avli.getDpidA(), s);
 	
 	//Create the current name of a interface
-	strcpy(ifac, "iface");
-	sprintf(temp, "%d", rnumber);
-	strcat(ifac, temp);
+	sprintf(ifac, "iface%d", rnumber);
 	
 	//create second endpoint
 	cmd_add_virtual_link(trv, vrt, ifac, avli.getDpidB(), s);
@@ -1987,11 +1956,11 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s){
 	return avlo;
 }
 
-void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint64_t dpi, int s){
+void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE], uint64_t dpi, int s){
 	
     ssize_t nwritten;
 	
-	char read_buf[4096] = "";
+	char read_buf[BUFFER_SIZE];
 	
 	int r = 0;
 	
@@ -2254,7 +2223,7 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint6
 
 void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s){
 	
-	char vrt[64] = "", trv[64] = "";
+	char vrt[BUF_SIZE] = "", trv[BUF_SIZE] = "";
 	
 	list<pair<unsigned int, unsigned int> > virtual_links;
 

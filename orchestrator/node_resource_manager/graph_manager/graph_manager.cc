@@ -8,8 +8,8 @@ void GraphManager::mutexInit()
 	pthread_mutex_init(&graph_manager_mutex, NULL);
 }
 
-GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bool is_control_in_band,string control_interface) :
-	local_ip(local_ip), is_control_in_band(is_control_in_band), control_interface(control_interface), switchManager()
+GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bool is_control_in_band,string control_interface,string ipsec_certificate) :
+	local_ip(local_ip), is_control_in_band(is_control_in_band), control_interface(control_interface), ipsec_certificate(ipsec_certificate), switchManager()
 {	
 	//Parse the file containing the description of the physical ports to be managed by the node orchestrator
 	set<CheckPhysicalPortsIn> phyPortsRequired;
@@ -95,7 +95,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 		//Create a new LSI, which is the LSI-0 of the node
 		
 		map<string,list<nf_port_info> > netFunctionsPortsInfo;
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI(), this->local_ip);
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI(), this->local_ip, this->ipsec_certificate);
 
 		CreateLsiOut *clo = switchManager.createLsi(cli);
 		
@@ -232,7 +232,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 		controller->installNewRules(graphLSI0lowLevel.getRules());
 	}
 	
-	//printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 
 #ifdef UNIFY_NFFG	
 	if(ComputeController::retrieveAllAvailableNFs() != NFManager_OK)
@@ -752,7 +752,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			netFunctionsPortsName[nf->first] = lsi->getNetworkFunctionsPortNames(nf->first);
 		}
 		
-CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), lsi->getEndpointsPorts(), lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS));
+CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), lsi->getEndpointsPorts(), lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS), this->ipsec_certificate);
 
 		clo = switchManager.createLsi(cli);
 
@@ -1341,9 +1341,9 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		}
 	}
 	
-	
 	for(map<string, vector<string> >::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 		AddEndpointOut *aepo = NULL;
 		try
 		{
@@ -1371,6 +1371,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			tmp = NULL;	
 			throw GraphManagerException();
 		}
+#else
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable");
+		throw GraphManagerException();	
+#endif
 	}
 		
 	/**
@@ -1814,6 +1818,7 @@ next2:
 	//Remove the endpoint, if it no longer appear in the graph
 	if((rri.endpoint != "") && (!graph->stillExistEndpoint(rri.endpoint)))
 	{
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The endpoint '%s' is no longer part of the graph",rri.endpoint.c_str());
 		
 		try
@@ -1825,7 +1830,10 @@ next2:
 		{
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 			throw GraphManagerException();
-		}	
+		}
+#else
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable");	
+#endif	
 	}
 #endif
 }

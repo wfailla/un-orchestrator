@@ -359,6 +359,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 	list<pair<unsigned int, unsigned int> > virtual_links;
 	
 	map<string,list<string> > out_nf_ports_name_on_switch;
+	map<string,unsigned int >  endpoints_ports;
 	
 	list<string> ports = cli.getPhysicalPortsName();
 	bool hasWireless = false;
@@ -633,7 +634,7 @@ CreateLsiOut *XDPDManager::parseCreateLSIresponse(CreateLsiIn cli, Object messag
 	
 	dpdiWirelessInterfaces[dpid] = wirelessList;
 	
-	CreateLsiOut *clo = new CreateLsiOut(dpid,physical_ports,network_functions_ports, out_nf_ports_name_on_switch, virtual_links);
+	CreateLsiOut *clo = new CreateLsiOut(dpid,physical_ports,network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
 	return clo;
 }
 bool XDPDManager::findCommand(Object message, string expected)

@@ -41,7 +41,10 @@ using namespace json_spirit;
 class commands
 {
 private:
-
+	/*
+	*	IPsec certificate
+	*/
+	string ipsec_certificate;
 public:
 	commands();
 
@@ -327,7 +330,7 @@ public:
 			]
 		}
 	*/
-	void add_endpoint(uint64_t dpi, char local_ip[64], char remote_ip[64], char key[64], char gre[64], char ifac[64], int s);
+	void add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, bool is_safe = false);
 	
 	/**
 	*	Example of command to create a new INTERNAL PORT
@@ -514,7 +517,7 @@ public:
 			]
 		}
 	*/
-	void cmd_add_virtual_link(string vrt, string trv, char ifac[64], uint64_t dpi, int s);
+	void cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE], uint64_t dpi, int s);
 	
 	void cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s);
 	

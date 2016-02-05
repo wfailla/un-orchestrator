@@ -72,17 +72,29 @@ private:
 	*	@brief: local IP of the lsi0
 	*/
 	string local_ip;
+	
+	/**
+	*	@brief: IPsec certificate
+	*/
+	string ipsec_certificate;
+	
+	/*
+	*	@brief: value that indicates if endpoint is safe (true) or unsafe (false) 
+	*/
+	bool is_safe;
 
 protected:
 
-	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<struct nf_port_info> > netFunctionsPortsInfo, map<string,vector<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi, string local_ip)
+	CreateLsiIn(string controllerAddress, string controllerPort, list<string> physicalPortsName, map<string,nf_t>  nf_types, map<string,list<struct nf_port_info> > netFunctionsPortsInfo, map<string,vector<string> > endpointsPortsName, list<uint64_t> vlinksRemoteLsi, string local_ip, string ipsec_certificate, bool is_safe = false)
 		: controllerAddress(controllerAddress), controllerPort(controllerPort),
 		physicalPortsName(physicalPortsName.begin(),physicalPortsName.end()),
 		nf_types(nf_types.begin(),nf_types.end()),
 		endpointsPortsName(endpointsPortsName.begin(),endpointsPortsName.end()),
 		netFunctionsPortsInfo(netFunctionsPortsInfo.begin(),netFunctionsPortsInfo.end()),
 		vlinksRemoteLsi(vlinksRemoteLsi.begin(),vlinksRemoteLsi.end()),
-		local_ip(local_ip)
+		local_ip(local_ip),
+		ipsec_certificate(ipsec_certificate),
+		is_safe(is_safe)
 	{
 		map<string,nf_t>::iterator it = nf_types.begin();
 		for(; it != nf_types.end(); it++)
@@ -134,6 +146,16 @@ public:
 	string getLocalIP()
 	{
 		return local_ip;
+	}
+	
+	string getIPsecCertificate()
+	{
+		return ipsec_certificate;
+	}
+	
+	bool isSafe()
+	{
+		return is_safe;
 	}
 };
 

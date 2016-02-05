@@ -105,6 +105,11 @@ private:
 	string control_interface;
 	
 	/**
+	*	IPsec certificate
+	*/
+	string ipsec_certificate;
+	
+	/**
 	*	Map containing the graph identifier of each tenant-LSI, and its desciption
 	*/
 	map<string,GraphInfo> tenantLSIs;
@@ -194,7 +199,7 @@ public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
 
-	GraphManager(int core_mask,string portsFileName,string local_ip,bool control,string control_interface);
+	GraphManager(int core_mask,string portsFileName,string local_ip,bool control,string control_interface,string ipsec_certificate);
 	~GraphManager();
 		
 	/**

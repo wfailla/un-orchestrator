@@ -21,7 +21,8 @@ void OVSDPDKManager::checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi)
 
 CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 {  // SwitchManager implementation
-
+	map<string,unsigned int >  endpoints_ports;
+	
 	unsigned int dpid = m_NextLsiId++;
 
 	logger(ORCH_DEBUG_INFO, OVSDPDK_MODULE_NAME, __FILE__, __LINE__, "createLsi() creating LSI %d", dpid);
@@ -186,7 +187,7 @@ CreateLsiOut *OVSDPDKManager::createLsi(CreateLsiIn cli)
 		vlink_n++;
 	}
 
-	CreateLsiOut *clo = new CreateLsiOut(dpid, out_physical_ports, out_nf_ports, out_nf_ports_name_on_switch, out_virtual_links);
+	CreateLsiOut *clo = new CreateLsiOut(dpid, out_physical_ports, out_nf_ports, endpoints_ports, out_nf_ports_name_on_switch, out_virtual_links);
 	return clo;
 }
 

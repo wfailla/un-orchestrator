@@ -12,11 +12,9 @@
 #include "addVirtualLink_out.h"
 #include "destroyVirtualLink_in.h"
 #include "checkPhysicalPorts_in.h"
-#ifdef VSWITCH_IMPLEMENTATION_OVSDB
-	#include "addEndpoint_in.h"
-	#include "addEndpoint_out.h"
-	#include "destroyEndpoint_in.h"
-#endif
+#include "addEndpoint_in.h"
+#include "addEndpoint_out.h"
+#include "destroyEndpoint_in.h"
 
 #include <stdio.h>
 

@@ -33,13 +33,18 @@ private:
 	string ep_name;
 	
 	/**
-	*	@brief: pair of information related by the endpoint
+	*	@brief: parameters related to the endpoint [key, local_ip, remote_ip, interface]
 	*/
 	vector<string> ep_param;
+	
+	/*
+	*	@brief: value that indicates if endpoint is safe (true) or unsafe (false) 
+	*/
+	bool is_safe;
 
 protected:
-	AddEndpointIn(uint64_t dpid, string ep_name, vector<string> ep_param)
-		: dpid(dpid), ep_name(ep_name), ep_param(ep_param)
+	AddEndpointIn(uint64_t dpid, string ep_name, vector<string> ep_param, bool is_safe = false)
+		: dpid(dpid), ep_name(ep_name), ep_param(ep_param), is_safe(is_safe)
 	{
 	}
 	
@@ -58,6 +63,11 @@ public:
 	vector<string> getEPparam()
 	{
 		return ep_param;
+	}
+	
+	bool isSafe()
+	{
+		return is_safe;
 	}
 	
 };

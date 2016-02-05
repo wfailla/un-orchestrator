@@ -148,6 +148,7 @@
 */
 #define BUFFER_SIZE				20480
 #define DATA_BUFFER_SIZE		20480
+#define BUF_SIZE				64
 
 /*
 *	Network functions
