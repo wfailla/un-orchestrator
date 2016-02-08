@@ -1,10 +1,13 @@
+#Configuration file of the virtualizer
+CONFIGURATION_FILE = 'config/configuration.ini'
+
 '''
 	File used by the virtualizer to maintain the state (i.e., rules deployed,
 	VNF instantiated
 '''
 
 #TMP file use by the virtualizer to maintain the current configuration of the node
-CONFIGURATION_FILE = '.universalnode.xml'
+GRAPH_XML_FILE = '.universalnode.xml'
 
 #TMP file used by the virtualizer and representing the deployed graph,
 #in the JSON syntax internally used by the virtualizer itself

@@ -21,6 +21,7 @@ import xml.dom.minidom
 import copy
 import requests
 from enum import Enum
+import ConfigParser
 
 import constants
 from virtualizer_library.virtualizer3 import *
@@ -50,17 +51,20 @@ class DoUsage:
 	
 	def __init__(self):
 		a = 'usage:\n'
-		b = 'get http://hostip:tcpport - this help message\n'
-		c = 'get http://hostip:tcpport/ping - test webserver aliveness\n'
-		d = 'post http://hostip:tcpport/get-config - query NF-FG\n'
-		e = 'post http://hostip:tcpport/edit-config - send NF-FG request in the post body\n'
+		b = '\tget http://hostip:tcpport - this help message\n'
+		c = '\tget http://hostip:tcpport/ping - test webserver aliveness\n'
+		d = '\tpost http://hostip:tcpport/get-config - query NF-FG\n'
+		e = '\tpost http://hostip:tcpport/edit-config - send NF-FG request in the post body\n'
 		f = '\n'
-		g = 'limitations:\n'
-		h = 'the flowrule ID must be unique on the node.\n'
-		i = 'type cannot be repeated in multiple NF instances.\n'
-		j = 'capabilities are not supported.\n'
-		k = 'actions are not supported.\n'	
-		self._answer = a + b + c + d + e + f + g + h + i + j + k
+		g = 'limitations (of the universal node orchestrator):\n'
+		h = '\tthe flowrule ID must be unique on the node.\n'
+		i = '\ttype cannot be repeated in multiple NF instances.\n'
+		j = '\tcapabilities are not supported.\n'
+		k = '\tit is not possible to deploy a VNF that does not have any flow referring its ports.\n'	
+		l = '\ta VNF is removed (undeployed) only when no flows still remain that refer to its ports.\n'
+		m = '\tthe number of ports actually attached to a VNF depends on the number of ports used in the flows'
+		N = '\n\n'
+		self._answer = a + b + c + d + e + f + g + h + i + j + k + l + m + N
 
 	def on_get(self,req,resp):
 		resp.body = self._answer
@@ -77,10 +81,10 @@ class DoGetConfig:
 		Return the current configuration of the node.
 		'''
 		LOG.info("Executing the 'get-config' command")
-		LOG.debug("Reading file: %s",constants.CONFIGURATION_FILE)
+		LOG.debug("Reading file: %s",constants.GRAPH_XML_FILE)
 
 		try:
-			tree = ET.parse(constants.CONFIGURATION_FILE)
+			tree = ET.parse(constants.GRAPH_XML_FILE)
 		except ET.ParseError as e:
 			print('ParseError: %s' % e.message)
 			resp.status = falcon.HTTP_500
@@ -176,7 +180,7 @@ class DoEditConfig:
 			if not instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):	#Sends the new VNFs and flow rules to the universal node orchestrator
 				resp.status = falcon.HTTP_500
 				return
-			
+				
 		if not removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved): #Save on a file the IDs of the rules and the NFs to be removed from the universal node
 			resp.status = falcon.HTTP_500
 			return
@@ -215,9 +219,9 @@ def isCorrect(newContent):
 	
 	LOG.debug("Checking the correctness of the new configuration...")
 
-	LOG.debug("Reading file '%s', which contains the current configuration of the universal node...",constants.CONFIGURATION_FILE)
+	LOG.debug("Reading file '%s', which contains the current configuration of the universal node...",constants.GRAPH_XML_FILE)
 	try:
-		oldTree = ET.parse(constants.CONFIGURATION_FILE)
+		oldTree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		return False
@@ -276,7 +280,7 @@ def extractVNFsInstantiated(content):
 	global error
 
 	try:
-		tree = ET.parse(constants.CONFIGURATION_FILE)
+		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		error = Error.server
@@ -486,7 +490,7 @@ def	extractToBeRemovedVNFs(content):
 	global error
 	
 	try:
-		tree = ET.parse(constants.CONFIGURATION_FILE)
+		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		error = Error.server
@@ -539,7 +543,7 @@ def extractToBeRemovedRules(content):
 	global error
 
 	try:
-		tree = ET.parse(constants.CONFIGURATION_FILE)
+		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		error = Error.server
@@ -739,7 +743,7 @@ def removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved):
 	Then, removes from it the VNFs and the flowrules to be removed
 	'''
 	
-	LOG.debug("Removes VNFs and flowrules from the graph containing the json representation of the graph")
+	LOG.debug("Removing VNFs and flowrules from the graph containing the json representation of the graph")
 	
 	try:
 		LOG.debug("Reading file: %s",constants.GRAPH_FILE)
@@ -791,9 +795,9 @@ def updateUniversalNodeConfig(newContent):
 	
 	LOG.debug("Updating the file containing the configuration of the node...")
 	
-	LOG.debug("Reading file '%s', which contains the current configuration of the universal node...",constants.CONFIGURATION_FILE)
+	LOG.debug("Reading file '%s', which contains the current configuration of the universal node...",constants.GRAPH_XML_FILE)
 	try:
-		oldTree = ET.parse(constants.CONFIGURATION_FILE)
+		oldTree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		return False
@@ -834,7 +838,7 @@ def updateUniversalNodeConfig(newContent):
 	#i.e., it does not insert two identical rules
 	
 	try:
-		tmpFile = open(constants.CONFIGURATION_FILE, "w")
+		tmpFile = open(constants.GRAPH_XML_FILE, "w")
 		tmpFile.write(infrastructure.xml())
 		tmpFile.close()
 	except IOError as e:
@@ -851,7 +855,7 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):
 	'''
 	Deploys rules and VNFs on the universal node
 	'''
-	LOG.info("Sending the new configuration to the universal node orchestrator")
+	LOG.info("Sending the new configuration to the universal node orchestrator (%s)",unOrchestratorURL)
 	
 	myjson = {}
 	graph = {}
@@ -863,10 +867,11 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):
 	LOG.debug("Graph that is going to be sent to the universal node orchestrator:")
 	LOG.debug("%s",json.dumps(myjson, indent = 4))
 	
+	url = unOrchestratorURL + '/graph/NF-FG'
 	try:
-		responseFromUN = requests.put('http://127.0.0.1:8080/graph/NF-FG',json.dumps(myjson))
+		responseFromUN = requests.put(url,json.dumps(myjson))
 	except (requests.ConnectionError) as e:
-		LOG.error("Cannot contact the universal node orchestrator at 'http://127.0.0.1:8080'")	
+		LOG.error("Cannot contact the universal node orchestrator at '%s'",unOrchestratorURL)
 		return False
 
 	LOG.debug("Status code received from the universal node orchestrator: %s",responseFromUN.status_code)
@@ -883,15 +888,25 @@ def removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved):
 	'''
 	Removes rules from the universal node
 	'''
+	
+	if len(vnfsToBeRemoved) != 0:
+		LOG.warning("Required to remove '%d' VNFs",len(vnfsToBeRemoved))
+		LOG.warning("Due to implementation choices of the universal node orchestrator, such VNFs will be only removed if no flow-rule will refer to their ports")
+	
+	if len(rulesToBeRemoved) == 0:
+		# No message is sent to the orchestrator
+		return True
+	
 	LOG.info("Removing %d rules from the universal node",len(rulesToBeRemoved))
+	LOG.warning("Due to implementation choices of the universal node orchestrator, the VNFs whose all ports will no longer used in any deployed flow will be removed (undeployed)")
 	
 	for rule in rulesToBeRemoved:
 		LOG.debug("Going to remove rule with ID: %s",rule)	
 		try:
-			url = 'http://127.0.0.1:8080/graph/NF-FG/' + rule
+			url =  unOrchestratorURL + '/graph/NF-FG/' + rule
 			responseFromUN = requests.delete(url)
 		except (requests.ConnectionError) as e:
-			LOG.error("Cannot contact the universal node orchestrator at 'http://127.0.0.1:8080'")	
+			LOG.error("Cannot contact the universal node orchestrator at '%s'",unOrchestratorURL)	
 			return False
 
 		LOG.debug("Status code: %s",responseFromUN.status_code)
@@ -916,6 +931,10 @@ def virtualizerInit():
 	
 	LOG.info("Initializing the virtualizer...")
 	
+	
+	if not readConfigurationFile():
+		return False
+	
 	v = Virtualizer(id=constants.INFRASTRUCTURE_ID, name=constants.INFRASTRUCTURE_NAME)				
 	v.nodes.add(
 		Infra_node(
@@ -932,8 +951,9 @@ def virtualizerInit():
 	
 	#Read information related to the infrastructure and add it to the
 	#virtualizer representation
+	LOG.debug("Reading file '%s'...",infrastructureFile)
 	try:
-		tree = ET.parse('infrastructure.xml')
+		tree = ET.parse(infrastructureFile)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		resp.status = falcon.HTTP_500
@@ -978,7 +998,7 @@ def virtualizerInit():
 	
 	#Save the virtualizer representation on a file
 	try:
-		tmpFile = open(constants.CONFIGURATION_FILE, "w")
+		tmpFile = open(constants.GRAPH_XML_FILE, "w")
 		tmpFile.write(v.xml())
 		tmpFile.close()
 	except IOError as e:
@@ -997,17 +1017,81 @@ def virtualizerInit():
 	LOG.info("The virtualizer has been initialized")
 	return True
 
+def readConfigurationFile():
+	'''
+	Read the configuration file of the virtualizer
+	'''
+	
+	global nameResolverURL
+	global unOrchestratorURL
+	global infrastructureFile
+	
+	LOG.info("Reading configuration file: '%s'",constants.CONFIGURATION_FILE)
+	config = ConfigParser.ConfigParser()
+	config.read(constants.CONFIGURATION_FILE)
+	sections = config.sections()
+	
+	if 'connections' not in sections:
+		LOG.error("Wrong file '%s'. It does not include the section 'connections' :(",constants.CONFIGURATION_FILE)
+		return False
+	try:
+		nameResolverURL = nameResolverURL + config.get("connections","NameResolverAddress") + ":" + config.get("connections","NameResolverPort")
+	except:
+		LOG.error("Option 'NameResolverAddress' or option 'NameResolverPort' not found in section 'connections' of file '%s'",constants.CONFIGURATION_FILE)
+		return False
+	try:
+		unOrchestratorURL = unOrchestratorURL + config.get("connections","UNOrchestratorAddress") + ":" + config.get("connections","UNOrchestratorPort")
+	except:
+		LOG.error("Option 'UNOrchestratorAddress' or option 'UNOrchestratorPort' not found in section 'connections' of file '%s'",constants.CONFIGURATION_FILE)
+		return False
+	
+	if 'configuration' not in sections:
+		LOG.error("Wrong file '%s'. It does not include the section 'configuration' :(",constants.CONFIGURATION_FILE)
+		return False
+	try:
+		infrastructureFile = config.get("configuration","UNOrchestratorConfigFile")
+	except:
+		LOG.error("Option 'UNOrchestratorConfigFile' not found in section 'configuration' of file '%s'",constants.CONFIGURATION_FILE)
+		return False	
+	try:
+		LogLevel = config.get("configuration","LogLevel")	
+		if LogLevel == 'debug':
+			LOG.setLevel(logging.DEBUG)
+			LOG.addHandler(sh)
+			LOG.debug("Log level set to 'debug'")
+		if LogLevel == 'info':
+			LOG.setLevel(logging.INFO)
+			LOG.info("Log level set to 'info'")
+		if LogLevel == 'warning':
+			LOG.setLevel(logging.WARNING)
+			LOG.warning("Log level set to 'warning'")
+		if LogLevel == 'error':
+			LOG.setLevel(logging.ERROR)
+			LOG.error("Log level set to 'error'")
+		if LogLevel == 'critical':
+			LOG.setLevel(logging.CRITICAL)
+			LOG.critical("Log level set to 'critical'")
+	except:
+		LOG.warning("Option 'LogLevel' not found in section 'configuration' of file '%s'",constants.CONFIGURATION_FILE)
+		LOG.warning("Log level is set on 'INFO'")
+	
+	LOG.info("Url used to contact the name-resolver: %s",nameResolverURL)
+	LOG.info("Url used to contact the universal node orchestrator: %s",unOrchestratorURL)
+	
+	return True
+
 def contactNameResolver():
 	'''
 	Contact the name resolver is order to know the VNFs available
 	'''
 	
-	LOG.info("Starting interaction with the name-resolver")
+	LOG.info("Starting interaction with the name-resolver (%s)",nameResolverURL)
 	
+	url = nameResolverURL + "/nfs/digest"
 	try:
-		response = requests.get('http://127.0.0.1:2626/nfs/digest')
+		response = requests.get(url)
 	except (requests.ConnectionError) as e:
-		LOG.error("Cannot contact the name-resolver at 'http://127.0.0.1:2626'")	
+		LOG.error("Cannot contact the name-resolver at %s",url)
 		return False
 	
 	data = response.json()
@@ -1028,8 +1112,13 @@ def contactNameResolver():
 			return False
 		LOG.debug("Considering VNF: '%s'",vnf_name['name'])
 		
-		url = 'http://127.0.0.1:2626/nfs/' + vnf_name['name']
-		response = requests.get(url)
+		url = nameResolverURL + '/nfs/' + vnf_name['name']
+		try:
+			response = requests.get(url)
+		except (requests.ConnectionError) as e:
+			LOG.error("Cannot contact the name-resolver at %s",url)
+			return False
+	
 		vnf_description = response.json()
 	
 		LOG.debug("Data received from the name-resolver")
@@ -1053,7 +1142,7 @@ def contactNameResolver():
 		numports = vnf_description['nports']
 		
 		try:
-			tree = ET.parse(constants.CONFIGURATION_FILE)
+			tree = ET.parse(constants.GRAPH_XML_FILE)
 		except ET.ParseError as e:
 			print('ParseError: %s' % e.message)
 			return False
@@ -1076,7 +1165,7 @@ def contactNameResolver():
 		supportedNF.add(vnf)
 	
 		try:
-			tmpFile = open(constants.CONFIGURATION_FILE, "w")
+			tmpFile = open(constants.GRAPH_XML_FILE, "w")
 			tmpFile.write(infrastructure.xml())
 			tmpFile.close()
 		except IOError as e:
@@ -1122,14 +1211,17 @@ api = falcon.API()
 
 #Set the logger
 LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.DEBUG)	#Change here the logging level
+LOG.setLevel(logging.INFO)
 LOG.propagate = False
 sh = logging.StreamHandler()
-sh.setLevel(logging.DEBUG)
 f = logging.Formatter('[%(asctime)s][Virtualizer][%(levelname)s] %(message)s')
 sh.setFormatter(f)
 LOG.addHandler(sh)
 
+#Global variables
+unOrchestratorURL = "http://"
+nameResolverURL = "http://"
+infrastructureFile = ""
 physicalPortsVirtualization = {}
 
 if not virtualizerInit():
