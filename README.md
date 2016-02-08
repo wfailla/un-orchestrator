@@ -15,5 +15,9 @@ given NF. It is exploited by the un-orchestrator each time that a NF must
 be started in order to translate the 'abstract' name into the proper
 suitable software image.
 
+## Virtualizer
+The Virtualizer is a module that converts the NF-FG defined by WP3 in the
+representation accepted by the un-orchestrator.
+
 ## NFs
 This folder contains some examples of virtual network functions.

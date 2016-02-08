@@ -8,8 +8,9 @@ the upper layer orchestrator. It operates as follows:
     (described in [../orchestrator/README_NF-FG.md](../orchestrator/README_NF-FG.md));
   * sends the command to the un-orchestrator through the API described in 
 
-The name-resolver is a module that returns the list of all existing implementations [../orchestrator/README_RESTAPI.md](../orchestrator/README_RESTAPI.md)
-of a network function.
+The virtualizer module is only required if you plan to use the Network Functions - 
+Forwarding Graph (NF-FG) defined in WP3, which is based on the concept of *virtualizer*.
+
 
 ## Required libraries
 
