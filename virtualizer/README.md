@@ -27,7 +27,7 @@ some more components are required to compile the un-orchestrator.
 
 # How to configure the virtualizer
 
-The virtualizer reads its configuration from the file [./config/configuration.in](./config/configuration.in), 
+The virtualizer reads its configuration from the file [./config/configuration.in](config/configuration.in), 
 which must be properly edited before starting the virtualizer itself.
 
 # How to run the virtualizer
