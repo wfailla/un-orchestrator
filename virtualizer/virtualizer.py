@@ -2,14 +2,6 @@
 
 __author__ = 'Ivano Cerrato'
 
-#sudo apt-get install python-pip
-#sudo pip install gunicorn
-#sudo pip install falcon
-#sudo pip install cython
-#sudo pip install enum
-
-#gunicorn -b ip:port example:api
-
 import sys
 import falcon
 import json
