@@ -33,6 +33,8 @@ which must be properly edited before starting the virtualizer itself.
 # How to run the virtualizer
 
 	$ gunicorn -b ip:port example:api
-	
+
+where 'ip' and 'port' must be set to the desired values.
+
 Please, note that the virtualizer requires the un-orchestrator and the 
 name-resolver running in the server.
