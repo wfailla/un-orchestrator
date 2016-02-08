@@ -171,15 +171,6 @@ ENDIF(DEBUG_OPENFLOW)
 
 
 OPTION(
-	VIRTUALIZER_NFFG
-	"Turn on to support the virtualizer NF-FG model defined in WP3"
-	OFF
-)
-IF(VIRTUALIZER_NFFG)
-	ADD_DEFINITIONS(-DUNIFY_NFFG)
-ENDIF(VIRTUALIZER_NFFG)
-
-OPTION(
 	LOG_ON_FILE
 	"Turn on to print log messages on the file 'node-orchestrator.log'. If disabled, stdout is used for the log."
 	OFF
@@ -355,22 +346,9 @@ ELSE()
     	)
 ENDIF(ENABLE_DOCKER)
 
-
-IF(VIRTUALIZER_NFFG)
-	SET(SOURCES5
-    ${SOURCES4}
-    node_resource_manager/virtualizer/virtualizer.cc
-    node_resource_manager/virtualizer/virtualizer.h
-	)
-ELSE()
-	SET(SOURCES5
-    	${SOURCES4}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
 IF(ENABLE_DPDK_PROCESSES)
-    SET(SOURCES6
-    ${SOURCES5}
+    SET(SOURCES5
+    ${SOURCES4}
 	compute_controller/plugins/dpdk/dpdk.h
 	compute_controller/plugins/dpdk/dpdk.cc
 	compute_controller/plugins/dpdk/dpdk_constants.h
@@ -378,14 +356,14 @@ IF(ENABLE_DPDK_PROCESSES)
 	compute_controller/plugins/dpdk/dpdk_description.h
 	)
 ELSE()
-     SET(SOURCES6
-         ${SOURCES5}
+     SET(SOURCES5
+         ${SOURCES4}
     	)
 ENDIF(ENABLE_DPDK_PROCESSES)
 
 IF(ENABLE_NATIVE)
-    SET(SOURCES7
-    ${SOURCES6}
+    SET(SOURCES6
+    ${SOURCES5}
 	compute_controller/plugins/native/native.cc
 	compute_controller/plugins/native/native.h
 	compute_controller/plugins/native/native_constants.h
@@ -395,8 +373,8 @@ IF(ENABLE_NATIVE)
 	compute_controller/plugins/native/native_description.cc
 	)
 ELSE()
-     SET(SOURCES7
-         ${SOURCES6}
+     SET(SOURCES6
+         ${SOURCES5}
     	)
 ENDIF(ENABLE_NATIVE)
 
@@ -406,18 +384,10 @@ INCLUDE_DIRECTORIES (
 	/usr/include/libxml2
 )
 
-#Include specific for the virtualizer NF-FG model defined in WP3
-IF(VIRTUALIZER_NFFG)
-	find_package(PythonLibs REQUIRED)
-	INCLUDE_DIRECTORIES (
-		${PYTHON_INCLUDE_DIRS}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES7}
+	${SOURCES6}
 )
 
 LINK_DIRECTORIES(
@@ -451,14 +421,6 @@ IF(ENABLE_KVM)
 		libvirt.so
 	)
 ENDIF(ENABLE_KVM)
-
-#Links specific for the virtualizer NF-FG model defined in WP3
-IF(VIRTUALIZER_NFFG)
-    TARGET_LINK_LIBRARIES( node-orchestrator
-		libpython2.7.so
-		${PYTHON_LIBRARIES}
-	)
-ENDIF(VIRTUALIZER_NFFG)
 
 # Add configuration rules to compile command line generator
 IF(ENABLE-DPDK-CMDLINE-GENERATOR)
