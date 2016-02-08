@@ -163,18 +163,45 @@ class DoEditConfig:
 			return
 		if error == Error.server:
 			resp.status = falcon.HTTP_500
+			return		
+		#XXX The previous operation is not done for VNFs, since the universal node orchestrator supports such a case	
+	
+		#
+		# Interact with the universal node orchestrator in order to implement the required commands
+		#
+		
+		if len(rulesToBeAdded) != 0:
+			#XXX: this is a limitation of the universal node orchestrator, which does not allow to deploy a
+			#	  VNF without flows involving such a VNF
+			if not instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):	#Sends the new VNFs and flow rules to the universal node orchestrator
+				resp.status = falcon.HTTP_500
+				return
+			
+		if not removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved): #Save on a file the IDs of the rules and the NFs to be removed from the universal node
+			resp.status = falcon.HTTP_500
 			return
 			
-		#XXX The previous operation is not done for VNFs, since the universal node orchestrator supports such a case	
+		# 
+		# The required modifications have been implemented in the universal node, then we can update the
+		# configuration saved in the proper files
+		#
 		
-		#
-		#	Prapare files used to provide, to the C++ part, the
-		#	*	VNFs and rules to be added
-		#	*	VNFs and rules to be removed
-		#
-	
-		if not instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):	#Sends the new VNFs and flow rules to the universal node orchestrator
+		if not addToGraphFile(rulesToBeAdded,vnfsToBeAdded): #Update the json representation of the deployed graph, by inserting the new VNFs/rules
 			resp.status = falcon.HTTP_500
+			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
+			LOG.error("Please, also restart the universal node orchestrator.")
+			return
+			
+		if not removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved): #Update the json representation of the deployed graph, by inserting the new VNFs/rules
+			resp.status = falcon.HTTP_500
+			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
+			LOG.error("Please, also restart the universal node orchestrator.")
+			return
+			
+		if not updateUniversalNodeConfig(content): #Updates the file containing the current configuration of the universal node, by editing the #<flowtable> and the <NF_instances>
+			resp.status = falcon.HTTP_500
+			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
+			LOG.error("Please, also restart the universal node orchestrator.")
 			return
 		
 		LOG.info("'edit-config' command properly handled")
@@ -597,9 +624,6 @@ def diffRulesToBeAdded(newRules):
 			newPriority = newRule['priority']
 		newId = newRule['id']
 		
-		LOG.debug("New match: %s",json.dumps(newMatch))
-		LOG.debug("New action: %s",json.dumps(newAction))
-		
 		equal = False
 		for rule in flowrules:
 			match = rule['match']
@@ -615,7 +639,7 @@ def diffRulesToBeAdded(newRules):
 		
 		if not equal:
 			#The new rule is not yet part of the graph
-			LOG.debug("The rule must be inserted!")
+			LOG.debug("Rule that must be inserted: ")
 			LOG.debug("%s",json.dumps(newRule))
 			rulesToBeAdded.append(newRule)
 			
@@ -661,11 +685,172 @@ def equivalentAction(tag):
 	'''
 	return constants.equivalent_actions[tag]
 
+def addToGraphFile(newRules,newVNFs):
+	'''
+	Read the graph currently deployed. It is stored in a tmp file, in a json format.
+	Then, adds to it the new VNFs and the new flowrules to be instantiated.
+	'''
+	
+	LOG.debug("Updating the json representation of the whole graph deployed")
+
+	try:
+		LOG.debug("Reading file: %s",constants.GRAPH_FILE)
+		tmpFile = open(constants.GRAPH_FILE,"r")
+		json_file = tmpFile.read()
+		tmpFile.close()
+	except IOError as e:
+		print "I/O error({0}): {1}".format(e.errno, e.strerror)
+		return False
+	
+	whole = json.loads(json_file)
+	
+	flowgraph = whole['flow-graph']
+	flowrules = flowgraph['flow-rules']
+	theVNFs = flowgraph['VNFs']	
+			
+	#Add the new flowrules
+	for nr in newRules:
+		flowrules.append(nr)
+	
+	#Add the new VNFs
+	for vnf in newVNFs:
+		LOG.debug("New VNF: %s!",vnf)
+		if vnf not in theVNFs:
+			LOG.debug("The VNF must be inserted!")
+			theVNFs.append(vnf)
+	
+	LOG.debug("Updated graph:");	
+	LOG.debug("%s",json.dumps(whole));
+	
+	try:
+		tmpFile = open(constants.GRAPH_FILE, "w")
+		tmpFile.write(json.dumps(whole))
+		tmpFile.close()
+	except IOError as e:
+		print "I/O error({0}): {1}".format(e.errno, e.strerror)
+		error = True
+		return False
+		
+	return True
+	
+def removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved):
+	'''
+	Read the graph currently deployed. It is stored in a tmp file, in a json format.
+	Then, removes from it the VNFs and the flowrules to be removed
+	'''
+	
+	LOG.debug("Removes VNFs and flowrules from the graph containing the json representation of the graph")
+	
+	try:
+		LOG.debug("Reading file: %s",constants.GRAPH_FILE)
+		tmpFile = open(constants.GRAPH_FILE,"r")
+		json_file = tmpFile.read()
+		tmpFile.close()
+	except IOError as e:
+		print "I/O error({0}): {1}".format(e.errno, e.strerror)
+		return False
+	
+	whole = json.loads(json_file)
+	
+	flowgraph = whole['flow-graph']
+	flowrules = flowgraph['flow-rules']
+	theVNFs = flowgraph['VNFs']	
+	
+	newVNFs = []
+	for vnf in theVNFs:
+		if vnf['id'] not in vnfsToBeRemoved:
+			newVNFs.append(vnf)
+	
+	flowgraph['VNFs'] = newVNFs
+	
+	newFlows = []
+	for rule in flowrules:
+		if rule['id'] not in rulesToBeRemoved:
+			newFlows.append(rule)
+			
+	flowgraph['flow-rules'] = newFlows	
+	
+	LOG.debug("Updated graph:");	
+	LOG.debug("%s",json.dumps(whole));
+	
+	try:
+		tmpFile = open(constants.GRAPH_FILE, "w")
+		tmpFile.write(json.dumps(whole))
+		tmpFile.close()
+	except IOError as e:
+		print "I/O error({0}): {1}".format(e.errno, e.strerror)
+		return False
+		
+	return True
+
+def updateUniversalNodeConfig(newContent):
+	'''
+	Read the configuration of the universal node, and applies the required modifications to
+	the NF instances and to the flowtable
+	'''
+	
+	LOG.debug("Updating the file containing the configuration of the node...")
+	
+	LOG.debug("Reading file '%s', which contains the current configuration of the universal node...",constants.CONFIGURATION_FILE)
+	try:
+		oldTree = ET.parse(constants.CONFIGURATION_FILE)
+	except ET.ParseError as e:
+		print('ParseError: %s' % e.message)
+		return False
+	LOG.debug("File correctly read")
+		
+	infrastructure = Virtualizer.parse(root=oldTree.getroot())
+	universal_node = infrastructure.nodes.node[constants.NODE_ID]
+	flowtable = universal_node.flowtable
+	nfInstances = universal_node.NF_instances
+	
+	tmpInfra = copy.deepcopy(infrastructure)
+	
+	LOG.debug("Getting the new flowrules to be installed on the universal node")
+	try:
+		newTree = ET.ElementTree(ET.fromstring(newContent))
+	except ET.ParseError as e:
+		print('ParseError: %s' % e.message)
+		return False
+			
+	newInfrastructure = Virtualizer.parse(root=newTree.getroot())
+	newFlowtable = newInfrastructure.nodes.node[constants.NODE_ID].flowtable
+	newNfInstances = newInfrastructure.nodes.node[constants.NODE_ID].NF_instances
+			
+	#Update the NF instances with the new NFs
+	for instance in newNfInstances:
+		if instance.get_operation() == 'delete':
+			nfInstances[instance.id.get_value()].delete()
+		else:
+			nfInstances.add(instance)
+	
+	#Update the flowtable with the new flowentries
+	for flowentry in newFlowtable:
+		if flowentry.get_operation() == 'delete':
+			flowtable[flowentry.id.get_value()].delete()
+		else:
+			flowtable.add(flowentry)
+	#It is not necessary to remove conflicts, since they are already handled by the library,
+	#i.e., it does not insert two identical rules
+	
+	try:
+		tmpFile = open(constants.CONFIGURATION_FILE, "w")
+		tmpFile.write(infrastructure.xml())
+		tmpFile.close()
+	except IOError as e:
+		print "I/O error({0}): {1}".format(e.errno, e.strerror)
+		return False
+		
+	return True
+
+
 '''
 	Methods used to interact with the universal node orchestrator
 '''
 def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):
-
+	'''
+	Deploys rules and VNFs on the universal node
+	'''
 	LOG.info("Sending the new configuration to the universal node orchestrator")
 	
 	myjson = {}
@@ -675,13 +860,16 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):
 	graph['flow-rules'] = rulesToBeAdded
 	myjson['flow-graph'] = graph
 	
+	LOG.debug("Graph that is going to be sent to the universal node orchestrator:")
+	LOG.debug("%s",json.dumps(myjson, indent = 4))
+	
 	try:
 		responseFromUN = requests.put('http://127.0.0.1:8080/graph/NF-FG',json.dumps(myjson))
 	except (requests.ConnectionError) as e:
 		LOG.error("Cannot contact the universal node orchestrator at 'http://127.0.0.1:8080'")	
 		return False
 
-	LOG.info("Satus code: %s",responseFromUN.status_code)
+	LOG.debug("Status code received from the universal node orchestrator: %s",responseFromUN.status_code)
 
 	if responseFromUN.status_code == 201:
 		LOG.info("New VNFs and flows properly deployed on the universal node")	
@@ -689,6 +877,31 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded):
 		LOG.error("Something went wrong while deploying the new VNFs and flows on the universal node")	
 		return False
 
+	return True
+
+def removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved):
+	'''
+	Removes rules from the universal node
+	'''
+	LOG.info("Removing %d rules from the universal node",len(rulesToBeRemoved))
+	
+	for rule in rulesToBeRemoved:
+		LOG.debug("Going to remove rule with ID: %s",rule)	
+		try:
+			url = 'http://127.0.0.1:8080/graph/NF-FG/' + rule
+			responseFromUN = requests.delete(url)
+		except (requests.ConnectionError) as e:
+			LOG.error("Cannot contact the universal node orchestrator at 'http://127.0.0.1:8080'")	
+			return False
+
+		LOG.debug("Status code: %s",responseFromUN.status_code)
+		
+		if responseFromUN.status_code == 204:
+			LOG.info("Rule '%s' has been properly deleted",rule)
+		else:
+			LOG.error("Something went wrong while deploying the new VNFs and flows on the universal node")	
+			return False
+	
 	return True
 
 '''

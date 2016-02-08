@@ -10,12 +10,6 @@ CONFIGURATION_FILE = '.universalnode.xml'
 #in the JSON syntax internally used by the virtualizer itself
 GRAPH_FILE = '.graph.json'
 
-#File containing the new piece of graph to be deployed, in the JSON
-#syntax internally used by the virtualizer
-NEW_GRAPH_FILE = '.new_graph.json'
-#File containing the IDs of the rules to be removed from the graph
-REMOVE_GRAPH_FILE = '.remove_graph.json'
-
 '''
 	Information to be exported
 '''
