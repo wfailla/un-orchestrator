@@ -70,6 +70,7 @@
 			#define REMOTE_IP		"remote-ip"
 			#define TTL				"ttl"
 			#define GRE_KEY			"gre-key"
+			#define SAFE			"safe"
 		#define VLAN			"vlan"
 			#define V_ID			"vlan-id"
 						
