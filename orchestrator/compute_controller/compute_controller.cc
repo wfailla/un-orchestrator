@@ -238,6 +238,8 @@ bool ComputeController::parseAnswer(string answer, string nf)
 					string location;
 					string dependencies;
 					std::map<unsigned int, PortType> port_types; // port_id -> port_type
+					std::map<unsigned int, string> port_mac; // port_id -> port_mac
+					std::map<unsigned int, string> port_ip; // port_id -> port_ip
 
 					for( Object::const_iterator impl_el = implementation.begin(); impl_el != implementation.end(); ++impl_el )
 					{
@@ -766,12 +768,16 @@ void ComputeController::setLsiID(uint64_t lsiID)
 	this->lsiID = lsiID;
 }
 
-bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch)
+bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string> > portsConfiguration)
 {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"", nf_name.c_str());
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
+	list<pair<string, string> >::iterator it1 = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %s", it->first, it->second.c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tMac address : %s", it1->first.c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tIp address : %s",  it1->second.c_str());
+		it1++;
 	}
 
 	if(nfs.count(nf_name) == 0)
@@ -785,7 +791,7 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 	NFsManager *nfsManager = nf->getSelectedDescription();
 	
 	
-	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, calculateCoreMask(nfsManager->getCores()));
+	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, portsConfiguration, calculateCoreMask(nfsManager->getCores()));
 
 	if(!nfsManager->startNF(sni))
 	{

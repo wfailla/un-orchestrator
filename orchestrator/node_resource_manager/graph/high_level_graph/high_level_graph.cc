@@ -123,6 +123,11 @@ map<string, list<unsigned int> > Graph::getNetworkFunctions()
 	return networkFunctions;
 }
 
+map<string, list<pair<string, string> > > Graph::getNetworkFunctionsDescription()
+{
+	return networkFunctionsDescription;
+}
+
 list<Rule> Graph::getRules()
 {
 	return rules;
@@ -149,6 +154,20 @@ bool Graph::addNetworkFunction(string nf)
 
 	list<unsigned int> ports;
 	networkFunctions[nf] = ports;
+	
+	return true;
+}
+
+bool Graph::addNetworkFunctionDescription(string nf, pair<string, string> descr)
+{
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionDescription(\"%s\"->\"%s\":\"%s\")",nf.c_str(), descr.first.c_str(), descr.second.c_str());
+
+	if(networkFunctionsDescription.count(nf) != 0) {
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionDescription(\"%s\") NF already present!",nf.c_str());
+		return false;
+	}
+
+	networkFunctionsDescription[nf].push_back(descr);
 	
 	return true;
 }

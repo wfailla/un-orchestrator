@@ -81,6 +81,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 
 	//The three following structures are empty. No NF and no virtual link is attached.
 	map<string, list<unsigned int> > dummy_network_functions;
+	map<string, list<pair<string, string> > > dummy_network_functions_ports_description;
 	map<string, map<unsigned int, PortType> > dummy_nfs_ports_type;
 	map<string, vector<string> > dummy_endpoints;
 	vector<VLink> dummy_virtual_links;
@@ -88,7 +89,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 	
 	unsigned int i = 0;
 	
-	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions,dummy_endpoints,dummy_virtual_links,dummy_nfs_ports_type);
+	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions,dummy_network_functions_ports_description,dummy_endpoints,dummy_virtual_links,dummy_nfs_ports_type);
 	
 	try
 	{
@@ -586,7 +587,7 @@ void *startNF(void *arguments)
     to_thread_t *args = (to_thread_t *)arguments;
     assert(args->computeController != NULL);
 
-    if(!args->computeController->startNF(args->nf_name, args->namesOfPortsOnTheSwitch))
+    if(!args->computeController->startNF(args->nf_name, args->namesOfPortsOnTheSwitch, args->portsConfiguration))
     	return (void*) 0;
     else
     	return (void*) 1;
@@ -681,6 +682,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	set<string> phyPorts = graph->getPorts();
 
 	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions();
+	map<string, list<pair<string, string> > > network_functions_ports_description = graph->getNetworkFunctionsDescription();
 	map<string, vector<string> > endpoints = graph->getEndPoints();
 	
 	vector<set<string> > vlVector = identifyVirtualLinksRequired(graph);
@@ -740,7 +742,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	}
 
 	//Prepare the structure representing the new tenant-LSI
-	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), dummyPhyPorts, network_functions,endpoints,virtual_links,nfs_ports_type);
+	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), dummyPhyPorts, network_functions,network_functions_ports_description,endpoints,virtual_links,nfs_ports_type);
 	
 	CreateLsiOut *clo = NULL;
 	try
@@ -839,9 +841,20 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tNF %s:",it->c_str());
 		map<string,unsigned int> nfs_ports = lsi->getNetworkFunctionsPorts(*it);
+		list<pair<string, string> > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(*it);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nfs_ports.size());
+		list<pair<string, string> >::iterator nd = nfs_ports_configuration.begin();
 		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++)
+		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t%s -> %d",(n->first).c_str(),n->second);
+			if(!(nd->first).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tMac address -> %s",(nd->first).c_str());
+#ifdef ENABLE_VNF_PORTS_IP_CONFIGURATION
+			if(!(nd->second).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tIp address -> %s",(nd->second).c_str());
+#endif	
+			nd++;		
+		}
 	}
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoints (%d):",eps.size());
@@ -854,7 +867,7 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tLocal ip: %s", it->second[1].c_str());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tRemote_ip: %s", it->second[2].c_str());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPhysical port: %s", it->second[3].c_str());
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tSafe: %s", it->second[4].c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tSecure: %s", it->second[4].c_str());
 	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual links (%u): ",vls.size());
@@ -919,6 +932,7 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 		thr[i].nf_name = nf->first;
 		thr[i].computeController = computeController;
 		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
+		thr[i].portsConfiguration = lsi->getNetworkFunctionsPortsConfiguration(nf->first);
 		#ifdef STARTVNF_SINGLE_THREAD
 		startNF((void *) &thr[i]);
 		#else	
@@ -1388,8 +1402,9 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);;
-		if(!computeController->startNF(nf->first, nfPortIdToNameOnSwitch))
+		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
+		list<pair<string, string> > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(nf->first);
+		if(!computeController->startNF(nf->first, nfPortIdToNameOnSwitch, nfs_ports_configuration))
 		{
 			//TODO: no idea on what I have to do at this point
 			assert(0);

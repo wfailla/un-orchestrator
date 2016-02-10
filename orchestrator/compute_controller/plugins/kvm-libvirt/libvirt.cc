@@ -286,10 +286,14 @@ bool Libvirt::startNF(StartNFIn sni)
 	vector<string> ivshmemPorts;
 
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
+	list<pair<string, string> > portsConfiguration = sni.getPortsConfiguration();
+	list<pair<string, string> >::iterator pd = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++)
 	{
 		const unsigned int port_id = p->first;
 		const string& port_name = p->second;
+		string port_mac_address = pd->first;
+		string port_ip_address = pd->second;
 
 		PortType port_type = description->getPortTypes().at(port_id);
 		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "NF Port \"%s\":%d (%s) is of type %s", nf_name.c_str(), port_id, port_name.c_str(), portTypeToString(port_type).c_str());
@@ -324,6 +328,18 @@ bool Libvirt::startNF(StartNFIn sni)
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
+			if(!port_mac_address.empty())
+			{
+				xmlNodePtr mac_addr = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
+				xmlNewProp(mac_addr, BAD_CAST "address", BAD_CAST port_mac_address.c_str());
+			}
+#ifdef ENABLE_VNF_PORTS_IP_CONFIGURATION
+			if(!port_ip_address.empty())
+			{
+				xmlNodePtr ip_addr = xmlNewChild(ifn, NULL, BAD_CAST "ip", NULL);
+				xmlNewProp(ip_addr, BAD_CAST "address", BAD_CAST port_ip_address.c_str());
+			}
+#endif	
 			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
 			xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
@@ -340,6 +356,8 @@ bool Libvirt::startNF(StartNFIn sni)
 	    	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
 	    	return false;
 	    }
+	    
+	    pd++;
 	}
 
 	if (! ivshmemPorts.empty()) {

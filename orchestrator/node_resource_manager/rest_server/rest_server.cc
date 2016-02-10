@@ -969,9 +969,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_addresses; 	//port name, ipv4 address
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
-							string id, name, vnf_template, groups, port_id, port_name;
+							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip;
 							//list of pair port id, port name related by the VNF
-							list<pair<string, string> > portS;
+							list<vector<string> > portS;
 
 							//Parse the network function
 							for(Object::const_iterator nf = network_function.begin(); nf != network_function.end(); nf++)
@@ -1019,6 +1019,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										//This is a VNF port, with an ID and a name
 										Object port = ports_array[ports].getObject();
 										
+										vector<string> port_descr(4);
+										
 										//Parse the port
 										for(Object::const_iterator p = port.begin(); p != port.end(); p++)
 										{
@@ -1030,12 +1032,32 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,_ID,p_value.getString().c_str());
 												
 												port_id = p_value.getString();
+												
+												port_descr[0] = port_id;
 											}
 											else if(p_name == _NAME)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,_NAME,p_value.getString().c_str());
 												
 												port_name = p_value.getString();
+												
+												port_descr[1] = port_name;
+											}
+											else if(p_name == PORT_MAC)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_MAC,p_value.getString().c_str());
+												
+												port_mac = p_value.getString();
+												
+												port_descr[2] = port_mac;
+											}
+											else if(p_name == PORT_IP)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
+												
+												port_ip = p_value.getString();
+												
+												port_descr[3] = port_ip;
 											}
 											else
 											{
@@ -1044,7 +1066,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											}
 										}
 										
-										portS.push_back(make_pair(port_id, port_name));	
+										//Add NF ports descriptions
+										if(!graph.addNetworkFunctionDescription(name, make_pair(port_mac, port_ip)))
+										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+											return false;
+										}					
+										
+										portS.push_back(port_descr);	
 									}
 								}
 								else if(nf_name == VNF_GROUPS)
@@ -1366,16 +1395,16 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(epi_name == SAFE)
 									{
-										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",EP_GRE,SAFE,epi_value.getBool());
+										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",EP_GRE,SAFE,epi_value.getBool());
 									
-										safe = epi_value.getBool();
-										
-										if(safe)
-											gre_param[4] = string("true");
-										else
-											gre_param[4] = string("false"); 
+										safe = epi_value.getBool(); 
 									}
 								}
+							
+								if(safe)
+									gre_param[4] = string("true");
+								else
+									gre_param[4] = string("false");
 							
 								//Add gre-tunnel end-points
 								highlevel::EndPointGre ep_gre(id_gre[j], e_name, local_ip, remote_ip, interface, gre_key, ttl, safe);

@@ -52,6 +52,8 @@
 		#define	VNF_PORTS			"ports"
 			//#define PORT_ID			"id"
 			//#define PORT_NAME		"name"
+			#define PORT_MAC			"mac"
+			#define PORT_IP				"unify-ip"
 		#define	VNF_GROUPS		"groups"
 	#define END_POINTS		"end-points"
 		//#define EP_ID     		"id"
@@ -70,7 +72,7 @@
 			#define REMOTE_IP		"remote-ip"
 			#define TTL				"ttl"
 			#define GRE_KEY			"gre-key"
-			#define SAFE			"safe"
+			#define SAFE			"secure"
 		#define VLAN			"vlan"
 			#define V_ID			"vlan-id"
 						

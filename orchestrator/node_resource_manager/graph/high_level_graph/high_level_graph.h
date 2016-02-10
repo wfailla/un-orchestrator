@@ -38,6 +38,7 @@ class Graph
 {
 public:
 	typedef map<string, list<unsigned int> > t_nfs_ports_list;
+	typedef map<string, list<pair<string, string> > > t_nfs_ports_description;
 
 private:	
 	/**
@@ -46,6 +47,12 @@ private:
 	*		an element of the map is <NF, <1,2> >
 	*/
 	t_nfs_ports_list networkFunctions;
+	
+	/**
+	*	@brief: for each NF attached to the graph specifies a list of pair elements 
+	* 		(mac address, ip address), one for each port
+	*/
+	t_nfs_ports_description networkFunctionsDescription;
 	
 	/**
 	*	@brief: for each endpoint attached to the graph specifies a list of params 
@@ -127,6 +134,13 @@ public:
 	bool addNetworkFunction(string nf);
 	
 	/**
+	*	@brief: Add a NF description to the graph
+	*
+	*	@param:	nf	Name of the network function to be added
+	*/
+	bool addNetworkFunctionDescription(string nf, pair<string, string>);
+	
+	/**
 	*	@brief: Update a NF by adding a port
 	*	//FIXME: is this useful?
 	*
@@ -139,6 +153,11 @@ public:
 	*	@brief: Return the NFs of the graph and the ports they require
 	*/
 	t_nfs_ports_list getNetworkFunctions();
+	
+	/**
+	*	@brief: Return the NFs of the graph and the description of the ports they require
+	*/
+	t_nfs_ports_description getNetworkFunctionsDescription();
 
 	/**
 	*	@brief: Add an end point to the graph, to be used to connect the graph itself with
