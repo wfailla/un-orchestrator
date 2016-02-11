@@ -62,11 +62,12 @@ private:
 
 		/**
 		*	@brief: Names of the ports connected to the LSI and related to the network function
+		*		The map is <port id, port name on switch>
 		*/
-		list<string> portsNameOnSwitch;
+		map<unsigned int,string> ports_name_on_switch;
 
 		/**
-		 * 	@brief: port ids assigned to the ports by switch
+		 * 	@brief: port ids (OpenFlow) assigned to the ports by switch
 		 *		The map is
 		 *			<nf port name, switch_id>
 		 */
