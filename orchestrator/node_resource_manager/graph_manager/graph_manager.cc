@@ -730,7 +730,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	try
 	{
 		//Create a new tenant-LSI
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), lsi->getVirtualLinksRemoteLSI());
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), lsi->getVirtualLinksRemoteLSI());
 		clo = switchManager.createLsi(cli);
 
 		lsi->setDpid(clo->getDpid());
@@ -742,7 +742,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			delete(clo);
 			throw GraphManagerException();
 		}
-			
+
 		map<string,map<string, unsigned int> > nfsports = clo->getNetworkFunctionsPorts();
 		//TODO: check if the number of vnfs and ports is the same required
 		for(map<string,map<string, unsigned int> >::iterator nfp = nfsports.begin(); nfp != nfsports.end(); nfp++)

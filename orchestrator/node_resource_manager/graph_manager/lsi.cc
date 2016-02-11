@@ -329,7 +329,7 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 		stringstream ss;
 		ss << nf_name << "_" << port_id;
 
-		nf_data.ports_switch_id[ss.str()] = 0;	// Until the switch assigns an ID to the NF ports
+		nf_data.ports_switch_id[ss.str()] = 0;	// Until the switch assigns an OpenFlow ID to the NF ports
 
 		map<unsigned int, PortType>::const_iterator pt_it = a_nf_ports_type.find(port_id);
 		if (pt_it == a_nf_ports_type.end())

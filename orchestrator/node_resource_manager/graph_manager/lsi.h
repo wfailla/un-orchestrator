@@ -63,7 +63,7 @@ private:
 		/**
 		*	@brief: Names of the ports connected to the LSI and related to the network function
 		*/
-	    list<string> portsNameOnSwitch;
+		list<string> portsNameOnSwitch;
 
 		/**
 		 * 	@brief: port ids assigned to the ports by switch
