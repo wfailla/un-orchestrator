@@ -1,6 +1,6 @@
 #include "lsi.h"
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, list <pair<string, string > > > network_functions_ports_configuration,map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, list <pair<string, string > > > network_functions_ports_configuration,map<string, list <pair<string, string > > > network_functions_control_configuration,map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
@@ -21,7 +21,10 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 		this->endpoints_ports[ep->first] = ep->second;
 		
 	//fill the map of NF ports configuration
-	this->network_functions_ports_configuration = network_functions_ports_configuration;	
+	this->network_functions_ports_configuration = network_functions_ports_configuration;
+	
+	//fill the map of NF control configuration
+	this->network_functions_control_configuration = network_functions_control_configuration;	
 }
 
 string LSI::getControllerAddress()
@@ -232,6 +235,11 @@ map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
 list<pair<string, string> > LSI::getNetworkFunctionsPortsConfiguration(string nf)
 {
 	return network_functions_ports_configuration[nf];
+}
+
+list<pair<string, string> > LSI::getNetworkFunctionsControlConfiguration(string nf)
+{
+	return network_functions_control_configuration[nf];
 }
 
 list<string> LSI::getNetworkFunctionsPortsNameOnSwitch(string nf)

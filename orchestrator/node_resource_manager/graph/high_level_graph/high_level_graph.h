@@ -38,7 +38,7 @@ class Graph
 {
 public:
 	typedef map<string, list<unsigned int> > t_nfs_ports_list;
-	typedef map<string, list<pair<string, string> > > t_nfs_ports_description;
+	typedef map<string, list<pair<string, string> > > t_nfs_configuration;
 
 private:	
 	/**
@@ -52,7 +52,13 @@ private:
 	*	@brief: for each NF attached to the graph specifies a list of pair elements 
 	* 		(mac address, ip address), one for each port
 	*/
-	t_nfs_ports_description networkFunctionsDescription;
+	t_nfs_configuration networkFunctionsConfiguration;
+	
+	/**
+	*	@brief: for each NF attached to the graph specifies a list of pair elements 
+	* 		(host tcp port, vnf tcp port)
+	*/
+	t_nfs_configuration networkFunctionsControlConfiguration;
 	
 	/**
 	*	@brief: for each endpoint attached to the graph specifies a list of params 
@@ -134,11 +140,20 @@ public:
 	bool addNetworkFunction(string nf);
 	
 	/**
-	*	@brief: Add a NF description to the graph
+	*	@brief: Add a NF port description to the graph
 	*
 	*	@param:	nf	Name of the network function to be added
+	*	@param: description a pair of value <mac address, ip address>
 	*/
-	bool addNetworkFunctionDescription(string nf, pair<string, string>);
+	bool addNetworkFunctionPortConfiguration(string nf, pair<string, string> description);
+	
+	/**
+	*	@brief: Add a NF control description to the graph
+	*
+	*	@param:	nf	Name of the network function to be added
+	*	@param: control a pair of value <vnf_tcp_port, host_tcp_port>
+	*/
+	bool addNetworkFunctionControlConfiguration(string nf, pair<string, string> control);
 	
 	/**
 	*	@brief: Update a NF by adding a port
@@ -157,7 +172,12 @@ public:
 	/**
 	*	@brief: Return the NFs of the graph and the description of the ports they require
 	*/
-	t_nfs_ports_description getNetworkFunctionsDescription();
+	t_nfs_configuration getNetworkFunctionsConfiguration();
+	
+	/**
+	*	@brief: Return the NFs of the graph and the control ports they require
+	*/
+	t_nfs_configuration getNetworkFunctionsControlConfiguration();
 
 	/**
 	*	@brief: Add an end point to the graph, to be used to connect the graph itself with

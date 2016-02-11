@@ -969,7 +969,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_addresses; 	//port name, ipv4 address
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
-							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip;
+							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip, vnf_tcp_port, host_tcp_port;
 							//list of pair port id, port name related by the VNF
 							list<vector<string> > portS;
 
@@ -1008,6 +1008,46 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									
 									//store value of VNF id
 									id.assign(nf_value.getString().c_str());
+								}
+								else if(nf_name == VNF_CONTROL)
+								{
+									const Array& control_array = nf_value.getArray();
+								
+									//Itearate on the control
+									for( unsigned int ctrl = 0; ctrl < control_array.size(); ++ctrl )
+									{
+										//This is a VNF control, with an host tcp port and a vnf tcp port 
+										Object control = control_array[ctrl].getObject();
+										
+										vector<string> port_descr(4);
+										
+										//Parse the control
+										for(Object::const_iterator c = control.begin(); c != control.end(); c++)
+										{
+											const string& c_name  = c->first;
+											const Value&  c_value = c->second;
+											
+											if(c_name == HOST_PORT)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_CONTROL,HOST_PORT,c_value.getString().c_str());
+												
+												host_tcp_port = c_value.getString();
+											}
+											else if(c_name == VNF_PORT)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_CONTROL,VNF_PORT,c_value.getString().c_str());
+												
+												vnf_tcp_port = c_value.getString();
+											}
+										}
+										
+										//Add NF ports descriptions
+										if(!graph.addNetworkFunctionControlConfiguration(name, make_pair(host_tcp_port, vnf_tcp_port)))
+										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+											return false;
+										}
+									}
 								}
 								else if(nf_name == VNF_PORTS)
 								{
@@ -1067,7 +1107,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 										
 										//Add NF ports descriptions
-										if(!graph.addNetworkFunctionDescription(name, make_pair(port_mac, port_ip)))
+										if(!graph.addNetworkFunctionPortConfiguration(name, make_pair(port_mac, port_ip)))
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;
