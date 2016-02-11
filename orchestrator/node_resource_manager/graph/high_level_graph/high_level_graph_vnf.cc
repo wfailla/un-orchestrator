@@ -3,12 +3,17 @@
 namespace highlevel
 {
 
-VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports) :
+VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports) :
 	id(id), name(name), groups(groups), vnf_template(vnf_template)
 {
 	for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
 	{
 		this->ports.push_back((*p));
+	}
+	
+	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
+	{
+		this->control_ports.push_back((*c));
 	}
 }
 
@@ -68,6 +73,12 @@ void VNFs::print()
 			if(!(*p)[3].empty())
 				cout << "\t\t\tip: " << (*p)[3] << endl;
 		}
+		cout << "\t\t\tcontrol: " << endl << "\t\t{" << endl;
+		for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
+		{
+			cout << "\t\t\thost-tcp-port: " << (*c).first << endl;
+			cout << "\t\t\tvnf-tcp-port: " << (*c).second << endl;
+		}
 		cout << "\t\t}" << endl;
 	}
 }
@@ -75,7 +86,7 @@ void VNFs::print()
 Object VNFs::toJSON()
 {
 	Object vnf;
-	Array portS;
+	Array portS, ctrl_ports;
 	
 	vnf[_ID] = id.c_str();
 	vnf[_NAME] = name.c_str();
@@ -95,7 +106,18 @@ Object VNFs::toJSON()
 		portS.push_back(pp);
 	}
 	
+	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
+	{
+		Object cc;
+		
+		cc[HOST_PORT] = (*c).first.c_str();
+		cc[VNF_PORT] = (*c).second.c_str();
+		
+		ctrl_ports.push_back(cc);
+	}
+	
 	vnf[VNF_PORTS] = portS;
+	vnf[VNF_CONTROL] = ctrl_ports;
 	
 	return vnf;
 }

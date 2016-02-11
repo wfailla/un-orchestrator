@@ -970,8 +970,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
 							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip, vnf_tcp_port, host_tcp_port;
-							//list of pair port id, port name related by the VNF
+							//list of four element port id, port name, mac address and ip address related by the VNF
 							list<vector<string> > portS;
+							//list of pair element host tcp port and vnf tcp port related by the VNF
+							list<pair<string, string> > portC;
 
 							//Parse the network function
 							for(Object::const_iterator nf = network_function.begin(); nf != network_function.end(); nf++)
@@ -1041,12 +1043,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											}
 										}
 										
-										//Add NF ports descriptions
+										//Add NF control ports descriptions
 										if(!graph.addNetworkFunctionControlConfiguration(name, make_pair(host_tcp_port, vnf_tcp_port)))
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;
 										}
+										
+										portC.push_back(make_pair(host_tcp_port, vnf_tcp_port));
 									}
 								}
 								else if(nf_name == VNF_PORTS)
@@ -1138,11 +1142,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								return false;
 							}
 							
-							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS);
+							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, portC);
 
 							graph.addVNF(vnfs);
 
 							portS.clear();
+							portC.clear();
 						}					
 				    	}
 					//Identify the end-points
