@@ -9,7 +9,7 @@ LSI::LSI(string controllerAddress, string controllerPort,
 	for(map<string,string>::iterator p = physical_ports.begin(); p != physical_ports.end(); p++)
 	{
 		this->physical_ports[p->first] = 0;
-		ports_type[p->first] = p->second;
+		this->physical_ports_type[p->first] = p->second;
 	}
 
 	//create NF ports (and give them names)
@@ -114,6 +114,7 @@ map<unsigned int, string> LSI::getNetworkFunctionsPortsNameOnSwitchMap(string nf
 			 (pnos_it != nf_data.portsNameOnSwitch.end()) && (p_it != nf_data.nf_ports_id.end());
 			 ++pnos_it, ++p_it) {
 			res.insert(map<unsigned int, string>::value_type(*p_it, *pnos_it));
+			printf("getNetworkFunctionsPortsNameOnSwitchMap(NF='%s') inserted map entry %d->'%s'\n", nf.c_str(), *p_it, (*pnos_it).c_str());
 		}
 	}
 
@@ -193,7 +194,7 @@ map<string,unsigned int> LSI::getPhysicalPorts()
 
 map<string,string> LSI::getPhysicalPortsType()
 {
-	return ports_type;
+	return physical_ports_type;
 }
 
 map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
@@ -201,14 +202,6 @@ map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
 	struct nfData& nf_data = network_functions[nf];
 
 	return nf_data.ports_switch_id;
-}
-
-list<string> LSI::getNetworkFunctionsPortsNameOnSwitch(string nf)
-{
-	assert(network_functions.count(nf) != 0);
-
-	struct nfData& nf_data = network_functions[nf];
-	return nf_data.portsNameOnSwitch;
 }
 
 vector<VLink> LSI::getVirtualLinks()
@@ -318,8 +311,6 @@ void LSI::removeEndPointvlink(string endpoint)
 
 bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned int, PortType>& a_nf_ports_type)
 {
-	map<string, PortType> nf_ports_type;	// port_name -> port_type
-
 	nfData nf_data;
 	nf_data.nf_ports_id = ports;
 

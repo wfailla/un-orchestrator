@@ -40,14 +40,14 @@ private:
 	uint64_t dpid;
 	
 	/**
-	*	@brief: the pair is <port name, port id>. It contains physical ports
+	*	@brief: the pair is <port name, port id>. It contains IDs assigned by the switch to the physical ports
 	*/
 	map<string,unsigned int> physical_ports;
 	
 	/**
 	*	@brief: the pair is <port name, port type>
 	*/
-	map<string,string> ports_type;
+	map<string,string> physical_ports_type;
 
 	/**
 	*	@brief: Data related to a specific NF
@@ -126,7 +126,6 @@ public:
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
 	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
-	list<string> getNetworkFunctionsPortsNameOnSwitch(string nf);
 	map<unsigned int, string> getNetworkFunctionsPortsNameOnSwitchMap(string nf);
 
 	list<uint64_t> getVirtualLinksRemoteLSI();
