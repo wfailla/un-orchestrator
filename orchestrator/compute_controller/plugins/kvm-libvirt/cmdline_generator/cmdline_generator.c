@@ -206,7 +206,7 @@ int expose_port_cmdline(const char * port_name, const char * port_alias, const c
 			return -1;
 		}
 #else
-		printf("WARNING: Ring aliases not support by this build (check IVSHMEM_RING_ALIAS)\n");
+		printf("WARNING: Ring aliases not supported by this build (check IVSHMEM_RING_ALIAS)\n");
 #endif
 	}
 
