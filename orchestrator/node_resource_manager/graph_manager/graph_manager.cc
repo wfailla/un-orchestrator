@@ -775,7 +775,7 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 			delete(clo);
 			throw GraphManagerException();
 		}
-			
+
 		map<string,map<string, unsigned int> > nfsports = clo->getNetworkFunctionsPorts();
 		//TODO: check if the number of vnfs and ports is the same required
 		for(map<string,map<string, unsigned int> >::iterator nfp = nfsports.begin(); nfp != nfsports.end(); nfp++)
