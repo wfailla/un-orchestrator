@@ -658,6 +658,11 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	sprintf(ifac, "iface%d", rnumber);
 	if (!is_nf_port) {
 		uuid_name = p;
+		/**
+ 		* Build name that is valid as UUID: no '.', no '_' ...
+ 		*/
+		std::replace(uuid_name.begin(), uuid_name.end(), '.', 'p');
+		std::replace(uuid_name.begin(), uuid_name.end(), '-', 'p');
 		port_name = p;
 		port_name_on_switch = p;
 	} else {

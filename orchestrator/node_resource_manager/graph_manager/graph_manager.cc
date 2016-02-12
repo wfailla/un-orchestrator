@@ -174,6 +174,12 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 		
 		//Install the default rules on LSI-0
 		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
+		if(lsi_ports.count((char *)control_interface.c_str()) == 0)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Control interface does not exist in a list of available plysical ports.");
+			throw GraphManagerException();
+		}
+		
 		map<string,unsigned int>::iterator translation = lsi_ports.find((char *)control_interface.c_str());
 		lsi0Match.setArpSpa((char *)local_ip.c_str());
 		lsi0Match.setEthType(2054 & 0xFFFF);
@@ -232,9 +238,9 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 		//Insert new rules into the LSI-0
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
 		controller->installNewRules(graphLSI0lowLevel.getRules());
-	}
 	
-	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+	}
 
 #ifdef UNIFY_NFFG	
 	if(ComputeController::retrieveAllAvailableNFs() != NFManager_OK)
