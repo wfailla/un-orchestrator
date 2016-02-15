@@ -5,9 +5,6 @@ that thanks to a small HTTP server embedded in the UN. The main REST commands to
 to interact with the un-orchestrator (e.g., deploy a new graph, update an existing graph,
 etc.) are detailed in this document.
 
-**WARNING: these commands are not valid if you use the NF-FG library defined in
-WP3.**
-
 ## Main REST commands accepted by the un-orchestrator
 
 Authentication on the universal node
