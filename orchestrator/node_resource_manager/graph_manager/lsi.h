@@ -40,14 +40,14 @@ private:
 	uint64_t dpid;
 	
 	/**
-	*	@brief: the pair is <port name, port id>. It contains physical ports
+	*	@brief: the pair is <port name, port id>. It contains IDs assigned by the switch to the physical ports
 	*/
 	map<string,unsigned int> physical_ports;
 	
 	/**
 	*	@brief: the pair is <port name, port type>
 	*/
-	map<string,string> ports_type;
+	map<string,string> physical_ports_type;
 
 	/**
 	*	@brief: Data related to a specific NF
@@ -62,11 +62,12 @@ private:
 
 		/**
 		*	@brief: Names of the ports connected to the LSI and related to the network function
+		*		The map is <port id, port name on switch>
 		*/
-	    list<string> portsNameOnSwitch;
+		map<unsigned int,string> ports_name_on_switch;
 
 		/**
-		 * 	@brief: port ids assigned to the ports by switch
+		 * 	@brief: port ids (OpenFlow) assigned to the ports by switch
 		 *		The map is
 		 *			<nf port name, switch_id>
 		 */
@@ -126,7 +127,6 @@ public:
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
 	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
-	list<string> getNetworkFunctionsPortsNameOnSwitch(string nf);
 	map<unsigned int, string> getNetworkFunctionsPortsNameOnSwitchMap(string nf);
 
 	list<uint64_t> getVirtualLinksRemoteLSI();
