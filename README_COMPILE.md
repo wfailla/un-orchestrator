@@ -38,8 +38,8 @@ case you will have to syncronize the code manually.
 
 Getting the code through GIT:
 
-	; Checkout the main GIT repository
-	$ git checkout https://github.com/netgroup-polito/un-orchestrator.git
+	; Clone the main GIT repository
+	$ git clone https://github.com/netgroup-polito/un-orchestrator.git
 	
 	; Your code is now in the 'un-orchestrator' folder.
 
