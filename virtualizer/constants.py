@@ -1,20 +1,17 @@
+#Configuration file of the virtualizer
+CONFIGURATION_FILE = 'config/configuration.ini'
+
 '''
-	File used by the orchestrator to maintain the state (i.e., rules deployed,
+	File used by the virtualizer to maintain the state (i.e., rules deployed,
 	VNF instantiated
 '''
 
-#TMP file use by the orchestrator to maintain the current configuration of the node
-CONFIGURATION_FILE = './node_resource_manager/virtualizer/.universalnode.xml'
+#TMP file use by the virtualizer to maintain the current configuration of the node
+GRAPH_XML_FILE = '.universalnode.xml'
 
-#TMP file used by the orchestrator and representing the deployed graph,
-#in the JSON syntax internally used by the orchestrator itself
-GRAPH_FILE = './node_resource_manager/virtualizer/.graph.json'
-
-#File containing the new piece of graph to be deployed, in the JSON
-#syntax internally used by the orchestrator
-NEW_GRAPH_FILE = './node_resource_manager/virtualizer/.new_graph.json'
-#File containing the IDs of the rules to be removed from the graph
-REMOVE_GRAPH_FILE = './node_resource_manager/virtualizer/.remove_graph.json'
+#TMP file used by the virtualizer and representing the deployed graph,
+#in the JSON syntax internally used by the virtualizer itself
+GRAPH_FILE = '.graph.json'
 
 '''
 	Information to be exported
@@ -28,7 +25,7 @@ NODE_TYPE = 'BisBis'
 '''
 	Supported matches.
 	For each key, it indicates the equivalent match in the NF-FG supported natively
-	by the node orchestrator.
+	by the node virtualizer.
 '''
 supported_matches = {
 	"dl_vlan" : "vlan_id"
@@ -47,7 +44,7 @@ supported_actions = {
 '''
 	Equivalent actions.
 	For each key, it indicates the equivalent action in the NF-FG supported natively
-	by the node orchestrator.
+	by the node virtualizer.
 '''
 #XXX: for each key, there must be an handler for that key in actionsParser.py
 equivalent_actions = {

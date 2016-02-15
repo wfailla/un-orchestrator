@@ -280,18 +280,6 @@ Here there are the required steps:
 In order to run VNFs implemented as DPDK processes, no further operation is required,
 since the DPDK library has already been installed together with the vSwitch.
 
-## NF-FG library
-
-These steps are mandatory only if you plan to use the Network Functions -
-Forwarding Graph (NF-FG) defined in WP3, which is based on the concept of *virtualizer*.
-
-	; Retrieve the NF-FG library.
-	$ cd [un-orchestrator]
-	$ git submodule update --init --recursive
-
-Finally, remember to select the proper `cmake` option when compiling the `un-orchestrator`.
-
-
 ## Compile the un-orchestrator
 
 We are now ready to compile the un-orchestrator. If you intend to enable support for DPDK IVSHMEM-based ports, you'll need to define environment variables pointing to your build of DPDK.
