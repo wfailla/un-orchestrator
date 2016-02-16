@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__author__ = 'Ivano Cerrato'
+__author__ = 'Ivano Cerrato, Stefano Petrangeli'
 
 import falcon
 import json
@@ -722,8 +722,8 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 	
 	#Add the new VNFs
 	for vnf in newVNFs:
-		LOG.debug("New VNF: %s!",vnf)
 		if nffg.getVNF(vnf.id) is None:
+			LOG.debug("New VNF: %s!",vnf.name)
 			LOG.debug("The VNF must be inserted!")
 			nffg.addVNF(vnf)
 	
