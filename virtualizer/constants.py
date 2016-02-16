@@ -35,7 +35,6 @@ supported_matches = {
 	Supported actions.
 	For each key, it indicates the number of parameters required (0 or 1).
 '''
-#XXX: for each key, there must be an handler for that key in actionsParser.py
 supported_actions = {
 	"strip_vlan" : 0,
 	"push_vlan" : 1
@@ -46,9 +45,8 @@ supported_actions = {
 	For each key, it indicates the equivalent action in the NF-FG supported natively
 	by the node virtualizer.
 '''
-#XXX: for each key, there must be an handler for that key in actionsParser.py
 equivalent_actions = {
-	"strip_vlan" : "vlan",
-	"push_vlan" : "vlan"
+	"strip_vlan" : "pop_vlan",
+	"push_vlan" : "push_vlan"
 }
 
