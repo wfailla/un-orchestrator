@@ -882,11 +882,12 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):
 	LOG.debug("Graph that is going to be sent to the universal node orchestrator:")
 	LOG.debug("%s",nffg.getJSON())
 	
-	url = unOrchestratorURL + '/graph/NF-FG/' + nffg.id
+	put_url = unOrchestratorURL + "/NF-FG/%s"
+
 	try:
-		responseFromUN = requests.put(url, nffg.getJSON())
+		responseFromUN = requests.put(put_url % (nffg.id), nffg.getJSON())
 	except (requests.ConnectionError) as e:
-		LOG.error("Cannot contact the universal node orchestrator at '%s'",unOrchestratorURL)
+		LOG.error("Cannot contact the universal node orchestrator at '%s'",put_url % (nffg.id))
 		return False
 
 	LOG.debug("Status code received from the universal node orchestrator: %s",responseFromUN.status_code)
@@ -916,11 +917,11 @@ def removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved):
 	LOG.info("Removing %d rules from the universal node",len(rulesToBeRemoved))
 	LOG.warning("Due to implementation choices of the universal node orchestrator, the VNFs whose all ports will no longer used in any deployed flow will be removed (undeployed)")
 	
+	delete_url = unOrchestratorURL + "/NF-FG/%s/%s"
 	for rule in rulesToBeRemoved:
 		LOG.debug("Going to remove rule with ID: %s",rule)	
 		try:
-			url =  unOrchestratorURL + '/graph/NF-FG/' + rule
-			responseFromUN = requests.delete(url)
+			responseFromUN = requests.delete(delete_url % (graph_id,rule))
 		except (requests.ConnectionError) as e:
 			LOG.error("Cannot contact the universal node orchestrator at '%s'",unOrchestratorURL)	
 			return False
@@ -932,9 +933,7 @@ def removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved):
 		else:
 			LOG.error("Something went wrong while deploying the new VNFs and flows on the universal node")	
 			return False
-		
-		#Endpoint deletion e VNF deletion...chiedi a Ivano
-	
+			
 	return True
 
 '''
