@@ -17,7 +17,8 @@ Forwarding Graph (NF-FG) defined in WP3, which is based on the concept of *virtu
 In addition to the libraries already listed in the main [../README_COMPILE.md](../README_COMPILE.md),
 some more components are required to compile the un-orchestrator.
 
-	; Retrieve the virtualizer library and the library used to handle the NF-FG in the format natively supported by the un-orchestrator.
+	; Retrieve the virtualizer library and the library used 
+	; to handle the NF-FG in the format natively supported by the un-orchestrator.
 	$ cd [un-orchestrator]
 	$ git submodule update --init --recursive
 
