@@ -99,7 +99,7 @@ environment is not optimized.
 The un-orchestrator natively supports the deployment of NF-FGs described with initial 
 JSON-based format defined in WP5 and used in the initial part of the project.
 
-If you plan instead to use the the new XML-based format defined in WP3 that includes both 
+If you plan instead to use the new XML-based format defined in WP3 that includes both 
 top-down communication (for the actual forwarding graph) and bottom-up primitives (for 
 resources and capabilities), you have also to run the [virtualizer](../virtualizer/README.md).
 
