@@ -14,28 +14,6 @@ In addition to the libraries already listed in the main [../README_COMPILE.md](.
 some more components are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
 
-	; Install required libraries
-	; - build-essential: it includes GCC, basic libraries, etc
-	; - cmake: to create cross-platform makefiles
-	; - cmake-curses-gui: nice 'gui' to edit cmake files
-	; - libboost-all-dev: nice c++ library with tons of useful functions
-	; - libmicrohttpd-dev: embedded micro http server
-	; - libxml2-dev: nice library to parse and create xml
-	; - sqlite3: command line interface for SQLite 3
-	; - libsqlite3-dev: SQLite 3 development files
-	: - libssl-dev: SSL development libraries, header files and documentation
-	; - libjson0-dev: JSON manipulation library
-	; - liburcu-dev: userspace RCU (read-copy-update) library - development files
-	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev sqlite3 libsqlite3-dev libssl-dev libjson0-dev liburcu-dev
-
-	; Install JSON Spirit (nice library to parse JSON files)
-	$ git clone https://github.com/sirikata/json-spirit
-	; alternatively, a copy of JSON Spirit is provided in `[un-orchestrator]/contrib/json-spirit.zip`
-	$ cd json-spirit/
-
-	; Now install the above library according to the description provided
-	; in the cloned folder
-
 	; Install ROFL-common  (library to parse OpenFlow messages)
 	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	; Please note that you have to use version 0.6; newer versions have a different API that
