@@ -7,7 +7,7 @@ etc.) are detailed in this document.
 
 ## Main REST commands accepted by the un-orchestrator
 
-Authentication on the universal node
+Authentication on the universal node (optional, it must be enabled during the compilation of the un-orchestrator)
 
 	POST /login	HTTP/1.1
 	Content-Type : application/json
