@@ -21,7 +21,7 @@ below.
 Folder `config` contains some configuration file examples that can be used
 to configure/test the un-orchestrator.
 
-  * [config/universal-node-config.ini](config/universal-node-config.ini): 
+  * [config/universal-node-config.ini](config/default-config.ini): 
     configuration file describing the rest server and the client authentication, 
     as well as the rest server port, configuration file describing the plysical ports 
     to be handled by the un-orchestrator, the first nf-fg to be deployed on the node and
