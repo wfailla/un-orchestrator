@@ -29,7 +29,7 @@
 	<devices>
 		<emulator>/home/dverbeir/qemu/qemu_git/x86_64-softmmu/qemu-system-x86_64</emulator>
 		<disk type="file" device="disk">
-			<source file="/home/nf_repository/kvm/splitbng_lb_qinq.qcow2"/>
+			<source file="/home/nf_repository/kvm/splitbng/splitbng_lb_qinq.qcow2"/>
 			<driver name="qemu" type="qcow2"/>
 			<target dev="vda" bus="virtio"/>
 		</disk>
