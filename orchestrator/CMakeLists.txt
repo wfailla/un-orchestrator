@@ -3,10 +3,15 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
+        
+# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function         
+        
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
+        
+# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 
@@ -216,6 +221,16 @@ ENDIF(IVSHMEM_RING_ALIAS)
 MARK_AS_ADVANCED(
 	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD IVSHMEM_RING_ALIAS
 )
+
+#Set some options to the compiler, which are only required when the support to double decker is enabled
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+	IF(CMAKE_COMPILER_IS_GNUCXX)
+		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+	IF(CMAKE_COMPILER_IS_GNUCC)
+		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+	ENDIF(CMAKE_COMPILER_IS_GNUCC)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
 # Set source files
 SET(SOURCES
@@ -471,14 +486,21 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	libxml2.so
 	libsqlite3.so
 	libcrypto.so
-	liburcu.so
-	libzmq.so
-	libczmq.so
-	libsodium.so
-	libjson.so
-	libddclient.so
 	-lrt
 )
+
+#Links specific for double decker 
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+	TARGET_LINK_LIBRARIES( node-orchestrator
+		liburcu.so
+		libzmq.so
+		libczmq.so
+		libsodium.so
+		libjson.so
+		libddclient.so
+	)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+
 
 #Links specific for ovs
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
