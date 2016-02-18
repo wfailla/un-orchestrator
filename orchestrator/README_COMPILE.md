@@ -32,9 +32,9 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	$ cd inih
 	$ cp * ../../orchestrator/node_resource_manager/database_manager/SQLite
 
-The following libraries are required if you plan to enable, in the un-orchestrator, 
-the publisher/subscriber mechanism, that is used to export the configuration 
-of the universal node.
+The following libraries are required if you plan to enable the publisher/subscriber 
+mechanism, which is used by the un-orchestrator to export the configuration of the 
+universal node.
 	
 	; Install libsodium (a modern and easy-to-use crypto library)
 	$ git clone git://github.com/jedisct1/libsodium.git
