@@ -65,6 +65,8 @@ string Libvirt::splitIpNetmask(string ip_netmask)
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
+	
+	return "";
 }
 
 bool Libvirt::isSupported(Description&)

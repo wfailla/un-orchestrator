@@ -167,11 +167,6 @@ bool Graph::addNetworkFunctionPortConfiguration(string nf, pair<string, string> 
 {
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionPortConfiguration(\"%s\"->\"%s\":\"%s\")",nf.c_str(), config.first.c_str(), config.second.c_str());
 
-	if(networkFunctionsConfiguration.count(nf) != 0) {
-		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionPortConfiguration(\"%s\") NF already present!",nf.c_str());
-		return false;
-	}
-
 	networkFunctionsConfiguration[nf].push_back(config);
 	
 	return true;

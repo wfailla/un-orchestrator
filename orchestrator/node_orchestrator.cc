@@ -147,31 +147,40 @@ int main(int argc, char *argv[])
 	if(strcmp(t_control_interface, "UNKNOWN") != 0)
 		strcpy(control_interface, t_control_interface);
 	else	
-		control_interface = NULL;
+		control_interface = "";
 		
 	if(strcmp(t_local_ip, "UNKNOWN") != 0)
 		strcpy(local_ip, t_local_ip);
 	else	
-		local_ip = NULL;
+		local_ip = "";
 		
 	if(strcmp(t_ipsec_certificate, "UNKNOWN") != 0)
 		strcpy(ipsec_certificate, t_ipsec_certificate);
 	else	
-		ipsec_certificate = NULL;
+		ipsec_certificate = "";
 	
 	rest_port = t_rest_port;
 	cli_auth = t_cli_auth;
 	control = t_control;
-
-	s_local_ip = string(local_ip);
-	s_ipsec_certificate = string(ipsec_certificate);
-
-	//remove " character from string
-	s_local_ip.erase(0,1);
-	s_local_ip.erase(s_local_ip.size()-1,1);
-	s_ipsec_certificate.erase(0,1);
-	s_ipsec_certificate.erase(s_ipsec_certificate.size()-1,1);
-
+	
+	if(!string(local_ip).empty())
+		s_local_ip = string(local_ip);
+	if(!string(ipsec_certificate).empty())
+		s_ipsec_certificate = string(ipsec_certificate);
+	
+	if(!string(local_ip).empty())
+	{
+		//remove " character from string
+		s_local_ip.erase(0,1);
+		s_local_ip.erase(s_local_ip.size()-1,1);
+	}
+	
+	if(!string(ipsec_certificate).empty())
+	{
+		s_ipsec_certificate.erase(0,1);
+		s_ipsec_certificate.erase(s_ipsec_certificate.size()-1,1);
+	}
+	
 	//test if client authentication is required and if true initialize database
 	if(cli_auth)
 	{
