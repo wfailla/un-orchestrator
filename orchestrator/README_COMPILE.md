@@ -15,7 +15,7 @@ some more components are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install ROFL-common  (library to parse OpenFlow messages)
-	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
+	; Alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	; Please note that you have to use version 0.6; newer versions have a different API that
 	; is not compatible with our code.
 	
@@ -26,11 +26,18 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	; Now install the above library according to the description provided
 	; in the cloned folder
 
-	; Install inih
-	; a copy of inih is provided in `[un-orchestrator]/contrib/inih.zip`
+	; Install inih (a nice library used to read the configuration file)
+	; Alernatively, a copy of inih is provided in `[un-orchestrator]/contrib/inih.zip`
+
+	$ git clone https://github.com/benhoyt/inih
+	$ cd inih/
 
 	; Now install the above library according to the description provided
 	; in the cloned folder
+
+The following libraries are required if you plan to enable, in the un-orchestrator, 
+the publisher/subscriber mechanism, that is used to export the configuration 
+of the universal node.
 	
 	; Install libsodium (a modern and easy-to-use crypto library)
 	$ git clone git://github.com/jedisct1/libsodium.git
@@ -280,7 +287,7 @@ You can then build the un-orchestrator:
 
 The previous command allows you to select some configuration parameters for the
 un-orchestrator, such as the virtual switch used, which kind of execution environment(s)
-you want to enable, etc. When you're finished, exit from the `ccmake` interface by 
+you want to enable, and more. When you're finished, exit from the `ccmake` interface by 
 *generating the configuration files* (press 'c' and 'g') and type the following commands:
 
 	; Create makefile scripts based on the previously selected options
