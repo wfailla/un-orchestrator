@@ -35,8 +35,12 @@ bool Docker::startNF(StartNFIn sni)
 	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 		command << " "  << pn->second;
 		
+	
+	//The first element is the mac address, the second is the ip address
+	//list<pair<string, string> > portsConfiguration = sni.getPortsConfiguration();
+		
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-	list<pair<string, string> >  controlConnections = sni.getControlConfiguration();
+	list<pair<string, string> >  controlConnections = sni.getControlPorts();
 	command << " " << controlConnections.size();
 	if(controlConnections.size() != 0)
 	{

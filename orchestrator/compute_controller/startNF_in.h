@@ -45,9 +45,9 @@ private:
 	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	/**
-	*	@brief: list of control port associated with the network function
+	*	@brief: list of control ports associated with the network function
 	*/
-	list<pair<string, string> > controlConfiguration;
+	list<pair<string, string> > controlPorts;
 #endif
 		
 	/**
@@ -59,12 +59,12 @@ private:
 protected:
 	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string > > portsConfiguration, 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	list<pair<string, string > > controlConfiguration, 
+	list<pair<string, string > > controlPorts,
 #endif	
 		uint64_t coreMask = 0x0)
 			: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), portsConfiguration(portsConfiguration), 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-			controlConfiguration(controlConfiguration),
+			controlPorts(controlPorts),
 #endif
 			coreMask(coreMask)
 	{
@@ -93,9 +93,9 @@ public:
 	}
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-	const list<pair<string, string> >& getControlConfiguration() const
+	const list<pair<string, string> >& getControlPorts() const
 	{
-		return controlConfiguration;
+		return controlPorts;
 	}
 #endif
 	
