@@ -176,11 +176,6 @@ bool Graph::addNetworkFunctionControlConfiguration(string nf, pair<string, strin
 {
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionControlConfiguration(\"%s\"->\"%s\":\"%s\")",nf.c_str(), control.first.c_str(), control.second.c_str());
 
-	if(networkFunctionsControlConfiguration.count(nf) != 0) {
-		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionControlConfiguration(\"%s\") NF already present!",nf.c_str());
-		return false;
-	}
-
 	networkFunctionsControlConfiguration[nf].push_back(control);
 	
 	return true;

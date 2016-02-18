@@ -969,7 +969,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_addresses; 	//port name, ipv4 address
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
-							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip, vnf_tcp_port, host_tcp_port;
+							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip;
+							int vnf_tcp_port, host_tcp_port;
 							//list of four element port id, port name, mac address and ip address related by the VNF
 							list<vector<string> > portS;
 							//list of pair element host tcp port and vnf tcp port related by the VNF
@@ -1031,26 +1032,31 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											
 											if(c_name == HOST_PORT)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_CONTROL,HOST_PORT,c_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",VNF_CONTROL,HOST_PORT,c_value.getInt());
 												
-												host_tcp_port = c_value.getString();
+												host_tcp_port = c_value.getInt();
 											}
 											else if(c_name == VNF_PORT)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_CONTROL,VNF_PORT,c_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",VNF_CONTROL,VNF_PORT,c_value.getInt());
 												
-												vnf_tcp_port = c_value.getString();
+												vnf_tcp_port = c_value.getInt();
 											}
 										}
 										
+										stringstream ss, sss;
+										ss << host_tcp_port;
+
+										sss << vnf_tcp_port;
+
 										//Add NF control ports descriptions
-										if(!graph.addNetworkFunctionControlConfiguration(name, make_pair(host_tcp_port, vnf_tcp_port)))
+										if(!graph.addNetworkFunctionControlConfiguration(name, make_pair(ss.str(), sss.str())))
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;
 										}
 										
-										portC.push_back(make_pair(host_tcp_port, vnf_tcp_port));
+										portC.push_back(make_pair(ss.str(), sss.str()));
 									}
 								}
 								else if(nf_name == VNF_PORTS)
