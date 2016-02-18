@@ -14,6 +14,11 @@ In addition to the libraries already listed in the main [../README_COMPILE.md](.
 some more components are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
 
+	; - sqlite3: command line interface for SQLite 3
+	; - libsqlite3-dev: SQLite 3 development files
+	; - libssl-dev: SSL development libraries, header files and documentation
+	$ sudo apt-get install sqlite3 libsqlite3-dev libssl-dev
+
 	; Install ROFL-common (library to parse OpenFlow messages)
 	; Alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	; Please note that you have to use version 0.6; newer versions have a different API that
@@ -35,7 +40,11 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 The following libraries are required if you plan to enable the publisher/subscriber 
 mechanism, which is used by the un-orchestrator to export the configuration of the 
 universal node.
-	
+
+	; - libjson0-dev: JSON manipulation library l
+	; - iburcu-dev: userspace RCU (read-copy-update) library - development files
+	$ sudo apt-get install libjson0-dev iburcu-dev
+
 	; Install libsodium (a modern and easy-to-use crypto library)
 	$ git clone git://github.com/jedisct1/libsodium.git
     $ cd libsodium
