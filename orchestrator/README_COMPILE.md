@@ -14,8 +14,13 @@ In addition to the libraries already listed in the main [../README_COMPILE.md](.
 some more components are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
 
-	; Install ROFL-common  (library to parse OpenFlow messages)
-	; alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
+	; - sqlite3: command line interface for SQLite 3
+	; - libsqlite3-dev: SQLite 3 development files
+	; - libssl-dev: SSL development libraries, header files and documentation
+	$ sudo apt-get install sqlite3 libsqlite3-dev libssl-dev
+
+	; Install ROFL-common (library to parse OpenFlow messages)
+	; Alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	; Please note that you have to use version 0.6; newer versions have a different API that
 	; is not compatible with our code.
 	
@@ -25,13 +30,21 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Now install the above library according to the description provided
 	; in the cloned folder
-
-	; Install inih
-	; a copy of inih is provided in `[un-orchestrator]/contrib/inih.zip`
-
-	; Now install the above library according to the description provided
-	; in the cloned folder
 	
+	; Install inih (a nice library used to read the configuration file)
+	$ cd [un-orchestrator]/contrib
+	$ unzip inih.zip
+	$ cd inih
+	$ cp * ../../orchestrator/node_resource_manager/database_manager/SQLite
+
+The following libraries are required if you plan to enable the publisher/subscriber 
+mechanism, which is used by the un-orchestrator to export the configuration of the 
+universal node.
+
+	; - libjson0-dev: JSON manipulation library l
+	; - iburcu-dev: userspace RCU (read-copy-update) library - development files
+	$ sudo apt-get install libjson0-dev iburcu-dev
+
 	; Install libsodium (a modern and easy-to-use crypto library)
 	$ git clone git://github.com/jedisct1/libsodium.git
     $ cd libsodium
@@ -280,7 +293,7 @@ You can then build the un-orchestrator:
 
 The previous command allows you to select some configuration parameters for the
 un-orchestrator, such as the virtual switch used, which kind of execution environment(s)
-you want to enable, etc. When you're finished, exit from the `ccmake` interface by 
+you want to enable, and more. When you're finished, exit from the `ccmake` interface by 
 *generating the configuration files* (press 'c' and 'g') and type the following commands:
 
 	; Create makefile scripts based on the previously selected options

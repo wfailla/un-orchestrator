@@ -3,10 +3,15 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
+        
+# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function         
+        
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Werror -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
+        
+# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 
@@ -108,15 +113,15 @@ ENDIF(ENABLE_OVSDB_DPDK)
 #################################################################################################################
 
 # Rather complicated CMake code for selecting the PubSub implementation
-SET(ENABLE_DOUBLE_DECKER "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
-SET(ENABLE_DOUBLE_DECKER_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
-SET_PROPERTY(CACHE ENABLE_DOUBLE_DECKER PROPERTY STRINGS ${ENABLE_DOUBLE_DECKER_VALUES})
-LIST(FIND ENABLE_DOUBLE_DECKER_VALUES ${ENABLE_DOUBLE_DECKER} ENABLE_DOUBLE_DECKER_INDEX)
+SET(ENABLE_PUB_SUB "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
+SET(ENABLE_PUB_SUB_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
+SET_PROPERTY(CACHE ENABLE_PUB_SUB PROPERTY STRINGS ${ENABLE_PUB_SUB_VALUES})
+LIST(FIND ENABLE_PUB_SUB_VALUES ${ENABLE_PUB_SUB} ENABLE_PUB_SUB_INDEX)
 
-IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${ENABLE_DOUBLE_DECKER} not supported, valid entries are ${ENABLE_DOUBLE_DECKER_VALUES}")
+IF(${ENABLE_PUB_SUB_INDEX} EQUAL -1)
+	message(FATAL_ERROR "Option ${ENABLE_PUB_SUB} not supported, valid entries are ${ENABLE_PUB_SUB_VALUES}")
 ENDIF()
-IF(${ENABLE_DOUBLE_DECKER_INDEX} EQUAL 1)
+IF(${ENABLE_PUB_SUB_INDEX} EQUAL 1)
 	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER)
 ENDIF()
 
@@ -216,6 +221,16 @@ ENDIF(IVSHMEM_RING_ALIAS)
 MARK_AS_ADVANCED(
 	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD IVSHMEM_RING_ALIAS
 )
+
+#Set some options to the compiler, which are only required when the support to double decker is enabled
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+	IF(CMAKE_COMPILER_IS_GNUCXX)
+		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+	IF(CMAKE_COMPILER_IS_GNUCC)
+		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+	ENDIF(CMAKE_COMPILER_IS_GNUCC)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
 # Set source files
 SET(SOURCES
@@ -319,7 +334,7 @@ SET(SOURCES
 	utils/sockutils.c
 )
 
-IF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
     SET(SOURCES1
     ${SOURCES}
 		node_resource_manager/pub_sub_manager/PubSubManager.h
@@ -333,7 +348,7 @@ ELSE()
      SET(SOURCES1
          ${SOURCES}
     	)
-ENDIF(ENABLE_DOUBLE_DECKER_INDEX EQUAL 1)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
     SET(SOURCES2
@@ -471,14 +486,21 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	libxml2.so
 	libsqlite3.so
 	libcrypto.so
-	liburcu.so
-	libzmq.so
-	libczmq.so
-	libsodium.so
-	libjson.so
-	libddclient.so
 	-lrt
 )
+
+#Links specific for double decker 
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+	TARGET_LINK_LIBRARIES( node-orchestrator
+		liburcu.so
+		libzmq.so
+		libczmq.so
+		libsodium.so
+		libjson.so
+		libddclient.so
+	)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+
 
 #Links specific for ovs
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
