@@ -24,6 +24,6 @@ do
 done
 
 sudo ethtool --offload $1 rx off tx off
-sudo ethtool --K $1 gso off
+sudo ethtool -K $1 gso off
 
 exit 0
