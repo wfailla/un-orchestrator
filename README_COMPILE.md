@@ -17,7 +17,7 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	$ sudo apt-get install build-essential cmake cmake-curses-gui libboost-all-dev libmicrohttpd-dev libxml2-dev ethtool
 	
 	; Install JSON Spirit (nice library to parse JSON files)
-	; Alternatively, a copy of JSON Spirit is provided in [un-orchestrator]/contrib/json-spirit.zip
+	; Alternatively, a copy of JSON Spirit is provided in `[un-orchestrator]/contrib/json-spirit.zip`
 	
 	$ git clone https://github.com/sirikata/json-spirit
 	$ cd json-spirit/
@@ -41,14 +41,14 @@ Getting the code through GIT:
 	; Clone the main GIT repository
 	$ git clone https://github.com/netgroup-polito/un-orchestrator.git
 	
-	; Your code is now in the 'un-orchestrator' folder.
+	; Your code is now in the `un-orchestrator` folder.
 
 Simply downloading source code:
 
-	; Download source code in the 'master' branch
+	; Download source code in the `master` branch
 	$ wget https://github.com/netgroup-polito/un-orchestrator/archive/master.zip
 	
-	; Your code is now in the 'un-orchestrator-master' folder.
+	; Your code is now in the `un-orchestrator-master` folder.
 
 In order to compile and setup the different components of the universal node,
 you have to follow the instruction provided in each subfolder.
