@@ -79,7 +79,7 @@ ENDIF(STARTVNF_SINGLE_THREAD)
 
 OPTION(
 	ENABLE_VNF_PORTS_IP_CONFIGURATION
-	"Turn on to enable ip configuration of the VNF ports"
+	"Turn on to enable the possibility to configure VNFs ports"
 	OFF
 )
 
