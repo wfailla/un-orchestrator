@@ -861,10 +861,12 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 		}
 		
 		map<string,unsigned int> nfs_ports = lsi->getNetworkFunctionsPorts(*it);
+		
 		list<pair<string, string> > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(*it);
+		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nfs_ports.size());
 		list<pair<string, string> >::iterator nd = nfs_ports_configuration.begin();
-		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++)
+		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++, nd++)
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t%s -> %d",(n->first).c_str(),n->second);
 			if(!(nd->first).empty())
@@ -872,8 +874,7 @@ CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getP
 #ifdef ENABLE_VNF_PORTS_IP_CONFIGURATION
 			if(!(nd->second).empty())
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tIp address/netmask -> %s",(nd->second).c_str());
-#endif	
-			nd++;		
+#endif
 		}
 	}
 	
