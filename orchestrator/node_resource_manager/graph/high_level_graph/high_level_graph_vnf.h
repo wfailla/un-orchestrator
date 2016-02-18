@@ -55,7 +55,12 @@ private:
 	
 public:
 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports);
+#else
+	VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports);
+#endif
+
 	string getId();
 	string getName();
 	string getGroups();

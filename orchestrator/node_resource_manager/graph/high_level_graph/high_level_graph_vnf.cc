@@ -3,18 +3,25 @@
 namespace highlevel
 {
 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports) :
 	id(id), name(name), groups(groups), vnf_template(vnf_template)
+#else
+VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports) :
+	id(id), name(name), groups(groups), vnf_template(vnf_template)
+#endif
 {
 	for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
 	{
 		this->ports.push_back((*p));
 	}
-	
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
 	{
 		this->control_ports.push_back((*c));
 	}
+#endif
 }
 
 VNFs::~VNFs()

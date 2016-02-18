@@ -718,12 +718,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
 							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip;
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 							int vnf_tcp_port, host_tcp_port;
+							//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
+							list<pair<string, string> > controlPorts;
+#endif
 							//list of four element port id, port name, mac address and ip address related by the VNF
 							list<vector<string> > portS;
-							//list of pair element host tcp port and vnf tcp port related by the VNF
-							list<pair<string, string> > portC;
-
+							
 							//Parse the network function
 							for(Object::const_iterator nf = network_function.begin(); nf != network_function.end(); nf++)
 							{
@@ -749,9 +751,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								{
 									logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_TEMPLATE,nf_value.getString().c_str());
 									vnf_template = nf_value.getString();
-	#ifdef POLITO_MESSAGE
+#ifdef POLITO_MESSAGE
 									foundTemplate = true;
-	#endif
+#endif
 								}
 								else if(nf_name == _ID)
 								{
@@ -762,6 +764,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}
 								else if(nf_name == VNF_CONTROL)
 								{
+#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",VNF_CONTROL,MODULE_NAME);
+									continue;
+#else
 									const Array& control_array = nf_value.getArray();
 								
 									//Itearate on the control
@@ -797,15 +803,16 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 										sss << vnf_tcp_port;
 
-										//Add NF control ports descriptions
+										//Add VNF control ports descriptions
 										if(!graph.addNetworkFunctionControlConfiguration(name, make_pair(ss.str(), sss.str())))
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;
 										}
 										
-										portC.push_back(make_pair(ss.str(), sss.str()));
+										controlPorts.push_back(make_pair(ss.str(), sss.str()));
 									}
+#endif
 								}
 								else if(nf_name == VNF_PORTS)
 								{
@@ -844,18 +851,19 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											else if(p_name == PORT_MAC)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_MAC,p_value.getString().c_str());
-												
 												port_mac = p_value.getString();
-												
 												port_descr[2] = port_mac;
 											}
 											else if(p_name == PORT_IP)
 											{
+#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",PORT_IP,MODULE_NAME);
+												continue;
+#else																			
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
-												
 												port_ip = p_value.getString();
-												
 												port_descr[3] = port_ip;
+#endif
 											}
 											else
 											{
@@ -896,14 +904,18 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								return false;
 							}
 							
-							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, portC);
-
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, controlPorts);
+#else
+							highlevel::VNFs vnfs(id, name, groups, vnf_template, portS);
+#endif
 							graph.addVNF(vnfs);
-
 							portS.clear();
-							portC.clear();
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+							controlPorts.clear();
+#endif
 						}					
-				    	}
+			    	}
 					//Identify the end-points
 					else if(fg_name == END_POINTS)
 				    {
