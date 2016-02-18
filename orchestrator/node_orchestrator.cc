@@ -451,24 +451,25 @@ bool usage(void)
 	stringstream message;
 	
 	message << "Usage:                                                                        \n" \
-	"  sudo ./name-orchestrator 															  \n" \
+	"  sudo ./name-orchestrator --d configuration_file [options]     						  \n" \
 	"                                                                                         \n" \
-	"Options:                                                                                 \n";
-	
-	message << "  --c core_mask                                                               \n" \
+	"Parameters:                                                                              \n" \
+	"  --d configuration_file                                                                 \n" \
+	"        File that specifies some parameters such as rest port, physical port file,       \n" \
+	"        NF-FG to deploy at the boot, and if client authentication is required            \n" \
+	"                                                                                         \n" \
+	"Options:                                                                                 \n" \
+	"  --c core_mask                                                                           \n" \
 	"        Mask that specifies which cores must be used for DPDK network functions. These   \n" \
 	"        cores will be allocated to the DPDK network functions in a round robin fashion   \n" \
 	"        (default is 0x2)                                                                 \n" \
-	"  --d configuration file                                                                 \n" \
-	"        File that specifies some parameters such as rest port, physical port file,       \n" \
-	"        nffg file to deploy at the boot time and if client authentication is required    \n" \
 	"  --i admin_password                                                                     \n" \
 	"        Initialize local database and set the password for the default 'admin' user  	  \n" \
 	"  --h                                                                                    \n" \
 	"        Print this help.                                                                 \n" \
 	"                                                                                         \n" \
 	"Example:                                                                                 \n" \
-	"  sudo ./node-orchestrator 								  							  \n";
+	"  sudo ./node-orchestrator --d config/default-config.ini	  							  \n";
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\n\n%s",message.str().c_str());
 	
