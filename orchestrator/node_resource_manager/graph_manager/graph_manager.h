@@ -183,7 +183,6 @@ private:
 	*/
 	string findEndPointTowardsNF(highlevel::Graph *graph, string nf);
 
-#ifndef UNIFY_NFFG	
 	/**
 	*	@brief: check if a specific flow can be removed from a graph. The flow cannot be removed if it defines
 	*		an endpoint currently used by other graphs.
@@ -195,7 +194,6 @@ private:
 	*	be removed if it is not used in actions of other graphs.
 	*/
 	bool canDeleteFlow(highlevel::Graph *graph, string flowID);
-#endif
 	
 public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF

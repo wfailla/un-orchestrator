@@ -1,9 +1,6 @@
 #include "rest_server.h"
 
 GraphManager *RestServer::gm = NULL;
-#ifdef UNIFY_NFFG
-	bool RestServer::firstTime = true;
-#endif
 
 /*
 *
@@ -20,14 +17,6 @@ bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int
 		strcpy(nffg_file_name, nffg_filename);
 	else
 		nffg_file_name = NULL;
-#ifdef UNIFY_NFFG
-	if(nffg_filename != NULL)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "You are using the NF-FG defined in the Unify project.");
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "The NF-FG from configuration file is not supported in this case!",nffg_filename);
-		return false;
-	}
-#endif
 
 	try
 	{
@@ -80,173 +69,6 @@ bool RestServer::readGraphFromFile(char *nffg_filename)
 		
 	return true;
 }
-
-#ifdef UNIFY_NFFG
-bool RestServer::toBeRemovedFromFile(char *filename)
-{
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Removing NFs and rules defined in file '%s'",filename);
-	
-	std::ifstream file;
-	file.open(filename);
-	if(file.fail())
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot open the file %s",filename);
-		return false;
-	}
-
-	stringstream stream;
-	string str;
-	while (std::getline(file, str))
-	    stream << str << endl;
-	
-	list<string> vnfsToBeRemoved;
-	list<string> rulesToBeRemoved;
-	
-	//Parse the content of the file
-	Value value;
-	read(stream.str(), value);
-	try
-	{
-		Object obj = value.getObject();
-		
-	  	bool foundFlowGraph = false;
-		
-		//Identify the flow rules
-		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
-		{
-	 	    const string& name  = i->first;
-		    const Value&  value = i->second;
-		
-		    if(name == FLOW_GRAPH)
-		    {
-		    	foundFlowGraph = true;
-		    	
-		    	bool foundVNFs = false;
-		    	bool foundFlowRules = false;
-		    	
-		  		Object flow_graph = value.getObject();
-		    	for(Object::const_iterator fg = flow_graph.begin(); fg != flow_graph.end(); fg++)
-		    	{
-		    		const string& fg_name  = fg->first;
-				    const Value&  fg_value = fg->second;
-				    if(fg_name == VNFS)
-				    {
-				    	foundVNFs = true;
-				    	const Array& vnfs_array = fg_value.getArray();
-				    					    	
-				    	//Iterate on the VNFs
-				    	for( unsigned int vnf = 0; vnf < vnfs_array.size(); ++vnf )
-						{
-							//This is a VNF, with an ID and a template
-							Object network_function = vnfs_array[vnf].getObject();
-							bool foundID = false;
-							//Parse the rule
-							for(Object::const_iterator nf = network_function.begin(); nf != network_function.end(); nf++)
-							{
-								const string& nf_name  = nf->first;
-								const Value&  nf_value = nf->second;
-					
-								if(nf_name == _ID)
-								{
-									foundID = true;
-									string theID = nf_value.getString();
-									vnfsToBeRemoved.push_back(theID);
-								}
-								else
-								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a VNF of \"%s\"",nf_name.c_str(),VNFS);
-									return false;
-								}
-							}
-							if(!foundID)
-							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in an element of \"%s\"",_ID,VNFS);
-								return false;
-							}
-						}
-				    }//end if(fg_name == VNFS)
-				    else if (fg_name == FLOW_RULES)
-				    {
-				    	const Array& ids_array = fg_value.getArray();
-						foundFlowRules = true;
-					
-						//Iterate on the IDs
-						for( unsigned int id = 0; id < ids_array.size(); ++id )
-						{
-							Object id_object = ids_array[id].getObject();
-					
-							bool foundID = false;
-					
-							for( Object::const_iterator currentID = id_object.begin(); currentID != id_object.end(); ++currentID )
-							{
-								const string& idName  = currentID->first;
-								const Value&  idValue = currentID->second;
-						
-								if(idName == _ID)
-								{
-									foundID = true;
-									string theID = idValue.getString();
-									rulesToBeRemoved.push_back(theID);
-								}
-								else	
-								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\"",name.c_str());
-									return false;
-								}
-							}
-							if(!foundID)
-							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"id\" not found in an elmenet of \"%s\"",FLOW_RULES);
-								return false;
-							}
-						}
-				    }// end  if (fg_name == FLOW_RULES)
-				    else
-					{
-					    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",fg_name.c_str(),FLOW_GRAPH);
-						return false;
-					}
-		    	}
-		    	if(!foundFlowRules)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",FLOW_RULES,FLOW_GRAPH);
-					return false;
-				}
-				if(!foundVNFs)
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",VNFS,FLOW_GRAPH);
-		    }
-		    else
-		    {
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",name.c_str());
-				return false;
-		    }
-		}
-		if(!foundFlowGraph)
-		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found",FLOW_GRAPH);
-			return false;
-		}
-	}catch(exception& e)
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: ",e.what());
-		return false;
-	}
-	
-	for(list<string>::iterator tbr = rulesToBeRemoved.begin(); tbr != rulesToBeRemoved.end(); tbr++)
-	{
-		if(!gm->deleteFlow(GRAPH_ID,*tbr))
-			return false;
-	}
-	
-	for(list<string>::iterator tbr = vnfsToBeRemoved.begin(); tbr != vnfsToBeRemoved.end(); tbr++)
-	{
-		if(!gm->stopNetworkFunction(GRAPH_ID,*tbr))
-			return false;
-	}
-	
-	return true;
-}
-#endif
 
 void RestServer::terminate()
 {
@@ -307,69 +129,6 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		return MHD_YES;
 	}
 
-#ifdef UNIFY_NFFG
-	
-	struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
-	assert(con_info != NULL);
-	if (0 != strcmp (method, GET))
-	{
-        //Extract the body of the HTTP request		
-		if (*upload_data_size != 0)
-		{
-			strcpy(&con_info->message[con_info->length],upload_data);
-			con_info->length += *upload_data_size;
-			*upload_data_size = 0;
-			return MHD_YES;
-		}
-		else if (NULL != con_info->message)
-		{
-			con_info->message[con_info->length] = '\0';
-		}
-	}
-	
-	/**
-	*	"answer" is handled as described here:
-	*	http://stackoverflow.com/questions/2838038/c-programming-malloc-inside-another-function
-	*/
-	char *answer;
-	handleRequest_status_t retVal = Virtualizer::handleRestRequest(con_info->message, &answer,url,method);
-	
-	if(retVal == HR_INTERNAL_ERROR)
-	{
-		struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-		int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-		MHD_destroy_response (response);
-		return ret;
-	}
-	else
-	{
-		if(retVal == HR_EDIT_CONFIG)
-		{
-			//Handle the graph received from the network
-			//Handle the rules to be removed as required
-			if(!readGraphFromFile(NEW_GRAPH_FILE) || !toBeRemovedFromFile(REMOVE_GRAPH_FILE))
-			{
-				//Something wrong happened during the manipulation of the graph
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the manipulation of the graph!");
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Please, reboot the orchestrator (and the vSwitch) in order to avoid inconsist state in the universal node");
-				
-				struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-				MHD_destroy_response (response);
-				return ret;
-			}
-		}
-	
-		struct MHD_Response *response = MHD_create_response_from_buffer (strlen(answer),(void*)answer, MHD_RESPMEM_PERSISTENT);
-	    stringstream absolute_url;
-		absolute_url << REST_URL << ":" << REST_PORT << url;
-		MHD_add_response_header (response, "Cache-Control",NO_CACHE);
-		MHD_add_response_header (response, "Location", absolute_url.str().c_str());
-		int ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
-		return ret;
-	}
-
-#else
 	if (0 == strcmp (method, GET))
 		return doGet(connection,url);
 	else if( (0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)))
@@ -416,7 +175,6 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 			return ret;
 		}
 	}
-#endif	
 	
 	//Just to remove a warning in the compiler
 	return MHD_YES;
@@ -832,21 +590,11 @@ int RestServer::createGraphFromFile(string toBeCreated)
 	graph->print();
 	try
 	{
-#ifndef UNIFY_NFFG
 		if(!gm->newGraph(graph))
-#else
-		//In case of NF-FG defined in the Unify project, only the first time a new graph must be created
-		//In fact, all the rules refer to a single NF-FG, and then the following times we simply update
-		//the graph already created.
-		if((firstTime && !gm->newGraph(graph)) || (!firstTime && !gm->updateGraph(graphID,graph)) )
-#endif
 		{
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
 			return 0;
 		}
-#ifdef UNIFY_NFFG
-		firstTime = false;
-#endif
 	}catch (...)
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the creation of the graph!");
@@ -1682,22 +1430,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															//physical endpoint
 															if(iface_found)
 															{
-#ifdef UNIFY_NFFG
-																//In this case, the virtualized port name must be translated into the real one.
-																try
-																{
-		realName = Virtualizer::getRealName(port_in_name);											
-#endif
 																	action = new highlevel::ActionPort(realName, string(s_a_value));
-																	
 																	graph.addPort(realName);
-#ifdef UNIFY_NFFG
-																}catch(exception e)
-																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error while translating the virtualized port '%s': %s",port_in_name.c_str(),e.what());
-																	return false;
-																}
-#endif
 															}
 															//vlan endpoint
 															else if(vlan_found)

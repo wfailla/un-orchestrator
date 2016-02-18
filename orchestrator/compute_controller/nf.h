@@ -21,18 +21,7 @@ private:
 	*/
 	string name;
 	
-#ifdef UNIFY_NFFG
-	/**
-	*	@brief: number of ports of a NF
-	*/
-	unsigned int numPorts;
-	
-	/**
-	*	@brief: text describing the NF
-	*/
-	string text_description;
-#endif
-	
+
 	/**
 	*	@brief: available descriptions of the NF
 	*/
@@ -49,11 +38,7 @@ private:
 	bool isRunning;
 	
 public:
-#ifdef UNIFY_NFFG
-	NF(string name, unsigned int numPorts, string text_description);
-#else
 	NF(string name);
-#endif
 
 	void addDescription(Description *description);
 	list<Description*> getAvailableDescriptions();
@@ -64,12 +49,7 @@ public:
 	void setRunning(bool val);
 	bool getRunning();
 	
-	string getName();
-	
-#ifdef UNIFY_NFFG
-	unsigned int getNumPorts();
-	string getTextDescription();
-#endif	
+	string getName();	
 };
 
 #endif //NF_H_ 1

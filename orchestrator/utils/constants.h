@@ -19,13 +19,9 @@
 /*
 *	Rest methods
 */
-#define PUT						"PUT"
-#define GET						"GET"
-#define DELETE					"DELETE"
-#ifdef UNIFY_NFFG
-	#define POST				"POST"
-#endif
-
+#define PUT					"PUT"
+#define GET					"GET"
+#define DELETE				"DELETE"
 #define POST				"POST"
 
 /*
@@ -214,35 +210,6 @@ extern ofp_version_t OFP_VERSION;
  *	Misc
  */
  #define GRAPH_ID					"NF-FG"
-
-/*
- * Constant required with the Unify NF-FG library is used
- */
-#ifdef UNIFY_NFFG
-	#define PYTHON_DIRECTORY    "node_resource_manager/virtualizer"
-	#define PYTHON_MAIN_FILE    "virtualizer"
-
-	/*
-	* Python functionas
-	*/
-	#define PYTHON_INIT					"init"
-	#define PYTHON_TERMINATE			"terminate"
-	#define PYTHON_ADDRESOURCES			"addResources"
-	#define PYTHON_ADDNODEPORT			"addNodePort"
-	#define PYTHON_EDIT_PORT_ID			"editPortID"
-	#define PYTHON_ADD_SUPPORTED_VNFs	"addSupportedVNFs"
-	#define PYTHON_HANDLE_REQ			"handle_request"
-	
-	/*
-	* File containing the NF-FG to be implemented
-	*/
-	#define NEW_GRAPH_FILE				"./node_resource_manager/virtualizer/.new_graph.json"
-	
-	/*
-	* File containing the rules to be removed from the graph
-	*/
-	#define REMOVE_GRAPH_FILE			"./node_resource_manager/virtualizer/.remove_graph.json"
-#endif	
 
 /*
 *	Name of the file used to print log information

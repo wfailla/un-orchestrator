@@ -3,10 +3,6 @@
 
 #pragma once
 
-#ifdef UNIFY_NFFG
-	#include "../virtualizer/virtualizer.h"
-#endif	
-
 #include "../../network_controller/switch_manager/checkPhysicalPorts_in.h"
 #include "../../utils/constants.h"
 #include "../../utils/logger.h"

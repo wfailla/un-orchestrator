@@ -156,11 +156,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		bool foundNports = false;
 		unsigned int numports = 0;		
-
-#ifdef UNIFY_NFFG
-		string text_description;
 		bool foundTextDescription = false;
-#endif
 
 		//A first sacan of the json is done in order to read the number of ports of the VNF.
 		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
@@ -204,10 +200,8 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		    }
 		    else if(name == "summary")
 		    {
-#ifdef UNIFY_NFFG
 				foundTextDescription = true;
-		    	text_description = value.getString();
-#endif
+				//XXX: the content of this field is ignored
 		    }
 		    else if(name == "implementations")
 		    {
@@ -429,25 +423,13 @@ bool ComputeController::parseAnswer(string answer, string nf)
 			}
 		}//end iteration on the answer
 
-		if(!foundName || !foundImplementations
-#ifdef UNIFY_NFFG
-			 || !foundTextDescription
-#endif		
-		)
+		if(!foundName || !foundImplementations || !foundTextDescription		)
 		{
-#ifdef UNIFY_NFFG
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", and/or key \"implementations\", and/or key \"description\" not found in the answer");
-#else
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"name\", or key \"implementations\", or both not found in the answer");
-#endif
 			return false;
 		}
 
-		NF *new_nf = new NF(nf_name
-#ifdef UNIFY_NFFG		
-			,numports, text_description
-#endif	
-		);
+		NF *new_nf = new NF(nf_name);
 		assert(possibleDescriptions.size() != 0);
 		
 		if(possibleDescriptions.size() == 0)
@@ -723,19 +705,6 @@ bool ComputeController::allSelected()
 	return retVal;
 }
 
-#ifdef UNIFY_NFFG
-unsigned int ComputeController::getNumPorts(string name)
-{
-	assert(nfs.count(name) != 0);
-
-	NF *nf = nfs[name];
-	unsigned int np = nf->getNumPorts();
-	
-	assert(np != 0);
-	
-	return np;
-}
-#endif
 
 nf_t ComputeController::getNFType(string name)
 {
@@ -890,194 +859,3 @@ void ComputeController::printInfo(int graph_id)
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tName: '%s'%s\t-\tType: %s\t-\tStatus: %s",nf->first.c_str(),(nf->first.length()<=7)? "\t" : "", str.c_str(),(nf->second->getRunning())?"running":"stopped");
 	}
 }
-
-#ifdef UNIFY_NFFG	
-nf_manager_ret_t ComputeController::retrieveAllAvailableNFs()
-{
-	set<string> NFsNames;
-
-	try
- 	{
- 		string translation;
-
- 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Retrieving information on all the available VNFs");
-
-		char ErrBuf[BUFFER_SIZE];
-		struct addrinfo Hints;
-		struct addrinfo *AddrInfo;
-		int socket;				// keeps the socket ID for this connection
-		int WrittenBytes;			// Number of bytes written on the socket
-		int ReadBytes;				// Number of bytes received from the socket
-		char DataBuffer[DATA_BUFFER_SIZE];	// Buffer containing data received from the socket
-
-		memset(&Hints, 0, sizeof(struct addrinfo));
-
-		Hints.ai_family= AF_INET;
-		Hints.ai_socktype= SOCK_STREAM;
-
-		if (sock_initaddress (NAME_RESOLVER_ADDRESS, NAME_RESOLVER_PORT, &Hints, &AddrInfo, ErrBuf, sizeof(ErrBuf)) == sockFAILURE)
-		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error resolving given address/port (%s/%s): %s",  NAME_RESOLVER_ADDRESS, NAME_RESOLVER_PORT, ErrBuf);
-			return NFManager_SERVER_ERROR;
-		}
-
-		stringstream tmp;
-		tmp << "GET " << NAME_RESOLVER_BASE_URL << NAME_RESOLVER_DIGEST_URL << " HTTP/1.1\r\n";
-		tmp << "Host: :" << NAME_RESOLVER_ADDRESS << ":" << NAME_RESOLVER_PORT << "\r\n";
-		tmp << "Connection: close\r\n";
-		tmp << "Accept: */*\r\n\r\n";
-		string message = tmp.str();
-
-		char command[message.size()+1];
-		command[message.size()]=0;
-		memcpy(command,message.c_str(),message.size());
-
-		if ( (socket= sock_open(AddrInfo, 0, 0,  ErrBuf, sizeof(ErrBuf))) == sockFAILURE)
-		{
-			// AddrInfo is no longer required
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot contact the name resolver at \"%s:%s\"", NAME_RESOLVER_ADDRESS, NAME_RESOLVER_PORT);
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s", ErrBuf);
-			return NFManager_SERVER_ERROR;
-		}
-
-		WrittenBytes = sock_send(socket, command, strlen(command), ErrBuf, sizeof(ErrBuf));
-		if (WrittenBytes == sockFAILURE)
-		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
-			return NFManager_SERVER_ERROR;
-
-		}
-
-		ReadBytes= sock_recv(socket, DataBuffer, sizeof(DataBuffer), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
-		if (ReadBytes == sockFAILURE)
-		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
-			return NFManager_SERVER_ERROR;
-		}
-
-		// Terminate buffer, just for printing purposes
-		// Warning: this can originate a buffer overflow
-		DataBuffer[ReadBytes]= 0;
-
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Data received: ");
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",DataBuffer);
-
-		shutdown(socket,SHUT_WR);
-		sock_close(socket,ErrBuf,sizeof(ErrBuf));
-
-		if(strncmp(&DataBuffer[CODE_POSITION],CODE_METHOD_NOT_ALLLOWED,3) == 0)
-			return NFManager_NO_NF;
-
-		if(strncmp(&DataBuffer[CODE_POSITION],CODE_OK,3) != 0)
-			return NFManager_SERVER_ERROR;
-
-		//the HTTP headers must be removed
-		int i = 0;
-		for(; i < ReadBytes; i++)
-		{
-			if((i+4) <= ReadBytes)
-			{
-				if((DataBuffer[i] == '\r') && (DataBuffer[i+1] == '\n') && (DataBuffer[i+2] == '\r') && (DataBuffer[i+3] == '\n'))
-				{
-					i += 4;
-					break;
-				}
-			}
-		}
-
-		translation.assign(&DataBuffer[i]);
-		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Information on NFs:");
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",translation.c_str());
-
-		//Parse the answer		
-		try
-		{
-			Value value;
-			read(translation, value);
-			Object obj = value.getObject();
-
-			bool foundNFs = false;
-
-			for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
-			{
-		 	    const string& name  = i->first;
-				const Value&  value = i->second;
-
-				if(name == "network-functions")
-				{
-					foundNFs = true;
-					
-					const Array& names_array = value.getArray();
-					if(names_array.size() == 0)
-					{
-						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"network-functions\" without descriptions");
-						return NFManager_NO_NF;
-					}
-
-					//Itearate on the VNFs
-					for( unsigned int i = 0; i < names_array.size(); ++i)
-					{
-						//This is an implementation, with a type and an URI
-						Object nf_name = names_array[i].getObject();
-						
-						for( Object::const_iterator nfn = nf_name.begin(); nfn != nf_name.end(); ++nfn )
-						{
-							const string& the_name  = nfn->first;
-							const Value&  the_value = nfn->second;
-												
-							if(the_name == "name")
-							{
-								string vnfName = the_value.getString();
-								NFsNames.insert(vnfName);
-							}
-							else
-							{
-								logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\"",the_name.c_str());
-								return NFManager_SERVER_ERROR;
-							}
-						}
-					}
-
-				}//end if(name == "network-functions")
-				else
-				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\"",name.c_str());
-					return NFManager_SERVER_ERROR;
-				}
-			}
-			if(!foundNFs)
-			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"network-functions\" not found in the answer");
-				return NFManager_SERVER_ERROR;
-			}
-		}catch(...)
-		{
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax");
-			return NFManager_SERVER_ERROR;
-		}
- 	}
-	catch (std::exception& e)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Exception: %s",e.what());
-		return NFManager_SERVER_ERROR;
-	}
-
-	//For each VNF, download its description
-	ComputeController tmpManager;
-	for(set<string>::iterator name = NFsNames.begin(); name != NFsNames.end(); name++)
-	{
-		nf_manager_ret_t retval = tmpManager.retrieveDescription(*name);
-		if(retval !=NFManager_OK)
-			return retval;
-	}
-	//Provide the dfescriptions to the virtualizer
-	set<NF*> vnfs;
-	for(map<string, NF*>::iterator it = tmpManager.nfs.begin(); it != tmpManager.nfs.end(); it++)
-		vnfs.insert(it->second);
-
-	Virtualizer::addSupportedVNFs(vnfs);
-
-	return NFManager_OK;
-}
-#endif

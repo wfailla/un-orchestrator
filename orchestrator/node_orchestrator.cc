@@ -1,8 +1,3 @@
-#ifdef UNIFY_NFFG
-	#include <Python.h>
-	#include "node_resource_manager/virtualizer/virtualizer.h"
-#endif	
-
 #include "utils/constants.h"
 #include "utils/logger.h"
 #include "node_resource_manager/rest_server/rest_server.h"
@@ -51,9 +46,6 @@ bool usage(void);
 bool doChecks(void);
 void terminateRestServer(void);
 bool createDB(SQLiteManager *dbm, char *pwd);
-#ifdef UNIFY_NFFG
-	void terminateVirtualizer(void);
-#endif
 
 /**
 *	Implementations
@@ -66,9 +58,6 @@ void singint_handler(int sig)
 	MHD_stop_daemon(http_daemon);
 	terminateRestServer();
 	
-#ifdef UNIFY_NFFG
-	terminateVirtualizer();
-#endif
 	if(dbm != NULL)
 		dbm->eraseAllToken();
 
@@ -209,19 +198,6 @@ int main(int argc, char *argv[])
 	sigfillset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-#ifdef UNIFY_NFFG
-	//Initialize the Python code
-	setenv("PYTHONPATH",PYTHON_DIRECTORY ,1);
-	Py_SetProgramName(argv[0]);  /* optional but recommended */
-    Py_Initialize();
-
-    if(!Virtualizer::init())
-    {
-    	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the virtualizer. The %s cannot be run.",MODULE_NAME);
-		return EXIT_FAILURE;
-	}
-#endif
-
 #ifdef ENABLE_DOUBLE_DECKER
 	/*Client pub/sub*/
 	if(!client->publishBoot(descr_file_name, client_name, broker_address))
@@ -237,9 +213,6 @@ int main(int argc, char *argv[])
 	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name,s_local_ip,control,control_interface,ipsec_certificate))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
-#ifdef UNIFY_NFFG
-		terminateVirtualizer();
-#endif
 		exit(EXIT_FAILURE);	
 	}
 
@@ -252,9 +225,6 @@ int main(int argc, char *argv[])
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Please, check that the TCP port %d is not used (use the command \"netstat -a | grep %d\")",rest_port,rest_port);
 		
 		terminateRestServer();
-#ifdef UNIFY_NFFG
-		terminateVirtualizer();
-#endif
 		
 		return EXIT_FAILURE;
 	}
@@ -497,15 +467,6 @@ bool doChecks(void)
 
 	return true;
 }
-
-#ifdef UNIFY_NFFG
-void terminateVirtualizer()
-{
-	//Terminate the Python code
-	Virtualizer::terminate();
-	Py_Finalize();
-}
-#endif
 
 void terminateRestServer()
 {

@@ -191,11 +191,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			}
 		
 			foundOne = true;
-#ifdef UNIFY_NFFG
-			//In this case, the virtualized port name must be translated into the real one.
-			try
-			{		
-#else
 
 			string port_in_name = value.getString();
 			string realName;
@@ -248,7 +243,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 				pnt = strtok( NULL, delimiter );
 				i++;
 			}
-#endif			
+
 			//VNFs port type
 			if(p_type == 0)
 			{
@@ -310,9 +305,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 				/*physical endpoint*/
 				if(iface_found)
 				{
-#ifdef UNIFY_NFFG
-					realName = Virtualizer::getRealName(port_in_name);		
-#endif	
 					match.setInputPort(realName);
 					graph.addPort(realName);
 				}
@@ -345,15 +337,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 					stringstream ss;
 					ss << match.getEndPoint();
 				}
-			} 
-#ifdef UNIFY_NFFG
-			}catch(exception e)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error while translating the virtualized port '%s': %s",value.getString().c_str(),e.what());
-				return false;
-			}
-#endif			
-			
+			} 		
 		}
 		else if(name == HARD_TIMEOUT)
 		{

@@ -112,10 +112,6 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 				delete(clo);
 				throw GraphManagerException();
 			}
-#ifdef UNIFY_NFFG
-			if(!Virtualizer::EditPortID(it->first,it->second))
-				throw GraphManagerException();
-#endif
 		}
 		
 		map<string,map<string, unsigned int> > nfsports = clo->getNetworkFunctionsPorts();
@@ -242,10 +238,6 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 	}
 
-#ifdef UNIFY_NFFG	
-	if(ComputeController::retrieveAllAvailableNFs() != NFManager_OK)
-		throw GraphManagerException();	
-#endif
 }
 
 GraphManager::~GraphManager()
@@ -576,14 +568,6 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		{
 			throw GraphManagerException();
 		}
-#ifdef UNIFY_NFFG
-		unsigned int numPorts =  computeController->getNumPorts(nf->first);
-		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The NF '%s' has %d ports",nf->first.c_str(),numPorts);
-		
-		for(unsigned int p = 1; p <= numPorts; p++)
-			graph->updateNetworkFunction(nf->first,p);
-#endif
 	}
 
 	return true;

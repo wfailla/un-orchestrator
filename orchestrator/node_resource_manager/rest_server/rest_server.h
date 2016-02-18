@@ -68,11 +68,6 @@ private:
 
 	static GraphManager *gm;
 
-#ifdef UNIFY_NFFG
-	static bool firstTime;
-#endif
-	
-
 	struct connection_info_struct
 	{
 		char *message;
@@ -100,9 +95,6 @@ private:
 	static bool parseGraph(Value value, highlevel::Graph &graph, bool newGraph);
 	
 	static bool readGraphFromFile(char *nffg_filename);
-#ifdef UNIFY_NFFG
-	static bool toBeRemovedFromFile(char *filename);
-#endif
 
 	static bool checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbm);
 	
