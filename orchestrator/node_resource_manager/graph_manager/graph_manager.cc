@@ -165,7 +165,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 	ComputeController::setCoreMask(core_mask);
 
 	//if control is in band install the default rules on LSI-0 otherwise skip this code
-	if(is_control_in_band)
+	if(is_control_in_band && !control_interface.empty() && !local_ip.empty())
 	{
 		//remove first " character
 		control_interface.erase(0,1);
