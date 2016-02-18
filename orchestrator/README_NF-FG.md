@@ -292,9 +292,12 @@ Json description of the graph:
 	
 ## Example 4
 
-It is possible to connect multiple universal nodes together by using the "gre-tunnel" endpoint.
+It is possible to send/receive traffic through GRE tunnels, by using the "gre-tunnel" endpoint. 
+For instance, this feature can be used to connect together pieces of the same service deployed 
+on different Universal Nodes.
 
-This graph can be graphically represented as follows:
+This example sends on a GRE tunnel all the traffic received through the physical port `eth0`, and 
+vice versa. This graph can be graphically represented as follows:
 
     eth0 <-> gre-tunnel
    
