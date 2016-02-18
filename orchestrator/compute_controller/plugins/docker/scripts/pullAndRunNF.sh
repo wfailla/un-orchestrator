@@ -55,7 +55,7 @@ then
 	lastnicname=`expr $4 + 1`
 else
 	# The NIC connected to the docker0 is not needed
-	echo -ne "--net=\"none\ " >> $tmp_file
+	echo -ne "--net=\"none\" " >> $tmp_file
 	
 	firstnicname=0
 	lastnicname=$4

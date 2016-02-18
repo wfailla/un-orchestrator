@@ -47,8 +47,8 @@ bool Docker::startNF(StartNFIn sni)
 			command << " " << control->first << " " << control->second;
 		}
 	}
-	
-		
+#else
+	command << " 0";
 #endif
 
 	logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
