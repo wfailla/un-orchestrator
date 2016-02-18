@@ -1907,24 +1907,31 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}//for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
 								
 								bool same_priority = false;
-							list<highlevel::Rule> rules = graph.getRules();
-							for(list<highlevel::Rule>::iterator r = rules.begin(); r != rules.end(); r++)
-							{
-								uint64_t priority = (*r).getPriority();
-								for(list<highlevel::Rule>::iterator r1 = r; r1!=rules.end(); r1++)
+								list<highlevel::Rule> rules = graph.getRules();
+								for(list<highlevel::Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 								{
-									if((*r1).getPriority() == priority)
-										same_priority = true;
+									list<highlevel::Rule>::iterator next_rule = r;
+									next_rule++;
+									if(next_rule != rules.end())
+									{
+										uint64_t priority = (*r).getPriority();
+										for(list<highlevel::Rule>::iterator r1 = next_rule; r1 != rules.end(); r1++)
+										{
+											if((*r1).getPriority() == priority)
+												same_priority = true;
+										}
+									}
 								}
-							}
 						
-							if(same_priority)
-								logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "One or more flow rule with the same priority, switch can delete one of this rules");
-								}// end  if (fg_name == FLOW_RULES)
-							}
-			    		}
-					}
-			    	if(!foundFlowRules)
+								if(same_priority)
+								{
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "One or more flow rule with the same priority, switch can delete one of this rules");
+								}
+							}// end  if (fg_name == FLOW_RULES)
+						}
+		    		}
+				}
+		    	if(!foundFlowRules)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",FLOW_RULES,FORWARDING_GRAPH);
 					return false;
