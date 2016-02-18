@@ -106,12 +106,14 @@ private:
 	*/
 	map<string, list<pair<string, string> > > network_functions_ports_configuration;
 	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	/**
-	*	@brief: NFs connected to the LSI.
+	*	@brief: For each VNF, describes its TCP control connections
 	*		The map is
-	*			<nf name, list<pair<host tcp port, vnf tcp port>> >
+	*			<nf name, list<pair<host TCP port, VNF TCP port>> >
 	*/
 	map<string, list<pair<string, string> > > network_functions_control_configuration;
+#endif
 	
 	/**
 	*	@brief: virtual links attached to the LSI
@@ -139,7 +141,12 @@ private:
 
 public:
 
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, map<string, list <pair<string, string > > > network_functions_ports_configuration, map<string, list <pair<string, string > > > network_functions_control_configuration, map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
+	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, 
+		map<string, list <pair<string, string > > > network_functions_ports_configuration, 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+		map<string, list <pair<string, string > > > network_functions_control_configuration, 
+#endif
+		map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
@@ -157,7 +164,9 @@ public:
 	set<string> getNetworkFunctionsName();
 	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
 	list<pair<string, string> > getNetworkFunctionsPortsConfiguration(string nf);
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	list<pair<string, string> > getNetworkFunctionsControlConfiguration(string nf);
+#endif
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
 	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();

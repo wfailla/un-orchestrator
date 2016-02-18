@@ -128,10 +128,12 @@ map<string, list<pair<string, string> > > Graph::getNetworkFunctionsConfiguratio
 	return networkFunctionsConfiguration;
 }
 
-map<string, list<pair<string, string> > > Graph::getNetworkFunctionsControlConfiguration()
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+map<string, list<pair<string, string> > > Graph::getNetworkFunctionsControlPorts()
 {
-	return networkFunctionsControlConfiguration;
+	return networkFunctionsControlPorts;
 }
+#endif
 
 list<Rule> Graph::getRules()
 {
@@ -172,14 +174,16 @@ bool Graph::addNetworkFunctionPortConfiguration(string nf, pair<string, string> 
 	return true;
 }
 
-bool Graph::addNetworkFunctionControlConfiguration(string nf, pair<string, string> control)
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+bool Graph::addNetworkFunctionControlPort(string nf, pair<string, string> control)
 {
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunctionControlConfiguration(\"%s\"->\"%s\":\"%s\")",nf.c_str(), control.first.c_str(), control.second.c_str());
 
-	networkFunctionsControlConfiguration[nf].push_back(control);
+	networkFunctionsControlPorts[nf].push_back(control);
 	
 	return true;
 }
+#endif
 
 bool Graph::updateNetworkFunction(string nf, unsigned int port)
 {

@@ -56,7 +56,9 @@ typedef struct
 		
 		map<unsigned int, string> namesOfPortsOnTheSwitch;
 		list<pair<string, string> > portsConfiguration;
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 		list<pair<string, string> > controlConfiguration;
+#endif
 	}to_thread_t;
 
 class GraphManager

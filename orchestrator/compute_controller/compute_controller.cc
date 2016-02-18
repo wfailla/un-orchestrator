@@ -737,9 +737,14 @@ void ComputeController::setLsiID(uint64_t lsiID)
 	this->lsiID = lsiID;
 }
 
-bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string> > portsConfiguration, list<pair<string, string> > controlConfiguration)
+bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string> > portsConfiguration
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	, list<pair<string, string> > controlConfiguration
+#endif
+	)
 {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"", nf_name.c_str());
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	if(!controlConfiguration.empty())
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tControl (%d):",controlConfiguration.size());
@@ -751,6 +756,7 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tVnf tcp port -> %s",(n->second).c_str());
 		}
 	}
+#endif
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
 	list<pair<string, string> >::iterator it1 = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
@@ -774,8 +780,11 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
 	
-	
-	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, portsConfiguration, controlConfiguration, calculateCoreMask(nfsManager->getCores()));
+	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, portsConfiguration, 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		controlConfiguration, 
+#endif
+		calculateCoreMask(nfsManager->getCores()));
 
 	if(!nfsManager->startNF(sni))
 	{

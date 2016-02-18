@@ -803,8 +803,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 										sss << vnf_tcp_port;
 
-										//Add VNF control ports descriptions
-										if(!graph.addNetworkFunctionControlConfiguration(name, make_pair(ss.str(), sss.str())))
+										//Add VNF control port description
+										if(!graph.addNetworkFunctionControlPort(name, make_pair(ss.str(), sss.str())))
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;

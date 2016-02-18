@@ -54,12 +54,14 @@ private:
 	*/
 	t_nfs_configuration networkFunctionsConfiguration;
 	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
-	*	@brief: for each NF attached to the graph specifies a list of pair elements 
-	* 		(host tcp port, vnf tcp port)
+	*	@brief: for each VNF attached to the graph specifies a list of pair elements 
+	* 		(host TCP port, VNF TCP port), which are the control connections for the VNF
 	*/
-	t_nfs_configuration networkFunctionsControlConfiguration;
-	
+	t_nfs_configuration networkFunctionsControlPorts;
+#endif	
+
 	/**
 	*	@brief: for each endpoint attached to the graph specifies a list of params 
 	* 		(gre key, local ip, remote ip)
@@ -147,13 +149,15 @@ public:
 	*/
 	bool addNetworkFunctionPortConfiguration(string nf, pair<string, string> description);
 	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
-	*	@brief: Add a NF control description to the graph
+	*	@brief: Add a VNF control port to the graph
 	*
 	*	@param:	nf	Name of the network function to be added
-	*	@param: control a pair of value <vnf_tcp_port, host_tcp_port>
+	*	@param: control port. It is a pair of value <vnf_tcp_port, host_tcp_port>
 	*/
-	bool addNetworkFunctionControlConfiguration(string nf, pair<string, string> control);
+	bool addNetworkFunctionControlPort(string nf, pair<string, string> control);
+#endif
 	
 	/**
 	*	@brief: Update a NF by adding a port
@@ -170,14 +174,16 @@ public:
 	t_nfs_ports_list getNetworkFunctions();
 	
 	/**
-	*	@brief: Return the NFs of the graph and the description of the ports they require
+	*	@brief: Return the VNFs of the graph and the description of the ports they require
 	*/
 	t_nfs_configuration getNetworkFunctionsConfiguration();
 	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
-	*	@brief: Return the NFs of the graph and the control ports they require
+	*	@brief: Return the VNFs of the graph and the control ports they require
 	*/
-	t_nfs_configuration getNetworkFunctionsControlConfiguration();
+	t_nfs_configuration getNetworkFunctionsControlPorts();
+#endif
 
 	/**
 	*	@brief: Add an end point to the graph, to be used to connect the graph itself with

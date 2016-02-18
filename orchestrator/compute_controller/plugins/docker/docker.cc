@@ -34,6 +34,22 @@ bool Docker::startNF(StartNFIn sni)
 		
 	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 		command << " "  << pn->second;
+		
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
+	list<pair<string, string> >  controlConnections = sni.getControlConfiguration();
+	command << " " << controlConnections.size();
+	if(controlConnections.size() != 0)
+	{
+		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "VNF '%s' requires %d control connections",nf_name.c_str(), controlConnections.size());
+		for(list<pair<string, string> >::iterator control = controlConnections.begin(); control != controlConnections.end(); control++)
+		{
+			logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t host TCP port: %s - VNF TCP port: %s",(control->first).c_str(), (control->second).c_str());
+			command << " " << control->first << " " << control->second;
+		}
+	}
+	
+		
+#endif
 
 	logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 

@@ -10,7 +10,11 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 	return ss.str();
 }
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, list <pair<string, string > > > network_functions_ports_configuration,map<string, list <pair<string, string > > > network_functions_control_configuration,map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, list <pair<string, string > > > network_functions_ports_configuration,
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	map<string, list <pair<string, string > > > network_functions_control_configuration,
+#endif	
+	map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
@@ -32,9 +36,11 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 		
 	//fill the map of NF ports configuration
 	this->network_functions_ports_configuration = network_functions_ports_configuration;
-	
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
 	//fill the map of NF control configuration
 	this->network_functions_control_configuration = network_functions_control_configuration;	
+#endif
 }
 
 string LSI::getControllerAddress()
@@ -252,10 +258,12 @@ list<pair<string, string> > LSI::getNetworkFunctionsPortsConfiguration(string nf
 	return network_functions_ports_configuration[nf];
 }
 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 list<pair<string, string> > LSI::getNetworkFunctionsControlConfiguration(string nf)
 {
 	return network_functions_control_configuration[nf];
 }
+#endif
 
 vector<VLink> LSI::getVirtualLinks()
 {

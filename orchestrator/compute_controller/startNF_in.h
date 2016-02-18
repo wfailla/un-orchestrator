@@ -43,10 +43,12 @@ private:
 	*/
 	list<pair<string, string> > portsConfiguration;
 	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	/**
 	*	@brief: list of control port associated with the network function
 	*/
 	list<pair<string, string> > controlConfiguration;
+#endif
 		
 	/**
 	*	@brief: mask of the cores to be assigned to the network functon.
@@ -55,8 +57,16 @@ private:
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string > > portsConfiguration, list<pair<string, string > > controlConfiguration, uint64_t coreMask = 0x0)
-		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), portsConfiguration(portsConfiguration), coreMask(coreMask)
+	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string > > portsConfiguration, 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	list<pair<string, string > > controlConfiguration, 
+#endif	
+		uint64_t coreMask = 0x0)
+			: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), portsConfiguration(portsConfiguration), 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+			controlConfiguration(controlConfiguration),
+#endif
+			coreMask(coreMask)
 	{
 	}
 	
@@ -81,11 +91,13 @@ public:
 	{
 		return portsConfiguration;
 	}
-	
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
 	const list<pair<string, string> >& getControlConfiguration() const
 	{
 		return controlConfiguration;
 	}
+#endif
 	
 	uint64_t getCoreMask() const
 	{
