@@ -29,15 +29,41 @@ bool Docker::startNF(StartNFIn sni)
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
+	//The first element is the mac address, the second is the ip address
+	//In case of empty string, such an information is not present
+	list<pair<string, string> > portsConfiguration = sni.getPortsConfiguration();
+	for(list<pair<string, string> >::iterator configuration = portsConfiguration.begin(); configuration != portsConfiguration.end(); configuration++)
+	{
+		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t MAC address: %s",(configuration->first).c_str());
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
+		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t IP address / netmask: %s",(configuration->second).c_str());
+#endif
+	}
+	
 	stringstream command;
 	command << PULL_AND_RUN_DOCKER_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
-		
-	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
-		command << " "  << pn->second;
-		
 	
-	//The first element is the mac address, the second is the ip address
-	//list<pair<string, string> > portsConfiguration = sni.getPortsConfiguration();
+	assert(portsConfiguration.size() == namesOfPortsOnTheSwitch.size());
+	list<pair<string, string> >::iterator configuration = portsConfiguration.begin();
+	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
+	{
+		command << " "  << pn->second;
+		command << " ";
+		if(configuration->first != "")
+			command <<  configuration->first;
+		else
+			command << 0;
+			
+		command << " ";
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+		if(configuration->second != "")
+			command <<  configuration->second;
+		else
+#endif
+			command << 0;
+			
+		configuration++;
+	}
 		
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
 	list<pair<string, string> >  controlConnections = sni.getControlPorts();
@@ -84,6 +110,7 @@ bool Docker::stopNF(StopNFIn sni)
 	return true;
 }
 
+#if 0
 unsigned int Docker::convertNetmask(string netmask)
 {
 	unsigned int slash = 0;
@@ -102,3 +129,4 @@ unsigned int Docker::convertNetmask(string netmask)
 	
 	return slash;
 }
+#endif
