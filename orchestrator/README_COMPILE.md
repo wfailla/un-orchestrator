@@ -14,7 +14,7 @@ In addition to the libraries already listed in the main [../README_COMPILE.md](.
 some more components are required to compile the un-orchestrator.
 In the following we list the steps required on an **Ubuntu 14.04**.
 
-	; Install ROFL-common  (library to parse OpenFlow messages)
+	; Install ROFL-common (library to parse OpenFlow messages)
 	; Alternatively, a copy of ROFL-common is provided in `[un-orchestrator]/contrib/rofl-common.zip`
 	; Please note that you have to use version 0.6; newer versions have a different API that
 	; is not compatible with our code.
@@ -25,15 +25,12 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Now install the above library according to the description provided
 	; in the cloned folder
-
+	
 	; Install inih (a nice library used to read the configuration file)
-	; Alernatively, a copy of inih is provided in `[un-orchestrator]/contrib/inih.zip`
-
-	$ git clone https://github.com/benhoyt/inih
-	$ cd inih/
-
-	; Now install the above library according to the description provided
-	; in the cloned folder
+	$ cd [un-orchestrator]/contrib
+	$ unzip inih.zip
+	$ cd inih
+	$ cp * ../../orchestrator/node_resource_manager/database_manager/SQLite
 
 The following libraries are required if you plan to enable, in the un-orchestrator, 
 the publisher/subscriber mechanism, that is used to export the configuration 
