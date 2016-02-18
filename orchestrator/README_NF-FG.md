@@ -2,7 +2,7 @@
 This section provides some examples of NF-FGs that can be deployed on the Universal
 Node through the un-orchestrator.
 
-Further examples are available in the `config` folder and at [https://github.com/netgroup-polito/nffg-library/blob/master/README_NFFG](https://github.com/netgroup-polito/nffg-library/blob/master/README_NFFG).
+Further examples are available in the [./config](./config) folder and at [https://github.com/netgroup-polito/nffg-library/blob/master/README_NFFG](https://github.com/netgroup-polito/nffg-library/blob/master/README_NFFG).
 
 ## Example 1
 
