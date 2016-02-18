@@ -366,7 +366,7 @@ bool Libvirt::startNF(StartNFIn sni)
 				xmlNodePtr mac_addr = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
 				xmlNewProp(mac_addr, BAD_CAST "address", BAD_CAST port_mac_address.c_str());
 			}
-#ifdef ENABLE_VNF_PORTS_IP_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 			if(!ip_address.empty())
 			{
 				xmlNodePtr ip_addr = xmlNewChild(ifn, NULL, BAD_CAST "ip", NULL);

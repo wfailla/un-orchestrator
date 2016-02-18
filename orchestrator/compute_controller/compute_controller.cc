@@ -788,7 +788,7 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %s", it->first, it->second.c_str());
 		if(!it1->first.empty())
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tMac address : %s", it1->first.c_str());
-#ifdef ENABLE_VNF_PORTS_IP_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		if(!it1->second.empty())
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tIp address/netmask : %s",  it1->second.c_str());
 #endif
