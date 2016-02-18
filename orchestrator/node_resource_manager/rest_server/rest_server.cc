@@ -1931,7 +1931,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 						
 								if(same_priority)
 								{
-									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "One or more flow rule with the same priority, switch can delete one of this rules");
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "One or more flow rule with the same priority...");
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Note that, if they match the same port, they may cause a conflict on the vSwitch!");
 								}
 							}// end  if (fg_name == FLOW_RULES)
 						}
