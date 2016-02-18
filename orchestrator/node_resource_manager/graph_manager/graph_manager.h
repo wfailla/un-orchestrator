@@ -264,7 +264,7 @@ public:
 	*/
 	bool deleteFlow(string graphID, string flowID);
 	
-#ifdef UNIFY_NFFG
+#if 0
 	/**
 	*	@brief: deletes a NF from the graph
 	*

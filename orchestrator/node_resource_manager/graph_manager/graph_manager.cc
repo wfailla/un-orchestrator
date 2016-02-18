@@ -471,7 +471,6 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		return false;
 	}
 
-#ifndef UNIFY_NFFG
 	//if the graph has only this flow, remove the entire graph
 	if(graph->getNumberOfRules() == 1)
 	{
@@ -479,15 +478,16 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		return deleteGraph(graphID);
 	}
 	
+#if 0
 	/**
 	*	The flow can be removed only if does not define an endpoint used by some other graph
 	*/
 	/*if(!canDeleteFlow(graph,flowID))
 		return false;*/	
+#endif
 				
 	string endpointInvolved = graph->getEndpointInvolved(flowID);
 	bool definedHere = true;
-#endif	
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Removing the flow from the LSI-0 graph");
 	Controller *lsi0Controller = graphInfoLSI0.getController();
@@ -508,7 +508,6 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	
 	removeUselessPorts_NFs_Endpoints_VirtualLinks(rri,nfs_manager,graph,lsi);
 
-#ifndef UNIFY_NFFG	
 	if(endpointInvolved != "")
 	{
 		if(definedHere)
@@ -521,7 +520,6 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" still used %d times",endpointInvolved.c_str(), availableEndPoints[endpointInvolved]);
 		}
 	}
-#endif
 	
 	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 	
@@ -1860,7 +1858,7 @@ next2:
 #endif
 }
 
-#ifdef UNIFY_NFFG
+#if 0
 bool GraphManager::stopNetworkFunction(string graphID, string nf_name)
 {
 	//TODO: the NF must not have flows associated!!
@@ -1933,7 +1931,7 @@ string GraphManager::findEndPointTowardsNF(highlevel::Graph *graph, string nf)
 	return ""; //just for the compiler
 }
 
-#ifndef UNIFY_NFFG
+#if 0
 bool GraphManager::canDeleteFlow(highlevel::Graph *graph, string flowID)
 {
 	highlevel::Rule r = graph->getRuleFromID(flowID);
