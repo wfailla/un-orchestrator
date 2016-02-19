@@ -1,3 +1,6 @@
+Ivano
+The examples in orchestrator/config must be updated to the new nf-fg.
+
 Mauricio (26-Jan-2016)
 When there is a missing semicolon in the rules list on a NF-FG file, it
 is still considered valid but all the rules after the missing semicolon are ignored.
