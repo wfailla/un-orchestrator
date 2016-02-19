@@ -129,7 +129,7 @@ map<string, map<unsigned int, port_network_config > > Graph::getNetworkFunctions
 }
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-map<string, list<pair<string, string> > > Graph::getNetworkFunctionsControlPorts()
+map<string, list<port_mapping_t > > Graph::getNetworkFunctionsControlPorts()
 {
 	return networkFunctionsControlPorts;
 }

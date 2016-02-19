@@ -185,7 +185,7 @@ public:
 	/**
 	*	@brief: Return the VNFs of the graph and the control ports they require
 	*/
-	t_nfs_configuration getNetworkFunctionsControlPorts();
+	t_nfs_control getNetworkFunctionsControlPorts();
 #endif
 
 	/**

@@ -29,14 +29,14 @@ bool Docker::startNF(StartNFIn sni)
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
-	//The first element is the mac address, the second is the ip address
+	//The second element of a map is a structure that have two elements, the mac address and the ip address
 	//In case of empty string, such an information is not present
-	list<pair<string, string> > portsConfiguration = sni.getPortsConfiguration();
-	for(list<pair<string, string> >::iterator configuration = portsConfiguration.begin(); configuration != portsConfiguration.end(); configuration++)
+	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
+	for(map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin(); configuration != portsConfiguration.end(); configuration++)
 	{
-		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t MAC address: %s",(configuration->first).c_str());
+		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t MAC address: %s",(configuration->second.mac_address).c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t IP address / netmask: %s",(configuration->second).c_str());
+		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t IP address: %s",(configuration->second.ip_address).c_str());
 #endif
 	}
 	
@@ -44,20 +44,20 @@ bool Docker::startNF(StartNFIn sni)
 	command << PULL_AND_RUN_DOCKER_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
 	
 	assert(portsConfiguration.size() == namesOfPortsOnTheSwitch.size());
-	list<pair<string, string> >::iterator configuration = portsConfiguration.begin();
+	map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 	{
 		command << " "  << pn->second;
 		command << " ";
-		if(configuration->first != "")
-			command <<  configuration->first;
+		if(configuration->second.mac_address != "")
+			command <<  configuration->second.mac_address;
 		else
 			command << 0;
 			
 		command << " ";
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-		if(configuration->second != "")
-			command <<  configuration->second;
+		if(configuration->second.ip_address != "")
+			command <<  configuration->second.ip_address;
 		else
 #endif
 			command << 0;
@@ -66,15 +66,15 @@ bool Docker::startNF(StartNFIn sni)
 	}
 		
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-	list<pair<string, string> >  controlConnections = sni.getControlPorts();
+	list<port_mapping_t >  controlConnections = sni.getControlPorts();
 	command << " " << controlConnections.size();
 	if(controlConnections.size() != 0)
 	{
 		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "VNF '%s' requires %d control connections",nf_name.c_str(), controlConnections.size());
-		for(list<pair<string, string> >::iterator control = controlConnections.begin(); control != controlConnections.end(); control++)
+		for(list<port_mapping_t >::iterator control = controlConnections.begin(); control != controlConnections.end(); control++)
 		{
-			logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t host TCP port: %s - VNF TCP port: %s",(control->first).c_str(), (control->second).c_str());
-			command << " " << control->first << " " << control->second;
+			logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t host TCP port: %s - VNF TCP port: %s",(control->host_port).c_str(), (control->guest_port).c_str());
+			command << " " << control->host_port << " " << control->guest_port;
 		}
 	}
 #else

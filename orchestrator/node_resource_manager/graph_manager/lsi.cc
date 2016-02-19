@@ -12,7 +12,7 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 
 LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration,
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	map<string, list <pair<string, string > > > network_functions_control_configuration,
+	map<string, list <port_mapping_t > > network_functions_control_configuration,
 #endif	
 	map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
@@ -259,7 +259,7 @@ map<unsigned int, port_network_config > LSI::getNetworkFunctionsPortsConfigurati
 }
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-list<pair<string, string> > LSI::getNetworkFunctionsControlConfiguration(string nf)
+list<port_mapping_t > LSI::getNetworkFunctionsControlConfiguration(string nf)
 {
 	return network_functions_control_configuration[nf];
 }

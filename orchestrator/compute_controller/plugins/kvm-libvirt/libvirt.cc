@@ -315,7 +315,13 @@ bool Libvirt::startNF(StartNFIn sni)
 	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
 	map<unsigned int, port_network_config_t >::iterator pd = portsConfiguration.begin();
 	
-	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++)
+	list<port_mapping_t > control_ports = sni.getControlPorts();
+	for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
+	{
+		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "Host Port \"%s\": VNF port \"%s\"", cp->host_port.c_str(), cp->guest_port.c_str());			
+	}
+
+	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++, pd++)
 	{
 		const unsigned int port_id = p->first;
 		const string& port_name = p->second;
@@ -327,6 +333,8 @@ bool Libvirt::startNF(StartNFIn sni)
 		string ip_address = portsConfiguration[port_id].ip_address;
 		/* retrieve mac address */
 		string port_mac_address = portsConfiguration[port_id].mac_address;
+
+		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "\"%s\":\"%s\"", port_mac_address.c_str(), ip_address.c_str());
 
 		if (port_type == USVHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
@@ -389,8 +397,6 @@ bool Libvirt::startNF(StartNFIn sni)
 	    		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
 	    		return false;
 	    	}
-	    
-	    	pd++;
 	}
 
 	if (! ivshmemPorts.empty()) {

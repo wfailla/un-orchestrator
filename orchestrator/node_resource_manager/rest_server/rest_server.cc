@@ -776,6 +776,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										//This is a VNF control, with an host tcp port and a vnf tcp port 
 										Object control = control_array[ctrl].getObject();
 										
+										port_mapping_t port_mapping;
+
 										vector<string> port_descr(4);
 										
 										//Parse the control
@@ -803,8 +805,11 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 										sss << vnf_tcp_port;
 
+										port_mapping.host_port = ss.str();
+										port_mapping.guest_port = sss.str();
+
 										//Add VNF control port description
-										if(!graph.addNetworkFunctionControlPort(name, make_pair(ss.str(), sss.str())))
+										if(!graph.addNetworkFunctionControlPort(name, port_mapping))
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;

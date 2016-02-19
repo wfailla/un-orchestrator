@@ -83,7 +83,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 	map<string, list<unsigned int> > dummy_network_functions;
 	map<string, map<unsigned int, port_network_config > > dummy_network_functions_ports_configuration;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	map<string, list<pair<string, string> > > dummy_network_functions_control_configuration;
+	map<string, list<port_mapping_t > > dummy_network_functions_control_configuration;
 #endif
 	map<string, map<unsigned int, PortType> > dummy_nfs_ports_type;
 	map<string, vector<string> > dummy_endpoints;
@@ -683,7 +683,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions();
 	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	map<string, list<pair<string, string> > > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
+	map<string, list<port_mapping_t > > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
 #endif
 	map<string, vector<string> > endpoints = graph->getEndPoints();
 	
@@ -844,17 +844,17 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network functions (%d):",nfs.size());
 	for(set<string>::iterator it = nfs.begin(); it != nfs.end(); it++)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tNF %s:",it->c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tNF %s:",it->c_str());
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-		list<pair<string, string> > nfs_control_configuration = lsi->getNetworkFunctionsControlConfiguration(*it);
+		list<port_mapping_t > nfs_control_configuration = lsi->getNetworkFunctionsControlConfiguration(*it);
 		if(!nfs_control_configuration.empty())
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tControl interfaces (%d):",nfs_control_configuration.size());
-			for(list<pair<string,string> >::iterator n = nfs_control_configuration.begin(); n != nfs_control_configuration.end(); n++)
+			for(list<port_mapping_t >::iterator n = nfs_control_configuration.begin(); n != nfs_control_configuration.end(); n++)
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tHost TCP port -> %s",(n->first).c_str());
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->second).c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tHost TCP port -> %s",(n->host_port).c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
 			}
 		}
 #endif
@@ -867,12 +867,12 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		map<unsigned int, port_network_config >::iterator nd = nfs_ports_configuration.begin();
 		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++, nd++)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t%s -> %d",(n->first).c_str(),nd->first);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s -> %d",(n->first).c_str(),nd->first);
 			if(!(nd->second.mac_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tMac address -> %s",(nd->second.mac_address).c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tMac address -> %s",(nd->second.mac_address).c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 			if(!(nd->second.ip_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tIp address -> %s",(nd->second.ip_address).c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tIp address -> %s",(nd->second.ip_address).c_str());
 #endif
 		}
 	}
@@ -882,18 +882,18 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		int id = 0;
 		sscanf(it->first.c_str(), "%d", &id);
 		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tID %d:", id);
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tKey: %s", it->second[0].c_str());
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tLocal ip: %s", it->second[1].c_str());
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tRemote_ip: %s", it->second[2].c_str());
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPhysical port: %s", it->second[3].c_str());
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tSecure: %s", it->second[4].c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tID %d:", id);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tKey: %s", it->second[0].c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tLocal ip: %s", it->second[1].c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tRemote_ip: %s", it->second[2].c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tPhysical port: %s", it->second[3].c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tSecure: %s", it->second[4].c_str());
 	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual links (%u): ",vls.size());
 
 	for(vector<VLink>::iterator v = vls.begin(); v != vls.end(); v++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t(ID: %x) %x:%d -> %x:%d",v->getID(),dpid,v->getLocalID(),v->getRemoteDpid(),v->getRemoteID());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t(ID: %x) %x:%d -> %x:%d",v->getID(),dpid,v->getLocalID(),v->getRemoteDpid(),v->getRemoteID());
 
 	//associate the vlinks to the NFs ports
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF port is virtual link ID:");
@@ -904,7 +904,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		for(set<string>::iterator nf = vlNFs.begin(); nf != vlNFs.end(); nf++, vl1++)
 		{
 			nfs_vlinks[*nf] = vl1->getID();
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*nf).c_str(),vl1->getID());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*nf).c_str(),vl1->getID());
 		}
 		lsi->setNFsVLinks(nfs_vlinks);
 		//associate the vlinks to the physical ports
@@ -914,7 +914,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		for(set<string>::iterator p = vlPhyPorts.begin(); p != vlPhyPorts.end(); p++, vl2++)
 		{
 			ports_vlinks[*p] = vl2->getID();
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*p).c_str(),vl2->getID());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*p).c_str(),vl2->getID());
 		}
 		lsi->setPortsVLinks(ports_vlinks);
 	
@@ -926,7 +926,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		for(set<string>::iterator ep = vlEndPoints.begin(); ep != vlEndPoints.end(); ep++, vl3++)
 		{			
 			endpoints_vlinks[*ep] = vl3->getID();
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %x",(*ep).c_str(),vl3->getID());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*ep).c_str(),vl3->getID());
 		}
 		lsi->setEndPointsVLinks(endpoints_vlinks);
 	}
@@ -1427,7 +1427,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
 		map<unsigned int, port_network_config_t > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(nf->first);
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-		list<pair<string, string> > nfs_control_configuration = lsi->getNetworkFunctionsControlConfiguration(nf->first);
+		list<port_mapping_t > nfs_control_configuration = lsi->getNetworkFunctionsControlConfiguration(nf->first);
 #endif
 		if(!computeController->startNF(nf->first, nfPortIdToNameOnSwitch, nfs_ports_configuration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION			

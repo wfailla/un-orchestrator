@@ -49,7 +49,7 @@ private:
 	/**
 	*	@brief: list of control ports associated with the network function
 	*/
-	list<pair<string, string> > controlPorts;
+	list<port_mapping_t > controlPorts;
 #endif
 		
 	/**
@@ -61,7 +61,7 @@ private:
 protected:
 	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration, 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	list<pair<string, string > > controlPorts,
+	list<port_mapping_t > controlPorts,
 #endif	
 		uint64_t coreMask = 0x0)
 			: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), portsConfiguration(portsConfiguration), 
@@ -95,7 +95,7 @@ public:
 	}
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-	const list<pair<string, string> >& getControlPorts() const
+	const list<port_mapping_t >& getControlPorts() const
 	{
 		return controlPorts;
 	}

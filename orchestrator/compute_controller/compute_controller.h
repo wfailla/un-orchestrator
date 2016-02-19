@@ -175,7 +175,7 @@ public:
 	*/
 	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		, list<pair<string, string> > controlConfiguration
+		, list<port_mapping_t > controlConfiguration
 #endif
 		);
 	

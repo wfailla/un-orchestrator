@@ -739,7 +739,7 @@ void ComputeController::setLsiID(uint64_t lsiID)
 
 bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	, list<pair<string, string> > controlConfiguration
+	, list<port_mapping_t > controlConfiguration
 #endif
 	)
 {
@@ -748,24 +748,24 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 	if(!controlConfiguration.empty())
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tControl (%d):",controlConfiguration.size());
-		for(list<pair<string,string> >::iterator n = controlConfiguration.begin(); n != controlConfiguration.end(); n++)
+		for(list<port_mapping_t >::iterator n = controlConfiguration.begin(); n != controlConfiguration.end(); n++)
 		{
-			if(!(n->first).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tHost tcp port -> %s",(n->first).c_str());
-			if(!(n->second).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tVnf tcp port -> %s",(n->second).c_str());
+			if(!(n->host_port).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tHost tcp port -> %s",(n->host_port).c_str());
+			if(!(n->guest_port).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tVnf tcp port -> %s",(n->guest_port).c_str());
 		}
 	}
 #endif
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
 	map<unsigned int, port_network_config_t >::iterator it1 = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %d", it->first, it1->first);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%d : %d", it->first, it1->first);
 		if(!it1->second.mac_address.empty())
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tMac address : %s", it1->second.mac_address.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tMac address : %s", it1->second.mac_address.c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		if(!it1->second.ip_address.empty())
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tIp address : %s",  it1->second.ip_address.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tIp address : %s",  it1->second.ip_address.c_str());
 #endif
 		it1++;
 	}
