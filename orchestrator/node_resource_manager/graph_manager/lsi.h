@@ -6,6 +6,8 @@
 #include "virtual_link.h"
 #include "../../compute_controller/description.h"
 
+#include "../graph/high_level_graph/nf_port_configuration.h"
+
 #include <map>
 #include <set>
 #include <list>
@@ -104,7 +106,7 @@ private:
 	*		The map is
 	*			<nf name, list<pair<mac address, ip address>> >
 	*/
-	map<string, list<pair<string, string> > > network_functions_ports_configuration;
+	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration;
 	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	/**
@@ -142,7 +144,7 @@ private:
 public:
 
 	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, 
-		map<string, list <pair<string, string > > > network_functions_ports_configuration, 
+		map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration, 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 		map<string, list <pair<string, string > > > network_functions_control_configuration, 
 #endif
@@ -163,7 +165,7 @@ public:
 
 	set<string> getNetworkFunctionsName();
 	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
-	list<pair<string, string> > getNetworkFunctionsPortsConfiguration(string nf);
+	map<unsigned int, port_network_config > getNetworkFunctionsPortsConfiguration(string nf);
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	list<pair<string, string> > getNetworkFunctionsControlConfiguration(string nf);
 #endif

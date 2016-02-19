@@ -10,7 +10,7 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 	return ss.str();
 }
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, list <pair<string, string > > > network_functions_ports_configuration,
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration,
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	map<string, list <pair<string, string > > > network_functions_control_configuration,
 #endif	
@@ -253,7 +253,7 @@ map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
 	return nf_data.ports_switch_id;
 }
 
-list<pair<string, string> > LSI::getNetworkFunctionsPortsConfiguration(string nf)
+map<unsigned int, port_network_config > LSI::getNetworkFunctionsPortsConfiguration(string nf)
 {
 	return network_functions_ports_configuration[nf];
 }

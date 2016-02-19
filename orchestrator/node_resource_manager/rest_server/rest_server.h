@@ -51,6 +51,8 @@
 #include "../graph/vlan_action.h"
 #include "match_parser.h"
 
+#include "../graph/high_level_graph/nf_port_configuration.h"
+
 #include "../database_manager/SQLite/SQLiteManager.h"
 
 #include <json_spirit/json_spirit.h>

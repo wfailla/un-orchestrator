@@ -81,7 +81,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 
 	//The three following structures are empty. No NF and no virtual link is attached.
 	map<string, list<unsigned int> > dummy_network_functions;
-	map<string, list<pair<string, string> > > dummy_network_functions_ports_configuration;
+	map<string, map<unsigned int, port_network_config > > dummy_network_functions_ports_configuration;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	map<string, list<pair<string, string> > > dummy_network_functions_control_configuration;
 #endif
@@ -681,7 +681,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	set<string> phyPorts = graph->getPorts();
 
 	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions();
-	map<string, list<pair<string, string> > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
+	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	map<string, list<pair<string, string> > > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
 #endif
@@ -697,7 +697,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	In principle a virtual link could also be shared between a NF port and an endpoint but, for simplicity, we
 	*	use separated virtual links in case of endpoint.
 	*/
-	unsigned int numberOfVLrequired = vlPhyPorts.size();
+	unsigned int numberOfVLrequired = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new LSI with LSI-0",numberOfVLrequired);
 	
@@ -861,18 +861,18 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		
 		map<string,unsigned int> nfs_ports = lsi->getNetworkFunctionsPorts(*it);
 		
-		list<pair<string, string> > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(*it);
+		map<unsigned int, port_network_config > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(*it);
 		
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nfs_ports.size());
-		list<pair<string, string> >::iterator nd = nfs_ports_configuration.begin();
+		map<unsigned int, port_network_config >::iterator nd = nfs_ports_configuration.begin();
 		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++, nd++)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t%s -> %d",(n->first).c_str(),n->second);
-			if(!(nd->first).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tMac address -> %s",(nd->first).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t%s -> %d",(n->first).c_str(),nd->first);
+			if(!(nd->second.mac_address).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tMac address -> %s",(nd->second.mac_address).c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-			if(!(nd->second).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tIp address/netmask -> %s",(nd->second).c_str());
+			if(!(nd->second.ip_address).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tIp address -> %s",(nd->second.ip_address).c_str());
 #endif
 		}
 	}
@@ -947,8 +947,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		
-
 		thr[i].nf_name = nf->first;
 		thr[i].computeController = computeController;
 		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
@@ -1257,7 +1255,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	set<string> vlEndPoints = vlVector[2];
 
 	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)
-	unsigned int numberOfVLrequired = vlPhyPorts.size();
+	unsigned int numberOfVLrequired = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);
 
@@ -1427,7 +1425,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
-		list<pair<string, string> > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(nf->first);
+		map<unsigned int, port_network_config_t > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(nf->first);
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 		list<pair<string, string> > nfs_control_configuration = lsi->getNetworkFunctionsControlConfiguration(nf->first);
 #endif

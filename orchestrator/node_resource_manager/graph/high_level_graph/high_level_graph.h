@@ -21,6 +21,8 @@
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
 
+#include "nf_port_configuration.h"
+
 #include <json_spirit/json_spirit.h>
 #include <json_spirit/value.h>
 #include <json_spirit/writer.h>
@@ -38,7 +40,8 @@ class Graph
 {
 public:
 	typedef map<string, list<unsigned int> > t_nfs_ports_list;
-	typedef map<string, list<pair<string, string> > > t_nfs_configuration;
+	typedef map<string, map<unsigned int, port_network_config_t > > t_nfs_configuration;
+	typedef map<string, list<port_mapping_t > > t_nfs_control;
 
 private:	
 	/**
@@ -59,7 +62,7 @@ private:
 	*	@brief: for each VNF attached to the graph specifies a list of pair elements 
 	* 		(host TCP port, VNF TCP port), which are the control connections for the VNF
 	*/
-	t_nfs_configuration networkFunctionsControlPorts;
+	t_nfs_control networkFunctionsControlPorts;
 #endif	
 
 	/**
@@ -147,7 +150,7 @@ public:
 	*	@param:	nf	Name of the network function to be added
 	*	@param: description a pair of value <mac address, ip address>
 	*/
-	bool addNetworkFunctionPortConfiguration(string nf, pair<string, string> description);
+	bool addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > description);
 	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
@@ -156,7 +159,7 @@ public:
 	*	@param:	nf	Name of the network function to be added
 	*	@param: control port. It is a pair of value <vnf_tcp_port, host_tcp_port>
 	*/
-	bool addNetworkFunctionControlPort(string nf, pair<string, string> control);
+	bool addNetworkFunctionControlPort(string nf, port_mapping_t control);
 #endif
 	
 	/**

@@ -55,7 +55,7 @@ typedef struct
 		ComputeController *computeController;
 		
 		map<unsigned int, string> namesOfPortsOnTheSwitch;
-		list<pair<string, string> > portsConfiguration;
+		map<unsigned int, port_network_config_t > portsConfiguration;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 		list<pair<string, string> > controlConfiguration;
 #endif

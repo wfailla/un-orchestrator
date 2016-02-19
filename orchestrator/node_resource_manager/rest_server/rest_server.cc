@@ -717,7 +717,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							map<string,string> ipv4_addresses; 	//port name, ipv4 address
 							map<string,string> ipv4_masks;		//port name, ipv4 address
 
-							string id, name, vnf_template, groups, port_id, port_name, port_mac, port_ip;
+							string id, name, vnf_template, groups, port_id, port_name;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 							int vnf_tcp_port, host_tcp_port;
 							//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
@@ -818,6 +818,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								{
 									const Array& ports_array = nf_value.getArray();
 								
+									map<unsigned int, port_network_config_t > vnf_port_config;
+
 									//Itearate on the ports
 									for( unsigned int ports = 0; ports < ports_array.size(); ++ports )
 									{
@@ -826,6 +828,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										
 										vector<string> port_descr(4);
 										
+										port_network_config_t port_config;
+
 										//Parse the port
 										for(Object::const_iterator p = port.begin(); p != port.end(); p++)
 										{
@@ -851,8 +855,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											else if(p_name == PORT_MAC)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_MAC,p_value.getString().c_str());
-												port_mac = p_value.getString();
-												port_descr[2] = port_mac;
+
+												port_config.mac_address = p_value.getString();
+												port_descr[2] = port_config.mac_address;
 											}
 											else if(p_name == PORT_IP)
 											{
@@ -861,8 +866,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												continue;
 #else																			
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
-												port_ip = p_value.getString();
-												port_descr[3] = port_ip;
+
+												port_config.ip_address = p_value.getString();
+												port_descr[3] = port_config.ip_address;
 #endif
 											}
 											else
@@ -872,8 +878,11 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											}
 										}
 										
+										//Each VNF port has its own configuration if provided
+										vnf_port_config[ports+1] = port_config;
+
 										//Add NF ports descriptions
-										if(!graph.addNetworkFunctionPortConfiguration(name, make_pair(port_mac, port_ip)))
+										if(!graph.addNetworkFunctionPortConfiguration(name, vnf_port_config))
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;

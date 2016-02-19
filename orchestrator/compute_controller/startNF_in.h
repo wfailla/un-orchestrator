@@ -8,6 +8,8 @@
 #include <inttypes.h>
 #include <list>
 
+#include "../node_resource_manager/graph/high_level_graph/nf_port_configuration.h"
+
 /**
 * @file StartNFIn_in.h
 *
@@ -39,9 +41,9 @@ private:
 	map<unsigned int, string> namesOfPortsOnTheSwitch;
 	
 	/**
-	*	@brief: list of ports with own configuration associated with the network function
+	*	@brief: mapping of port_id to configuration (mac_address, ip_address) associated with the network function
 	*/
-	list<pair<string, string> > portsConfiguration;
+	map<unsigned int, port_network_config_t > portsConfiguration;
 	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	/**
@@ -57,7 +59,7 @@ private:
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string > > portsConfiguration, 
+	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration, 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	list<pair<string, string > > controlPorts,
 #endif	
@@ -87,7 +89,7 @@ public:
 		return namesOfPortsOnTheSwitch;
 	}
 	
-	const list<pair<string, string> >& getPortsConfiguration() const
+	const map<unsigned int, port_network_config_t >& getPortsConfiguration() const
 	{
 		return portsConfiguration;
 	}

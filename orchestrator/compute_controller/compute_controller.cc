@@ -737,7 +737,7 @@ void ComputeController::setLsiID(uint64_t lsiID)
 	this->lsiID = lsiID;
 }
 
-bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string> > portsConfiguration
+bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	, list<pair<string, string> > controlConfiguration
 #endif
@@ -758,14 +758,14 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 	}
 #endif
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
-	list<pair<string, string> >::iterator it1 = portsConfiguration.begin();
+	map<unsigned int, port_network_config_t >::iterator it1 = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %s", it->first, it->second.c_str());
-		if(!it1->first.empty())
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tMac address : %s", it1->first.c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d : %d", it->first, it1->first);
+		if(!it1->second.mac_address.empty())
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tMac address : %s", it1->second.mac_address.c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		if(!it1->second.empty())
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tIp address/netmask : %s",  it1->second.c_str());
+		if(!it1->second.ip_address.empty())
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tIp address : %s",  it1->second.ip_address.c_str());
 #endif
 		it1++;
 	}

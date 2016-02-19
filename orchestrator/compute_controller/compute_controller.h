@@ -173,7 +173,7 @@ public:
 	*	@param: portsConfiguration		Ports configuration (mac address, ip address)
 	*	@param: controlConfiguration	Control ports configuration (host TCP port, VNF TCP port)
 	*/
-	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, list<pair<string, string> > portsConfiguration
+	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		, list<pair<string, string> > controlConfiguration
 #endif

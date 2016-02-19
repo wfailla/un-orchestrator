@@ -312,25 +312,25 @@ bool Libvirt::startNF(StartNFIn sni)
 	vector< pair<string, string> > ivshmemPorts; // name, alias
 
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
-	list<pair<string, string> > portsConfiguration = sni.getPortsConfiguration();
-	list<pair<string, string> >::iterator pd = portsConfiguration.begin();
-	string port_ip_address = pd->second;
-	
-	/* retrieve ip address */
-	string ip_address = splitIpNetmask(port_ip_address);
+	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
+	map<unsigned int, port_network_config_t >::iterator pd = portsConfiguration.begin();
 	
 	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++)
 	{
 		const unsigned int port_id = p->first;
 		const string& port_name = p->second;
-		string port_mac_address = pd->first;
 
 		PortType port_type = description->getPortTypes().at(port_id);
 		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "NF Port \"%s\":%d (%s) is of type %s", nf_name.c_str(), port_id, port_name.c_str(), portTypeToString(port_type).c_str());
 
-	    if (port_type == USVHOST_PORT) {
+		/* retrieve ip address */
+		string ip_address = portsConfiguration[port_id].ip_address;
+		/* retrieve mac address */
+		string port_mac_address = portsConfiguration[port_id].mac_address;
+
+		if (port_type == USVHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
-		    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
+			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
 
 			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
 			ostringstream sock_path_os;
@@ -339,25 +339,25 @@ bool Libvirt::startNF(StartNFIn sni)
 			xmlNewProp(srcn, BAD_CAST "path", BAD_CAST sock_path_os.str().c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "client");
 
-		    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
-		    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
+			xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
+			xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
 
-		    xmlNodePtr drvn = xmlNewChild(ifn, NULL, BAD_CAST "driver", NULL);
-		    xmlNodePtr drv_hostn = xmlNewChild(drvn, NULL, BAD_CAST "host", NULL);
-		    xmlNewProp(drv_hostn, BAD_CAST "csum", BAD_CAST "off");
-		    xmlNewProp(drv_hostn, BAD_CAST "gso", BAD_CAST "off");
-		    xmlNodePtr drv_guestn = xmlNewChild(drvn, NULL, BAD_CAST "guest", NULL);
-		    xmlNewProp(drv_guestn, BAD_CAST "tso4", BAD_CAST "off");
-		    xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
-		    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
-	    }
-	    else if (port_type == IVSHMEM_PORT) {
+			xmlNodePtr drvn = xmlNewChild(ifn, NULL, BAD_CAST "driver", NULL);
+			xmlNodePtr drv_hostn = xmlNewChild(drvn, NULL, BAD_CAST "host", NULL);
+			xmlNewProp(drv_hostn, BAD_CAST "csum", BAD_CAST "off");
+			xmlNewProp(drv_hostn, BAD_CAST "gso", BAD_CAST "off");
+			xmlNodePtr drv_guestn = xmlNewChild(drvn, NULL, BAD_CAST "guest", NULL);
+			xmlNewProp(drv_guestn, BAD_CAST "tso4", BAD_CAST "off");
+			xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
+			xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
+	    	}
+	    	else if (port_type == IVSHMEM_PORT) {
 			ostringstream local_name;  // Name of the port as known by the VNF internally - We set a convention here
 			local_name << "p" << port_id;  // Will result in p<n>_tx and p<n>_rx rings
 
 			ivshmemPorts.push_back(pair<string, string>(port_name, local_name.str()));
-	    }
-	    else if (port_type == VHOST_PORT) {
+	    	}
+	    	else if (port_type == VHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
@@ -382,15 +382,15 @@ bool Libvirt::startNF(StartNFIn sni)
 
 		    xmlNodePtr virt = xmlNewChild(ifn, NULL, BAD_CAST "virtualport", NULL);
 		    xmlNewProp(virt, BAD_CAST "type", BAD_CAST "openvswitch");
-	    }
-	    else
-	    {
-	    	assert(0 && "There is a BUG! You cannot be here!");
-	    	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
-	    	return false;
-	    }
+	    	}
+	    	else
+	    	{
+	    		assert(0 && "There is a BUG! You cannot be here!");
+	    		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
+	    		return false;
+	    	}
 	    
-	    pd++;
+	    	pd++;
 	}
 
 	if (! ivshmemPorts.empty()) {
