@@ -17,9 +17,9 @@ bool Dpdk::startNF(StartNFIn sni)
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-	list<pair<string, string> >  controlConnections = sni.getControlPorts();
-	if(controlConnections.size() != 0)
-		logger(ORCH_WARNING, DPDK_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by DPDK type", controlConnections.size(),nf_name.c_str());
+	list<port_mapping_t > control_ports = sni.getControlPorts();
+	if(control_ports.size() != 0)
+		logger(ORCH_WARNING, DPDK_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by DPDK type", control_ports.size(),nf_name.c_str());
 #endif
 		
 	string uri_image = description->getURI();	

@@ -66,12 +66,12 @@ bool Docker::startNF(StartNFIn sni)
 	}
 		
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-	list<port_mapping_t >  controlConnections = sni.getControlPorts();
-	command << " " << controlConnections.size();
-	if(controlConnections.size() != 0)
+	list<port_mapping_t >  control_ports = sni.getControlPorts();
+	command << " " << control_ports.size();
+	if(control_ports.size() != 0)
 	{
-		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "VNF '%s' requires %d control connections",nf_name.c_str(), controlConnections.size());
-		for(list<port_mapping_t >::iterator control = controlConnections.begin(); control != controlConnections.end(); control++)
+		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "VNF '%s' requires %d control connections",nf_name.c_str(), control_ports.size());
+		for(list<port_mapping_t >::iterator control = control_ports.begin(); control != control_ports.end(); control++)
 		{
 			logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t host TCP port: %s - VNF TCP port: %s",(control->host_port).c_str(), (control->guest_port).c_str());
 			command << " " << control->host_port << " " << control->guest_port;

@@ -315,11 +315,11 @@ bool Libvirt::startNF(StartNFIn sni)
 	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
 	map<unsigned int, port_network_config_t >::iterator pd = portsConfiguration.begin();
 	
-	list<port_mapping_t > control_ports = sni.getControlPorts();
-	for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
-	{
-		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "Host Port \"%s\": VNF port \"%s\"", cp->host_port.c_str(), cp->guest_port.c_str());			
-	}
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	list<port_mapping_t > control_ports = sni.getControlPorts();	
+	if(control_ports.size() != 0)
+		logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by DPDK type", control_ports.size(),nf_name.c_str());	
+#endif
 
 	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++, pd++)
 	{
@@ -329,12 +329,17 @@ bool Libvirt::startNF(StartNFIn sni)
 		PortType port_type = description->getPortTypes().at(port_id);
 		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "NF Port \"%s\":%d (%s) is of type %s", nf_name.c_str(), port_id, port_name.c_str(), portTypeToString(port_type).c_str());
 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		/* retrieve ip address */
 		string ip_address = portsConfiguration[port_id].ip_address;
+#endif
 		/* retrieve mac address */
 		string port_mac_address = portsConfiguration[port_id].mac_address;
 
-		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "\"%s\":\"%s\"", port_mac_address.c_str(), ip_address.c_str());
+		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "Interface \"%s\" associated with MAC address \"%s\"", port_name.c_str(), port_mac_address.c_str());
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "Interface \"%s\" associated with IP/netmask \"%s\"", port_name.c_str(), ip_address.c_str());
+#endif
 
 		if (port_type == USVHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);

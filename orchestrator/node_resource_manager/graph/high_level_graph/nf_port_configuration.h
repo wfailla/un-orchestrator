@@ -10,9 +10,18 @@ using namespace std;
 */
 typedef struct port_network_config
 {
-	string ip_address;
-	string netmask;
+	/**
+	*	@brief: MAC address to be assigned to the port
+	*		E.g., aa:bb:cc:dd:ee:ff
+	*/
 	string mac_address;
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	/**
+	*	@brief: IPv4/netmask to be assigned to the port
+	*		E.g., 10.0.0.1/24
+	*/
+	string ip_address;
+#endif
 }port_network_config_t;
 
 /**
