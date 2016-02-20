@@ -34,9 +34,13 @@ bool Docker::startNF(StartNFIn sni)
 	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
 	for(map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin(); configuration != portsConfiguration.end(); configuration++)
 	{
-		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t MAC address: %s",(configuration->second.mac_address).c_str());
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t IP address: %s",(configuration->second.ip_address).c_str());
+		logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Network configuration for port: %s:%d",nf_name.c_str(),configuration->first);
+	
+		if(configuration->second.mac_address != "")
+			logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t MAC address: %s",(configuration->second.mac_address).c_str());
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		if(configuration->second.ip_address != "")
+			logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t IP address: %s",(configuration->second.ip_address).c_str());
 #endif
 	}
 	
@@ -44,25 +48,25 @@ bool Docker::startNF(StartNFIn sni)
 	command << PULL_AND_RUN_DOCKER_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
 	
 	assert(portsConfiguration.size() == namesOfPortsOnTheSwitch.size());
-	map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin();
+	//map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 	{
+		port_network_config_t configuration = portsConfiguration[pn->first];
+	
 		command << " "  << pn->second;
 		command << " ";
-		if(configuration->second.mac_address != "")
-			command <<  configuration->second.mac_address;
+		if(configuration.mac_address != "")
+			command <<  configuration.mac_address;
 		else
 			command << 0;
 			
 		command << " ";
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-		if(configuration->second.ip_address != "")
-			command <<  configuration->second.ip_address;
+		if(configuration.ip_address != "")
+			command <<  configuration.ip_address;
 		else
 #endif
 			command << 0;
-			
-		configuration++;
 	}
 		
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
