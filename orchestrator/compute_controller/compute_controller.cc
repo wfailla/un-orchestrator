@@ -758,16 +758,19 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 	}
 #endif
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
-	map<unsigned int, port_network_config_t >::iterator it1 = portsConfiguration.begin();
+	//map<unsigned int, port_network_config_t >::iterator it1 = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%d : %d", it->first, it1->first);
-		if(!it1->second.mac_address.empty())
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tMac address : %s", it1->second.mac_address.c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%d : %s", it->first, it->second.c_str());
+		
+		port_network_config_t configuration = portsConfiguration[it->first];
+		
+		if(!configuration.mac_address.empty())
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tMAC address : %s", configuration.mac_address.c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		if(!it1->second.ip_address.empty())
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tIp address : %s",  it1->second.ip_address.c_str());
+		if(!configuration.ip_address.empty())
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tIP address : %s", configuration.ip_address.c_str());
 #endif
-		it1++;
+		//it1++;
 	}
 
 	if(nfs.count(nf_name) == 0)
