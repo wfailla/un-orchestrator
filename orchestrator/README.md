@@ -12,14 +12,14 @@ the physical node.
 More in detail, when it receives a command to deploy a new NF-FG, it does all
 the operations required to actually implement the forwarding graph:
 
-  * retrieve the most appropriate image for the selected virtual network
-    function (VNF);
+  * retrieve the most appropriate images for the selected virtual network
+    functions (VNFs);
   * configure the virtual switch (vSwitch) to create a new logical switching
-    instance (LSI) and the ports required to connect it to the VNF to be deployed;
-  * deploy and start the VNF;
+    instance (LSI) and the ports required to connect it to the VNFs to be deployed;
+  * deploy and start the VNFs;
   * translate the rules to steer the traffic into OpenFlow flowmod messages
-    to be sent to the vSwitch (some flowmod are sent to the new LSI, others
-    to the LSI-0, i.e. an LSI that steers the traffic into the proper graph.)
+    to be sent to the vSwitch (some flowmods are sent to the new LSI, others
+    to the LSI-0, i.e. an LSI that steers the traffic towards the proper graph.)
 
 Similarly, the un-orchestrator takes care of updating or destroying a graph,
 when the proper messages are received.
@@ -39,9 +39,8 @@ The network controller is the sub-module that interacts with the vSwitch.
 It consists of two parts:
 
   * the Openflow controller(s): a new Openflow controller is created for each
-    new LSI, which is used to steer the traffic among the ports of the LSI
-    itself;
-  * the switch manager: it is used to create/destroy LSIs and virtual ports,
+    new LSI, which steers the traffic among the ports of the LSI itself;
+  * the switch manager: it creates/destroys LSIs and virtual ports,
     and more. In practice, it allows the un-orchestrator to
     interact with the vSwitch in order to perform management operations. Each
     virtual switch implementation (e.g., xDPd, OvS) may require a different
@@ -59,7 +58,7 @@ that is connected to the physical interfaces; then, for each new graph to be dep
 a new `tenant-LSI` is created and connected to the LSI-0 through a number of 
 internal links. Since each one of these additional LSIs corresponds to a different 
 NF-FG, it is connected to the VNFs of such a NF-FG, and takes care of steering the 
-traffic among them as required by the graph description. Instead the LSI-0, being 
+traffic among them as required by the graph description. Contrarily, the LSI-0, being 
 the only one connected to the physical interfaces of the UN and to all the other 
 graphs, dispatches the traffic entering into the node to the proper graph, and properly 
 handles the packets already processed in a graph.
@@ -73,7 +72,7 @@ VNF ports (already created on the the vSwitch) to the VNF itself. Each
 execution environment may require a different implementation for the compute
 controller, according to the commands supported by the hypervisor itself.
 
-Currently the prototype supports virtual network functions as (KVM) VMs, Docker,
+Currently, the prototype supports virtual network functions as (KVM) VMs, Docker,
 DPDK processes and native functions, although only a subset of them can be
 available depending on the chosen vSwitch.
 If you are interested to add the support for a new hypervisor, please check the

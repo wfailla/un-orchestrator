@@ -1,82 +1,144 @@
 {  
-	"flow-graph":  
-	{  
+	"forwarding-graph":  
+	{
+		"id": "00000001",
+		"name": "Forwarding graph",
 		"VNFs": [  
-			{  
-				"id": "ctrl"  
+			{
+				"vnf_template": "OF-controller.json",  
+				"id": "00000001",
+				"name": "OF-controller",
+				"ports": [
+					{
+						"id": "inout:0",
+						"name": "data-port"
+					}
+				]
 			},
 			{
-				"id": "vnft5"
+				"vnf_template": "vnft5.json",
+				"id": "00000002",
+				"name": "vnft5",
+				"ports": [
+					{
+						"id": "inout:0",
+						"name": "data-port"
+					},
+					{
+						"id": "inout:1",
+						"name": "data-port"
+					},
+					{
+						"id": "inout:2",
+						"name": "data-port"
+					}
+				]
 			}  
-		],  
-		"flow-rules": [  
-			{  
-				"id": "1",  
-				"match":  
-				{  
-					"port" : "eth1"  
-				},  
-				"action":  
-				{  
-					"VNF_id": "vnft5:2"  
-				}  
-			},  
-			{  
-				"id": "2",  
-				"match":  
-				{  
-					"VNF_id" : "vnft5:2"  
-				},  
-				"action":  
-				{  
-					"port": "eth1"  
-				}  
+		],
+		"end-points":[
+			{
+				"id": "00000003",
+				"name": "port1",
+				"type": "interface",
+				"interface": {
+					"node-id": "10.0.1.1",
+					"interface": "eth1"
+				}
 			},
-
-                        {  
-				"id": "3",  
-				"match":  
-				{  
-                                       	"VNF_id": "vnft5:3"  
-				},  
-				"action":  
-				{  
-                                        "port" : "eth2"  
-				}  
-			},  
-			{  
-				"id": "4",  
-				"match":  
-				{  
-					"port": "eth2"  
-				},  
-				"action":  
-				{  
-                                        "VNF_id" : "vnft5:3"  
-				}  
-			},
-                        {  
-				"id": "5",  
-				"match":  
-				{  
-                                       	"VNF_id": "vnft5:1"  
-				},  
-				"action":  
-				{  
-                                        "VNF_id" : "ctrl:1"  
-				}  
-			},  
-			{  
-				"id": "6",  
-				"match":  
-				{  
-					"VNF_id": "ctrl:1"  
-				},  
-				"action":  
-				{  
-                                        "VNF_id" : "vnft5:1"  
-				}  
+			{
+				"id": "00000004",
+				"name": "port2",
+				"type": "interface",
+				"interface": {
+					"node-id": "10.0.1.2",
+					"interface": "eth2"
+				}
 			}
-		]  
+		],
+		"big-switch": {
+			"flow-rules": [  
+				{  
+					"id": "000000001",
+					"priority": 1,  
+					"match":  
+					{  
+						"port_in" : "endpoint:00000003"  
+					},  
+					"actions": [
+						{  
+							"output_to_port": "vnf:00000002:inout:1"  
+						} 
+					] 
+				},  
+				{  
+					"id": "000000002",
+					"priority": 1,  
+					"match":  
+					{  
+						"port_in" : "vnf:00000002:inout:1"  
+					},  
+					"actions":[
+						{  
+							"output_to_port": "endpoint:00000003"  
+						}
+					]  
+				},
+
+		                {  
+					"id": "000000003",
+					"priority": 1,  
+					"match":  
+					{  
+		                               	"port_in": "vnf:00000002:inout:2"  
+					},  
+					"actions": [
+						{  
+				                        "output_to_port" : "endpoint:00000004"  
+						}  
+					]
+				},  
+				{  
+					"id": "000000004",
+					"priority": 1,  
+					"match":  
+					{  
+						"port_in": "endpoint:00000004"  
+					},  
+					"actions":  [
+						{  
+				                        "output_to_port" : "vnf:00000002:inout:2"  
+						} 
+					]
+ 
+				},
+		                {  
+					"id": "000000005",
+					"priority": 1,  
+					"match":  
+					{  
+		                               	"port_in": "vnf:00000002:inout:0"  
+					},  
+					"actions": [
+						{  
+				                        "output_to_port" : "vnf:00000001:inout:0"  
+						}  
+					]
+
+				},  
+				{  
+					"id": "000000006",  
+					"match":  
+					{  
+						"port_in": "vnf:00000001:inout:0"  
+					},  
+					"actions": [
+						{  
+				                        "output_to_port" : "vnf:00000002:inout:0"  
+						}  
+					]
+
+				}
+			]
+		}   
 	}  
 }  
