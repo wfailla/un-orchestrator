@@ -292,7 +292,7 @@ bool Libvirt::startNF(StartNFIn sni)
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	list<port_mapping_t > control_ports = sni.getControlPorts();	
 	if(control_ports.size() != 0)
-		logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by DPDK type", control_ports.size(),nf_name.c_str());	
+		logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by KVM type", control_ports.size(),nf_name.c_str());	
 #endif
 
 	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++, pd++)
