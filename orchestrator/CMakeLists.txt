@@ -104,14 +104,6 @@ OPTION(
 	OFF
 )
 
-#OPTION(
-#	ENABLE_OVSDB_DPDK
-#	"Turn on to support OVS with DPDK netdev using the OVS-OVSDB netwrok controller plugin"
-#	OFF
-#)
-#IF(ENABLE_OVSDB_DPDK)
-#	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
-#ENDIF(ENABLE_OVSDB_DPDK)
 #################################################################################################################
 
 # Rather complicated CMake code for selecting the PubSub implementation

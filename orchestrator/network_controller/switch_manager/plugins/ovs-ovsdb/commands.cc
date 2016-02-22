@@ -1374,7 +1374,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 			
 	first_obj["where"] = where;
 
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removing dpi: %d", dpi);
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removing dpi: %d", dpi);
 	switch_uuid.erase(dpi);
 	
 	for(map<uint64_t, string>::iterator sww = switch_uuid.begin(); sww != switch_uuid.end(); sww++)
@@ -1452,10 +1452,10 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 		throw commandsException();
 	}
 			
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	root.clear();
 	params.clear();

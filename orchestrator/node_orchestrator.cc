@@ -43,6 +43,7 @@ SQLiteManager *dbm = NULL;
 bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file, bool *init_db, char **pwd);
 bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, bool *control, char **control_interface, char **local_ip, char **ipsec_certificate);
 bool usage(void);
+void printUniversalNodeInfo();
 bool doChecks(void);
 void terminateRestServer(void);
 bool createDB(SQLiteManager *dbm, char *pwd);
@@ -230,7 +231,8 @@ int main(int argc, char *argv[])
 	}
 	
 	signal(SIGINT,singint_handler);
-	
+
+	printUniversalNodeInfo();	
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The '%s' is started!",MODULE_NAME);
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Waiting for commands on TCP port \"%d\"",rest_port);
 	
@@ -453,6 +455,53 @@ bool usage(void)
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\n\n%s",message.str().c_str());
 	
 	return false;
+}
+
+/**
+*	Prints information about the vSwitch configured and the execution environments supported
+*/
+void printUniversalNodeInfo()
+{
+
+logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "************************************");
+
+#ifdef VSWITCH_IMPLEMENTATION_XDPD
+	string vswitch = "xDPd";
+#endif
+#ifdef VSWITCH_IMPLEMENTATION_OFCONFIG
+	string vswitch = "OvS with OFCONFIG protocol";
+#endif
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
+	stringstream ssvswitch;
+	ssvswitch << "OvS with OVSDB protocol";
+#ifdef ENABLE_OVSDB_DPDK	
+	ssvswitch << " (DPDK support enabled)";
+#endif	
+	string vswitch = ssvswitch.str();
+#endif
+#ifdef VSWITCH_IMPLEMENTATION_ERFS
+	string vswitch = "ERFS";
+#endif
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "* Virtual switch used: '%s'",vswitch.c_str());
+
+	list<string> executionenvironment;
+#ifdef ENABLE_KVM
+	executionenvironment.push_back("virtual machines");
+#endif
+#ifdef ENABLE_DOCKER
+	executionenvironment.push_back("Docker containers");
+#endif
+#ifdef ENABLE_DPDK_PROCESSES
+	executionenvironment.push_back("DPDK processes");
+#endif
+#ifdef ENABLE_NATIVE
+	executionenvironment.push_back("native functions");
+#endif
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "* Execution environments supported:");
+	for(list<string>::iterator ee = executionenvironment.begin(); ee != executionenvironment.end(); ee++)
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "* \t'%s'",ee->c_str());
+
+logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "************************************");
 }
 
 /**
