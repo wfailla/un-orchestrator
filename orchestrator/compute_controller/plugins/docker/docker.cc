@@ -29,8 +29,6 @@ bool Docker::startNF(StartNFIn sni)
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
-	//The second element of a map is a structure that have two elements, the mac address and the ip address
-	//In case of empty string, such an information is not present
 	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
 	for(map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin(); configuration != portsConfiguration.end(); configuration++)
 	{

@@ -16,6 +16,17 @@ bool Dpdk::startNF(StartNFIn sni)
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
 	
+	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
+	for(map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin(); configuration != portsConfiguration.end(); configuration++)
+	{
+		if(configuration->second.mac_address != "")
+			logger(ORCH_WARNING, DPDK_MODULE_NAME, __FILE__, __LINE__, "Required to assign MAC address to interface %s:%d. This feature is not supported by DPDK type",nf_name.c_str(),configuration->first);
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		if(configuration->second.ip_address != "")
+			logger(ORCH_WARNING, DPDK_MODULE_NAME, __FILE__, __LINE__, "Required to assign IP address to interface %s:%d. This feature is not supported by DPDK type",nf_name.c_str(),configuration->first);
+#endif
+	}
+	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
 	list<port_mapping_t > control_ports = sni.getControlPorts();
 	if(control_ports.size() != 0)
