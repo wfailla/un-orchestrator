@@ -1,7 +1,7 @@
 # Virtualizer
 
-The virtualizer is an intermediate module sit between the un-orchestrator and 
-the upper layer orchestrator. It operates as follows:
+The Virtualizer is an intermediate module sit between the un-orchestrator and the upper layers 
+of the Unify architecture. It operates as follows:
   * receives commands from the upper layer orchestrator based on the virtualizer 
     library defined by WP3;
   * converts those command in the formalism natively supported by the un-orchestrator
