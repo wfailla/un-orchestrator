@@ -26,7 +26,7 @@ when the proper messages are received.
 
 As evident in the picture below, which provides an overall view of the UN, the
 un-orchestrator includes several modules; the most important ones are the network
-controller and the compute controller, which are exploited by the un-orchestrator itself to interact
+controller and the compute controller, which are exploited to interact
 respectively with the vSwitch and the hypervisor(s). These two modules are detailed in
 the following.
 
