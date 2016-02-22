@@ -44,6 +44,100 @@ Then, register the new VNF in the name-resolver by adding the following piece of
 
 At this point, prepare a NF-FG and pass it to the un-orchestator, which will take care of executing all the operations required to implement the graph. The graph shown in the picture above can be described in the JSON syntax defined in WP5 as follow:
 
+	{
+		"forwarding-graph": 
+		{
+			"id": "00000001",
+			"name": "Forwarding graph",
+			"VNFs": [
+		  	{
+		    	"id": "00000001",
+		    	"name": "dummy",
+        		"ports": [
+          		{
+            		"id": "inout:0",
+            		"name": "data-port"
+          		},
+          		{
+            		"id": "inout:1",
+            		"name": "data-port"
+          		}
+        		]
+		  	}
+			],
+			"end-points": [
+		  	{
+		    	"id": "00000001",
+		    	"name": "ingress",
+		    	"type": "interface",
+		    	"interface": {
+		      		"interface": "eth0"
+		    	}
+		  	},
+		  	{
+		    	"id": "00000002",
+		    	"name": "egress",
+		    	"type": "interface",
+		    	"interface": {
+		      		"interface": "eth1"
+		    	}
+		  	}
+			],
+			"big-switch": {
+		  		"flow-rules": [
+		    	{
+		      		"id": "000000001",
+		      		"priority": 100,
+		      		"match": {
+		        		"port_in": "endpoint:00000001"
+		      		},
+		      		"actions": [
+		        	{
+		        		"output_to_port": "vnf:00000001:inout:0"
+		        	}
+		      		]
+		    	},
+		    	{
+		      		"id": "000000002",
+		      		"priority": 100,
+		      		"match": {
+		        		"port_in": "vnf:00000001:inout:1"
+		      		},
+		      		"actions": [
+		        	{
+		          		"output_to_port": "endpoint:00000002"
+		        	}
+		      		]
+		    	},
+		    	{
+		      		"id": "000000003",
+		      		"priority": 100,
+		      		"match": {
+		        		"port_in": "endpoint:00000002"
+		      		},
+		      		"actions": [
+		        	{
+		        		"output_to_port": "vnf:00000001:inout:1"
+		        	}
+		      		]
+		    	},
+		    	{
+		      		"id": "000000002",
+		      		"priority": 1,
+		      		"match": {
+		        		"port_in": "vnf:00000001:inout:0"
+		      		},
+		      		"actions": [
+		        	{
+		          		"output_to_port": "endpoint:00000001"
+		        	}
+		      		]
+		    	}
+		  		]
+			}
+	  	}
+	}
+
 
 	{
 		"flow-graph": {
