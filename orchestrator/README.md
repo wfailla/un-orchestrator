@@ -40,7 +40,7 @@ It consists of two parts:
 
   * the Openflow controller(s): a new Openflow controller is created for each
     new LSI, which steers the traffic among the ports of the LSI itself;
-  * the switch manager: it creates/destroys LSIs and virtual ports,
+  * the switch manager: it creates/destroys LSIs, virtual ports,
     and more. In practice, it allows the un-orchestrator to
     interact with the vSwitch in order to perform management operations. Each
     virtual switch implementation (e.g., xDPd, OvS) may require a different
