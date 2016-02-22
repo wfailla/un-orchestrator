@@ -81,7 +81,7 @@ file [compute_controller/README.md](compute_controller/README.md).
 
 ### Compute and network controllers: supported combinations
 
-The following table shows which execution environments
+The following table shows the execution environments that
 are supported with the different vSwitches.
 
 |                            |   Docker      |    KVM   |   KVM-DPDK (ivshmem)   |     DPDK processes     |  Native  |
