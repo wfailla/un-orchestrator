@@ -2,7 +2,7 @@
 
 ## Required libraries
 
-Several libraries are required to compile the universal node.
+Several libraries are required to compile the Universal Node (UN).
 In the following we list the steps required on an **Ubuntu 14.04**.
 
 	; Install required libraries
@@ -50,7 +50,7 @@ Simply downloading source code:
 	
 	; Your code is now in the `un-orchestrator-master` folder.
 
-In order to compile and setup the different components of the universal node,
+In order to compile and setup the different components of the Universal Node,
 you have to follow the instruction provided in each subfolder.
 
 
