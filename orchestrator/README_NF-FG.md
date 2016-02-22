@@ -7,7 +7,7 @@ Further examples are available in the [./config](./config) folder and at [https:
 ## Example 1
 
 This example is very simple: configures a graph that receives all the traffic
-from interface `eth0` and sends it to interface `eth1`, without traversing any
+from interface `eth1` and sends it to interface `eth2`, without traversing any
 VNF.
 
 	{
@@ -22,7 +22,7 @@ VNF.
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.1",
-		      		"interface": "eth0"
+		      		"interface": "eth1"
 		    	}
 		  	},
 		  	{
@@ -31,7 +31,7 @@ VNF.
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.2",
-		      		"interface": "eth1"
+		      		"interface": "eth2"
 		    	}
 		  	}
 			],
@@ -57,9 +57,9 @@ VNF.
 ## Example 2
 
 This example is more complex, and it includes a network function called "firewall".
-Packets coming from the interface `eth0` are sent to the first port of the network
+Packets coming from the interface `eth1` are sent to the first port of the network
 function (`firewall:1`), while packets coming from the second port of the network
-function (`firewall:2`) are sent on the network interface `eth1`.
+function (`firewall:2`) are sent on the network interface `eth2`.
 
 	{
 		"forwarding-graph": 
@@ -68,7 +68,6 @@ function (`firewall:2`) are sent on the network interface `eth1`.
 			"name": "Forwarding graph",
 			"VNFs": [
 		  	{
-		    	"vnf_template": "firewall.json",
 		    	"id": "00000001",
 		    	"name": "firewall",
         		"ports": [
@@ -90,7 +89,7 @@ function (`firewall:2`) are sent on the network interface `eth1`.
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.1",
-		      		"interface": "eth0"
+		      		"interface": "eth1"
 		    	}
 		  	},
 		  	{
@@ -99,7 +98,7 @@ function (`firewall:2`) are sent on the network interface `eth1`.
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.2",
-		      		"interface": "eth1"
+		      		"interface": "eth2"
 		    	}
 		  	}
 			],
@@ -136,7 +135,7 @@ function (`firewall:2`) are sent on the network interface `eth1`.
 	
 ## Example 3
 
-In this example, traffic coming from `eth0` is forwarded to the firewall through the port
+In this example, traffic coming from `eth1` is forwarded to the firewall through the port
 `firewall:1`. Then, traffic coming from the firewall (`firewall:2`) is split based on the destination
 TCP port. Packets directed to the TCP port 80 is provided to the web cache then to the NAT,
 while all the other traffic is directly provided to the NAT. Finally, packets from `NAT:2` leaves the
@@ -144,7 +143,7 @@ graph through the port `eth2`.
 
 This graph can be graphically represented as follows:
 
-    eth0 -> firewall -> if (tcp_dst == 80) -> web cache  -> nat  -> eth1
+    eth1 -> firewall -> if (tcp_dst == 80) -> web cache  -> nat  -> eth2
                         else \--------------------------/
 
 Json description of the graph:
@@ -156,7 +155,6 @@ Json description of the graph:
 			"name": "Forwarding graph",
 			"VNFs": [
 		  	{
-		    	"vnf_template": "firewall.json",
 		    	"id": "00000001",
 		    	"name": "firewall",
         		"ports": [
@@ -171,7 +169,6 @@ Json description of the graph:
         		]
 		  	},
 		  	{
-		    	"vnf_template": "nat.json",
 		    	"id": "00000002",
 		    	"name": "nat",
         		"ports": [
@@ -186,7 +183,6 @@ Json description of the graph:
         		]
 		  	},
 		  	{
-		    	"vnf_template": "web-cache.json",
 		    	"id": "00000003",
 		    	"name": "web-cache",
         		"ports": [
@@ -208,7 +204,7 @@ Json description of the graph:
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.1",
-		      		"interface": "eth0"
+		      		"interface": "eth1"
 		    	}
 		  	},
 		  	{
@@ -217,7 +213,7 @@ Json description of the graph:
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.2",
-		      		"interface": "eth1"
+		      		"interface": "eth2"
 		    	}
 		  	}
 			],
@@ -296,10 +292,10 @@ It is possible to send/receive traffic through GRE tunnels, by using the "gre-tu
 For instance, this feature can be used to connect together pieces of the same service deployed 
 on different Universal Nodes.
 
-This example sends on a GRE tunnel all the traffic received through the physical port `eth0`, and 
+This example sends on a GRE tunnel all the traffic received through the physical port `eth1`, and 
 vice versa. This graph can be graphically represented as follows:
 
-    eth0 <-> gre-tunnel
+    eth1 <-> gre-tunnel
    
 Json description of the graph:
  
@@ -315,7 +311,7 @@ Json description of the graph:
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.1",
-		      		"interface": "eth0"
+		      		"interface": "eth1"
 		    	}
 		  	},
 		  	{
@@ -325,7 +321,7 @@ Json description of the graph:
 		    	"gre": {
 		      		"local-ip": "10.0.0.1",
 		      		"remote-ip": "10.0.0.2",
-		      		"interface" : "eth0",
+		      		"interface" : "eth1",
 		      		"gre-key" : "1"
 		    	}
 		  	}
@@ -366,16 +362,50 @@ Json description of the graph:
 Within the `match` element of the NF-FG description, the following fields are allowed
 (all the values must be specified as strings):
 
-    "ether_type"
-    "vlan_id"
-    "source_mac"
-    "dest_mac"
-    "source_ip"
-    "dest_ip"
-    "source_port"
-    "dest_port"
-    "protocol"
-    "port_in"
+	"port_in"
+	"ether_type"
+	"source_mac"
+	"eth_src_mask"
+	"dest_mac"
+	"eth_dst_mask"
+	"source_ip"
+	"dest_ip"
+	"source_port"
+	"dest_port"
+	"protocol"
+	"ethertype"
+	"vlan_id"
+	"vlan_pcp"
+	"ip_dscp"
+	"ip_ecn"
+	"ip_proto"
+	"ipv4_src"
+	"ipv4_src_mask"
+	"ipv4_dst"
+	"ipv4_dst_mask"
+	"sctp_src"
+	"sctp_dst"
+	"icmpv4_type"
+	"icmpv4_code"
+	"arp_opcode"
+	"arp_spa"
+	"arp_spa_mask"
+	"arp_tpa"
+	"arp_tpa_mask"
+	"arp_sha"
+	"arp_tha"
+	"ipv6_src"
+	"ipv6_src_mask"
+	"ipv6_dst"
+	"ipv6_dst_mask"
+	"ipv6_flabel"
+	"ipv6_nd_target"
+	"ipv6_nd_sll"
+	"ipv6_nd_tll"
+	"icmpv6_type"
+	"icmpv6_code"
+	"mpls_label"
+	"mpls_tc"
         
 ## Supported actions
 
@@ -383,10 +413,10 @@ Within the `action` element of the NF-FG description, one and only one of the
 following fields **MUST** be specified:
 
 	"output_to_port"
-    "push_vlan"
-    "pop_vlan"
+	"push_vlan"
+	"pop_vlan"
   
-As an example, the following NF-FG tags all the packets coming from interface `eth0` and forwards them on interface `eth1`.
+As an example, the following NF-FG tags all the packets coming from interface `eth1` and forwards them on interface `eth2`.
 
 	{
 		"forwarding-graph": 
@@ -401,7 +431,7 @@ As an example, the following NF-FG tags all the packets coming from interface `e
 		    	"type": "interface",
 		    	"interface": {
 		      		"node-id": "10.0.0.1",
-		      		"interface": "eth0"
+		      		"interface": "eth1"
 		    	}
 		  	},
 		  	{
@@ -411,7 +441,7 @@ As an example, the following NF-FG tags all the packets coming from interface `e
 		    	"vlan": {
 		      		"vlan-id": "25",
 		      		"node-id": "10.0.0.1",
-		      		"interface": "eth1"
+		      		"interface": "eth2"
 		    	}
 		  	}
 			],
