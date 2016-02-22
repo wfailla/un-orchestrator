@@ -24,10 +24,6 @@
 	#include "../../network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.h"
 	#define SWITCH_MANAGER_IMPLEMENTATION OVSManager
 #endif
-#ifdef VSWITCH_IMPLEMENTATION_OVSDPDK
-	#include "../../network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.h"
-	#define SWITCH_MANAGER_IMPLEMENTATION OVSDPDKManager
-#endif
 #ifdef VSWITCH_IMPLEMENTATION_OVSDB
 	#include "../../network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h"
 	#define SWITCH_MANAGER_IMPLEMENTATION OVSDBManager

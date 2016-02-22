@@ -58,7 +58,9 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OFCONFIG)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDPDK)
+	#OVS-DPDK uses the OVSDB plugin with some specific code needed by DPDK
+	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
+	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
@@ -102,14 +104,14 @@ OPTION(
 	OFF
 )
 
-OPTION(
-	ENABLE_OVSDB_DPDK
-	"Turn on to support OVS with DPDK netdev using the OVS-OVSDB netwrok controller plugin"
-	OFF
-)
-IF(ENABLE_OVSDB_DPDK)
-	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
-ENDIF(ENABLE_OVSDB_DPDK)
+#OPTION(
+#	ENABLE_OVSDB_DPDK
+#	"Turn on to support OVS with DPDK netdev using the OVS-OVSDB netwrok controller plugin"
+#	OFF
+#)
+#IF(ENABLE_OVSDB_DPDK)
+#	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
+#ENDIF(ENABLE_OVSDB_DPDK)
 #################################################################################################################
 
 # Rather complicated CMake code for selecting the PubSub implementation
@@ -370,16 +372,7 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
-    SET(SOURCES2
-    ${SOURCES1}
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.h
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.cc
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_constants.h
-    )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
-
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
+IF((VSWITCH_IMPLEMENTATION_INDEX EQUAL 2) OR (VSWITCH_IMPLEMENTATION_INDEX EQUAL 3))
     SET(SOURCES2
     ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
@@ -388,7 +381,7 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h
     network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.cc
     )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
+ENDIF((VSWITCH_IMPLEMENTATION_INDEX EQUAL 2) OR (VSWITCH_IMPLEMENTATION_INDEX EQUAL 3))
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 4)
     SET(SOURCES2
