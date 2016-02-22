@@ -1,8 +1,9 @@
 # Name-resolver
 
-The name-resolver is a module that returns the list of all existing implementations
-of a network function.
-
+The Name Resolver is a module that returns a set of implementations for a given VNF. 
+It is exploited by the un-orchestrator each time that a VNF must be started in order to 
+translate the *abstract* name (e.g. `firewall`) into the proper suitable software image 
+(e.g., `firewal_vmimage_abc`).
 
 ## Compile the name-resolver
 
