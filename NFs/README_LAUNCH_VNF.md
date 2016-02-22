@@ -22,7 +22,7 @@ The un-orchestrator supports two NF-FG versions:
     communication (for the actual forwarding graph) and bottom-up primitives
     (for resources and capabilities). 
 
-The former format is supported natively and it is described in [orchestrator/README_RESTAPI.md](../orchestrator/README_NF-FG.md), while the other requires the usage of the [`virtualizer`](../virtaulizer/README.md).
+The former format is supported natively and it is described in [orchestrator/README_RESTAPI.md](../orchestrator/README_NF-FG.md), while the other requires the usage of the [`virtualizer`](../virtualizer/README.md).
 
 ## An example
 
