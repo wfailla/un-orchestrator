@@ -43,32 +43,6 @@ Libvirt::~Libvirt()
 #endif
 }
 
-string Libvirt::splitIpNetmask(string ip_netmask)
-{
-	char delimiter[] = "/";
-	char tmp[BUFFER_SIZE];
-	strcpy(tmp,ip_netmask.c_str());
-	char *pnt=strtok((char*)ip_netmask.c_str(), delimiter);
-	string ip_address;
-
-	int i = 0;
-	while( pnt!= NULL )
-	{
-		switch(i)
-		{
-			case 0:
-				ip_address = string(pnt);
-				return ip_address;
-			break;
-		}
-		
-		pnt = strtok( NULL, delimiter );
-		i++;
-	}
-	
-	return "";
-}
-
 bool Libvirt::isSupported(Description&)
 {
 #ifndef DIRECT_KVM_IVSHMEM
@@ -331,15 +305,13 @@ bool Libvirt::startNF(StartNFIn sni)
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		/* retrieve ip address */
-		string ip_address = portsConfiguration[port_id].ip_address;
+		if(!portsConfiguration[port_id].ip_address.empty())
+			logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required ip address configuration for VNF '%s'. Ip address configuration are not supported by KVM type", control_ports.size(),nf_name.c_str());
 #endif
 		/* retrieve mac address */
 		string port_mac_address = portsConfiguration[port_id].mac_address;
 
 		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "Interface \"%s\" associated with MAC address \"%s\"", port_name.c_str(), port_mac_address.c_str());
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "Interface \"%s\" associated with IP/netmask \"%s\"", port_name.c_str(), ip_address.c_str());
-#endif
 
 		if (port_type == USVHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
@@ -379,13 +351,7 @@ bool Libvirt::startNF(StartNFIn sni)
 				xmlNodePtr mac_addr = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
 				xmlNewProp(mac_addr, BAD_CAST "address", BAD_CAST port_mac_address.c_str());
 			}
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-			if(!ip_address.empty())
-			{
-				xmlNodePtr ip_addr = xmlNewChild(ifn, NULL, BAD_CAST "ip", NULL);
-				xmlNewProp(ip_addr, BAD_CAST "address", BAD_CAST ip_address.c_str());
-			}
-#endif	
+	
 			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
 			xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");

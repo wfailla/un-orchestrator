@@ -85,10 +85,6 @@ private:
 	*/
 	static void customErrorFunc(void *userdata, virErrorPtr err);
 	
-	/*
-	*	@brief: split string in ip and netmask
-	*/
-	string splitIpNetmask(string ip_netmask);
 #endif
 
 public:
