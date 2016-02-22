@@ -121,8 +121,8 @@ At this point, prepare a NF-FG and pass it to the un-orchestator, which will tak
 		      		]
 		    	},
 		    	{
-		      		"id": "000000002",
-		      		"priority": 1,
+		      		"id": "000000004",
+		      		"priority": 100,
 		      		"match": {
 		        		"port_in": "vnf:00000001:inout:0"
 		      		},
