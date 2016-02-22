@@ -21,7 +21,6 @@ VNF.
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.1",
 		      		"interface": "eth1"
 		    	}
 		  	},
@@ -30,7 +29,6 @@ VNF.
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.2",
 		      		"interface": "eth2"
 		    	}
 		  	}
@@ -88,7 +86,6 @@ function (`firewall:2`) are sent on the network interface `eth2`.
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.1",
 		      		"interface": "eth1"
 		    	}
 		  	},
@@ -97,7 +94,6 @@ function (`firewall:2`) are sent on the network interface `eth2`.
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.2",
 		      		"interface": "eth2"
 		    	}
 		  	}
@@ -203,7 +199,6 @@ Json description of the graph:
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.1",
 		      		"interface": "eth1"
 		    	}
 		  	},
@@ -212,7 +207,6 @@ Json description of the graph:
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.2",
 		      		"interface": "eth2"
 		    	}
 		  	}
@@ -310,7 +304,6 @@ Json description of the graph:
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.1",
 		      		"interface": "eth1"
 		    	}
 		  	},
@@ -430,7 +423,6 @@ As an example, the following NF-FG tags all the packets coming from interface `e
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"node-id": "10.0.0.1",
 		      		"interface": "eth1"
 		    	}
 		  	},
@@ -440,7 +432,6 @@ As an example, the following NF-FG tags all the packets coming from interface `e
 		    	"type": "vlan",
 		    	"vlan": {
 		      		"vlan-id": "25",
-		      		"node-id": "10.0.0.1",
 		      		"interface": "eth2"
 		    	}
 		  	}
