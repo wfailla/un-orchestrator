@@ -17,8 +17,8 @@ the operations required to actually implement the forwarding graph:
   * configure the virtual switch (vSwitch) to create a new logical switching
     instance (LSI) and the ports required to connect it to the VNFs to be deployed;
   * deploy and start the VNFs;
-  * translate the rules to steer the traffic into OpenFlow flowmod messages
-    to be sent to the vSwitch (some flowmods are sent to the new LSI, others
+  * translate the rules to steer the traffic into OpenFlow `flowmod` messages
+    to be sent to the vSwitch (some `flowmod` are sent to the new LSI, others
     to the LSI-0, i.e. an LSI that steers the traffic towards the proper graph.)
 
 Similarly, the un-orchestrator takes care of updating or destroying a graph,
@@ -58,7 +58,7 @@ that is connected to the physical interfaces; then, for each new graph to be dep
 a new `tenant-LSI` is created and connected to the LSI-0 through a number of 
 internal links. Since each one of these additional LSIs corresponds to a different 
 NF-FG, it is connected to the VNFs of such a NF-FG, and takes care of steering the 
-traffic among them as required by the graph description. Contrarily, the LSI-0, being 
+traffic among them as required by the graph description. Instead, the LSI-0, being 
 the only one connected to the physical interfaces of the UN and to all the other 
 graphs, dispatches the traffic entering into the node to the proper graph, and properly 
 handles the packets already processed in a graph.
