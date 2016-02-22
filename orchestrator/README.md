@@ -64,16 +64,18 @@ handles the packets already processed in a graph.
 
 ### The compute controller
 
-The compute controller is the sub-module that interacts with the hypervisor
-and handles the lifecycle of a virtual network function (i.e., creating,
-updating, destroying a VNF), including the operations needed to attach
-VNF ports (already created on the the vSwitch) to the VNF itself. Each
+The compute controller is the sub-module that interacts with the virtual execution 
+environment(s) (i.e., the hypervisor) and handles the lifecycle of a Virtual Network 
+Function (i.e., creating, updating, destroying a VNF), including the operations needed 
+to attach VNF ports already created on the the vSwitch to the VNF itself. Each
 execution environment may require a different implementation for the compute
 controller, according to the commands supported by the hypervisor itself.
 
 Currently, the prototype supports virtual network functions as (KVM) VMs, Docker,
 DPDK processes and native functions, although only a subset of them can be
 available depending on the chosen vSwitch.
+Also in thuis case, further execution environments can be supported through the implementation
+of a proper API. 
 If you are interested to add the support for a new hypervisor, please check the
 file [compute_controller/README.md](compute_controller/README.md).
 
