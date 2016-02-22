@@ -1312,24 +1312,6 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	
 	//disconnect socket
     cmd_disconnect(s);
-
-#if 0
-    //XXX: this code is a trick that activates a VNF ports through ifconfig. In fact, we noted that on some system
-    //this operation has not done by OVSDB
-    if(is_nf_port && (port_type != USVHOST_PORT) && (port_type != IVSHMEM_PORT))
-    {
-    	stringstream command;
-		command << ACTIVATE_INTERFACE << " " << port_name;
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
-		int retVal = system(command.str().c_str());
-		retVal = retVal >> 8;
-		
-		assert(retVal == 0);
-
-		if(retVal != 0)
-			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "This cannot happen. It is here just for the compiler.");
-	}
-#endif
 }
 
 void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
@@ -1392,10 +1374,8 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 			
 	first_obj["where"] = where;
 
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removing dpi: %d", dpi);		
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "C %d",switch_uuid.size());
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Removing dpi: %d", dpi);
 	switch_uuid.erase(dpi);
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "C2 %d",switch_uuid.size());
 	
 	for(map<uint64_t, string>::iterator sww = switch_uuid.begin(); sww != switch_uuid.end(); sww++)
 	{
