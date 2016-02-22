@@ -511,7 +511,7 @@ put_malformed_url:
 			{
 				//User unauthenticated!
 				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+				int ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
 				MHD_destroy_response (response);
 				return ret;
 			}
@@ -659,54 +659,78 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 			//Identify the forwarding graph
 			if(name == FORWARDING_GRAPH)
 			{
-		    	foundFlowGraph = true;
+		    		foundFlowGraph = true;
 		    	
-		    	bool foundVNFs = false, foundEP = false, foundGRE = false, foundFlowRules = false;
-		    	vector<string> id_gre (256);
+		    		bool foundVNFs = false, foundEP = false, foundGRE = false, foundFlowRules = false;
+		    		vector<string> id_gre (256);
 		    	
-		  		Object forwarding_graph = value.getObject();
-		    		
+				Object forwarding_graph;
+
+				try
+				{
+		  			forwarding_graph = value.getObject();
+				} catch(exception& e)
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", FORWARDING_GRAPH);
+					return false;				
+				}	    		
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
-		    	{
+		    		{
 					bool e_if = false, e_if_out = false, e_vlan = false;
 								
 					string id, v_id, node, iface, e_name, node_id, sw_id, interface;
 
-		        	const string& fg_name  = fg->first;
-			       	const Value&  fg_value = fg->second;
+		        		const string& fg_name  = fg->first;
+			       		const Value&  fg_value = fg->second;
 				
 					if(fg_name == _ID)
-		         	{
-		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
+		         		{
+		         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
 					}
 					else if(fg_name == _NAME)
 					{
-		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_NAME,fg_value.getString().c_str());
+		         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_NAME,fg_value.getString().c_str());
 					
 						//set name of the graph
 						graph.setName(fg_value.getString());
 					}
 					else if(fg_name == F_DESCR)
 					{
-		         		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,F_DESCR,fg_value.getString().c_str());
+		         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,F_DESCR,fg_value.getString().c_str());
 
 						//XXX: currently, this information is ignored
 					}
 					//Identify the VNFs
 					else if(fg_name == VNFS)
 					{
+						try{
+							fg_value.getArray();
+						} catch(exception& e)
+						{
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", VNFS);
+							return false;				
+						}
+
 						const Array& vnfs_array = fg_value.getArray();
 
 						//XXX We may have no VNFs in the following cases:
 						//*	graph with only physical ports
 						//*	update of a graph that only adds new flows
 						//However, when there are no VNFs, we provide a warning
-				    	if(vnfs_array.size() != 0)
-					    	foundVNFs = true;
+				    		if(vnfs_array.size() != 0)
+						    	foundVNFs = true;
 				    	
-				    	//Itearate on the VNFs
-				    	for( unsigned int vnf = 0; vnf < vnfs_array.size(); ++vnf )
+				    		//Itearate on the VNFs
+				    		for( unsigned int vnf = 0; vnf < vnfs_array.size(); ++vnf )
 						{
+							try{
+								vnfs_array[vnf].getObject();
+							} catch(exception& e)
+							{
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNFS);
+								return false;				
+							}
+
 							//This is a VNF, with an ID and a template
 							Object network_function = vnfs_array[vnf].getObject();
 #ifdef POLITO_MESSAGE							
@@ -768,11 +792,27 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",VNF_CONTROL,MODULE_NAME);
 									continue;
 #else
+									try{
+										nf_value.getArray();
+									} catch(exception& e)
+									{
+										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", VNF_CONTROL);
+										return false;				
+									}
+
 									const Array& control_array = nf_value.getArray();
 								
 									//Itearate on the control
 									for( unsigned int ctrl = 0; ctrl < control_array.size(); ++ctrl )
 									{
+										try{
+											control_array[ctrl].getObject();
+										} catch(exception& e)
+										{
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNF_CONTROL);
+											return false;				
+										}
+
 										//This is a VNF control, with an host tcp port and a vnf tcp port 
 										Object control = control_array[ctrl].getObject();
 										
@@ -1828,7 +1868,7 @@ get_malformed_url:
 		{
 			//User unauthenticated!
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+			int ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
 			MHD_destroy_response (response);
 			return ret;
 		}
@@ -1989,7 +2029,7 @@ delete_malformed_url:
 		{
 			//User unauthenticated!
 			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
+			int ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
 			MHD_destroy_response (response);
 			return ret;
 		}
