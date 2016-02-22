@@ -3,7 +3,7 @@
 The Universal Node orchestrator (un-orchestrator) is the main component of the
 Universal Node (UN). It handles the orchestration of compute and network
 resources within a UN, hence managing the complete lifecycle of computing
-containers (e.g., VMs, Docker, DPDK processes, native environment) and
+containers (e.g., VMs, Docker, DPDK processes) and
 networking primitives (e.g., OpenFlow rules, logical switching instances, etc).
 It receives commands through a REST API according to the Network Functions 
 Forwarding Graph (NF-FG) formalism, and takes care of implementing them on 
