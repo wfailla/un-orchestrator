@@ -331,7 +331,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		/* retrieve ip address */
-		string ip_address = portsConfiguration[port_id].ip_address;
+		string ip_address = splitIpNetmask(portsConfiguration[port_id].ip_address);
 #endif
 		/* retrieve mac address */
 		string port_mac_address = portsConfiguration[port_id].mac_address;
