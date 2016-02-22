@@ -20,10 +20,9 @@ The un-orchestrator supports two NF-FG versions:
   * the initial JSON-based format defined in WP5;
   * the new XML-based format defined in WP3 that includes both top-down
     communication (for the actual forwarding graph) and bottom-up primitives
-    (for resources and capabilities).
+    (for resources and capabilities). 
 
-The former format is supported natively and it is described in [orchestrator/README_RESTAPI.md](../orchestrator/README_RESTAPI.md), while the other requires setting up an additional library as described in [orchestrator/README_COMPILE.md](../orchestrator/README_COMPILE.md#nf-fg-library).
-
+The former format is supported natively and it is described in [orchestrator/README_RESTAPI.md](../orchestrator/README_NF-FG.md), while the other requires the usage of the [`virtualizer`](../virtaulizer/README.md).
 
 ## An example
 
@@ -138,67 +137,10 @@ At this point, prepare a NF-FG and pass it to the un-orchestator, which will tak
 	  	}
 	}
 
-
-	{
-		"flow-graph": {
-			"VNFs": [
-			{
-				"id": "dummy"
-			}
-			],
-			"flow-rules": [
-			{
-				"id": "00000001",
-				"match":
-				{
-					"port": "eth0"
-				},
-					"action":
-				{
-					"VNF_id": "dummy:1"
-				}
-			},
-			{
-				"id": "00000002",
-				"match":
-				{
-					"VNF_id": "dummy:2"
-				},
-				"action":
-				{
-					"port": "eth1"
-				}
-			},
-			{
-				"id": "00000003",
-				"match":
-				{
-					"port": "eth1"
-				},
-				"action":
-				{
-					"VNF_id": "dummy:2"
-				}
-			},
-			{
-				"id": "00000004",
-				"match":
-				{
-					"VNF_id": "dummy:1"
-				},
-				"action":
-				{
-					"port": "eth0"
-				}
-			}
-			]
-		}
-	}
-
 This json can be stored in a file (e.g., `nffg.json`) and provided to the un-orchestrator either through the command line at the boot of the un-orchestrator, or through its REST API. In the latter case, the command to be used is the following:
 
 	curl -i -H "Content-Type: application/json" -d "@nffg.json" \
-		-X PUT  http://un-orchestrator-address:port/graph/graphid
+		-X PUT  http://un-orchestrator-address:port/NF-FG/graphid
 
 where the `graphid` is an alphanumeric string that will uniquely identify your graph in the orchestrator.
 
