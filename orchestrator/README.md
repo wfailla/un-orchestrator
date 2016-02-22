@@ -55,12 +55,10 @@ check the file [network_controller/switch_manager/README.md](network_controller/
 
 Note that, according to the picture above, several LSIs may be deployed on the UN. 
 In particular, in the boot phase the network controller creates a first LSI (called LSI-0) 
-that is connected to the physical interfaces; then, for each new graph to be deployed, 
-a new `tenant-LSI` is created and connected to the LSI-0 through a number of 
-internal links. Since each one of these additional LSIs corresponds to a different 
-NF-FG, it is connected to the VNFs of such a NF-FG, and takes care of steering the 
-traffic among them as required by the graph description. Instead, the LSI-0, being 
-the only one connected to the physical interfaces of the UN and to all the other 
+that is connected to the physical interfaces and that will be connected to several other LSIs.
+Each one of these additional LSIs corresponds to a different NF-FG; hence, it is connected to the VNFs 
+of such a NF-FG, and takes care of steering the traffic among them as required by the graph description. 
+Instead the LSI-0, being the only one connected to the physical interfaces of the UN and to all the other 
 graphs, dispatches the traffic entering into the node to the proper graph, and properly 
 handles the packets already processed in a graph.
 
