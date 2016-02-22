@@ -47,8 +47,9 @@ It consists of two parts:
     implementation for the switch manager, according to the API exported by 
     the vSwitch itself.
 
-Currently, the un-orchestrator supports OpenvSwitch (OvS) and the extensible DataPath daemon
-(xDPd) as vSwitches.
+Currently, the un-orchestrator supports OpenvSwitch (OvS), the extensible DataPath daemon
+(xDPd) and the Ericsson Research Flow Switch (ERFS) as vSwitches, although further vSwiches can be supported by 
+writing a module implementing a proper API.
 If you are interested to add the support for a new virtual switch, please
 check the file [network_controller/switch_manager/README.md](network_controller/switch_manager/README.md).
 
