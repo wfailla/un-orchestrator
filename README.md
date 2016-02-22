@@ -16,8 +16,7 @@ be started in order to translate the 'abstract' name into the proper
 suitable software image.
 
 ## Virtualizer
-The Virtualizer is a module that converts the NF-FG defined by WP3 in the
-representation accepted by the un-orchestrator.
+The Virtualizer is a module that enables the un-orchestrator to interact with the upper layers of the Unify architecture, by means of the NF-FG defined in WP3. It in fact converts the NF-FG defined by WP3 in the representation accepted by the un-orchestrator.
 
 ## NFs
 This folder contains some examples of virtual network functions.
