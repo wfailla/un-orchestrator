@@ -700,8 +700,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	unsigned int numberOfVLrequired = 0;
 	if(vlPhyPorts.size() != 0)
 		numberOfVLrequired = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
-	else
-		numberOfVLrequired = 0;
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new LSI with LSI-0",numberOfVLrequired);
 	
@@ -1262,8 +1260,6 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	unsigned int numberOfVLrequired = 0;
 	if(vlPhyPorts.size() != 0)
 		numberOfVLrequired = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
-	else
-		numberOfVLrequired = 0;
 	
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);
 
