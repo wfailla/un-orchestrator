@@ -105,15 +105,7 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 				"name": "ingress",
 				"type": "interface",
 				"interface": {
-				  "interface": "eth3"
-				}
-			  },
-			  {
-				"id": "00000003",
-				"name": "egress",
-				"type": "interface",
-				"interface": {
-				  "interface": "eth4"
+				  "interface": "eth2"
 				}
 			  }
 			],
@@ -123,11 +115,11 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 				  "id": "000000001",
 				  "priority": 1,
 				  "match": {
-					"port_in": "vnf:00000001:inout:0"
+					"port_in": "vnf:00000001:inout:1"
 				  },
 				  "actions": [
 					{
-					  "output_to_port": "endpoint:00000003"
+					  "output_to_port": "endpoint:00000002"
 					}
 				  ]
 				}
