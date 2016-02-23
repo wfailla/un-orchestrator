@@ -170,7 +170,7 @@ For the previously method if authentication is required, insert in a X-Auth-Toke
 
 ## Send commands to the un-orchestrator
 
-In order to interact with the un-orchestrator throug its REST API, you can use
+In order to interact with the un-orchestrator through its REST API, you can use
 your favorite REST tool (e.g., some nice plugins for Mozilla Firefox). Just in
 also use the CURL command line tool, such as in the following example (where the
 NF-FG to be instantiated is stored in the file 'myGraph.json'):
