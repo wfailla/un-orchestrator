@@ -39,7 +39,12 @@ to configure/test the un-orchestrator.
     graph that includes a VNF. Traffic is received from a first physical port, provided
     to a network function, and then sent out from a second physical port.
 
-## How to start xDPd with DPDK support to work with the un-orchestrator
+## How to start the proper virtual switch
+
+As stated above, the proper vSwitch must be started on the Universal Node before the boot of the
+un-orchestrator; in the following the instructions to run the supported vSwitches are provided.
+
+### How to start xDPd with DPDK support to work with the un-orchestrator
 
 Set up DPDK (after each reboot of the physical machine), in order to:
 
@@ -67,7 +72,7 @@ on flows matched, and so on. The xcli can be run by just typing:
 
     $ xcli
 
-## How to start OvS (managed through OFCONFIG) to work with the un-orchestrator [DEPRECATED]
+### How to start OvS (managed through OFCONFIG) to work with the un-orchestrator [DEPRECATED]
 
 Start OvS:
 
@@ -87,7 +92,7 @@ For the full list of the supported parameters, type:
     $ ofc-server -h
 
 
-## How to start OvS (managed through OVSDB) to work with the un-orchestrator
+### How to start OvS (managed through OVSDB) to work with the un-orchestrator
 
 Start OVS:
 
@@ -97,7 +102,7 @@ Start ovsdb-server:
 
     $ sudo ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6632
 	
-## How to start OvS (managed through OVSDB) with DPDK support to work with the un-orchestrator
+### How to start OvS (managed through OVSDB) with DPDK support to work with the un-orchestrator
 
 Configure the system (after each reboot of the physical machine):
 
