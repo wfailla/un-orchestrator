@@ -23,7 +23,7 @@ to understand how to execute this component.
 Folder `config` contains some configuration file examples that can be used
 to configure/test the un-orchestrator.
 
-  * [config/universal-node-config.ini](config/default-config.ini): 
+  * [config/default-config.ini](config/default-config.ini): 
     configuration file for the un-orchestrator. It allows to specify information such 
     as the TCP port used by the REST server, the file describing the physical 
     ports of the Universal Node, and more;
