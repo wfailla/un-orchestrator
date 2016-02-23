@@ -30,7 +30,7 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 			"VNFs": [
 			  {
 				"id": "00000001",
-				"name": "ubuntu",
+				"name": "firewall",
 				"ports": [
 				  {
 					"id": "inout:0",
