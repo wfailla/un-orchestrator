@@ -230,7 +230,7 @@ Json description of the graph:
 		      		"priority": 10,
 		      		"match": {
 		        		"port_in": "vnf:00000001:inout:1",
-				"ether_type": "0x800",
+            			"ether_type": "0x800",
             			"protocol": "0x06",
             			"dest_port": "80"
 		      		},
