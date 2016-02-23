@@ -10,11 +10,13 @@ understand how to use the different options.
 
 The un-orchestrator requires a virtual switch up and running in the server,
 which is completely independent from this software.
-
-Therefore you need to start your preferred softswitch first, before running
-the un-orchestrator. Proper instructions for xDPd and OpenvSwich are provided
+Therefore you need to start your preferred vSwitch first, before running
+the un-orchestrator. Proper instructions for xDPd, ERFS and Open vSwich are provided
 below.
 
+Similarly, the un-orchestrator requires that the Name Resolver is already running; 
+please refer to the instructions provided in [../name-resolver/README.md](../name-resolver/README.md) 
+to understand how to execute this component.
 
 ### Configuration file examples
 
