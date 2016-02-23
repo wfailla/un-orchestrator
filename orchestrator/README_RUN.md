@@ -15,7 +15,7 @@ the un-orchestrator. Proper instructions for xDPd, ERFS and Open vSwich are prov
 below.
 
 Similarly, the un-orchestrator requires that the Name Resolver is already running; 
-please refer to the instructions provided in [../name-resolver/README.md](../name-resolver/README.md) 
+please, refer to the instructions provided in [../name-resolver/README.md](../name-resolver/README.md) 
 to understand how to execute this component.
 
 ### Configuration file examples
