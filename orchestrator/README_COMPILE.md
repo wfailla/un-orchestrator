@@ -105,9 +105,9 @@ In order to install xDPd with DPDK support, you have to follow the steps below.
 
 **WARNING: Currently, xDPd is not compiling on Linux kernels newer than 3.16.0-30.**
 
-### OpenvSwitch (of-config) [DEPRECATED]
+### Open vSwitch (of-config) [DEPRECATED]
 
-OpenvSwitch can be installed with either the OVSDB or OF-CONFIG plugin.
+Open vSwitch can be installed with either the OVSDB or OF-CONFIG plugin.
 Although both protocols allow to control the switch (e.g., create/delete
 new bridging instances, create/delete ports, etc), we found out
 that OF-CONFIG is rather limited in terms of capabilities. For instance,
