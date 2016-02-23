@@ -94,5 +94,4 @@ In order to interact with the Virtualizer throug its REST API, you can use your 
 plugins for Mozilla Firefox). Just in also use the CURL command line tool, such as in the following example 
 (where the NF-FG to be instantiated is stored in the file 'myGraph.xml'):
 
-curl -i -d "@myGraph.json" \
-    -X POST  http://virtualizer-address:port/edit-config
+curl -i -d "@myGraph.json" -X POST  http://virtualizer-address:port/edit-config
