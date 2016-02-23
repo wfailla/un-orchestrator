@@ -85,4 +85,12 @@ In particular:
   * [./config/nffg_examples/nffg_delete_flow_vnf.xml](./config/nffg_examples/nffg_delete_flow_vnf.xml): 
     configuration that deletes some flows and a VNF instantiated on the Universal 
     Node.
+
+### Send commands to the Virtualzier
     
+In order to interact with the Virtualizer throug its REST API, you can use your favorite REST tool (e.g., some nice 
+plugins for Mozilla Firefox). Just in also use the CURL command line tool, such as in the following example 
+(where the NF-FG to be instantiated is stored in the file 'myGraph.xml'):
+
+curl -i -d "@myGraph.json" \
+    -X POST  http://virtualizer-address:port/edit-config
