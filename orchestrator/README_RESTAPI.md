@@ -29,7 +29,6 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 			"name": "Forwarding graph",
 			"VNFs": [
 			  {
-				"vnf_template": "client.json",
 				"id": "00000001",
 				"name": "ubuntu",
 				"ports": [
@@ -50,7 +49,6 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 				"name": "ingress",
 				"type": "interface",
 				"interface": {
-				  "node-id": "10.0.0.1",
 				  "interface": "eth3"
 				}
 			  },
@@ -59,7 +57,6 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 				"name": "egress",
 				"type": "interface",
 				"interface": {
-				  "node-id": "10.0.0.1",
 				  "interface": "eth4"
 				}
 			  }
@@ -96,7 +93,6 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 			"name": "Forwarding graph",
 			"VNFs": [
 			  {
-				"vnf_template": "client.json",
 				"id": "00000001",
 				"name": "ubuntu",
 				"ports": [
@@ -117,7 +113,6 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 				"name": "ingress",
 				"type": "interface",
 				"interface": {
-				  "node-id": "10.0.0.1",
 				  "interface": "eth3"
 				}
 			  },
@@ -126,7 +121,6 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 				"name": "egress",
 				"type": "interface",
 				"interface": {
-				  "node-id": "10.0.0.1",
 				  "interface": "eth4"
 				}
 			  }
