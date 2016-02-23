@@ -45,19 +45,11 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 			],
 			"end-points": [
 			  {
-				"id": "00000002",
+				"id": "00000001",
 				"name": "ingress",
 				"type": "interface",
 				"interface": {
-				  "interface": "eth3"
-				}
-			  },
-			  {
-				"id": "00000003",
-				"name": "egress",
-				"type": "interface",
-				"interface": {
-				  "interface": "eth4"
+				  "interface": "eth1"
 				}
 			  }
 			],
@@ -67,7 +59,7 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 				  "id": "000000001",
 				  "priority": 1,
 				  "match": {
-					"port_in": "endpoint:00000002"
+					"port_in": "endpoint:00000001"
 				  },
 				  "actions": [
 					{
