@@ -467,18 +467,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 			match.setIpECN(ipECN & 0xFF);
 			foundProtocolField = true;
 		}
-		else if(name == IP_PROTO)
-		{
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_PROTO,value.getString().c_str());
-			uint16_t ipProto;
-			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipProto) != 1) || (ipProto > 255) )
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_PROTO,value.getString().c_str());
-				return false;
-			}
-			match.setIpProto(ipProto & 0xFF);
-			foundProtocolField = true;
-		}
 		else if(name == IP_SRC)
 		{
 			size_t found = value.getString().find(':');
@@ -851,10 +839,21 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 		}
 		else if(name == PROTOCOL)
 		{
-			if(value.getString().compare(TCP) == 0)
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,PROTOCOL,value.getString().c_str());
+			uint16_t ipProto;
+
+			if(value.getString().compare("0x06") == 0)
 				is_tcp = true;
 			else
 				is_tcp = false;
+
+			if((sscanf(value.getString().c_str(),"%"SCNd16,&ipProto) != 1) || (ipProto > 255) )
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",PROTOCOL,value.getString().c_str());
+				return false;
+			}
+			match.setIpProto(ipProto & 0xFF);
+			foundProtocolField = true;
 		}
 		else
 		{
