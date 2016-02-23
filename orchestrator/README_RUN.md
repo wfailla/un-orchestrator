@@ -28,7 +28,7 @@ to configure/test the un-orchestrator.
     as the TCP port used by the REST server, the file describing the physical 
     ports of the Universal Node, and more;
   * [config/universal-node-example.xml](config/universal-node-example.xml): 
-    configuration file describing the physical ports to be handled by the 
+    file describing the physical ports to be handled by the 
     un-orchestrator, as well as the amount of CPU, memory and storage provided 
     to the Universal Node;
   * [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json): 
