@@ -4,8 +4,8 @@ In order to execute the un-orchestrator, we need to setup different components, 
 
   * a set of libraries and tools needed to compile and execute the un-orchestrator code
   * a virtual switch (either xDPd, ERFS or Open vSwitch) as a base switch for
-    our platform
-  * one or more execution environments for virtual network functions, e.g., KVM for
+    the platform
+  * one or more execution environments for Virtual Network Functions, e.g., KVM for
     executing VM, Docker, or other.
 
 ## Required libraries
