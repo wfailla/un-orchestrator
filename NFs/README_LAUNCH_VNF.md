@@ -141,7 +141,7 @@ This json can be stored in a file (e.g., `nffg.json`) and provided to the un-orc
 	curl -i -H "Content-Type: application/json" -d "@nffg.json" \
 		-X PUT  http://un-orchestrator-address:port/NF-FG/graphid
 
-where the `graphid` is an alphanumeric string that will uniquely identify your graph in the orchestrator.
+where the `graphid` is an alphanumeric string that will uniquely identify your graph in the un-orchestrator.
 
 At this point the un-orchestrator
 *	through the *network controller*: it creates a new LSI, inserts the proper Openflow rules in such an LSI in order to steer the traffic among the VNFs of the graph, and inserts the proper Openflow rules in the LSI-0 (which is the only LSI connected to the physical interfaces) in order to inject the proper traffic in the graph, and properly handle the network packets exiting from such a graph;
