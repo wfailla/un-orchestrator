@@ -1,6 +1,6 @@
 # How to launch a Virtual Network Function (VNF) on the Universal Node
 
-This file details how to deploy and run a virtual network function (VNF) on the Universal Node (UN). This requires the execution of the following main steps (detailed in the remainder of the document):
+This document details how to deploy and run a Virtual Network Function (VNF) on the Universal Node (UN). This requires the execution of the following main steps (detailed in the remainder of the document):
 *	create the desired VNF image;
 *	register such a VNF in the name-resolver database;
 *	send to the un-orchestrator a Network Functions-Forwarding Graph (NF-FG) including the VNF that has to be instantiated.
