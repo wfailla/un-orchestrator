@@ -268,7 +268,7 @@ Here there are the required steps:
 
 ### DPDK processes
 
-In order to run VNFs implemented as DPDK processes, no further operation is required,
+In order to run VNFs implemented as DPDK processes, no further operations are required,
 since the DPDK library has already been installed together with the vSwitch.
 
 ## Compile the un-orchestrator
