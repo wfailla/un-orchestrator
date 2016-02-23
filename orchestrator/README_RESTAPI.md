@@ -86,7 +86,7 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 			"VNFs": [
 			  {
 				"id": "00000001",
-				"name": "ubuntu",
+				"name": "firewall",
 				"ports": [
 				  {
 					"id": "inout:0",
