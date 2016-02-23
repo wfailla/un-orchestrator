@@ -29,23 +29,23 @@ some more components are required to compile the un-orchestrator.
 	$ sudo apt-get install python-pip
 	$ sudo pip install gunicorn falcon cython enum
 
-## How to configure the virtualizer
+## How to configure the Virtualizer
 
-The virtualizer reads its configuration from the file [./config/configuration.ini](config/configuration.ini), 
-which must be properly edited before starting the virtualizer itself.
+The Virtualizer reads its configuration from the file [./config/configuration.ini](config/configuration.ini), 
+which must be properly edited before starting the Virtualizer itself.
 
-## How to run the virtualizer
+## How to run the Virtualizer
 
 	$ gunicorn -b ip:port example:api
 
 where 'ip' and 'port' must be set to the desired values.
 
-Please, note that the virtualizer requires the un-orchestrator and the 
+Please, note that the Virtualizer requires the un-orchestrator and the 
 name-resolver running in the server.
 
 ## Configuration file examples
 
-Examples of configurations that can be sent to the virtualizer are available in [./config/nffg_examples](nffg_examples).
+Examples of configurations that can be sent to the Virtualizer are available in [./config/nffg_examples](nffg_examples).
 In particular:
   * [./config/nffg_examples/simple_passthrough_nffg.xml](./config/nffg_examples/simple_passthrough_nffg.xml): 
     simple configuration that implements a simple passthrough function, i.e., traffic is 
@@ -64,14 +64,14 @@ In particular:
 
 ## Rest API
 
-The virtualizer accept commands through its REST interface. The main REST commands 
+The Virtualizer accept commands through its REST interface. The main REST commands 
 to be used to interact with it are detailed in the following.
 
-Get information about the virtualizer
+Get information about the Virtualizer
 
     GET / HTTP/1.1
     
-Test the virtualizer aliveness
+Test the Virtualizer aliveness
 
     GET /ping HTTP/1.1
 
@@ -86,7 +86,7 @@ Deploy a new configuration
     POST /edit-config HTTP/1.1
 
 The body of the message must contain the new configuration for the universal node 
-espressed in the format defined by the virtualizer library.
+espressed in the format defined by the Virtualizer library.
 
 ### Send commands to the Virtualzier
     
