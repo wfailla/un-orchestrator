@@ -17,7 +17,7 @@ VNF.
 			"name": "Forwarding graph",
 			"end-points": [
 		  	{
-		    	"id": "00000003",
+		    	"id": "00000001",
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
@@ -25,7 +25,7 @@ VNF.
 		    	}
 		  	},
 		  	{
-		    	"id": "00000004",
+		    	"id": "00000002",
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
@@ -39,11 +39,11 @@ VNF.
 		      	    "id": "000000001",
 		      		"priority": 1,
 		      		"match": {
-		        		"port_in": "endpoint:00000003"
+		        		"port_in": "endpoint:00000001"
 		      		},
 		      		"actions": [
 		        	{
-		          		"output_to_port": "endpoint:00000004"
+		          		"output_to_port": "endpoint:00000002"
 		        	}
 		      		]
 		    	}
