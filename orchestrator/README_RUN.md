@@ -5,7 +5,7 @@ retrieved by the following command:
 
     $ sudo ./node-orchestrator --h
 
-Please refer to the help provided by the node-orchestrator itself in order to
+Please refer to the help provided by the un-orchestrator itself in order to
 understand how to use the different options.
 
 The un-orchestrator requires a virtual switch up and running in the server,
