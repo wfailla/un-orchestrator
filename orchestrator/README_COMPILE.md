@@ -250,7 +250,7 @@ You can build it from sources using the following commands:
 To compile and install the QEMU/KVM execution environment, you need a recent QEMU 
 version.
 
-Additionally, for `ivshmem` support, a patch (`[un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch`) 
+Additionally, for `ivshmem` support, a patch ([`[un-orchestrator]/orchestrator/compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch`](./compute_controller/plugins/kvm-libvirt/patches/ivshmem-qemu-2.2.1.patch)) 
 is needed to introduce the same changes that were present in the old `qemu-1.6-based` 
 version included in OVDK (Intel DPDK vSwitch).
 
