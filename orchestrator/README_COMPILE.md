@@ -152,9 +152,9 @@ OvS with the OFCONFIG support can be installed as follows:
 
 	; Follow the instructions as described in the file INSTALL.md provided in the root folder of that repository.
 
-### OpenvSwitch (OVSDB)
+### Open vSwitch (OVSDB)
 
-At first, download the OpenvSwitch source code from:
+At first, download the Open vSwitch source code from:
 
     http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
 
@@ -166,7 +166,7 @@ Then execute the following commands:
     $ make
     $ sudo make install
 
-### OpenvSwitch (OVSDB) with DPDK support
+### Open vSwitch (OVSDB) with DPDK support
 
 Before installing OvS with DPDK, you must download and compile the DPDK library. At first, download
 the source code from:
