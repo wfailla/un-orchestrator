@@ -4,7 +4,7 @@ The Virtualizer is an intermediate module sit between the un-orchestrator and th
 of the Unify architecture. It operates as follows:
   * receives commands from the upper layers of the Unify architecture based on the virtualizer 
     library defined by WP3;
-  * converts those command in the formalism natively supported by the un-orchestrator
+  * converts those commands in the formalism natively supported by the un-orchestrator
     (described in [../orchestrator/README_NF-FG.md](../orchestrator/README_NF-FG.md));
   * sends the command to the un-orchestrator through the API described in [../orchestrator/README_RESTAPI.md](../orchestrator/README_RESTAPI.md)
 
