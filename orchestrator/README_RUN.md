@@ -24,10 +24,9 @@ Folder `config` contains some configuration file examples that can be used
 to configure/test the un-orchestrator.
 
   * [config/universal-node-config.ini](config/default-config.ini): 
-    configuration file describing the rest server and the client authentication, 
-    as well as the rest server port, configuration file describing the plysical ports 
-    to be handled by the un-orchestrator, the first nf-fg to be deployed on the node and
-    if the client authentication is required;
+    configuration file for the un-orchestrator. It allows to specify information such 
+    as the TCP port used by the REST server, the file describing the physical 
+    ports of the Universal Node, and more;
   * [config/universal-node-example.xml](config/universal-node-example.xml): 
     configuration file describing the physical ports to be handled by the 
     un-orchestrator, as well as the amount of CPU, memory and storage provided 
