@@ -146,10 +146,10 @@ Start the switching daemon:
 
 ## How to start the proper virtual execution environment
 
-Only libvirt needs to be expliclty started. If you do not intend 
+Only Libvirt needs to be explicitly started. If you do not intend 
 to use this execution environment, you can skip this section.
 
-### How to configure and start libvirt
+### How to configure and start Libvirt
 
 In case you are planning to use OvS with DPDK support as virtual switch, you have 
 to edit the file `/usr/local/etc/libvirt/qemu.conf` by adding the following line:
