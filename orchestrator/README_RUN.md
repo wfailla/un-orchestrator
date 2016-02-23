@@ -143,8 +143,14 @@ Start the switching daemon:
     $ export DB_SOCK=/usr/local/var/run/openvswitch/db.sock
     $ sudo ovs-vswitchd --dpdk -c 0x1 -n 4 --socket-mem 1024,0 \
         -- unix:$DB_SOCK --pidfile --detach
-		
-## How to configure and start libvirt
+
+## How to start the proper virtual execution environment
+
+Only libvirt needs to be expliclty started, as described in the following.
+If you do not intend to use such an execution environment, you can skip this
+section.
+
+### How to configure and start libvirt
 
 In case you are planning to use OvS with DPDK support as virtual switch, you have 
 to edit the file `/usr/local/etc/libvirt/qemu.conf` by adding the following line:
