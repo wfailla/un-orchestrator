@@ -55,10 +55,10 @@ Set up DPDK (after each reboot of the physical machine), in order to:
     number)
   * Bind Ethernet devices to IGB UIO module (bind all the ethernet interfaces
     that you want to use)
-
-	$ cd [xdpd]/libs/dpdk/tools  
-	$ sudo ./setup.sh  
-	; Follow the instructions provided in the script
+ 
+    $ cd [xdpd]/libs/dpdk/tools  
+    $ sudo ./setup.sh  
+    ; Follow the instructions provided in the script
 
 
 Start xDPd:
@@ -67,8 +67,8 @@ Start xDPd:
 	$ sudo ./xdpd
 
 xDPd comes with a command line tool called `xcli`, that can be used to check
-the  flows installed in the lsis, which are the LSIs deployed, see statistics
-on flows matched, and so on. The xcli can be run by just typing:
+the  flows installed in the LSIs, which are the LSIs deployed, see statistics
+on flows matched, and so on. The `xcli` can be run by just typing:
 
     $ xcli
 
