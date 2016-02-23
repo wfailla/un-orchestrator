@@ -82,7 +82,7 @@ function (`firewall:2`) are sent on the network interface `eth2`.
 			],
 			"end-points": [
 		  	{
-		    	"id": "00000002",
+		    	"id": "00000001",
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
@@ -90,7 +90,7 @@ function (`firewall:2`) are sent on the network interface `eth2`.
 		    	}
 		  	},
 		  	{
-		    	"id": "00000003",
+		    	"id": "00000002",
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
@@ -104,7 +104,7 @@ function (`firewall:2`) are sent on the network interface `eth2`.
 		      		"id": "000000001",
 		      		"priority": 1,
 		      		"match": {
-		        		"port_in": "endpoint:00000002"
+		        		"port_in": "endpoint:00000001"
 		      		},
 		      		"actions": [
 		        	{
@@ -120,7 +120,7 @@ function (`firewall:2`) are sent on the network interface `eth2`.
 		      		},
 		      		"actions": [
 		        	{
-		          		"output_to_port": "endpoint:00000003"
+		          		"output_to_port": "endpoint:00000002"
 		        	}
 		      		]
 		    	}
