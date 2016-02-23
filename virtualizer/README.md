@@ -43,6 +43,25 @@ where 'ip' and 'port' must be set to the desired values.
 Please, note that the virtualizer requires the un-orchestrator and the 
 name-resolver running in the server.
 
+## Configuration file examples
+
+Examples of configurations that can be sent to the virtualizer are available in [./config/nffg_examples](nffg_examples).
+In particular:
+  * [./config/nffg_examples/simple_passthrough_nffg.xml](./config/nffg_examples/simple_passthrough_nffg.xml): 
+    simple configuration that implements a simple passthrough function, i.e., traffic is 
+    received from a first physical port and sent out from a second physical port, 
+    after having been handled to the vSwitch;
+  * [./config/nffg_examples/passthrough_with_vnf_nffg.xml](./config/nffg_examples/passthrough_with_vnf_nffg.xml): 
+    configuration that includes a VNF. Traffic is received from a first physical 
+    port, provided to a network function, and then sent out from a second physical 
+    port;
+  * [./config/nffg_examples/passthrough_with_vnf_nffg_and_match_and_action.xml](./config/passthrough_with_vnf_nffg_and_match_and_action.xml): 
+    this configuration includes flows matching some protocol fields, and having 
+    actions that manipulate protocol fields;
+  * [./config/nffg_examples/nffg_delete_flow_vnf.xml](./config/nffg_examples/nffg_delete_flow_vnf.xml): 
+    configuration that deletes some flows and a VNF instantiated on the Universal 
+    Node.
+
 ## Rest API
 
 The virtualizer accept commands through its REST interface. The main REST commands 
@@ -68,23 +87,6 @@ Deploy a new configuration
 
 The body of the message must contain the new configuration for the universal node 
 espressed in the format defined by the virtualizer library.
-
-Examples of configurations that can be sent to the virtualizer are available in [./config/nffg_examples](nffg_examples).
-In particular:
-  * [./config/nffg_examples/simple_passthrough_nffg.xml](./config/nffg_examples/simple_passthrough_nffg.xml): 
-    simple configuration that implements a simple passthrough function, i.e., traffic is 
-    received from a first physical port and sent out from a second physical port, 
-    after having been handled to the vSwitch;
-  * [./config/nffg_examples/passthrough_with_vnf_nffg.xml](./config/nffg_examples/passthrough_with_vnf_nffg.xml): 
-    configuration that includes a VNF. Traffic is received from a first physical 
-    port, provided to a network function, and then sent out from a second physical 
-    port;
-  * [./config/nffg_examples/passthrough_with_vnf_nffg_and_match_and_action.xml](./config/passthrough_with_vnf_nffg_and_match_and_action.xml): 
-    this configuration includes flows matching some protocol fields, and having 
-    actions that manipulate protocol fields;
-  * [./config/nffg_examples/nffg_delete_flow_vnf.xml](./config/nffg_examples/nffg_delete_flow_vnf.xml): 
-    configuration that deletes some flows and a VNF instantiated on the Universal 
-    Node.
 
 ### Send commands to the Virtualzier
     
