@@ -17,7 +17,7 @@ This operation requires to edit the configuration file of the name-resolver and 
 In order to deploy your VNF on the UN, you must provide to the un-orchestration a NF-FG including such a VNF (to compile and then execute the un-orchestrator, please check the files [orchestrator/README_COMPILE.md](../orchestrator/README_COMPILE.md) and [orchestrator/README_RUN.md](../orchestrator/README_RUN.md)).
 
 The un-orchestrator supports two NF-FG versions:
-  * the JSON-based format, which is supported natively (more information are available in       [orchestrator/README_NF-FG.md](../orchestrator/README_NF-FG.md) and in [orchestrator/README_RESTAPI.md](../orchestrator/README_RESTAPI.md)
+  * the JSON-based format, which is supported natively (more information is available in       [orchestrator/README_NF-FG.md](../orchestrator/README_NF-FG.md) and in [orchestrator/README_RESTAPI.md](../orchestrator/README_RESTAPI.md)
   * the  XML-based format defined in WP3 that includes both top-down
     communication (for the actual forwarding graph) and bottom-up primitives
     (for resources and capabilities). This version of the NF-FG requires the
