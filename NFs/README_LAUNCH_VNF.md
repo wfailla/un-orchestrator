@@ -6,7 +6,7 @@ This file details how to deploy and run a virtual network function (VNF) on the 
 *	send to the un-orchestrator a Network Functions-Forwarding Graph (NF-FG) including the VNF that has to be instantiated.
 
 ### Create the VNF image
-The universal node currently supports three types of VNFs: VNFs executed as Docker containers, VNFs executed inside KVM-based virtual machines, and VNFs based on the DPDK library (i.e., DPDK processes).
+The Universal Node currently supports four types of VNFs: VNFs executed as Docker containers, VNFs executed inside KVM-based virtual machines, VNFs based on the DPDK library (i.e., DPDK processes), and the so called native functions.
 In order to create your own VNF image, please check individual README's in each sub-package.
 
 ### Register the VNF in the name-resolver
