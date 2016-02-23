@@ -74,7 +74,7 @@ In particular:
   * [./config/nffg_examples/simple_passthrough_nffg.xml](./config/nffg_examples/simple_passthrough_nffg.xml): 
     simple configuration that implements a simple passthrough function, i.e., traffic is 
     received from a first physical port and sent out from a second physical port, 
-    after having been handled to the vswitch;
+    after having been handled to the vSwitch;
   * [./config/nffg_examples/passthrough_with_vnf_nffg.xml](./config/nffg_examples/passthrough_with_vnf_nffg.xml): 
     configuration that includes a VNF. Traffic is received from a first physical 
     port, provided to a network function, and then sent out from a second physical 
@@ -83,6 +83,6 @@ In particular:
     this configuration includes flows matching some protocol fields, and having 
     actions that manipulate protocol fields;
   * [./config/nffg_examples/nffg_delete_flow_vnf.xml](./config/nffg_examples/nffg_delete_flow_vnf.xml): 
-    configuration that deletes some flows and a VNF instantiated on the universal 
-    node.
+    configuration that deletes some flows and a VNF instantiated on the Universal 
+    Node.
     
