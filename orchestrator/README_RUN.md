@@ -146,9 +146,8 @@ Start the switching daemon:
 
 ## How to start the proper virtual execution environment
 
-Only libvirt needs to be expliclty started, as described in the following.
-If you do not intend to use such an execution environment, you can skip this
-section.
+Only libvirt needs to be expliclty started. If you do not intend 
+to use this execution environment, you can skip this section.
 
 ### How to configure and start libvirt
 
