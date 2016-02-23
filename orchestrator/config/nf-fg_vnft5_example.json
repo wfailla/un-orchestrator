@@ -5,7 +5,6 @@
 		"name": "Forwarding graph",
 		"VNFs": [  
 			{
-				"vnf_template": "OF-controller.json",  
 				"id": "00000001",
 				"name": "OF-controller",
 				"ports": [
@@ -16,7 +15,6 @@
 				]
 			},
 			{
-				"vnf_template": "vnft5.json",
 				"id": "00000002",
 				"name": "vnft5",
 				"ports": [
@@ -41,7 +39,6 @@
 				"name": "port1",
 				"type": "interface",
 				"interface": {
-					"node-id": "10.0.1.1",
 					"interface": "eth1"
 				}
 			},
@@ -50,7 +47,6 @@
 				"name": "port2",
 				"type": "interface",
 				"interface": {
-					"node-id": "10.0.1.2",
 					"interface": "eth2"
 				}
 			}

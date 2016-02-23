@@ -4,7 +4,6 @@
     "name": "Forwarding graph",
     "VNFs": [
       {
-        "vnf_template": "bng.json",
         "id": "00000001",
         "name": "bng",
         "ports": [
@@ -19,7 +18,6 @@
         ]
       },
       {
-        "vnf_template": "nat.json",
         "id": "00000002",
         "name": "nat",
         "ports": [
@@ -40,7 +38,6 @@
         "name": "ingress",
         "type": "interface",
         "interface": {
-          "node-id": "10.0.0.1",
           "interface": "eth3"
         }
       },
@@ -49,7 +46,6 @@
         "name": "ingress",
         "type": "interface",
         "interface": {
-          "node-id": "10.0.0.2",
           "interface": "eth4"
         }
       }

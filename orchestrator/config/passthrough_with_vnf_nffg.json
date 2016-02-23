@@ -4,7 +4,6 @@
     "name": "Forwarding graph",
     "VNFs": [
       {
-        "vnf_template": "example.json",
         "id": "00000001",
         "name": "example",
         "ports": [
@@ -25,7 +24,6 @@
         "name": "ingress",
         "type": "interface",
         "interface": {
-          "node-id": "10.0.0.1",
           "interface": "eth0"
         }
       },
@@ -34,7 +32,6 @@
         "name": "egress",
         "type": "interface",
         "interface": {
-          "node-id": "10.0.0.2",
           "interface": "eth1"
         }
       }

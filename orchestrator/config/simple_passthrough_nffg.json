@@ -8,7 +8,6 @@
         "name": "ingress",
         "type": "interface",
         "interface": {
-          "node-id": "10.0.0.1",
           "interface": "eth0"
         }
       },
@@ -17,7 +16,6 @@
         "name": "egress",
         "type": "interface",
         "interface": {
-          "node-id": "10.0.0.1",
           "interface": "eth1"
         }
       }
