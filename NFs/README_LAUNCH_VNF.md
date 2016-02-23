@@ -144,8 +144,8 @@ This json can be stored in a file (e.g., `nffg.json`) and provided to the un-orc
 where the `graphid` is an alphanumeric string that will uniquely identify your graph in the un-orchestrator.
 
 At this point the un-orchestrator
-*	through the *network controller*: it creates a new LSI, inserts the proper Openflow rules in such an LSI in order to steer the traffic among the VNFs of the graph, and inserts the proper Openflow rules in the LSI-0 (which is the only LSI connected to the physical interfaces) in order to inject the proper traffic in the graph, and properly handle the network packets exiting from such a graph;
-*	through the *compute controller*: it starts the Docker image implementing the VNF with name *dummy* (the image associated with the name of the VNF is obtained through the name-resolver).
+*	creates a new LSI through the *network controller*, inserts the proper Openflow rules in such an LSI in order to steer the traffic among the VNFs of the graph, and inserts the proper Openflow rules in the LSI-0 (which is the only LSI connected to the physical interfaces) in order to inject the proper traffic in the graph, and properly handle the network packets exiting from such a graph;
+*	starts the Docker image implementing the VNF with name *dummy* (the image associated with the name of the VNF is obtained through the name-resolver) through the *compute controller*.
 
 The following picture shows how the NF-FG of the example is actually implemented on the UN; in particular, it depicts the connections among LSIs and the VNF, and the rules in the flow tables of the involved LSIs.
 
