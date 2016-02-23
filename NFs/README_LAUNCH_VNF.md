@@ -21,7 +21,7 @@ The un-orchestrator supports two NF-FG versions:
   * the  XML-based format defined in WP3 that includes both top-down
     communication (for the actual forwarding graph) and bottom-up primitives
     (for resources and capabilities). This version of the NF-FG requires the
-    usage of the [`virtualizer`](../virtualizer/README.md)
+    usage of the [`virtualizer`](../virtualizer/README.md).
 
 ## An example
 
