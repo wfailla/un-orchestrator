@@ -401,14 +401,16 @@ Within the `match` element of the NF-FG description, the following fields are al
         
 ## Supported actions
 
-Within the `action` element of the NF-FG description, one and only one of the
-following fields **MUST** be specified:
+Within the `action` element of the NF-FG description, the following elements can be used:
 
 	"output_to_port"
 	"push_vlan"
 	"pop_vlan"
   
-As an example, the following NF-FG tags all the packets coming from interface `eth1` and forwards them on interface `eth2`.
+ Note that multiple actions can be specified in the same `flowrule`, and that `output_to_port` should 
+ appear at least once in each `flowrule`.
+  
+As an example, the following NF-FG tags all the packets coming from interface `firewall:inout:1` (belonging to the `firewall` VNF) and forwards them to the `network-monitor` VNF, by means of its interface `network-monitor:inout:0`.
 
 	{
 		"forwarding-graph": 
