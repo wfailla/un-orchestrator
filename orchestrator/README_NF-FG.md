@@ -436,7 +436,7 @@ The NF-FG specification supports several types of endpoints:
 	`vlan`
 	`gre-tunnel`
 
-### Endpoint type: `inteface`
+### Endpoint type: `interface`
 
 It represents a physical interface of the UN. Its usage is shown in all the examples 
 provided so far. 
@@ -590,7 +590,7 @@ Is `gre-tunnel` endpoint is defined as follows:
 		"id": "00000002",
 		"name": "egress",
 		"type": "gre-tunnel",
-		"gre": {
+		"gre-tunnel": {
 			"local-ip": "10.0.0.1",
 			"remote-ip": "10.0.0.2",
 			"interface" : "eth1",
@@ -636,7 +636,7 @@ the `gre-tunnel` endpoint.
 		    	"id": "00000001",
 		    	"name": "egress",
 		    	"type": "gre-tunnel",
-		    	"gre": {
+		    	"gre-tunnel": {
 		      		"local-ip": "10.0.0.1",
 		      		"remote-ip": "10.0.0.2",
 		      		"interface" : "eth1",
