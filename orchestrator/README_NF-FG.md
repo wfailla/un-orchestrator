@@ -56,8 +56,8 @@ VNF.
 
 This example is more complex, and it includes a network function called `firewall`.
 Packets coming from the interface `eth1` are sent to the first port of the network
-function (`firewall:1`), while packets coming from the second port of the network
-function (`firewall:2`) are sent on the network interface `eth2`.
+function (`firewall:inout:0`), while packets coming from the second port of the network
+function (`firewall:inout:1`) are sent on the network interface `eth2`.
 
 	{
 		"forwarding-graph": 
@@ -132,9 +132,9 @@ function (`firewall:2`) are sent on the network interface `eth2`.
 ## Example 3
 
 In this example, traffic coming from `eth1` is forwarded to the `firewall` through the port
-`firewall:1`. Then, traffic coming from the firewall (`firewall:2`) is split based on the destination
+`firewall:inout:0`. Then, traffic coming from the firewall (`firewall:inout:0`) is split based on the destination
 TCP port. Packets directed to the TCP port 80 is provided to the web cache then to the NAT,
-while all the other traffic is directly provided to the NAT. Finally, packets from `NAT:2` leaves the
+while all the other traffic is directly provided to the NAT. Finally, packets from `NAT:inout:1` leaves the
 graph through the port `eth2`.
 
 This graph can be graphically represented as follows:
