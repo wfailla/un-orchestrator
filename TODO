@@ -15,3 +15,9 @@ example:
 In this case all the rules from 200 are ignored.
 
 *******************************************************************************
+VLAN Endpoint does not work properly.
+Traffic coming from an endpoint of this type (tagged) is not correctly matched and the vlan tag is not popped. 
+On the other hand, traffic directed to an endpoint of this type is not tagged (the problem should be on the actions order)
+
+Not all flows are deleted when a graph is deleted.
+
