@@ -555,7 +555,7 @@ Referring to the example above, the un-orchestrator changes the flowrule `000000
   		]
 	},
 	
-The flowrule `00000002` is instead changes as follows:
+The flowrule `00000002` is instead changed as follows:
 
 	{
   		"id": "00000002",
