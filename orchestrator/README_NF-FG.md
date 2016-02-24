@@ -281,7 +281,7 @@ Json description of the graph:
 	  	}
 	}
 		
-## Supported matches
+## Matches
 
 Within the `match` element of the NF-FG description, the following fields are allowed
 (all the values must be specified as strings):
@@ -329,7 +329,7 @@ Within the `match` element of the NF-FG description, the following fields are al
 	`mpls_label`
 	`mpls_tc`
         
-## Supported actions
+## Actions
 
 Within the `action` element of the NF-FG description, the following elements can be used:
 
