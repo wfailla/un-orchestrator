@@ -1693,28 +1693,18 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															else if(a_name == VLAN_POP)
 															{
 																//A vlan pop action is required
-																bool foundVlanID = false;
-											
 																vlan_action_t actionType;
 																unsigned int vlanID = 0;
 														
-																actionType = ACTION_VLAN_POP;
-														
-																string strVlanID = a_value.getString();
-																if(strVlanID.compare("") != 0)
-																	foundVlanID = true;
-																sscanf(strVlanID.c_str(),"%u",&vlanID);
-											
-																if(actionType == ACTION_VLAN_POP && foundVlanID)
+																bool is_vlan_pop = a_value.getBool();
+																if(is_vlan_pop)
 																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found in \"%s\"",VLAN_ID,VLAN_POP);
-																	return false;
-																}
+																	actionType = ACTION_VLAN_POP;
 														
-																//Finally, we are sure that the command is correct!
-																GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
-																genericActions.push_back(ga);
-											
+																	//Finally, we are sure that the command is correct!
+																	GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
+																	genericActions.push_back(ga);
+																}
 															}//end if(a_name == VLAN_POP)
 															else if(a_name == SET_ETH_SRC_ADDR)
 															{
