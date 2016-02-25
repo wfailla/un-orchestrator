@@ -421,7 +421,7 @@ on the network through the physical port `eth1`, without any VLAN tag.
 		        		"output_to_port": "endpoint:00000001"
 		        	}
 		      		]
-		    	},
+		    	}
 		  		]
 			}
 	  	}
