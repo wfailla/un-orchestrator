@@ -491,6 +491,10 @@ put_malformed_url:
 	string gID(graphID);
 	highlevel::Graph *graph = new highlevel::Graph(gID);
 	
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
+	
 	if(!parsePutBody(*con_info,*graph,newGraph))
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Malformed content");
@@ -500,7 +504,7 @@ put_malformed_url:
 		return ret;
 	}
 	
-		graph->print();
+	graph->print();
 	try
 	{
 		//if client authentication is required
@@ -516,10 +520,6 @@ put_malformed_url:
 				return ret;
 			}
 		}
-
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s",graphID);
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
 
 		if(newGraph)
 		{
@@ -622,19 +622,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 {
 	//for each NF, contains the set of ports it requires
 	map<string,set<unsigned int> > nfs_ports_found;
-
 	//for each NF, contains the id
 	map<string, string> nfs_id;
-
 	//for each endpoint (interface), contains the id
 	map<string, string> iface_id;
-
 	//for each endpoint (interface-out), contains the id
 	map<string, string> iface_out_id;
-
 	//for each endpoint (gre), contains the id
 	map<string, string> gre_id;
-
 	//for each endpoint (vlan), contains the pair vlan id, interface
 	map<string, pair<string, string> > vlan_id; //XXX: currently, this information is ignored
 
@@ -675,21 +670,19 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 					return false;				
 				}	    		
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
-		    		{
+		    	{
 					bool e_if = false, e_if_out = false, e_vlan = false;
 								
 					string id, v_id, node, iface, e_name, node_id, sw_id, interface;
 
-		        		const string& fg_name  = fg->first;
-			       		const Value&  fg_value = fg->second;
+	        		const string& fg_name  = fg->first;
+		       		const Value&  fg_value = fg->second;
 				
 					if(fg_name == _ID)
-		         		{
-		         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
-					}
+	         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
 					else if(fg_name == _NAME)
 					{
-		         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_NAME,fg_value.getString().c_str());
+	         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_NAME,fg_value.getString().c_str());
 					
 						//set name of the graph
 						graph.setName(fg_value.getString());
@@ -1459,8 +1452,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											}
 											else if(fr_name == ACTIONS)
 											{
-												try{
-													try{
+												try
+												{
+													try
+													{
 														fr_value.getArray();
 													} catch(exception& e)
 													{
@@ -1470,6 +1465,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 			
 													const Array& actions_array = fr_value.getArray();
 												
+													//One and only one output_to_port is allowed
+													bool foundOneOutputToPort = false;
+													
+													//Itearate on all the actions specified for this flowrule
 													for( unsigned int ac = 0; ac < actions_array.size(); ++ac )
 													{
 														foundAction = true;
@@ -1481,18 +1480,24 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															return false;				
 														}
 
+														//A specific action of the array can have a single keyword inside
 														Object theAction = actions_array[ac].getObject();
-
-														bool foundOne = false;
-
+														assert(theAction.size() == 1);
+														if(theAction.size() != 1)
+														{
+															logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Too many keywords in an element of \"%s\"",ACTIONS);
+															return false;				
+														}
+														
 														for(Object::const_iterator a = theAction.begin(); a != theAction.end(); a++)
 														{
 															const string& a_name  = a->first;
 															const Value&  a_value = a->second;
 	
-															//output_to_port
 															if(a_name == OUTPUT)
 															{
+																//The action is "output_to_port"
+															
 																string port_in_name = a_value.getString();
 																string realName;
 																const char *port_in_name_tmp = port_in_name.c_str();
@@ -1509,12 +1514,15 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																pnt=strtok(tmp, delimiter);
 																int i = 0;
 															
+																//The "output_to_port" action can refer to:
+																//	- an endpoint
+																//	- the port of a VNF
 																while( pnt!= NULL )
 																{
 																	switch(i)
 																	{
 																		case 0:
-																			//VNFss port type
+																			//VNFs port type
 																			if(strcmp(pnt,VNF) == 0)
 																			{
 																				p_type = 0;
@@ -1542,15 +1550,17 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																	pnt = strtok( NULL, delimiter );
 																	i++;
 																}
-																//VNFs port type 
+																
+																if(foundOneOutputToPort)
+																{
+																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT_IN,VNF,ENDPOINT,ACTIONS);
+																	return false;
+																}
+																foundOneOutputToPort = true;
+																
 																if(p_type == 0)
 																{
-																	if(foundOne)
-																	{
-																		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT_IN,VNF,ENDPOINT,ACTIONS);
-																		return false;
-																	}
-																	foundOne = true;
+																	//This is an output action referred to a VNF port
 
 																	//convert char *vnf_name_tmp to string vnf_name
 																	string vnf_name(vnf_name_tmp, strlen(vnf_name_tmp));
@@ -1583,12 +1593,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																//end-points port type
 																else if(p_type == 1) 
 																{
-																	if(foundOne)
-																	{
-																		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT_IN,VNF,ENDPOINT,ACTIONS);
-																		return false;
-																	}
-																	foundOne = true;
+																	//This is an output action referred to an endpoint
 										
 																	bool iface_found = false, vlan_found = false;
 						
@@ -1654,7 +1659,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																		action = new highlevel::ActionEndPoint(endPoint, string(s_a_value));
 																	}
 																}
-															}
+															}//End action == output_to_port
 															else if(a_name == SET_VLAN_ID)
 															{
 																logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_VLAN_ID,a_value.getString().c_str());
@@ -1668,10 +1673,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																//XXX: currently, this information is ignored	
 															}
 															else if(a_name == VLAN_PUSH)
-															{
-																//A vlan push action is required
+															{	
+																//The action is "push_vlan"
 											
-																bool foundVlanID = false;
+																//bool foundVlanID = false;
 											
 																vlan_action_t actionType;
 																unsigned int vlanID = 0;
@@ -1679,13 +1684,22 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																actionType = ACTION_VLAN_PUSH;
 														
 																string strVlanID = a_value.getString();
-																sscanf(strVlanID.c_str(),"%u",&vlanID);
+																															
+																//Convert the number from string to int
+																stringstream ss;
+																ss << std::hex << strVlanID;
+																ss >> vlanID;
+																
+																
+//																sscanf(strVlanID.c_str(),"%u",&vlanID);
+																
 											
-																if(actionType == ACTION_VLAN_PUSH && !foundVlanID)
+																//IVANO: probably this check is wrong
+/*																if(actionType == ACTION_VLAN_PUSH && !foundVlanID)
 																{
 																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",VLAN_ID,VLAN_PUSH);
 																	return false;
-																}
+																}*/
 																//Finally, we are sure that the command is correct!
 											
 																GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
@@ -1793,19 +1807,20 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",a_name.c_str(),ACTIONS);
 																return false;
 															}
-														}
+														}//end iteration on the keywords of an action element (remember that a single keywork is allowed in each element)
 	
-														if(!foundOne)
-														{
-															logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Neither Key \"%s\", nor key \"%s\" found in \"%s\"",PORT_IN,_ID,ACTIONS);
-															return false;
-														}
-														for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
-														{
-															action->addGenericAction(*ga);
-														}
+														
+													}//Here terminates the loop on the array actions
+													if(!foundOneOutputToPort)
+													{
+														//"output_to_port" is a mandatory action
+														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",OUTPUT,ACTIONS);
+														return false;
 													}
-												}
+													assert(action != NULL);
+													for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
+														action->addGenericAction(*ga);
+												}//end of try
 												catch(exception& e)
 												{
 													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", ACTIONS, e.what());
