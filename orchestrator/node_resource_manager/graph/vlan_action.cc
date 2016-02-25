@@ -62,6 +62,7 @@ void VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsigne
 			}
 			else
 			{
+				assert(type == ACTION_VLAN_POP);
 				message.set_instructions().set_inst_apply_actions().set_actions().add_action_pop_vlan(rofl::cindex(*position));
 				(*position)++;
 			}

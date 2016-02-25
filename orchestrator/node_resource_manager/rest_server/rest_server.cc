@@ -1684,7 +1684,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																actionType = ACTION_VLAN_PUSH;
 														
 																string strVlanID = a_value.getString();
-																															
+																
+																//FIXME: what if the number is not exadecimal?															
 																//Convert the number from string to int
 																stringstream ss;
 																ss << std::hex << strVlanID;

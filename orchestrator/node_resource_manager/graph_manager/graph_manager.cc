@@ -390,10 +390,10 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Remove the rules from the LSI-0");
 	
 	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),availableEndPoints,is_control_in_band,false);
-	graphLSI0lowLevel.removeRules(graphLSI0lowLevel.getRules());	
-		
+	graphLSI0lowLevel.removeRules(graphLSI0.getRules());
+			
 	//Remove rules from the LSI-0
-	graphInfoLSI0.getController()->removeRules(graphLSI0lowLevel.getRules());
+	graphInfoLSI0.getController()->removeRules(graphLSI0.getRules());
 	
 	/**
 	*		2) stop the NFs
@@ -478,11 +478,11 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	}
 
 	//if the graph has only this flow, remove the entire graph
-	if(graph->getNumberOfRules() == 1)
+/*	if(graph->getNumberOfRules() == 1)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph \"%s\" has only one flow. Then the entire graph will be removed",graphID.c_str());
 		return deleteGraph(graphID);
-	}
+	}*/
 	
 #if 0
 	/**
