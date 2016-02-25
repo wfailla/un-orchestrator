@@ -170,7 +170,7 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 	return true;
 }
 
-bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, highlevel::Graph &graph)
+bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, highlevel::Graph &graph)
 {
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
@@ -311,17 +311,29 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, map<string,
 				/*vlan endpoint*/
 				else if(vlan_found)
 				{
-					uint32_t vlanID;
-				
-					match.setInputPort(vlan_id[eP].second);
-					graph.addPort(vlan_id[eP].second);
+					char etherTypeVlan[BUF_SIZE] = "0x8100";
+					uint32_t vlanID = 0, ethType = 0;
+					vlan_action_t actionType = ACTION_VLAN_POP;
 					
 					if((sscanf(v_id.c_str(),"%"SCNd32,&vlanID) != 1) && (vlanID > 4094))
 					{
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_ID,value.getString().c_str());
 						return false;
 					}
+					/*add match on "ethertype" vlan*/
+					sscanf(etherTypeVlan,"%"SCNi32,&ethType);
+					match.setEthType(ethType & 0xFFFF);
+
+					/*add match on "vlan_id"*/
 					match.setEndpointVlanID(vlanID & 0xFFFF);
+
+					/*add match on "output_port"*/
+					match.setInputPort(vlan_id[eP].second);
+					graph.addPort(vlan_id[eP].second);
+
+					/*add "pop_vlan" action*/
+					GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
+					action.addGenericAction(ga);
 				}
 				/*gre-tunnel endpoint*/
 				else

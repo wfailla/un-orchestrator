@@ -1447,7 +1447,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											{
 												try{
 													foundMatch = true;
-													if(!MatchParser::parseMatch(fr_value.getObject(),match,nfs_ports_found,nfs_id,iface_id,iface_out_id,vlan_id,graph))
+													if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action),nfs_ports_found,nfs_id,iface_id,iface_out_id,vlan_id,graph))
 													{
 														return false;
 													}
@@ -1633,12 +1633,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																		actionType = ACTION_ENDPOINT_VLAN;
 														
 																		sscanf(vlan_id[eP].first.c_str(),"%u",&vlanID);
-											
+																		
+																		/*add "push_vlan" action*/
+																		GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
+ 																		action->addGenericAction(ga);
+																		
+																		/*add "output_port" action*/
 																		action = new highlevel::ActionPort(vlan_id[eP].second, string(s_a_value));
 																		graph.addPort(vlan_id[eP].second);
-											
-																		GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
-																		genericActions.push_back(ga);
 																	}
 																	//gre-tunnel endpoint
 																	else
