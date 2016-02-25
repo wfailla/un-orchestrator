@@ -413,7 +413,7 @@ def extractRules(content):
 			#This is a port of the universal node. We have to extract the virtualized port name
 			port_name = physicalPortsVirtualization[port.name.get_value()]		
 			if port_name not in endpoints_dict:
-				endpoints_dict[port_name] = EndPoint(_id = str(endpoint_id) ,_type = "interface", node_id = unOrchestratorIP, interface = port_name)
+				endpoints_dict[port_name] = EndPoint(_id = str(endpoint_id) ,_type = "interface", interface = port_name)
 				endpoint_id = endpoint_id + 1
 			match.port_in = "endpoint:" + endpoints_dict[port_name].id
 		elif tokens[4] == 'NF_instances':
@@ -464,7 +464,7 @@ def extractRules(content):
 			#the real name of the port on the universal node
 			port_name = physicalPortsVirtualization[port.name.get_value()]		
 			if port_name not in endpoints_dict:
-				endpoints_dict[port_name] = EndPoint(_id = str(endpoint_id) ,_type = "interface", node_id = unOrchestratorIP, interface = port_name)
+				endpoints_dict[port_name] = EndPoint(_id = str(endpoint_id) ,_type = "interface", interface = port_name)
 				endpoint_id = endpoint_id + 1
 			action.output = "endpoint:" + endpoints_dict[port_name].id
 		elif tokens[4] == 'NF_instances':
@@ -730,7 +730,7 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 	for endp in newEndpoints:
 		already_present = False
 		for endpoint in nffg.end_points:
-			if endp.node_id == endpoint.node_id and endp.interface == endpoint.interface:
+			if endp.interface == endpoint.interface:
 				already_present = True
 				break
 		if already_present is False:		
