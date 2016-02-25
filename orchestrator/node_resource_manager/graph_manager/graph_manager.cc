@@ -478,11 +478,11 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	}
 
 	//if the graph has only this flow, remove the entire graph
-/*	if(graph->getNumberOfRules() == 1)
+	if(graph->getNumberOfRules() == 1)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph \"%s\" has only one flow. Then the entire graph will be removed",graphID.c_str());
 		return deleteGraph(graphID);
-	}*/
+	}
 	
 #if 0
 	/**
