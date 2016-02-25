@@ -36,7 +36,7 @@ which must be properly edited before starting the Virtualizer itself.
 
 ## How to run the Virtualizer
 
-	$ gunicorn -b ip:port example:api
+	$ gunicorn -b ip:port virtualizer:api
 
 where 'ip' and 'port' must be set to the desired values.
 
