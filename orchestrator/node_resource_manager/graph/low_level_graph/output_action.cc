@@ -30,26 +30,28 @@ openflow::ofp_action_type Action::getActionType()
 
 void Action::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 {
+	//Before inserting the output action, the other actions are considered
+	unsigned int position = 0;
+	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
+		(*ga)->fillFlowmodMessage(message,&position);
+
+	//Now we can consider the output action
 	switch(OFP_VERSION)
 	{
 		case OFP_10:
 			if(is_local_port)
-				message.set_actions().add_action_output(cindex(0)).set_port_no(rofl::openflow::OFPP_LOCAL);
+				message.set_actions().add_action_output(cindex(position)).set_port_no(rofl::openflow::OFPP_LOCAL);
 			else	
-				message.set_actions().add_action_output(cindex(0)).set_port_no(port_id);
+				message.set_actions().add_action_output(cindex(position)).set_port_no(port_id);
 			break;
 		case OFP_12:
 		case OFP_13:
 			if(is_local_port)
-				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(0)).set_port_no(rofl::openflow::OFPP_LOCAL);
+				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(position)).set_port_no(rofl::openflow::OFPP_LOCAL);
 			else
-				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(0)).set_port_no(port_id);
+				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(position)).set_port_no(port_id);
 			break;	
 	}
-	
-	unsigned int position = 1;
-	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
-		(*ga)->fillFlowmodMessage(message,&position);
 }
 
 void Action::print()
