@@ -478,11 +478,11 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	}
 
 	//if the graph has only this flow, remove the entire graph
-	if(graph->getNumberOfRules() == 1)
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph \"%s\" has only one flow. Then the entire graph will be removed",graphID.c_str());
-		return deleteGraph(graphID);
-	}
+//	if(graph->getNumberOfRules() == 1)
+//	{
+//		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph \"%s\" has only one flow. Then the entire graph will be removed",graphID.c_str());
+//		return deleteGraph(graphID);
+//	}
 	
 #if 0
 	/**
@@ -1831,15 +1831,15 @@ next2:
 
 			//Stop the NF	
 #ifdef RUN_NFS
-			computeController->stopNF(*nf);
+
 #else
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Flag RUN_NFS disabled. No NF to be stopped");
 #endif
 
 			set<string> nf_ports;
-			map<string,unsigned int>lsi_nf_ports = lsi->getNetworkFunctionsPorts(*nf);
-			for (map<string,unsigned int>::iterator lsi_nfp_it = lsi_nf_ports.begin(); lsi_nfp_it != lsi_nf_ports.end(); ++lsi_nfp_it) {
-				nf_ports.insert(lsi_nfp_it->first);
+			map<unsigned int, string>lsi_nf_ports = lsi->getNetworkFunctionsPortsNameOnSwitchMap(*nf);
+			for (map<unsigned int,string>::iterator lsi_nfp_it = lsi_nf_ports.begin(); lsi_nfp_it != lsi_nf_ports.end(); ++lsi_nfp_it) {
+				nf_ports.insert(lsi_nfp_it->second);
 			}
 
 			try
@@ -1852,6 +1852,8 @@ next2:
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 				throw GraphManagerException();
 			}
+			
+						computeController->stopNF(*nf);
 		}
 	}
 #endif

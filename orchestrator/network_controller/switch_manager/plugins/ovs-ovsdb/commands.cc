@@ -723,7 +723,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 		}
 		case VETH_PORT:
 		{		
-			//In this case the veth pair needs to be created!
+			//In this case the veth pair needs to be created! The pair of names is stored; this information will be used when the VNF will be destroyed
 			stringstream peer_port_name;
 			peer_port_name << port_name << ".lxc";
 			stringstream cmd_create_veth_pair;
@@ -739,6 +739,8 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 			
 			//	The veth pair peer given to the container is the one with the port_name as derived from the NF-FG.
 			//	As a result, the veth pair peer we add to OVS is the one with the decorated name: port_name.lxc
+			peersNames[port_name] = peer_port_name.str();
+			
 			port_name = peer_port_name.str();
 			break;
 		}
@@ -958,7 +960,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 							port_uuid[dnumber].push_back(stuff1[1].getString());
 						}
 					} else if(name1 == "details"){
-						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
+						logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
 						throw commandsException();
 					}
 				}		
@@ -1246,24 +1248,24 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
 	if (nwritten == sockFAILURE)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 		throw commandsException();
 	}
 
     r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
 		throw commandsException();
 	}
 		
-	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 		
-	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 		
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);	
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);	
 		
 	Value value;
     read( read_buf, value );
@@ -1549,6 +1551,24 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
     s = cmd_connect();
 
 	if(nfp.size() != 0){
+	
+		list<string> portsToBeRemoved;
+		
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Network function ports to be removed from the switch:");
+		for(set<string>::iterator port = nfp.begin(); port != nfp.end(); port++)
+		{
+			if(peersNames.count(*port) != 0)
+			{
+				//this port is a VETH
+				portsToBeRemoved.push_back(peersNames[*port]);
+				logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "\t* %s",peersNames[*port].c_str());
+			}
+			else
+			{
+				portsToBeRemoved.push_back(*port);
+				logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "\t* %s",port->c_str());
+			}
+		}
 		
 		root["method"] = "transact";
 
@@ -1573,7 +1593,9 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		list<string>::iterator uu = port_uuid[dnpi.getDpid()].begin();
 		
 		/*for each port in the list of the getNetworkFunctionsPorts*/
-		for(set<string>::iterator p = nfp.begin(); p != nfp.end(); p++){
+		//for(set<string>::iterator p = nfp.begin(); p != nfp.end(); p++){
+		for(list<string>::iterator p = portsToBeRemoved.begin(); p != portsToBeRemoved.end(); p++)
+		{
 			string sss = (*p);
 			uu = port_uuid[dnpi.getDpid()].begin();
 			//should be search in port_l, p....if find it take the index and remove it from the set port-uuid[pi]
@@ -1675,24 +1697,22 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
 		if (nwritten == sockFAILURE)
 		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
+			logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 			throw commandsException();
 		}
 
     	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 		if (r == sockFAILURE)
 		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
+			logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
 			throw commandsException();
 		}
+		read_buf[r] = '\0';
 			
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, read_buf);
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 			
 		root.clear();
 		params.clear();

@@ -42,9 +42,16 @@ class commands
 {
 private:
 	/*
-	*	IPsec certificate
+	*	@brief: IPsec certificate
 	*/
 	string ipsec_certificate;
+	
+	/*
+	*	@brief: Map that, given a port name used by the VNF, provides the name of such a port on the switch.
+	*			It is needed in case of VETH ports, in which the name of the end given to the VNF is different with
+	*			respect to the name of the end attached to the switch
+	*/
+	map<string,string> peersNames;
 public:
 	commands();
 
