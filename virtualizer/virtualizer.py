@@ -276,7 +276,7 @@ def extractVNFsInstantiated(content):
 	of the NF to be instantiated is among those to be supported by the universal node
 	'''
 	
-	global error, graph_id
+	global error
 
 	try:
 		tree = ET.parse(constants.GRAPH_XML_FILE)
@@ -303,7 +303,6 @@ def extractVNFsInstantiated(content):
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
 	instances = universal_node.NF_instances	
-	graph_id = universal_node.id.get_value()
 	
 	foundTypes = []
 	nfinstances = []
@@ -869,6 +868,7 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):
 
 	nffg = NF_FG()
 	nffg.id = graph_id
+	nffg.name = graph_name
 	nffg.flow_rules = rulesToBeAdded
 	nffg.vnfs = vnfsToBeAdded
 	nffg.end_points = endpoints
@@ -1210,6 +1210,7 @@ def toBeAddedToFile(flowRules,vnfs,endpoints,fileName):
 	nffg.vnfs = vnfs
 	nffg.end_points = endpoints
 	nffg.id = graph_id
+	nffg.name = graph_name
 
 	
 	try:
@@ -1242,7 +1243,8 @@ unOrchestratorURL = "http://"
 nameResolverURL = "http://"
 infrastructureFile = ""
 physicalPortsVirtualization = {}
-graph_id = ""
+graph_id = "1"
+graph_name = "NF-FG"
 
 if not virtualizerInit():
 	LOG.error("Failed to start up the virtualizer.")
