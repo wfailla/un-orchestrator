@@ -423,7 +423,7 @@ def extractRules(content):
 			vnf = port.get_parent().get_parent()
 			vnf_id = vnf.id.get_value()
 			port_id = int(port.id.get_value()) - 1
-			match.port_in = "vnf:"+ vnf_id + ":port:" + port_id
+			match.port_in = "vnf:"+ vnf_id + ":port:" + str(port_id)
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
 			error = Error.client
@@ -474,7 +474,7 @@ def extractRules(content):
 			vnf = port.get_parent().get_parent()
 			vnf_id = vnf.id.get_value()
 			port_id = int(port.id.get_value()) - 1
-			action.output = "vnf:" + vnf_id + ":port:" + port_id
+			action.output = "vnf:" + vnf_id + ":port:" + str(port_id)
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
 			error = Error.client
