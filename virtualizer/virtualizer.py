@@ -109,6 +109,7 @@ class DoEditConfig:
 			resp.status = falcon.HTTP_400
 			return	
 		
+		global error
 		error = Error.noerror
 		
 		#
@@ -428,13 +429,13 @@ def extractRules(content):
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
 			error = Error.client
 			return
-				
-		action = Action()
+	
 		if flowentry.action is not None:
 			if type(flowentry.action.data) is str:
 				#The tag <action> contains a sequence of actions separated by " "
 				actions = flowentry.action.data.split(" ")
 				for a in actions:
+					action = Action()
 					tokens = a.split(":")
 					elements = len(tokens)
 					if not supportedAction(tokens[0],elements-1):
@@ -445,6 +446,7 @@ def extractRules(content):
 						setattr(action, equivalentAction(tokens[0]), True)
 					else:
 						setattr(action, equivalentAction(tokens[0]), tokens[1])
+					flowrule.actions.append(action)
 
 			# We ignore the element in case it's not a string. It could be simply empty.
 							
@@ -467,14 +469,14 @@ def extractRules(content):
 			if port_name not in endpoints_dict:
 				endpoints_dict[port_name] = EndPoint(_id = str(endpoint_id) ,_type = "interface", interface = port_name)
 				endpoint_id = endpoint_id + 1
-			action.output = "endpoint:" + endpoints_dict[port_name].id
+			flowrule.actions.append(Action(output = "endpoint:" + endpoints_dict[port_name].id))
 		elif tokens[4] == 'NF_instances':
 			#This is a port of the NF. I have to extract the port ID and the type of the NF.
 			#XXX I'm using the port ID as name of the port			
 			vnf = port.get_parent().get_parent()
 			vnf_id = vnf.id.get_value()
 			port_id = int(port.id.get_value()) - 1
-			action.output = "vnf:" + vnf_id + ":port:" + str(port_id)
+			flowrule.actions.append(Action(output = "vnf:" + vnf_id + ":port:" + str(port_id)))
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
 			error = Error.client
@@ -488,8 +490,6 @@ def extractRules(content):
 			return
 		flowrule.priority = int(priority)
 		flowrule.match = match
-		flowrule.actions.append(action)
-		
 				
 		flowrules.append(flowrule)
 			
@@ -1259,4 +1259,3 @@ api.add_route('/edit-config',DoEditConfig())
 #in_file = open ("config/nffg_examples/passthrough_with_vnf_nffg_and_match_and_action.xml")
 #in_file = open ("config/nffg_examples/nffg_delete_flow_vnf.xml")
 #DoEditConfig().on_post(in_file.read(), None)
-
