@@ -330,7 +330,7 @@ def extractVNFsInstantiated(content):
 		foundTypes.append(vnfType)
 		port_list = []
 		for port in instance.ports.port:
-			port_list.append(Port(_id=port))
+			port_list.append(Port(_id="port:"+port))
 			
 		vnf = VNF(_id = instance.id.get_value(), name = vnfType, ports=port_list)
 		nfinstances.append(vnf)
@@ -422,7 +422,7 @@ def extractRules(content):
 			vnf = port.get_parent().get_parent()
 			vnf_id = vnf.id.get_value()
 			port_id = port.id.get_value()
-			match.port_in = "vnf:"+ vnf_id + ":" + port_id
+			match.port_in = "vnf:"+ vnf_id + ":port:" + port_id
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
 			error = Error.client
@@ -473,7 +473,7 @@ def extractRules(content):
 			vnf = port.get_parent().get_parent()
 			vnf_id = vnf.id.get_value()
 			port_id = port.id.get_value()
-			action.output = "vnf:" + vnf_id + ":" + port_id
+			action.output = "vnf:" + vnf_id + ":port:" + port_id
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
 			error = Error.client
