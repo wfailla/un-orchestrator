@@ -478,11 +478,11 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	}
 
 	//if the graph has only this flow, remove the entire graph
-//	if(graph->getNumberOfRules() == 1)
-//	{
-//		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph \"%s\" has only one flow. Then the entire graph will be removed",graphID.c_str());
-//		return deleteGraph(graphID);
-//	}
+	if(graph->getNumberOfRules() == 1)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph \"%s\" has only one flow. Then the entire graph will be removed",graphID.c_str());
+		return deleteGraph(graphID);
+	}
 	
 #if 0
 	/**
@@ -1831,7 +1831,7 @@ next2:
 
 			//Stop the NF	
 #ifdef RUN_NFS
-
+			computeController->stopNF(*nf);
 #else
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Flag RUN_NFS disabled. No NF to be stopped");
 #endif
@@ -1852,8 +1852,6 @@ next2:
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 				throw GraphManagerException();
 			}
-			
-						computeController->stopNF(*nf);
 		}
 	}
 #endif
