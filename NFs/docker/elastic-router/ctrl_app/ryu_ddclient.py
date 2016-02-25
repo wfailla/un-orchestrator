@@ -59,7 +59,6 @@ class SecureCli(ClientSafe):
     def on_reg(self):
         print("The client is now connected")
 
-
     # callback called when the client detects that the heartbeating with
     # its broker has failed, it can happen if the broker is terminated/crash
     # or if the link is broken
@@ -83,23 +82,18 @@ class SecureCli(ClientSafe):
 
     def alarm_sub(self, msg):
         if len(msg) < 3:
-            logging.ERROR("Malformed alarm subscription")
+            logging.error("Malformed alarm subscription")
             return
         action_ = msg.pop(0)
-        topic_ = msg.pop(0)
-        scope_ = msg.pop(0)
+        topic_ = msg.pop(0).decode()
+        scope_ = msg.pop(0).decode()
 
-        if not isinstance(topic_, str):
-            topic_ = str(topic_)
-        if not isinstance(scope_, str):
-            scope_ = str(scope_)
-
-        if 'sub' == action_:
+        if b'sub' == action_:
             self.subscribe(topic_, scope_)
-        elif 'unsub' == action_:
+        elif b'unsub' == action_:
             self.unsubscribe(topic_)
         else:
-            logging.ERROR("Ryu sent a weird command :", action_)
+            logging.error("Ryu sent a weird command :", action_)
 
 
 if __name__ == '__main__':

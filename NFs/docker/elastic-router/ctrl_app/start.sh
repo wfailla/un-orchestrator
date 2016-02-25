@@ -3,6 +3,7 @@
 #This gives time to the UN to configure the network namespace of the container
 sleep 3
 
+./ryu_ddclient.py -k /a-keys.json -d tcp://172.17.0.1:7777 ryu a
 
 echo "Control app container started"
 
