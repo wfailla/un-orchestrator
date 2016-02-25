@@ -1684,16 +1684,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																actionType = ACTION_VLAN_PUSH;
 														
 																string strVlanID = a_value.getString();
-																
-																//FIXME: what if the number is not exadecimal?															
-																//Convert the number from string to int
-																stringstream ss;
-																ss << std::hex << strVlanID;
-																ss >> vlanID;
-																
-																
-//																sscanf(strVlanID.c_str(),"%u",&vlanID);
-																
+																vlanID = strtol (strVlanID.c_str(),NULL,0);													
 											
 																//IVANO: probably this check is wrong
 /*																if(actionType == ACTION_VLAN_PUSH && !foundVlanID)
