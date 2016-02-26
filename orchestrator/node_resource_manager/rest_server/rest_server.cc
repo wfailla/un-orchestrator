@@ -633,20 +633,20 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	//for each endpoint (vlan), contains the pair vlan id, interface
 	map<string, pair<string, string> > vlan_id; //XXX: currently, this information is ignored
 
+	/**
+	*	The graph is defined according to this schema:
+	*		https://github.com/netgroup-polito/nffg-library/blob/master/schema.json
+	*/
 	try
 	{
 		Object obj = value.getObject();
-		
 		vector<Object> gre_array(256);
-		
 		Object big_switch, ep_gre;
-
 	  	bool foundFlowGraph = false;
-	  	
 	  	int ii = 0;
 		
 		//Identify the flow rules
-		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
+		for(Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
 		{
 	 		const string& name  = i->first;
 			const Value&  value = i->second;
@@ -654,13 +654,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 			//Identify the forwarding graph
 			if(name == FORWARDING_GRAPH)
 			{
-		    		foundFlowGraph = true;
-		    	
-		    		bool foundVNFs = false, foundEP = false, foundGRE = false, foundFlowRules = false;
-		    		vector<string> id_gre (256);
+	    		foundFlowGraph = true;
+	    	
+	    		bool foundVNFs = false, foundEP = false, foundGRE = false, foundFlowRules = false;
+	    		vector<string> id_gre (256);
 		    	
 				Object forwarding_graph;
-
 				try
 				{
 		  			forwarding_graph = value.getObject();
@@ -696,8 +695,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 					//Identify the VNFs
 					else if(fg_name == VNFS)
 					{
-						try{
-							try{
+						try
+						{
+							try
+							{
 								fg_value.getArray();
 							} catch(exception& e)
 							{
@@ -711,36 +712,46 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							//*	graph with only physical ports
 							//*	update of a graph that only adds new flows
 							//However, when there are no VNFs, we provide a warning
-					    		if(vnfs_array.size() != 0)
-							    	foundVNFs = true;
+					    	if(vnfs_array.size() != 0)
+							   	foundVNFs = true;
 					    	
-					    		//Itearate on the VNFs
-					    		for( unsigned int vnf = 0; vnf < vnfs_array.size(); ++vnf )
+					    	//Itearate on the VNFs
+					    	for( unsigned int vnf = 0; vnf < vnfs_array.size(); ++vnf )
 							{
-								try{
+								try
+								{
 									vnfs_array[vnf].getObject();
 								} catch(exception& e)
 								{
 									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNFS);
 									return false;				
 								}
-
-								//This is a VNF, with an ID and a template
+								
+								/**
+								*	According to https://github.com/netgroup-polito/nffg-library/blob/master/schema.json , a VNF can contain:
+								*		- id
+								*		- name	(mandatory)
+								*		- vnf_template
+								*		- domain
+								*		- ports
+								*			- id
+								*			- name
+								*			- mac
+								*			- unify-ip
+								*		- unify-control
+								*		- groups
+								*/
+								
 								Object network_function = vnfs_array[vnf].getObject();
-	#ifdef POLITO_MESSAGE							
-								bool foundTemplate = false;
-	#endif					
-								bool foundName = false;
-							
-								map<string,string> ipv4_addresses; 	//port name, ipv4 address
-								map<string,string> ipv4_masks;		//port name, ipv4 address
 
+								bool foundName = false;
+								
 								string id, name, vnf_template, groups, port_id, port_name;
-	#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								int vnf_tcp_port, host_tcp_port;
 								//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
 								list<pair<string, string> > controlPorts;
-	#endif
+#endif
 								//list of four element port id, port name, mac address and ip address related by the VNF
 								list<vector<string> > portS;
 							
@@ -756,7 +767,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										foundName = true;
 										if(!graph.addNetworkFunction(nf_value.getString()))
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;
 										}	
 									
@@ -769,9 +780,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_TEMPLATE,nf_value.getString().c_str());
 										vnf_template = nf_value.getString();
-	#ifdef POLITO_MESSAGE
-										foundTemplate = true;
-	#endif
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found. It is ignored in the current implementation of the %s",VNF_TEMPLATE,MODULE_NAME);
 									}
 									else if(nf_name == _ID)
 									{
@@ -782,10 +791,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(nf_name == VNF_CONTROL)
 									{
-	#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",VNF_CONTROL,MODULE_NAME);
 										continue;
-	#else
+#else
 										try{
 											nf_value.getArray();
 										} catch(exception& e)
@@ -851,7 +860,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										
 											controlPorts.push_back(make_pair(ss.str(), sss.str()));
 										}
-	#endif
+#endif
 									}
 									else if(nf_name == VNF_PORTS)
 									{
@@ -916,15 +925,15 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												}
 												else if(p_name == PORT_IP)
 												{
-	#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
 													logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",PORT_IP,MODULE_NAME);
 													continue;
-	#else																			
+#else																			
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
 
 													port_config.ip_address = p_value.getString();
 													port_descr[3] = port_config.ip_address;
-	#endif
+#endif
 												}
 												else
 												{
@@ -939,7 +948,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											//Add NF ports descriptions
 											if(!graph.addNetworkFunctionPortConfiguration(name, vnf_port_config))
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 												return false;
 											}					
 										
@@ -949,8 +958,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									else if(nf_name == VNF_GROUPS)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_GROUPS,nf_value.getString().c_str());
-									
 										groups = nf_value.getString();
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found. It is ignored in the current implementation of the %s",VNF_GROUPS,MODULE_NAME);
 									}
 									else 
 									{
@@ -958,26 +967,22 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										return false;
 									}
 								}
-								if(
-	#ifdef POLITO_MESSAGE							
-								!foundTemplate ||
-	#endif							
-								!foundName)
+								if(!foundName)
 								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or both not found in an element of \"%s\"",_NAME,VNF_TEMPLATE,VNFS);
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in an element of \"%s\"",_NAME,VNFS);
 									return false;
 								}
 							
-	#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, controlPorts);
-	#else
+#else
 								highlevel::VNFs vnfs(id, name, groups, vnf_template, portS);
-	#endif
+#endif
 								graph.addVNF(vnfs);
 								portS.clear();
-	#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								controlPorts.clear();
-	#endif
+#endif
 							}
 						}
 						catch(exception& e)
@@ -985,10 +990,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", VNFS, e.what());
 							return false;
 						}					
-			    		}
+			    	}
 					//Identify the end-points
 					else if(fg_name == END_POINTS)
-				    	{
+				    {
 						try{
 							try{
 								fg_value.getArray();
@@ -998,7 +1003,20 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								return false;				
 							}
 
-					    		const Array& end_points_array = fg_value.getArray();
+							/**
+							*	According to https://github.com/netgroup-polito/nffg-library/blob/master/schema.json , an endpoint can contain:
+							*	- id
+							*	- name
+							*	- type
+							*		- internal
+							*		- interface
+							*		- interface-out
+							*		- gre-tunnel
+							*		- vlan
+							*	- Other information that depend on the type
+							*/
+
+					    	const Array& end_points_array = fg_value.getArray();
 					    	
 							foundEP = true;
 
@@ -1006,14 +1024,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 							int i = 0;
 
-					    		//Iterate on the end-points
-					    		for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
+				    		//Iterate on the end-points
+				    		for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
 							{
 								try{
 									end_points_array[ep].getObject();
 								} catch(exception& e)
 								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNF_PORTS);
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", END_POINTS);
 									return false;				
 								}
 	
@@ -1028,7 +1046,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									if(ep_name == _ID)
 									{	
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,_ID,ep_value.getString().c_str());
-									
 										if(!foundGRE)
 											id = ep_value.getString();
 										else
@@ -1037,31 +1054,30 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									else if(ep_name == _NAME)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,_NAME,ep_value.getString().c_str());
-									
 										e_name = ep_value.getString();
 									} 
 									else if(ep_name == EP_TYPE)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_TYPE,ep_value.getString().c_str());
-							
 										string type = ep_value.getString();
 									}
 									else if(ep_name == EP_REM)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_REM,ep_value.getString().c_str());
-
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_REM,MODULE_NAME);
 										//XXX: currently, this information is ignored
 									} 
 									else if(ep_name == EP_PR)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_PR,ep_value.getString().c_str());
-
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,MODULE_NAME);
 										//XXX: currently, this information is ignored
 									}
 									//identify interface end-points 
 									else if(ep_name == IFACE)
 									{
-										try{
+										try
+										{
 											ep_value.getObject();
 										} catch(exception& e)
 										{
@@ -1070,7 +1086,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 
 										Object ep_iface = ep_value.getObject();
-						
 										e_if = true;
 						
 										for(Object::const_iterator epi = ep_iface.begin(); epi != ep_iface.end(); epi++)
@@ -1081,13 +1096,13 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											if(epi_name == NODE_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,NODE_ID,epi_value.getString().c_str());
-											
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,NODE_ID);
 												node_id = epi_value.getString();	
 											}
 											else if(epi_name == SW_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,SW_ID,epi_value.getString().c_str());
-											
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,SW_ID);
 												sw_id = epi_value.getString();	
 											}
 											else if(epi_name == IFACE)
@@ -1095,7 +1110,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,IFACE,epi_value.getString().c_str());
 
 												interface = epi_value.getString();
-										
 												iface_id[id] = epi_value.getString();
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_id[id].c_str());
 											}

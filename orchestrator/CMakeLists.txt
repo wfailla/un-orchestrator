@@ -166,15 +166,6 @@ IF(DEBUG_KVM)
 ENDIF(DEBUG_KVM)
 
 OPTION(
-	POLITO_MESSAGE
-	"Turn on to support a slightly different JSON message describing the graph"
-	OFF
-)
-IF(POLITO_MESSAGE)
-	ADD_DEFINITIONS(-DPOLITO_MESSAGE)
-ENDIF(POLITO_MESSAGE)
-
-OPTION(
 	LOG_1024X768
 	"Turn on to print the log for a monitor of 1024 X 768"
 	OFF
@@ -213,7 +204,7 @@ ENDIF(IVSHMEM_RING_ALIAS)
 
 
 MARK_AS_ADVANCED(
-	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD IVSHMEM_RING_ALIAS
+	DEBUG_KVM DEBUG_OPENFLOW LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD IVSHMEM_RING_ALIAS
 )
 
 #Set some options to the compiler, which are only required when the support to double decker is enabled

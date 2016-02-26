@@ -30,12 +30,6 @@
 #define JSON_C_TYPE				"application/json"
 #define NO_CACHE				"no-cache"
 
-/*
-*	Costants in the JSON describing the graph
-*	XXX: the list of supported matches and actions MUST be aligned with those
-*	in [orchestrator]/node_resource_manager/virtualizer/constants.py
-*/
-
 #define TCP			"tcp"
 
 #define FORWARDING_GRAPH	"forwarding-graph"
