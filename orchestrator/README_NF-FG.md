@@ -411,8 +411,7 @@ on the network through the physical port `eth1`, without any VLAN tag.
 		      		"id": "00000002",
 		      		"priority": 1,
 		      		"match": {
-		        		"port_in": "vnf:00000002:inout:1",
-		        		"ether_type: "0x8100",
+		        		"port_in": "vnf:00000002:inout:1"
 		        		"vlan_id" : "0x25"
 		      		},
 		      		"actions": [
@@ -428,6 +427,25 @@ on the network through the physical port `eth1`, without any VLAN tag.
 			}
 	  	}
 	}
+	
+Note that the flow-rule `00000002` does not specify any match on `"ether_type": "0x8100"`. In fact, you can use the `ether_type` 
+match to indicate a match of the protocol encapsulated inside the VLAN header. For instance, the next flow-rule matches all the 
+packets having VLAN ID equal to `0x25`, and with the IP header as a payload of the VLAN packet.
+
+{
+	"id": "00000001",
+	"priority": 1,
+	"match": {
+		"port_in": "vnf:00000001:inout:1",
+		"vlan_id" : "0x25",
+		"ether_type": "0x800"
+	},
+	"actions": [
+	{
+		"output_to_port": "vnf:00000002:inout:0"
+	}
+	]
+}
 
 
 ## Endpoints
@@ -546,7 +564,6 @@ Referring to the example above, the un-orchestrator changes the flowrule `000000
   		"priority": 1,
   		"match": {
     		"port_in": "endpoint:00000001",
-    		"ether_type": "0x100",
     		"vlan_id": "0x25"
   		},
   		"actions": [
@@ -691,7 +708,7 @@ A simple configuration mechanism is supported by the NF-FG formalism. In particu
 **WARNING**: all the elements starting with the string `unify` only work with Docker containers, and requires that a 
 specific compilation flag for the un-orchestrator is enabled.
     
-### Configuring the VNF iterface
+### Configuring the VNF interface
 
 This is possibile by using the elements `mac` and `unify-ip` within the description of a VNF port, as show in the 
 following example:

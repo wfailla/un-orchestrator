@@ -311,8 +311,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				/*vlan endpoint*/
 				else if(vlan_found)
 				{
-					char etherTypeVlan[BUF_SIZE] = "0x8100";
-					uint32_t vlanID = 0, ethType = 0;
+					uint32_t vlanID = 0;
 					vlan_action_t actionType = ACTION_VLAN_POP;
 					
 					if((sscanf(v_id.c_str(),"%"SCNd32,&vlanID) != 1) && (vlanID > 4094))
@@ -320,10 +319,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_ID,value.getString().c_str());
 						return false;
 					}
-					/*add match on "ethertype" vlan*/
-					sscanf(etherTypeVlan,"%"SCNi32,&ethType);
-					match.setEthType(ethType & 0xFFFF);
-
 					/*add match on "vlan_id"*/
 					match.setEndpointVlanID(vlanID & 0xFFFF);
 
