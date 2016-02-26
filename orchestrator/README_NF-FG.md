@@ -493,7 +493,8 @@ UN through the physical interface `eth1` and then again tagged with the VLAN ID 
             		"name": "data-port"
           		}
         		]
-		  	},
+		  	}
+		  	],
 			"end-points": [
 		  	{
 		    	"id": "00000001",
@@ -633,7 +634,8 @@ the `gre-tunnel` endpoint.
             		"name": "data-port"
           		}
         		]
-		  	},
+		  	}
+		  	],
 			"end-points": [
 			{
 		    	"id": "00000001",
