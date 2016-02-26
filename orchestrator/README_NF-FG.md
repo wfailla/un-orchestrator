@@ -677,7 +677,7 @@ the `gre-tunnel` endpoint.
 	
 ## Configuration
 
-A simple configuration mechanism is supported by the NF-FG formalism. In paritucular, it is possibile to:
+A simple configuration mechanism is supported by the NF-FG formalism. In particular, it is possibile to:
 
   * assign the MAC address, IPv4 address and netmask to a specific VNF interface;
   * create ports of the VNF connected to the Internet through the UN control interface, and not through the NF-FG itself. 
