@@ -675,3 +675,76 @@ the `gre-tunnel` endpoint.
 	  	}
 	}
 	
+## Configuration
+
+A simple configuration mechanism is supported by the NF-FG formalism. In paritucular, it is possibile to:
+
+  * assign the MAC address, IPv4 address and netmask to a specific VNF interface;
+  * create ports of the VNF connected to the Internet through the UN control interface, and not through the NF-FG itself. 
+    This also requires the creation of a TCP port forwarding between a TCP port in the host (UN) and in the VNF.
+    
+**WARNING**: all the elements starting with the string `unify` only work with Docker containers, and requires that a 
+specific compilation flag for the un-orchestrator is enabled.
+    
+### Configuring the VNF iterface
+
+This is possibile by using the element `mac` and `unify-ip` within the description of a VNF port, as show in the 
+following example:
+
+	"VNFs": [
+	{
+		"id": "00000001",
+	   	"name": "firewall",
+    	"ports": [
+    	{
+       		"id": "inout:0",
+       		"name": "data-port",
+       		"mac": "aa:bb:cc:dd:ee:ff",
+       		"unify-ip": "192.168.0.1/24"
+    	},
+    	{
+    		"id": "inout:1",
+    		"name": "data-port",
+    		"mac": "11:22:33:44:55:66",
+       		"unify-ip": "10.0.0.1/24"
+   		}
+		]
+  	}
+  	]
+  
+Given this NF-FG, the un-orchestrator properly configures the VNF ports as specified by the graph itself.
+
+### Create a further port not connected to the NFV
+
+It is possibile to create a further port of a VNF, which is not connected to the NF-FG, but that will be connected 
+by the un-orchestrator to the default switch created by the execution environment (e.g., `Docker0` in case 
+of Docker containers). This operation requires to create a binding between a TCP port inside the VNF and 
+a TCP port in the host, as shown in the following example:
+
+	"VNFs": [
+	{
+		"id": "00000001",
+	   	"name": "firewall",
+	   	"unify-control": [
+	   	{
+			"host-tcp-port": 2000,
+			"vnf-tcp-port":	80
+	   	}
+	   	],
+    	"ports": [
+    	{
+       		"id": "inout:0",
+       		"name": "data-port"
+    	},
+    	{
+    		"id": "inout:1",
+    		"name": "data-port"
+   		}
+		]
+  	}
+  	]
+
+When the un-orchestrator receives an NF-FG with this information, it creates a third port connected to, 
+e.g., `Docker0` in case of Docker containers, and sets up a port forwarding so that, all the traffic that 
+arrives on the UN (by means of the control port) and directed to the TCP port 2000, is provided to the 
+VNF on its own TCP port 80.
