@@ -645,7 +645,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	  	bool foundFlowGraph = false;
 	  	int ii = 0;
 		
-		//Identify the flow rules
+		//Iterates on the json received
 		for(Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
 		{
 	 		const string& name  = i->first;
@@ -670,7 +670,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 				}	    		
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
 		    	{
-					bool e_if = false, e_if_out = false, e_vlan = false;
+					bool e_if = false, e_vlan = false;
+#if 0
+					bool e_if_out = false
+#endif
 								
 					string id, v_id, node, iface, e_name, node_id, sw_id, interface;
 
@@ -994,8 +997,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 					//Identify the end-points
 					else if(fg_name == END_POINTS)
 				    {
-						try{
-							try{
+						try
+						{
+							try
+							{
 								fg_value.getArray();
 							} catch(exception& e)
 							{
@@ -1010,7 +1015,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							*	- type
 							*		- internal
 							*		- interface
-							*		- interface-out
+							*		- interface-out		-> NOT SUPPORTED
 							*		- gre-tunnel
 							*		- vlan
 							*	- Other information that depend on the type
@@ -1038,6 +1043,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								//This is a endpoints, with a name, a type, and an interface
 								Object end_points = end_points_array[ep].getObject();
 							
+								//Iterate on the elements of an endpoint
 								for(Object::const_iterator aep = end_points.begin(); aep != end_points.end(); aep++)
 								{
 									const string& ep_name  = aep->first;
@@ -1115,9 +1121,19 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											}
 										}
 									}
+									else if(ep_name == EP_INTERNAL)
+									{
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s. This type of end-point is not supported!", EP_INTERNAL,MODULE_NAME);
+									}
 									//identify interface-out end-points 
 									else if(ep_name == EP_IFACE_OUT)
 									{
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s. This type of end-point is not supported!", EP_IFACE_OUT,MODULE_NAME);
+										//IVANO: I comment this code because this end-point
+										//	* has never been defined
+										//	* is not actually supported by the UN (does it make sense for the UN?)
+										//	* has never been tested
+#if 0
 										try{
 											ep_value.getObject();
 										} catch(exception& e)
@@ -1157,8 +1173,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_out_id[id].c_str());
 											}
 										}
-									}
-									//identify vlan end-points 
+#endif
+									}//identify vlan end-points 
 									else if(ep_name == VLAN)
 									{
 										try{
@@ -1181,25 +1197,21 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											if(epi_name == V_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,VLAN_ID,epi_value.getString().c_str());
-										
 												v_id = epi_value.getString();
 											}
 											else if(epi_name == IFACE)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,IFACE,epi_value.getString().c_str());
-
 												interface = epi_value.getString();
 											}
 											else if(epi_name == SW_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,SW_ID,epi_value.getString().c_str());
-
 												sw_id = epi_value.getString();
 											}
 											else if(epi_name == NODE_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,NODE_ID,epi_value.getString().c_str());
-
 												node_id = epi_value.getString();
 											}
 										}
@@ -1209,7 +1221,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(ep_name == EP_GRE)
 									{
-										try{
+										try
+										{
 											ep_value.getObject();
 										} catch(exception& e)
 										{
@@ -1218,45 +1231,43 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 
 										ep_gre = ep_value.getObject();
-									
 										gre_array[i] = ep_gre;
-						
 										foundGRE = true;
-									
 										i++;
 									}
 									else
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());
-								}
+								}//End of iteration on the elements of an endpoint
+								
 								//add interface end-points
 								if(e_if)
 								{
+									//FIXME: are we sure that "interface" has been specified?
+									//FIXME: node_id and sw_id should be ignored
 									highlevel::EndPointInterface ep_if(id, e_name, node_id, sw_id, interface);
-
 									graph.addEndPointInterface(ep_if);
-								
 									e_if = false;
 								}
+#if 0
 								//add interface-out end-points
 								else if(e_if_out)
 								{
 									highlevel::EndPointInterfaceOut ep_if_out(id, e_name, node_id, sw_id, interface);
-
 									graph.addEndPointInterfaceOut(ep_if_out);
 								
 									e_if_out = false;
 								}
+#endif
 								//add vlan end-points
 								else if(e_vlan)
 								{
+									//FIXME: are we sure that "interface" and "v_id" have been specified?
+									//FIXME: node_id and sw_id should be ignored							
 									highlevel::EndPointVlan ep_vlan(id, e_name, v_id, node_id, sw_id, interface);
-
 									graph.addEndPointVlan(ep_vlan);
-								
 									e_vlan = false;
 								}
-							}
-						
+							}//End iteration on the endpoints
 							ii = i;
 						}
 						catch(exception& e)
@@ -1264,7 +1275,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", END_POINTS, e.what());
 							return false;
 						}
-					}
+					}//End if(fg_name == END_POINTS)
 					//Identify the big-switch
 					else if(fg_name == BIG_SWITCH)
 					{
@@ -1275,14 +1286,16 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", BIG_SWITCH);
 							return false;				
 						}
-
 						big_switch = fg_value.getObject();
+						//The content of the "big-switch" element will be parsed only when the "end-points" element will be found
 					}
 					else
 					{
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",fg_name.c_str(),FORWARDING_GRAPH);
 						return false;
 					}
+					
+					//Since we found the element "end-points", we can now parse the content of "big-switch"
 					if(foundEP)
 					{
 						//Iterate on the gre-tunnel
@@ -1380,12 +1393,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", EP_GRE, e.what());
 								return false;
 							}	
-						}
+						}//End if(foundGRE)
 					
 						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",BIG_SWITCH);
 						foundEP = false;
 
-						/*Iterate on the big-switch*/
+						// Iterate on the element of the big-switch
 						for(Object::const_iterator bs = big_switch.begin(); bs != big_switch.end(); bs++)
 						{
 							const string& bs_name  = bs->first;
@@ -1393,7 +1406,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								
 							if (bs_name == FLOW_RULES)
 							{
-								try{			
+								foundFlowRules = true;
+							
+								try
+								{			
 									try{
 										bs_value.getArray();
 									} catch(exception& e)
@@ -1404,15 +1420,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 									const Array& flow_rules_array = bs_value.getArray();
 
-									foundFlowRules = true;
-	#ifndef UNIFY_NFFG
+#ifndef UNIFY_NFFG
 									//FIXME: put the flowrules optional also in case of "standard| nffg?
 									if(flow_rules_array.size() == 0)
 									{
 										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" without rules",FLOW_RULES);
 										return false;
 									}
-	#endif
+#endif
 									//Itearate on the flow rules
 									for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
 									{	
@@ -1885,17 +1900,22 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									return false;
 								}
 							}// end  if (fg_name == FLOW_RULES)
-						}
-		    			}
-				}
-		    		if(!foundFlowRules)
+							else
+							{
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",bs_name.c_str());
+								return false;
+							}
+						}//End iteration on the elements inside "big-switch"
+		    		}//end if(foundEP)
+				}// End iteration on the elements of "forwarding-graph"
+		    	if(!foundFlowRules)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",FLOW_RULES,FORWARDING_GRAPH);
 					return false;
 				}
 				if(!foundVNFs)
 					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",VNFS,FORWARDING_GRAPH);
-			}
+			}//End if(name == FORWARDING_GRAPH)
 			else
 			{
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",name.c_str());
@@ -1913,10 +1933,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		return false;
 	}
 
-#ifndef UNIFY_NFFG
-	//XXX The number of ports is provided by the name resolver, and should not depend on the flows inserted. In fact,
+	//FIXME The number of ports is provided by the name resolver, and should not depend on the flows inserted. In fact,
 	//it should be possible to start VNFs without setting flows related to such a function!
-    	for(map<string,set<unsigned int> >::iterator it = nfs_ports_found.begin(); it != nfs_ports_found.end(); it++)
+    for(map<string,set<unsigned int> >::iterator it = nfs_ports_found.begin(); it != nfs_ports_found.end(); it++)
 	{
 		set<unsigned int> ports = it->second;
 		assert(ports.size() != 0);
@@ -1947,7 +1966,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		for(set<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
 	}
-#endif	
 	
 	return true;
 }

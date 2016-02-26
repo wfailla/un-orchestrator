@@ -55,6 +55,7 @@
 		#define EP_REM			"remote_endpoint_id"
 		#define EP_PR			"prepare_connection_to_remote_endpoint_ids"
 		//#define EP_IFACE   		"interface"
+		#define EP_INTERNAL		"internal"
 		#define EP_IFACE_OUT	"interface-out"
 			#define NODE_ID			"node-id"
 			#define SW_ID			"switch-id"
