@@ -327,7 +327,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					/*add match on "vlan_id"*/
 					match.setEndpointVlanID(vlanID & 0xFFFF);
 
-					/*add match on "output_port"*/
+					/*add match on "port_in"*/
 					match.setInputPort(vlan_id[eP].second);
 					graph.addPort(vlan_id[eP].second);
 
