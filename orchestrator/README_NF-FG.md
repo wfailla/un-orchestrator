@@ -545,11 +545,12 @@ Referring to the example above, the un-orchestrator changes the flowrule `000000
   		"priority": 1,
   		"match": {
     		"port_in": "endpoint:00000001",
-    		**"vlan_id": "0x25"**
+    		"ether_type": "0x100",
+    		"vlan_id": "0x25"
   		},
   		"actions": [
   		{
-  			**"pop_vlan" : true**
+  			"pop_vlan" : true
   		},
     	{
       		"output_to_port": "vnf:00000001:inout:0"
@@ -567,7 +568,7 @@ The flowrule `00000002` is instead changed as follows:
   		},
   		"actions": [
   		{
-  			**"push_vlan" : "0x25"**
+  			"push_vlan" : "0x25"
   		},
     	{
       		"output_to_port": "endpoint:00000001"
