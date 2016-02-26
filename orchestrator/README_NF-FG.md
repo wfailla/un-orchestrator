@@ -714,9 +714,9 @@ following example:
   
 Given this NF-FG, the un-orchestrator properly configures the VNF ports as specified by the graph itself.
 
-### Create a further port not connected to the NFV
+### Create further VNF ports not connected to the NF-FG
 
-It is possibile to create a further port of a VNF, which is not connected to the NF-FG, but that will be connected 
+It is possibile to create a further ports of VNFs, which are not connected to the NF-FG, but that will be connected 
 by the un-orchestrator to the default switch created by the execution environment (e.g., `Docker0` in case 
 of Docker containers). This operation requires to create a binding between a TCP port inside the VNF and 
 a TCP port in the host, as shown in the following example:
@@ -747,4 +747,6 @@ a TCP port in the host, as shown in the following example:
 When the un-orchestrator receives an NF-FG with this information, it creates a third port connected to, 
 e.g., `Docker0` in case of Docker containers, and sets up a port forwarding so that, all the traffic that 
 arrives on the UN (by means of the control port) and directed to the TCP port 2000, is provided to the 
-VNF on its own TCP port 80.
+VNF on its own TCP port 80. 
+Note that multiple port forwardings may be set up for a VNF; however, a single port connected to, e.g., 
+`Docker0`, is created, regardless of the number of port forwardings required.
