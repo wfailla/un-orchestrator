@@ -688,7 +688,7 @@ specific compilation flag for the un-orchestrator is enabled.
     
 ### Configuring the VNF iterface
 
-This is possibile by using the element `mac` and `unify-ip` within the description of a VNF port, as show in the 
+This is possibile by using the elements `mac` and `unify-ip` within the description of a VNF port, as show in the 
 following example:
 
 	"VNFs": [
