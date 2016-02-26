@@ -411,7 +411,9 @@ on the network through the physical port `eth1`, without any VLAN tag.
 		      		"id": "00000002",
 		      		"priority": 1,
 		      		"match": {
-		        		"port_in": "vnf:00000002:inout:1"
+		        		"port_in": "vnf:00000002:inout:1",
+		        		"ether_type: "0x8100",
+		        		"vlan_id" : "0x25"
 		      		},
 		      		"actions": [
 		      		{
