@@ -432,20 +432,20 @@ Note that the flow-rule `00000002` does not specify any match on `"ether_type": 
 match to indicate a match of the protocol encapsulated inside the VLAN header. For instance, the next flow-rule matches all the 
 packets having VLAN ID equal to `0x25`, and with the IP header as a payload of the VLAN packet.
 
-{
-	"id": "00000001",
-	"priority": 1,
-	"match": {
-		"port_in": "vnf:00000001:inout:1",
-		"vlan_id" : "0x25",
-		"ether_type": "0x800"
-	},
-	"actions": [
 	{
-		"output_to_port": "vnf:00000002:inout:0"
+		"id": "00000001",
+		"priority": 1,
+		"match": {
+			"port_in": "vnf:00000001:inout:1",
+			"vlan_id" : "0x25",
+			"ether_type": "0x800"
+		},
+		"actions": [
+		{
+			"output_to_port": "vnf:00000002:inout:0"
+		}
+		]
 	}
-	]
-}
 
 
 ## Endpoints
