@@ -8,6 +8,8 @@
 #include <inttypes.h>
 #include <list>
 
+#include "../node_resource_manager/graph/high_level_graph/nf_port_configuration.h"
+
 /**
 * @file StartNFIn_in.h
 *
@@ -37,6 +39,18 @@ private:
 	*	@brief: mapping of port_id to name of port on the vSwitch for ports associated with the network function
 	*/
 	map<unsigned int, string> namesOfPortsOnTheSwitch;
+	
+	/**
+	*	@brief: mapping of port_id to configuration (mac_address, ip_address) associated with the network function
+	*/
+	map<unsigned int, port_network_config_t > portsConfiguration;
+	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	/**
+	*	@brief: list of control ports associated with the network function
+	*/
+	list<port_mapping_t > controlPorts;
+#endif
 		
 	/**
 	*	@brief: mask of the cores to be assigned to the network functon.
@@ -45,8 +59,16 @@ private:
 	uint64_t coreMask;
 
 protected:
-	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, uint64_t coreMask = 0x0)
-		: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), coreMask(coreMask)
+	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration, 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	list<port_mapping_t > controlPorts,
+#endif	
+		uint64_t coreMask = 0x0)
+			: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), portsConfiguration(portsConfiguration), 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+			controlPorts(controlPorts),
+#endif
+			coreMask(coreMask)
 	{
 	}
 	
@@ -66,6 +88,18 @@ public:
 	{
 		return namesOfPortsOnTheSwitch;
 	}
+	
+	const map<unsigned int, port_network_config_t >& getPortsConfiguration() const
+	{
+		return portsConfiguration;
+	}
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
+	const list<port_mapping_t >& getControlPorts() const
+	{
+		return controlPorts;
+	}
+#endif
 	
 	uint64_t getCoreMask() const
 	{

@@ -1,7 +1,7 @@
 #include "vlan_action.h"
 
-VlanAction::VlanAction(vlan_action_t type, uint16_t label):
-	GenericAction(), type(type), label(label)
+VlanAction::VlanAction(vlan_action_t type, string vlan_endpoint, uint16_t label):
+	GenericAction(), type(type), vlan_endpoint(vlan_endpoint), label(label)
 {
 
 }
@@ -14,9 +14,10 @@ VlanAction::~VlanAction()
 void VlanAction::print()
 {
 	stringstream ss;
-	ss << ((type == ACTION_VLAN_PUSH)? "push " : "pop");
-	if(type == ACTION_VLAN_PUSH)
-		ss << " " << label;
+	if(type == ACTION_VLAN_PUSH || type == ACTION_ENDPOINT_VLAN)
+		ss << "push_vlan " << label;
+	else if(type == ACTION_VLAN_POP)
+		ss << "pop_vlan";
 	ss << endl;
 
 	cout << "\t\t\tvlan: " << ss.str();
@@ -25,18 +26,24 @@ void VlanAction::print()
 void VlanAction::toJSON(Object &action)
 {
 	Object vlanAction;
-	vlanAction[VLAN_OP] = ((type == ACTION_VLAN_PUSH)? "push" : "pop");
-	if(type == ACTION_VLAN_PUSH)
+	string vlan_op;
+
+	if(type == ACTION_ENDPOINT_VLAN)
+		action[OUTPUT] = vlan_endpoint.c_str();
+	else if(type == ACTION_VLAN_PUSH)
+		vlan_op = "push_vlan";
+	else
+		vlan_op = "pop_vlan";
+	
+	if(type != ACTION_ENDPOINT_VLAN)
 	{
 		stringstream s_label;
 		s_label << label;
-		vlanAction[VLAN_ID] = s_label.str();
+		action[vlan_op] = s_label.str();
 	}
-	
-	action[VLAN] = vlanAction;
 }
 
-void  VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsigned int *position)
+void VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsigned int *position)
 {
 	switch(OFP_VERSION)
 	{
@@ -46,7 +53,7 @@ void  VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsign
 			exit(0);
 			break;
 		case OFP_12:
-			if(type == ACTION_VLAN_PUSH)
+			if(type == ACTION_VLAN_PUSH || type == ACTION_ENDPOINT_VLAN)
 			{
 				message.set_instructions().set_inst_apply_actions().set_actions().add_action_push_vlan(rofl::cindex(*position)).set_eth_type(rofl::fvlanframe::VLAN_CTAG_ETHER);
 				(*position)++;
@@ -55,6 +62,7 @@ void  VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsign
 			}
 			else
 			{
+				assert(type == ACTION_VLAN_POP);
 				message.set_instructions().set_inst_apply_actions().set_actions().add_action_pop_vlan(rofl::cindex(*position));
 				(*position)++;
 			}
@@ -70,7 +78,7 @@ void  VlanAction::fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsign
 string VlanAction::prettyPrint()
 {
 	stringstream ss;
-	ss << " # vlan: " << ((type == ACTION_VLAN_PUSH)? "push " : "pop");
+	ss << " # vlan: " << ((type == ACTION_VLAN_PUSH)? "push_vlan " : "pop_vlan");
 	if(type == ACTION_VLAN_PUSH)
 		ss << " " << label;
 	return ss.str();

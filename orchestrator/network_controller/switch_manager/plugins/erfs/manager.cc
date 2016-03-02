@@ -22,6 +22,8 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
     nextPort[dpid]=1;
     string core_id = "auto"; // FIXME: this should be handled by the LO
 
+	map<string,unsigned int >  endpoints_ports;
+
     logger(ORCH_DEBUG_INFO, ERFS_MAN_MODULE_NAME, __FILE__, __LINE__, "createLsi() creating ERFS LSI %d", dpid);
 
     stringstream cmd;
@@ -82,7 +84,7 @@ CreateLsiOut *ERFSManager::createLsi(CreateLsiIn cli)
         vlink_n++;
     }
 
-    CreateLsiOut *clo = new CreateLsiOut(dpid, out_physical_ports, out_nf_ports, out_nf_ports_name_on_switch, out_virtual_links);
+    CreateLsiOut *clo = new CreateLsiOut(dpid, out_physical_ports, out_nf_ports, endpoints_ports, out_nf_ports_name_on_switch, out_virtual_links);
     return clo;
 }
 

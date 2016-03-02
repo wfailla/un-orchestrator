@@ -80,7 +80,9 @@ void Rule::print()
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
 		cout << "\trule " << flowID << ": " << endl << "\t{" << endl;
-		cout << "\t\tpriority : " << priority << endl;
+		stringstream prior;
+		prior << priority;
+		cout << "\t\tpriority : " << prior.str() << endl;
 		match.print();
 		action.print();
 		cout << "\t}" << endl;

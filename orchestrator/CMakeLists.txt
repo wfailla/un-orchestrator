@@ -3,15 +3,21 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings )
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
+        
+# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function         
+        
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
-        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings )
+        ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
+        
+# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 
+
 # Rather complicated CMake code for setting the logging level
-SET(LOGGING_LEVEL "ORCH_WARNING" CACHE STRING "Orchestrator logging levels: ORCH_DEBUG, ORCH_DEBUG_INFO, ORCH_WARNING, ORCH_ERROR, ORCH_INFO")
+SET(LOGGING_LEVEL "ORCH_WARNING" CACHE STRING "Orchestrator logging levels: ORCH_DEBUG, ORCH_DEBUG_INFO (recommended), ORCH_WARNING, ORCH_ERROR, ORCH_INFO")
 SET(LOGGING_LEVEL_VALUES "ORCH_DEBUG" "ORCH_DEBUG_INFO" "ORCH_WARNING" "ORCH_ERROR" "ORCH_INFO")
 SET_PROPERTY(CACHE LOGGING_LEVEL PROPERTY STRINGS ${LOGGING_LEVEL_VALUES})
 LIST(FIND LOGGING_LEVEL_VALUES ${LOGGING_LEVEL} LOGGING_LEVEL_INDEX)
@@ -52,7 +58,9 @@ IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OFCONFIG)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 2)
-	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDPDK)
+	#OVS-DPDK uses the OVSDB plugin with some specific code needed by DPDK
+	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
+	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
 ENDIF()
 IF(${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3)
 	ADD_DEFINITIONS(-DVSWITCH_IMPLEMENTATION_OVSDB)
@@ -72,6 +80,16 @@ IF(STARTVNF_SINGLE_THREAD)
 ENDIF(STARTVNF_SINGLE_THREAD)
 
 OPTION(
+	ENABLE_UNIFY_PORTS_CONFIGURATION
+	"Turn on to enable the possibility to configure VNFs ports (used in the Unify project)"
+	OFF
+)
+
+IF(ENABLE_UNIFY_PORTS_CONFIGURATION)
+	ADD_DEFINITIONS(-DENABLE_UNIFY_PORTS_CONFIGURATION)
+ENDIF(ENABLE_UNIFY_PORTS_CONFIGURATION)
+
+OPTION(
 	ENABLE_KVM
 	"Turn on to support NFs implemented in KVM-based virtual machines"
 	ON
@@ -86,15 +104,20 @@ OPTION(
 	OFF
 )
 
-OPTION(
-	ENABLE_OVSDB_DPDK
-	"Turn on to support OVS with DPDK netdev using the OVS-OVSDB netwrok controller plugin"
-	OFF
-)
-IF(ENABLE_OVSDB_DPDK)
-	ADD_DEFINITIONS(-DENABLE_OVSDB_DPDK)
-ENDIF(ENABLE_OVSDB_DPDK)
 #################################################################################################################
+
+# Rather complicated CMake code for selecting the PubSub implementation
+SET(ENABLE_PUB_SUB "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
+SET(ENABLE_PUB_SUB_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
+SET_PROPERTY(CACHE ENABLE_PUB_SUB PROPERTY STRINGS ${ENABLE_PUB_SUB_VALUES})
+LIST(FIND ENABLE_PUB_SUB_VALUES ${ENABLE_PUB_SUB} ENABLE_PUB_SUB_INDEX)
+
+IF(${ENABLE_PUB_SUB_INDEX} EQUAL -1)
+	message(FATAL_ERROR "Option ${ENABLE_PUB_SUB} not supported, valid entries are ${ENABLE_PUB_SUB_VALUES}")
+ENDIF()
+IF(${ENABLE_PUB_SUB_INDEX} EQUAL 1)
+	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER)
+ENDIF()
 
 OPTION(
 	RUN_NFS
@@ -143,15 +166,6 @@ IF(DEBUG_KVM)
 ENDIF(DEBUG_KVM)
 
 OPTION(
-	POLITO_MESSAGE
-	"Turn on to support a slightly different JSON message describing the graph"
-	OFF
-)
-IF(POLITO_MESSAGE)
-	ADD_DEFINITIONS(-DPOLITO_MESSAGE)
-ENDIF(POLITO_MESSAGE)
-
-OPTION(
 	LOG_1024X768
 	"Turn on to print the log for a monitor of 1024 X 768"
 	OFF
@@ -171,15 +185,6 @@ ENDIF(DEBUG_OPENFLOW)
 
 
 OPTION(
-	VIRTUALIZER_NFFG
-	"Turn on to support the virtualizer NF-FG model defined in WP3"
-	OFF
-)
-IF(VIRTUALIZER_NFFG)
-	ADD_DEFINITIONS(-DUNIFY_NFFG)
-ENDIF(VIRTUALIZER_NFFG)
-
-OPTION(
 	LOG_ON_FILE
 	"Turn on to print log messages on the file 'node-orchestrator.log'. If disabled, stdout is used for the log."
 	OFF
@@ -188,10 +193,29 @@ IF(LOG_ON_FILE)
 	ADD_DEFINITIONS(-DLOG_ON_FILE)
 ENDIF(LOG_ON_FILE)
 
+OPTION(
+	IVSHMEM_RING_ALIAS
+	"Use IVSHMEM Ring Aliases to expose localized ring names to VMs (requires DPDK patch)"
+	OFF
+)
+IF(IVSHMEM_RING_ALIAS)
+	ADD_DEFINITIONS(-DIVSHMEM_RING_ALIAS)
+ENDIF(IVSHMEM_RING_ALIAS)
+
 
 MARK_AS_ADVANCED(
-	DEBUG_KVM DEBUG_OPENFLOW POLITO_MESSAGE LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD
+	DEBUG_KVM DEBUG_OPENFLOW LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD IVSHMEM_RING_ALIAS
 )
+
+#Set some options to the compiler, which are only required when the support to double decker is enabled
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+	IF(CMAKE_COMPILER_IS_GNUCXX)
+		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+	IF(CMAKE_COMPILER_IS_GNUCC)
+		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
+	ENDIF(CMAKE_COMPILER_IS_GNUCC)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
 # Set source files
 SET(SOURCES
@@ -237,6 +261,16 @@ SET(SOURCES
 	node_resource_manager/graph/high_level_graph/high_level_output_action_endpoint.cc
 	node_resource_manager/graph/high_level_graph/high_level_rule.h
 	node_resource_manager/graph/high_level_graph/high_level_rule.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface_out.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface_out.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_vlan.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_vlan.h
+	node_resource_manager/graph/high_level_graph/high_level_graph_vnf.cc
+	node_resource_manager/graph/high_level_graph/high_level_graph_vnf.h
 	node_resource_manager/graph/high_level_graph/high_level_graph.h
 	node_resource_manager/graph/high_level_graph/high_level_graph.cc
 	node_resource_manager/graph/high_level_graph/high_level_match.h
@@ -272,6 +306,12 @@ SET(SOURCES
 	node_resource_manager/rest_server/match_parser.h
 	node_resource_manager/rest_server/match_parser.cc
 
+	node_resource_manager/database_manager/SQLite/SQLiteManager.h
+	node_resource_manager/database_manager/SQLite/SQLiteManager.cc
+	node_resource_manager/database_manager/SQLite/SQLiteManager_constants.h
+	node_resource_manager/database_manager/SQLite/INIReader.cpp
+	node_resource_manager/database_manager/SQLite/ini.c
+
 	utils/logger.h
 	utils/logger.c
 	utils/constants.h
@@ -279,9 +319,25 @@ SET(SOURCES
 	utils/sockutils.c
 )
 
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+    SET(SOURCES1
+    ${SOURCES}
+		node_resource_manager/pub_sub_manager/PubSubManager.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
+		              
+		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClient.h
+    )
+ELSE()
+     SET(SOURCES1
+         ${SOURCES}
+    	)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/xdpd/xdpd_manager.h
 	network_controller/switch_manager/plugins/xdpd/xdpd_manager.cc
 	network_controller/switch_manager/plugins/xdpd/xdpd_constants.h
@@ -290,7 +346,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ofconfig/commands.h
 	network_controller/switch_manager/plugins/ovs-ofconfig/commands.cc
 	network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_constants.h
@@ -299,25 +355,16 @@ IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
     )
 ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
+IF((VSWITCH_IMPLEMENTATION_INDEX EQUAL 2) OR (VSWITCH_IMPLEMENTATION_INDEX EQUAL 3))
     SET(SOURCES2
-    ${SOURCES}
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.h
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.cc
-	network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_constants.h
-    )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 2)
-
-IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
-    SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/commands.cc
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_constants.h
 	network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h
     network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.cc
     )
-ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 3)
+ENDIF((VSWITCH_IMPLEMENTATION_INDEX EQUAL 2) OR (VSWITCH_IMPLEMENTATION_INDEX EQUAL 3))
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 4)
     SET(SOURCES2
@@ -355,22 +402,9 @@ ELSE()
     	)
 ENDIF(ENABLE_DOCKER)
 
-
-IF(VIRTUALIZER_NFFG)
-	SET(SOURCES5
-    ${SOURCES4}
-    node_resource_manager/virtualizer/virtualizer.cc
-    node_resource_manager/virtualizer/virtualizer.h
-	)
-ELSE()
-	SET(SOURCES5
-    	${SOURCES4}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
 IF(ENABLE_DPDK_PROCESSES)
-    SET(SOURCES6
-    ${SOURCES5}
+    SET(SOURCES5
+    ${SOURCES4}
 	compute_controller/plugins/dpdk/dpdk.h
 	compute_controller/plugins/dpdk/dpdk.cc
 	compute_controller/plugins/dpdk/dpdk_constants.h
@@ -378,14 +412,14 @@ IF(ENABLE_DPDK_PROCESSES)
 	compute_controller/plugins/dpdk/dpdk_description.h
 	)
 ELSE()
-     SET(SOURCES6
-         ${SOURCES5}
+     SET(SOURCES5
+         ${SOURCES4}
     	)
 ENDIF(ENABLE_DPDK_PROCESSES)
 
 IF(ENABLE_NATIVE)
-    SET(SOURCES7
-    ${SOURCES6}
+    SET(SOURCES6
+    ${SOURCES5}
 	compute_controller/plugins/native/native.cc
 	compute_controller/plugins/native/native.h
 	compute_controller/plugins/native/native_constants.h
@@ -395,29 +429,20 @@ IF(ENABLE_NATIVE)
 	compute_controller/plugins/native/native_description.cc
 	)
 ELSE()
-     SET(SOURCES7
-         ${SOURCES6}
+     SET(SOURCES6
+         ${SOURCES5}
     	)
 ENDIF(ENABLE_NATIVE)
-
 
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
 )
 
-#Include specific for the virtualizer NF-FG model defined in WP3
-IF(VIRTUALIZER_NFFG)
-	find_package(PythonLibs REQUIRED)
-	INCLUDE_DIRECTORIES (
-		${PYTHON_INCLUDE_DIRS}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES7}
+	${SOURCES6}
 )
 
 LINK_DIRECTORIES(
@@ -435,8 +460,23 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	libmicrohttpd.so
 	libboost_system.so
 	libxml2.so
+	libsqlite3.so
+	libcrypto.so
 	-lrt
 )
+
+#Links specific for double decker 
+IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+	TARGET_LINK_LIBRARIES( node-orchestrator
+		liburcu.so
+		libzmq.so
+		libczmq.so
+		libsodium.so
+		libjson.so
+		libddclient.so
+	)
+ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+
 
 #Links specific for ovs
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
@@ -452,14 +492,6 @@ IF(ENABLE_KVM)
 	)
 ENDIF(ENABLE_KVM)
 
-#Links specific for the virtualizer NF-FG model defined in WP3
-IF(VIRTUALIZER_NFFG)
-    TARGET_LINK_LIBRARIES( node-orchestrator
-		libpython2.7.so
-		${PYTHON_LIBRARIES}
-	)
-ENDIF(VIRTUALIZER_NFFG)
-
 # Add configuration rules to compile command line generator
 IF(ENABLE-DPDK-CMDLINE-GENERATOR)
 
@@ -473,11 +505,16 @@ IF(ENABLE-DPDK-CMDLINE-GENERATOR)
 
 	ADD_DEPENDENCIES(node-orchestrator cmd_line_generator)
 
+	IF (IVSHMEM_RING_ALIAS)
+		SET(CMDLINEGEN_MAKE_PREARGS EXTRA_CFLAGS="-DIVSHMEM_RING_ALIAS")
+	ENDIF(IVSHMEM_RING_ALIAS)
+	  
 	ADD_CUSTOM_TARGET(
 		cmd_line_generator
-		COMMAND make
+		COMMAND ${CMDLINEGEN_MAKE_PREARGS} make
 		WORKING_DIRECTORY compute_controller/plugins/kvm-libvirt/cmdline_generator/
 		)
+
 ENDIF(ENABLE-DPDK-CMDLINE-GENERATOR)
 
 ###############################################################################

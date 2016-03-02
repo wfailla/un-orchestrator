@@ -1,5 +1,5 @@
 # Universal Node Repository Summary
-This repository contains the current implementation of the Universal Node and is divided in three sub-portions.
+This repository contains the current implementation of the Universal Node and is divided in four sub-portions.
 Please check individual README's in each sub-package.
 
 ## Universal Node orchestrator
@@ -14,6 +14,9 @@ The Name Resolver is a module that returns a set of implementations for a
 given NF. It is exploited by the un-orchestrator each time that a NF must
 be started in order to translate the 'abstract' name into the proper
 suitable software image.
+
+## Virtualizer
+The Virtualizer is a module that enables the un-orchestrator to interact with the upper layers of the Unify architecture, by means of the NF-FG defined in WP3. It in fact converts the NF-FG defined by WP3 in the representation accepted by the un-orchestrator.
 
 ## NFs
 This folder contains some examples of virtual network functions.

@@ -16,9 +16,11 @@ class ActionPort : public Action
 private:
 	string port;
 	
+	string input_port;
+	
 public:
 	~ActionPort();
-	ActionPort(string port);
+	ActionPort(string port, string input_port);
 	string getInfo();
 	string toString();
 	

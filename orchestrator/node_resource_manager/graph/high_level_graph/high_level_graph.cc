@@ -13,6 +13,106 @@ string Graph::getID()
 	return ID;
 }
 
+void Graph::setName(string name)
+{
+	this->name = name;
+}
+
+string Graph::getName()
+{
+	return name;
+}
+
+bool Graph::addEndPointInterface(EndPointInterface endpoint)
+{
+	for(list<EndPointInterface>::iterator e = endPointsInterface.begin(); e != endPointsInterface.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsInterface.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointInterface> Graph::getEndPointsInterface()
+{
+	return endPointsInterface;
+}
+
+bool Graph::addEndPointInterfaceOut(EndPointInterfaceOut endpoint)
+{
+	for(list<EndPointInterfaceOut>::iterator e = endPointsInterfaceOut.begin(); e != endPointsInterfaceOut.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsInterfaceOut.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointInterfaceOut> Graph::getEndPointsInterfaceOut()
+{
+	return endPointsInterfaceOut;
+}
+
+bool Graph::addEndPointGre(EndPointGre endpoint)
+{
+	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsGre.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointGre> Graph::getEndPointsGre()
+{
+	return endPointsGre;
+}
+
+bool Graph::addEndPointVlan(EndPointVlan endpoint)
+{
+	for(list<EndPointVlan>::iterator e = endPointsVlan.begin(); e != endPointsVlan.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsVlan.push_back(endpoint);
+	
+	return true;
+}
+
+list<EndPointVlan> Graph::getEndPointsVlan()
+{
+	return endPointsVlan;
+}
+
+bool Graph::addVNF(VNFs vnf)
+{
+	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end(); v++)
+	{
+		if(*v == vnf)
+			return false;
+	}
+
+	vnfs.push_back(vnf);
+	
+	return true;
+}
+
+list<VNFs> Graph::getVNFs()
+{
+	return vnfs;
+}
+
 set<string> Graph::getPorts()
 {
 	return ports;
@@ -22,6 +122,18 @@ map<string, list<unsigned int> > Graph::getNetworkFunctions()
 {
 	return networkFunctions;
 }
+
+map<string, map<unsigned int, port_network_config > > Graph::getNetworkFunctionsConfiguration()
+{
+	return networkFunctionsConfiguration;
+}
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+map<string, list<port_mapping_t > > Graph::getNetworkFunctionsControlPorts()
+{
+	return networkFunctionsControlPorts;
+}
+#endif
 
 list<Rule> Graph::getRules()
 {
@@ -52,6 +164,22 @@ bool Graph::addNetworkFunction(string nf)
 	
 	return true;
 }
+
+bool Graph::addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > config)
+{
+	networkFunctionsConfiguration[nf] = config;
+	
+	return true;
+}
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+bool Graph::addNetworkFunctionControlPort(string nf, port_mapping_t control)
+{
+	networkFunctionsControlPorts[nf].push_back(control);
+	
+	return true;
+}
+#endif
 
 bool Graph::updateNetworkFunction(string nf, unsigned int port)
 {
@@ -166,7 +294,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 			else
 			{
 				stringstream ss;
-				ss << match.getGraphID() << ":" << match.getEndPoint();
+				ss << match.getEndPoint();
 				rri.endpoint = ss.str();
 			}
 
@@ -205,17 +333,50 @@ void Graph::print()
 
 Object Graph::toJSON()
 {
-	Object flow_graph;
+	Object forwarding_graph, big_switch;
 	
-	Array flow_rules;
+	Array flow_rules, end_points, vnf;
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end();r++)
 	{
 		flow_rules.push_back(r->toJSON());
 	}
 	
-	flow_graph[FLOW_RULES] = flow_rules;
+	for(list<EndPointInterface>::iterator e = endPointsInterface.begin(); e != endPointsInterface.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
 	
-	return flow_graph;
+	for(list<EndPointInterfaceOut>::iterator e = endPointsInterfaceOut.begin(); e != endPointsInterfaceOut.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+	
+	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+	
+	for(list<EndPointVlan>::iterator e = endPointsVlan.begin(); e != endPointsVlan.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+	
+	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end();v++)
+	{
+		vnf.push_back(v->toJSON());
+	}
+	
+	forwarding_graph[_ID] = ID;
+	forwarding_graph[_NAME] = name;
+	if(end_points.size() != 0)
+		forwarding_graph[END_POINTS] = end_points;
+	if(vnf.size() != 0)
+		forwarding_graph[VNFS] = vnf;
+	big_switch[FLOW_RULES] = flow_rules;
+	
+	forwarding_graph[BIG_SWITCH] = big_switch;
+	
+	return forwarding_graph;
 }
 
 bool Graph::stillExistNF(string nf)
@@ -254,12 +415,7 @@ bool Graph::stillExistEndpoint(string endpoint)
 {
 	if(endpoints.count(endpoint) == 0)
 		return false;
-
-	if(endpointIsUsedInMatch(endpoint))
-		return true;
-		
-	if(endpointIsUsedInAction(endpoint))
-		return true;
+	return true;
 			
 	endpoints.erase(endpoint);
 	return false;
@@ -298,31 +454,19 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::addEndPoint(string graphID, string endpoint)
+bool Graph::addEndPoint(string ep, vector<string> p)
 {	
-	if(graphID == ID)
-		endpoints[endpoint] = true;
-	else
-		endpoints[endpoint] = false;
-		
-	return endpoints[endpoint];
+	if(endpoints.count(ep) != 0)
+		return false;
+
+	endpoints[ep] = p;
+	
+	return true;
 }
 
-set<string> Graph::getEndPoints()
+map<string, vector<string> > Graph::getEndPoints()
 {
-	set<string> endPoints;
-	
-	for(map<string,bool>::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
-		endPoints.insert(ep->first);
-
-	return endPoints;
-}
-
-bool Graph::isDefinedHere(string endpoint)
-{
-	assert(endpoints.count(endpoint) != 0);
-	
-	return endpoints[endpoint];
+	return endpoints;
 }
 
 string Graph::getEndpointInvolved(string flowID)
@@ -337,45 +481,11 @@ string Graph::getEndpointInvolved(string flowID)
 	if(m.matchOnEndPoint())
 	{
 		stringstream ss;
-		ss << m.getGraphID() << ":" << m.getEndPoint();
+		ss << m.getEndPoint();
 		return ss.str();
 	}
 	
 	return "";
-}
-
-bool Graph::endpointIsUsedInMatch(string endpoint)
-{
-	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
-	{
-		Match match = r->getMatch();		
-		if(match.matchOnEndPoint())
-		{
-			stringstream ss;
-			ss << match.getGraphID() << ":" << match.getEndPoint();
-			if(ss.str() == endpoint)
-				//The endpoint is used in a match
-				return true;
-		}		
-	}
-	return false;
-}
-
-bool Graph::endpointIsUsedInAction(string endpoint)
-{
-	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
-	{
-		Action *action = r->getAction();		
-		action_t actionType = action->getType();
-		
-		if(actionType == ACTION_ON_ENDPOINT)
-		{
-			if(action->toString() == endpoint)
-				//The port is used in an action
-				return true;
-		}
-	}
-	return false;
 }
 
 }

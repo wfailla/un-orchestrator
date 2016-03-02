@@ -4,7 +4,13 @@ namespace lowlevel
 {
 
 Match::Match() :
-	graph::Match(),isInput_port(false)
+	graph::Match(),isInput_port(false),is_local_port(false)
+{
+
+}
+
+Match::Match(bool is_local_port) :
+	graph::Match(),isInput_port(false), is_local_port(is_local_port)
 {
 
 }
@@ -31,6 +37,8 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 {
 	if(isInput_port)
 		message.set_match().set_in_port(input_port);
+	if(is_local_port)
+		message.set_match().set_in_port(rofl::openflow::OFPP_LOCAL);
 		
 	if(eth_src != NULL)
 	{
@@ -49,8 +57,16 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	}
 	if(isEthType)
 		message.set_match().set_eth_type(ethType);
-	if(isVlanID)
-		message.set_match().set_vlan_vid(vlanID);
+	if(isVlanID || isEndpointVlanID)
+	{
+		/**
+		*	This field is vlan_tci and, according to the documentation provided at
+		*		http://openvswitch.org/support/dist-docs/ovs-ofctl.8.txt
+		*	requires that the VLAN ID is put in OR with 0x1000.
+		*	Thanks to Roberto Bonafiglia for his help :D !
+		*/		
+		message.set_match().set_vlan_vid(vlanID | 0x1000 );
+	}
 	else if(isAnyVlan)
 		message.set_match().set_vlan_present();
 	else if(isNoVlan)
@@ -143,13 +159,19 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 		message.set_match().set_mpls_label(mplsLabel);
 	if(isMplsTC)
 		message.set_match().set_mpls_tc(mplsTC);
+	if(gre_key)
+	{
+		unsigned int key = 0;
+		
+		sscanf(gre_key, "%u", &key);
+		message.set_match().set_tunnel_id(key);
+	}
 }
 
 void Match::setInputPort(unsigned int input_port)
 {
 	this->input_port = input_port;
 	isInput_port = true;
-
 }
 
 void Match::setAllCommonFields(graph::Match match)
@@ -162,7 +184,10 @@ void Match::print()
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
 		cout << "\t\tmatch:" << endl << "\t\t{" << endl;
-		cout << "\t\t\tport: "<< input_port << endl;
+		if(is_local_port)
+			cout << "\t\t\tport: "<< "LOCAL" << endl;
+		else
+			cout << "\t\t\tport: "<< input_port << endl;
 		graph::Match::print();
 		cout << "\t\t}" << endl;
 	}
@@ -199,8 +224,14 @@ string Match::prettyPrint(LSI *lsi0,map<string,LSI *> lsis)
 		}
 	}
 	
-	//The code could be here only when a SIGINT is received and all the graph are going to be removed
-	ss << input_port << " (unknown graph)";
+	if(is_local_port)
+		ss << "LOCAL" << " (LOCAL graph)";
+	else
+	{	
+		//The code could be here only when a SIGINT is received and all the graph are going to be removed
+		ss << input_port << " (unknown graph)";
+	}
+	
 	return ss.str();
 }
 

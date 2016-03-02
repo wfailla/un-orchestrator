@@ -24,10 +24,6 @@
 	#include "../../network_controller/switch_manager/plugins/ovs-ofconfig/ofconfig_manager.h"
 	#define SWITCH_MANAGER_IMPLEMENTATION OVSManager
 #endif
-#ifdef VSWITCH_IMPLEMENTATION_OVSDPDK
-	#include "../../network_controller/switch_manager/plugins/ovs-dpdk/ovsdpdk_manager.h"
-	#define SWITCH_MANAGER_IMPLEMENTATION OVSDPDKManager
-#endif
 #ifdef VSWITCH_IMPLEMENTATION_OVSDB
 	#include "../../network_controller/switch_manager/plugins/ovs-ovsdb/ovsdb_manager.h"
 	#define SWITCH_MANAGER_IMPLEMENTATION OVSDBManager
@@ -55,6 +51,10 @@ typedef struct
 		ComputeController *computeController;
 		
 		map<unsigned int, string> namesOfPortsOnTheSwitch;
+		map<unsigned int, port_network_config_t > portsConfiguration;
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+		list<port_mapping_t > controlConfiguration;
+#endif
 	}to_thread_t;
 
 class GraphManager
@@ -81,38 +81,33 @@ private:
 	map<string, unsigned int > availableEndPoints;
 	
 	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the action of another graph (hence, the
-	*	"current" graph uses this end point in the match).
-	*	
-	*	Example: the graph defining the endpoint "ep" has the rule
-	*		match: nf:1 - action: ep
-	*	ep originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g., 2). This structure contains the entry: <ep, 1>
-	*/
-	map<string, unsigned int> endPointsDefinedInActions;
-	
-	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the match of another graph (hence, the
-	*	"current" graph uses this end point in the action).
-	*	This port ID is the remote part of the vlink connecting the LSI to the NF
-	*	defined in the action of the rule whose match defines the endpoint iself.
-	*
-	*   Example: the graph defining the endpoint "ep" has the rule
-	*		match: ep - action: nf:1
-	*	nf:1 originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g.. 2). This structure contains the entry: <ep, 1>
-	*/
-	map<string, unsigned int> endPointsDefinedInMatches;
-	
-	/**
 	*	The LSI in common with all the tenants, which
 	*	access to the physical interfaces
 	*/
 	GraphInfo graphInfoLSI0;
 	uint64_t dpid0;
 	lowlevel::Graph graphLSI0lowLevel; //FIXME: this is a trick for the log
+	lowlevel::Graph graph; //FIXME: this is a trick for default rules
+	
+	/**
+	*	Local IP of the LSI0
+	*/
+	string local_ip;
+	
+	/**
+	*	Control can be in band (true) or out of band (false)
+	*/
+	bool is_control_in_band;
+	
+	/**
+	*	Control interface of the node
+	*/
+	string control_interface;
+	
+	/**
+	*	IPsec certificate
+	*/
+	string ipsec_certificate;
 	
 	/**
 	*	Map containing the graph identifier of each tenant-LSI, and its desciption
@@ -186,7 +181,6 @@ private:
 	*/
 	string findEndPointTowardsNF(highlevel::Graph *graph, string nf);
 
-#ifndef UNIFY_NFFG	
 	/**
 	*	@brief: check if a specific flow can be removed from a graph. The flow cannot be removed if it defines
 	*		an endpoint currently used by other graphs.
@@ -198,13 +192,12 @@ private:
 	*	be removed if it is not used in actions of other graphs.
 	*/
 	bool canDeleteFlow(highlevel::Graph *graph, string flowID);
-#endif
 	
 public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
 
-	GraphManager(int core_mask,string portsFileName);
+	GraphManager(int core_mask,string portsFileName,string local_ip,bool control,string control_interface,string ipsec_certificate);
 	~GraphManager();
 		
 	/**
@@ -269,7 +262,7 @@ public:
 	*/
 	bool deleteFlow(string graphID, string flowID);
 	
-#ifdef UNIFY_NFFG
+#if 0
 	/**
 	*	@brief: deletes a NF from the graph
 	*

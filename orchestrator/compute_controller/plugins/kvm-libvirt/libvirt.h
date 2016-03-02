@@ -84,6 +84,7 @@ private:
 	*	@brief: Custom error handler
 	*/
 	static void customErrorFunc(void *userdata, virErrorPtr err);
+	
 #endif
 
 public:

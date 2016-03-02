@@ -6,6 +6,8 @@
 #include "virtual_link.h"
 #include "../../compute_controller/description.h"
 
+#include "../graph/high_level_graph/nf_port_configuration.h"
+
 #include <map>
 #include <set>
 #include <list>
@@ -40,14 +42,14 @@ private:
 	uint64_t dpid;
 	
 	/**
-	*	@brief: the pair is <port name, port id>. It contains physical ports
+	*	@brief: the pair is <port name, port id>. It contains IDs assigned by the switch to the physical ports
 	*/
 	map<string,unsigned int> physical_ports;
 	
 	/**
 	*	@brief: the pair is <port name, port type>
 	*/
-	map<string,string> ports_type;
+	map<string,string> physical_ports_type;
 
 	/**
 	*	@brief: Data related to a specific NF
@@ -62,11 +64,12 @@ private:
 
 		/**
 		*	@brief: Names of the ports connected to the LSI and related to the network function
+		*		The map is <port id, port name on switch>
 		*/
-	    list<string> portsNameOnSwitch;
+		map<unsigned int,string> ports_name_on_switch;
 
 		/**
-		 * 	@brief: port ids assigned to the ports by switch
+		 * 	@brief: port ids (OpenFlow) assigned to the ports by switch
 		 *		The map is
 		 *			<nf port name, switch_id>
 		 */
@@ -79,11 +82,40 @@ private:
 	};
 	
 	/**
+	*	@brief: endpoints connected to the LSI 
+	*		The map is
+	*  			<endpoint name, list params>
+	*				list params: gre key, local ip, remote ip
+	*/
+	map<string,vector<string> > endpoints_ports;
+	
+	/**
+	*	@brief: the pair is <endpoint name, endpoint id>
+	*/
+	map<string,unsigned int > endpoints_ports_id;
+	
+	/**
 	*	@brief: NFs connected to the LSI.
 	*		The map is
 	*			<nf name, nfData >
 	*/
 	map<string, struct nfData>  network_functions;
+	
+	/**
+	*	@brief: NFs connected to the LSI.
+	*		The map is
+	*			<nf name, list<pair<mac address, ip address>> >
+	*/
+	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration;
+	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	/**
+	*	@brief: For each VNF, describes its TCP control connections
+	*		The map is
+	*			<nf name, list<pair<host TCP port, VNF TCP port>> >
+	*/
+	map<string, list<port_mapping_t > > network_functions_control_configuration;
+#endif
 	
 	/**
 	*	@brief: virtual links attached to the LSI
@@ -110,10 +142,20 @@ private:
 	map<string, uint64_t> endpoints_vlinks;
 
 public:
-	LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > network_functions, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
+
+	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, 
+		map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration, 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+		map<string, list <port_mapping_t > > network_functions_control_configuration, 
+#endif
+		map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
+	
+	map<string,vector<string> > getEndpointsPorts();
+
+	map<string,unsigned int > getEndpointsPortsId();
 
 	uint64_t getDpid();
 
@@ -123,10 +165,13 @@ public:
 
 	set<string> getNetworkFunctionsName();
 	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
+	map<unsigned int, port_network_config > getNetworkFunctionsPortsConfiguration(string nf);
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	list<port_mapping_t > getNetworkFunctionsControlConfiguration(string nf);
+#endif
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
 	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
-	list<string> getNetworkFunctionsPortsNameOnSwitch(string nf);
 	map<unsigned int, string> getNetworkFunctionsPortsNameOnSwitchMap(string nf);
 
 	list<uint64_t> getVirtualLinksRemoteLSI();
@@ -154,6 +199,7 @@ protected:
 	bool setPhysicalPortID(string port, uint64_t id);
 	bool setNfSwitchPortsID(string nf, map<string, unsigned int>);
 	void setVLinkIDs(unsigned int position, unsigned int localID, unsigned int remoteID);
+	bool setEndpointPortID(string ep, uint64_t id);
 	
 	void setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names);
 
@@ -162,6 +208,9 @@ protected:
 
 	bool addNF(string name, list< unsigned int> ports, const map<unsigned int, PortType>& nf_ports_type);
 	void removeNF(string nf);
+	
+	void addEndpoint(string name, vector<string> param);
+	void removeEndpoint(string ep);
 };
 
 #endif //LSI_H_

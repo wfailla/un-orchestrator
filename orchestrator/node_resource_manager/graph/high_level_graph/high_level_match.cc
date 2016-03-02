@@ -4,7 +4,7 @@ namespace highlevel
 {
 
 Match::Match() :
-	graph::Match(),input(NULL), nf_port(0), type(MATCH_GENERIC)
+	graph::Match(), nf_port(0), type(MATCH_GENERIC)
 {
 
 }
@@ -34,15 +34,32 @@ bool Match::setNFport(string network_function, int port)
 	return true;
 }
 
-bool Match::setEndPoint(string graphID, unsigned int endpoint)
+bool Match::setEndPoint(unsigned int endpoint)
 {
 	if(type != MATCH_GENERIC)
 		return false;
 
-	input = (char*)malloc(sizeof(char)*(graphID.length()+1));
-	strcpy(input,graphID.c_str());
 	this->endpoint = endpoint;
 	type = MATCH_ENDPOINT;
+	
+	return true;
+}
+
+bool Match::setInputEndpoint(string input_endpoint)
+{
+	this->input_endpoint = (char*)malloc(sizeof(char)*(input_endpoint.length()+1));
+	strcpy(this->input_endpoint,input_endpoint.c_str());
+	
+	input = (char*)malloc(sizeof(char)*(input_endpoint.length()+1));
+	strcpy(input,input_endpoint.c_str());
+	
+	return true;
+}
+	
+bool Match::setNFEndpointPort(string nf_endpoint_port)
+{
+	this->nf_endpoint_port = (char*)malloc(sizeof(char)*(nf_endpoint_port.length()+1));
+	strcpy(this->nf_endpoint_port,nf_endpoint_port.c_str());
 	
 	return true;
 }
@@ -99,23 +116,46 @@ unsigned int Match::getEndPoint()
 	return endpoint;
 }
 
+char *Match::getInputEndpoint()
+{
+	assert(type == MATCH_ENDPOINT);
+		
+	//Check the name of port
+	char delimiter[] = ":";
+	char * pnt;
+
+	string str;
+
+	char tmp[BUFFER_SIZE];
+	strcpy(tmp,(char *)input_endpoint);
+	pnt=strtok(tmp, delimiter);
+	int i = 0;
+
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 1:
+				str = string(pnt);
+		}
+		
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+	
+	return (char *)str.c_str();
+}
+
 void Match::print()
 {
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
 		cout << "\t\tmatch:" << endl << "\t\t{" << endl;
 	
-		if(type == MATCH_NF)
-		{
-			cout << "\t\t\tNF port: "<< input << ":" << nf_port << endl;
-		}
-		else if(type == MATCH_PORT)
-			cout << "\t\t\tport: " << input << endl;
+		if(type == MATCH_PORT || type == MATCH_ENDPOINT)	
+			cout << "\t\t\tport_in: " << input << endl;
 		else
-		{
-			assert(type == MATCH_ENDPOINT);
-			cout << "\t\t\tendpoint: " << input << ":" << endpoint << endl;
-		}
+			cout << "\t\t\tport_in: " << input << ":" << nf_port << endl;
 		
 		graph::Match::print();
 	
@@ -127,20 +167,13 @@ Object Match::toJSON()
 {
 	Object match;	
 	
-	if(type == MATCH_PORT)
-		match[PORT]  = input;
+	if(type == MATCH_PORT || type == MATCH_ENDPOINT)
+		match[PORT_IN]  = input_endpoint;
 	else if(type == MATCH_NF)
 	{
 		stringstream nf;
 		nf << input << ":" << nf_port;
-		match[VNF_ID] = nf.str().c_str();
-	}
-	else
-	{
-		assert(type == MATCH_ENDPOINT);
-		stringstream ep;
-		ep << input << ":" << endpoint;
-		match[ENDPOINT_ID] = ep.str().c_str();
+		match[PORT_IN] = nf_endpoint_port;
 	}
 	
 	graph::Match::toJSON(match);

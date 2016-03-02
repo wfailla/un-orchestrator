@@ -29,8 +29,8 @@ private:
 	*	@brief: NF			The match is expressed on a NF (and potentially
 	*						on other parameters)
 	*	@brief: ENDPOINT	The match is expressed on a graph end point, that is
-	*						a sort of virtual ports to be used to connect many
-	*						garphs together (and potentially on other parameters)
+	*						a gre tunnel to be used to connect many
+	*						universal node together
 	*	@brief: GENERIC		The match is neither expressed on a port, nor on
 	*						a network function (but potentially on other
 	*						parameters)
@@ -63,6 +63,18 @@ private:
 	unsigned int endpoint;
 	
 	/**
+	*	@brief: this attribute can either represent
+	*		a endpoint port (e.g. endpoint:00000001)
+	*/
+	char *input_endpoint;
+	
+	/**
+	*	@brief: this attribute can either represent
+	*		a vnf endpoint port (e.g. vnf:00000002:inout:0)
+	*/
+	char *nf_endpoint_port;
+	
+	/**
 	*	@brief: type of the match
 	*/
 	match_t type;
@@ -88,10 +100,30 @@ public:
 	/**
 	*	@brief: set a graph endpoint
 	*
-	*	@param: graphID		identifier of the graph defining the endpoint
 	*	@param: endpoint	identifier of the endpoint within the graph
 	*/
-	bool setEndPoint(string graphID, unsigned int endpoint);
+	bool setEndPoint(unsigned int endpoint);
+	
+	/**
+	*	@brief: set a input endpoint
+	*
+	*	@param: input_endpoint	endpoint (e.g., endpoint:00000001)
+	*/
+	bool setInputEndpoint(string input_endpoint);
+	
+	/**
+	*	@brief: set a name of endpoint
+	*
+	*	@param: endpoint_name	name of endpoint (e.g., gre1)
+	*/
+	bool setEndpointName(string endpoint_name);
+	
+	/**
+	*	@brief: set a endpoint (type: vnf)
+	*
+	*	@param: nf_endpoint	the name of a vnf endpoint port (e.g., vnf:00000002:inout:0)
+	*/
+	bool setNFEndpointPort(string nf_endpoint_port);
 	
 	/**
 	*	@brief: return true if the match is on a physical port
@@ -132,6 +164,11 @@ public:
 	*	@brief: get the identifier of the endpoint within the graph defining it (the match must be on a graph endpoint)
 	*/
 	unsigned int getEndPoint();
+	
+	/**
+	*	@brief: get the full identifier of the endpoint within the graph defining it (the match must be on a graph endpoint)
+	*/
+	char *getInputEndpoint();
 	
 	/**
 	*	@brief: print the match in a json like style

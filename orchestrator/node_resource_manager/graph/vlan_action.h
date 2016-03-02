@@ -9,16 +9,18 @@
 
 #include <rofl/common/protocols/fvlanframe.h>
 
-enum vlan_action_t {ACTION_VLAN_PUSH,ACTION_VLAN_POP};
+//TODO: the ACTION_ENDPOINT_VLAN is actually a ACTION_VLAN_PUSH
+enum vlan_action_t {ACTION_VLAN_PUSH,ACTION_VLAN_POP,ACTION_ENDPOINT_VLAN};
 
 class VlanAction : public GenericAction
 {
 private:
 	vlan_action_t type;
+	string vlan_endpoint;
 	uint16_t label;
 	
 public:
-	VlanAction(vlan_action_t type, uint16_t label = 0);
+	VlanAction(vlan_action_t type, string vlan_endpoint, uint16_t label = 0);
 	~VlanAction();
 	
 	void print();

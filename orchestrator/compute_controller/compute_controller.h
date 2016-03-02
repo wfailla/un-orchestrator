@@ -21,10 +21,6 @@
 #include <json_spirit/value.h>
 #include <json_spirit/writer.h>
 
-#ifdef UNIFY_NFFG
-	#include "../node_resource_manager/virtualizer/virtualizer.h"
-#endif
-
 #include "nfs_manager.h"
 
 #ifdef ENABLE_DPDK_PROCESSES
@@ -148,15 +144,6 @@ public:
 	*/
 	bool selectImplementation();
 	
-#ifdef UNIFY_NFFG
-	/**
-	*	@brief: Return the number of ports of a specific NF
-	*
-	*	@param:	name	Name of a network function
-	*/
-	unsigned int getNumPorts(string name);
-#endif
-	
 	/**
 	*	@brief: Return the type selected for a specific NF
 	*
@@ -183,8 +170,14 @@ public:
 	*
 	*	@param:	nf_name					Name of the network function to be started
 	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started
+	*	@param: portsConfiguration		Ports configuration (mac address, ip address)
+	*	@param: controlConfiguration	Control ports configuration (host TCP port, VNF TCP port)
 	*/
-	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch);
+	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		, list<port_mapping_t > controlConfiguration
+#endif
+		);
 	
 	/**
 	*	@brief: Stop all the running NFs
@@ -211,13 +204,6 @@ public:
 	*	@brief: prints information on the VNFs deployed
 	*/
 	void printInfo(int graph_id);
-	
-#ifdef UNIFY_NFFG	
-	/**
-	*	@brief:	Retrieves information about all the available VNFs, in order to set the virtualizer
-	*/
-	static nf_manager_ret_t retrieveAllAvailableNFs();
-#endif
 };
 
 #endif //COMPUTE_CONTROLLER_H_

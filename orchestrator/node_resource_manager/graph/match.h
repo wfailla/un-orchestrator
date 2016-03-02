@@ -48,18 +48,13 @@ protected:
 	/*
 	*	VLAN
 	*/
-	//Only one of
-	//	isVlanID
-	// isNoVlan
-	// isAnyVlan
-	//can be set at the same time
-	
 	bool isVlanID;
 	uint16_t vlanID;
 	bool isNoVlan;
 	bool isAnyVlan;
 	bool isVlanPCP;
 	uint8_t vlanPCP;
+	bool isEndpointVlanID;
 	
 	/*
 	*	IPv4
@@ -148,6 +143,11 @@ protected:
 	bool isMplsTC;
 	uint8_t mplsTC;
 	
+	/*
+	*	GRE
+	*/
+	char *gre_key;
+	
 	Match();
 
 	bool isEqual(const Match &other) const;
@@ -196,7 +196,9 @@ public:
 	void setIcmpv6Type(uint8_t icmpv6Type);
 	void setIcmpv6Code(uint8_t icmpv6Code);
 	void setMplsLabel(uint32_t mplsLabel);
-	void setMplsTC(uint8_t mplsTC);
+	void setMplsTC(uint8_t mplsTC);	
+	void setEndpointVlanID(uint16_t vlanID);
+	void setGreKey(char *gre_key);
 	
 	virtual void setAllCommonFields(Match match);
 	

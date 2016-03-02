@@ -4,9 +4,6 @@
 #pragma once
 
 #include "rest_server.h"
-#ifdef UNIFY_NFFG
-	#include "../virtualizer/virtualizer.h"
-#endif
 
 class MatchParser
 {
@@ -17,10 +14,12 @@ protected:
 
 	static string nfName(string name_port);
 	static unsigned int nfPort(string name_port);
+	static bool nfIsPort(string name_port);	
+
+	static string epName(string name_port);
+	static unsigned int epPort(string name_port);
 	
-	static unsigned int graphEndPoint(string name_port);
-	
-	static bool parseMatch(Object object, highlevel::Match &match, map<string,set<unsigned int> > &nfs, highlevel::Graph &graph);
+	static bool parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, highlevel::Graph &graph);
 	
 private:
 	static bool validateMac(const char* mac);

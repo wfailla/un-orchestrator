@@ -15,21 +15,23 @@ namespace highlevel
 class ActionEndPoint : public Action
 {
 private:
-	/**
-	*	@brief: ID of the graph defining this endpoint
-	*/
-	string graphID;
 	
 	/**
 	*	@brief: endpoint identifier
 	*/
 	unsigned int endpoint;
 	
+	/**
+	*	@brief: the name of the endpoint (e.g., endpoint:00000001)
+	*/
+	string input_endpoint;
+	
 public:
 
-	ActionEndPoint(string graphID, unsigned int endpoint);
+	ActionEndPoint(unsigned int endpoint, string input_endpoint);
 	string getInfo();
 	unsigned int getPort();
+	string getInputEndpoint();
 	string toString();
 	
 	bool operator==(const ActionEndPoint &other) const;

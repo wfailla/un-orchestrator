@@ -78,63 +78,6 @@ void Libvirt::disconnect()
 }
 #endif
 
-#ifdef VSWITCH_IMPLEMENTATION_ERFS
-//#define VSWITCH_IMPLEMENTATION_ERFS_DIRECT_KVM
-#endif
-
-#ifdef VSWITCH_IMPLEMENTATION_ERFS_DIRECT_KVM
-// No need for command line generator, ERFS generates the command line for Qemu
-bool Libvirt::startNF(StartNFIn sni)
-{
-    const char *a = QEMU_BIN_PATH;
-    const char *b = OVS_BASE_SOCK_PATH;
-    if (a == b);
-
-    stringstream ports;
-    list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
-    int port_id = 0;
-    for(list<string>::iterator name = namesOfPortsOnTheSwitch.begin(); name != namesOfPortsOnTheSwitch.end(); name++) {
-        PortType port_type = description->getPortTypes().at(port_id);
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM VNF Port %d (%s) is of type %d", port_id, (*name).c_str(), port_type);
-        ports << port_id + 1 << ",";
-        port_id++;
-    }
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "ports: (%s)", ports.str().c_str());
-
-    // Get image name
-    stringstream command;
-    char image_path[512];
-    command << "cat " << description->getURI().c_str() << " | grep 'source file' | awk -F '\"' '{print $2}'";
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "command for getting image file: %s", command.str().c_str());
-    FILE *out = popen(command.str().c_str(), "r");
-    if (out) {
-        int res = fscanf(out, "%s", image_path);
-        if (res) {
-            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "image path: (%s)", image_path);
-        }
-        else {
-            logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "error in getting image path");
-            return false;
-        }
-    }
-    else {
-        logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "can not open file");
-        return false;
-    }
-
-    // TODO: number of cores and core mask is to be added
-    command.str("");
-    command.clear();
-    command << QEMU_ERFS << " " << sni.getLsiID() << " " << sni.getNfName();
-    command << " " << image_path << " " << ports.str().c_str();
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "command for starting KVM: (%s)", command.str().c_str());
-
-    int retVal = system(command.str().c_str());
-    if(retVal != 0)
-        return false;
-    return true;
-}
-#else
 #if not defined(DIRECT_KVM_IVSHMEM)
 bool Libvirt::startNF(StartNFIn sni)
 {
@@ -283,10 +226,19 @@ bool Libvirt::startNF(StartNFIn sni)
 	/* Create XML for VM */
 
 	/* Create NICs */
-	vector<string> ivshmemPorts;
+	vector< pair<string, string> > ivshmemPorts; // name, alias
 
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
-	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++)
+	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
+	map<unsigned int, port_network_config_t >::iterator pd = portsConfiguration.begin();
+	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	list<port_mapping_t > control_ports = sni.getControlPorts();	
+	if(control_ports.size() != 0)
+		logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by KVM type", control_ports.size(),nf_name.c_str());	
+#endif
+
+	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++, pd++)
 	{
 		const unsigned int port_id = p->first;
 		const string& port_name = p->second;
@@ -294,9 +246,19 @@ bool Libvirt::startNF(StartNFIn sni)
 		PortType port_type = description->getPortTypes().at(port_id);
 		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "NF Port \"%s\":%d (%s) is of type %s", nf_name.c_str(), port_id, port_name.c_str(), portTypeToString(port_type).c_str());
 
-	    if (port_type == USVHOST_PORT) {
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		/* retrieve ip address */
+		if(!portsConfiguration[port_id].ip_address.empty())
+			logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required ip address configuration for VNF '%s'. Ip address configuration are not supported by KVM type", control_ports.size(),nf_name.c_str());
+#endif
+		/* retrieve mac address */
+		string port_mac_address = portsConfiguration[port_id].mac_address;
+
+		logger(ORCH_DEBUG, KVM_MODULE_NAME, __FILE__, __LINE__, "Interface \"%s\" associated with MAC address \"%s\"", port_name.c_str(), port_mac_address.c_str());
+
+		if (port_type == USVHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
-		    xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
+			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "vhostuser");
 
 			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
 			ostringstream sock_path_os;
@@ -305,25 +267,34 @@ bool Libvirt::startNF(StartNFIn sni)
 			xmlNewProp(srcn, BAD_CAST "path", BAD_CAST sock_path_os.str().c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "client");
 
-		    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
-		    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
+			xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
+			xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
 
-		    xmlNodePtr drvn = xmlNewChild(ifn, NULL, BAD_CAST "driver", NULL);
-		    xmlNodePtr drv_hostn = xmlNewChild(drvn, NULL, BAD_CAST "host", NULL);
-		    xmlNewProp(drv_hostn, BAD_CAST "csum", BAD_CAST "off");
-		    xmlNewProp(drv_hostn, BAD_CAST "gso", BAD_CAST "off");
-		    xmlNodePtr drv_guestn = xmlNewChild(drvn, NULL, BAD_CAST "guest", NULL);
-		    xmlNewProp(drv_guestn, BAD_CAST "tso4", BAD_CAST "off");
-		    xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
-		    xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
-	    }
-	    else if (port_type == IVSHMEM_PORT) {
-	    	ivshmemPorts.push_back(port_name);
-	    }
-	    else if (port_type == VHOST_PORT) {
+			xmlNodePtr drvn = xmlNewChild(ifn, NULL, BAD_CAST "driver", NULL);
+			xmlNodePtr drv_hostn = xmlNewChild(drvn, NULL, BAD_CAST "host", NULL);
+			xmlNewProp(drv_hostn, BAD_CAST "csum", BAD_CAST "off");
+			xmlNewProp(drv_hostn, BAD_CAST "gso", BAD_CAST "off");
+			xmlNodePtr drv_guestn = xmlNewChild(drvn, NULL, BAD_CAST "guest", NULL);
+			xmlNewProp(drv_guestn, BAD_CAST "tso4", BAD_CAST "off");
+			xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
+			xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
+	    	}
+	    	else if (port_type == IVSHMEM_PORT) {
+			ostringstream local_name;  // Name of the port as known by the VNF internally - We set a convention here
+			local_name << "p" << port_id;  // Will result in p<n>_tx and p<n>_rx rings
+
+			ivshmemPorts.push_back(pair<string, string>(port_name, local_name.str()));
+	    	}
+	    	else if (port_type == VHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
+			if(!port_mac_address.empty())
+			{
+				xmlNodePtr mac_addr = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
+				xmlNewProp(mac_addr, BAD_CAST "address", BAD_CAST port_mac_address.c_str());
+			}
+	
 			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
 			xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
@@ -333,13 +304,13 @@ bool Libvirt::startNF(StartNFIn sni)
 
 		    xmlNodePtr virt = xmlNewChild(ifn, NULL, BAD_CAST "virtualport", NULL);
 		    xmlNewProp(virt, BAD_CAST "type", BAD_CAST "openvswitch");
-	    }
-	    else
-	    {
-	    	assert(0 && "There is a BUG! You cannot be here!");
-	    	logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
-	    	return false;
-	    }
+	    	}
+	    	else
+	    	{
+	    		assert(0 && "There is a BUG! You cannot be here!");
+	    		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
+	    		return false;
+	    	}
 	}
 
 	if (! ivshmemPorts.empty()) {
@@ -351,8 +322,8 @@ bool Libvirt::startNF(StartNFIn sni)
 
         ostringstream cmd;
         cmd << "group-ivshmems " << sni.getLsiID() << "." << sni.getNfName();
-        for (vector<string>::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
-            cmd << " IVSHMEM:" << sni.getLsiID() << "-" << *it;
+        for (vector< pair<string, string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
+            cmd << " IVSHMEM:" << sni.getLsiID() << "-" << it->first;
         }
         logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating IVSHMEM QEMU command line using ERFS cmd: %s", cmd.str().c_str());
 
@@ -396,8 +367,8 @@ bool Libvirt::startNF(StartNFIn sni)
     	}
         ivshmemCmdElems.push_back(cmdline);
         // Port rings
-        for (vector<string>::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
-            if(!ivshmemCmdGenerator.get_port_cmdline((*it).c_str(), cmdline, sizeof(cmdline))) {
+        for (vector< pair<string,string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
+            if(!ivshmemCmdGenerator.get_port_cmdline((it->first).c_str(), (it->second).c_str(), cmdline, sizeof(cmdline))) {
                 return false;
             }
             ivshmemCmdElems.push_back(cmdline);
@@ -604,7 +575,6 @@ after_parsing:
 	return true;
 }
 #endif // if not defined(ENABLE_KVM_IVSHMEM)
-#endif // ERFS_DIRECT_KVM
 
 bool Libvirt::stopNF(StopNFIn sni)
 {

@@ -5,41 +5,46 @@ retrieved by the following command:
 
     $ sudo ./node-orchestrator --h
 
-Please refer to the help provided by the node-orchestrator itself in order to
+Please refer to the help provided by the un-orchestrator itself in order to
 understand how to use the different options.
 
 The un-orchestrator requires a virtual switch up and running in the server,
 which is completely independent from this software.
-
-Therefore you need to start your preferred softswitch first, before running
-the un-orchestrator. Proper instructions for xDPd and OpenvSwich are provided
+Therefore you need to start your preferred vSwitch first, before running
+the un-orchestrator. Proper instructions for xDPd, ERFS and Open vSwich are provided
 below.
 
+Similarly, the un-orchestrator requires that the Name Resolver is already running; 
+please, refer to the instructions provided in [../name-resolver/README.md](../name-resolver/README.md) 
+to understand how to execute this component.
 
 ### Configuration file examples
 
 Folder `config` contains some configuration file examples that can be used
 to configure/test the un-orchestrator.
 
+  * [config/default-config.ini](config/default-config.ini): 
+    configuration file for the un-orchestrator. It allows to specify information such 
+    as the TCP port used by the REST server, the file describing the physical 
+    ports of the Universal Node, and more;
   * [config/universal-node-example.xml](config/universal-node-example.xml): 
-    configuration file describing the physical ports to be handled by the 
+    file describing the physical ports to be handled by the 
     un-orchestrator, as well as the amount of CPU, memory and storage provided 
     to the Universal Node;
   * [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json): 
     simple graph that implements a simple passthrough function, i.e., traffic is 
     received from a first physical port and sent out from a second physical port, 
-    after having been handled to the vswitch. This graph is written according to 
-    the original NF-FG definition (WP5-based);
+    after having been handled to the vswitch;
   * [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json): 
     graph that includes a VNF. Traffic is received from a first physical port, provided
-    to a network function, and then sent out from a second physical port. This graph 
-    is written according to the original NF-FG definition (WP5-based).
+    to a network function, and then sent out from a second physical port.
 
-The same graphs of [config/simple_passthrough_nffg.json](config/simple_passthrough_nffg.json) 
-and [config/passthrough_with_vnf_nffg.json](config/passthrough_with_vnf_nffg.json) are described 
-through the WP3 definition based on the *virtualizer* in files [config/virtualizer/simple_passthrough_nffg.xml](config/virtualizer/simple_passthrough_nffg.xml) and [config/virtualizer/passthrough_with_vnf_nffg.xml](config/virtualizer/passthrough_with_vnf_nffg.xml).
+## How to start the proper virtual switch
 
-## How to start xDPd with DPDK support to work with the un-orchestrator
+As stated above, the proper vSwitch must be started on the Universal Node before the boot of the
+un-orchestrator; in the following the instructions to run the supported vSwitches are provided.
+
+### How to start xDPd with DPDK support to work with the un-orchestrator
 
 Set up DPDK (after each reboot of the physical machine), in order to:
 
@@ -50,10 +55,10 @@ Set up DPDK (after each reboot of the physical machine), in order to:
     number)
   * Bind Ethernet devices to IGB UIO module (bind all the ethernet interfaces
     that you want to use)
-
-	$ cd [xdpd]/libs/dpdk/tools
-	$ sudo ./setup.sh
-	; Follow the instructions provided in the script
+ 
+    $ cd [xdpd]/libs/dpdk/tools  
+    $ sudo ./setup.sh  
+    ; Follow the instructions provided in the script
 
 
 Start xDPd:
@@ -62,12 +67,12 @@ Start xDPd:
 	$ sudo ./xdpd
 
 xDPd comes with a command line tool called `xcli`, that can be used to check
-the  flows installed in the lsis, which are the LSIs deployed, see statistics
-on flows matched, and so on. The xcli can be run by just typing:
+the  flows installed in the LSIs, which are the LSIs deployed, see statistics
+on flows matched, and so on. The `xcli` can be run by just typing:
 
     $ xcli
 
-## How to start OvS (managed through OFCONFIG) to work with the un-orchestrator [DEPRECATED]
+### How to start OvS (managed through OFCONFIG) to work with the un-orchestrator [DEPRECATED]
 
 Start OvS:
 
@@ -87,7 +92,7 @@ For the full list of the supported parameters, type:
     $ ofc-server -h
 
 
-## How to start OvS (managed through OVSDB) to work with the un-orchestrator
+### How to start OvS (managed through OVSDB) to work with the un-orchestrator
 
 Start OVS:
 
@@ -97,7 +102,7 @@ Start ovsdb-server:
 
     $ sudo ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6632
 	
-## How to start OvS (managed through OVSDB) with DPDK support to work with the un-orchestrator
+### How to start OvS (managed through OVSDB) with DPDK support to work with the un-orchestrator
 
 Configure the system (after each reboot of the physical machine):
 
@@ -127,7 +132,7 @@ Set up DPDK (after each reboot of the physical machine):
 Start `ovsdb-server`:
 
     $ sudo ovsdb-server --remote=punix:/usr/local/var/run/openvswitch/db.sock \
-        --remote=db:Open_vSwitch,Open_vSwitch,manager_options  --pidfile --detach
+        --remote=db:Open_vSwitch,Open_vSwitch,manager_options --remote=ptcp:6632  --pidfile --detach
 	
 The first time after the ovsdb database creation, initialize it:
 
@@ -138,8 +143,13 @@ Start the switching daemon:
     $ export DB_SOCK=/usr/local/var/run/openvswitch/db.sock
     $ sudo ovs-vswitchd --dpdk -c 0x1 -n 4 --socket-mem 1024,0 \
         -- unix:$DB_SOCK --pidfile --detach
-		
-## How to configure and start libvirt
+
+## How to start the proper virtual execution environment
+
+Only Libvirt needs to be explicitly started. If you do not intend 
+to use this execution environment, you can skip this section.
+
+### How to configure and start Libvirt
 
 In case you are planning to use OvS with DPDK support as virtual switch, you have 
 to edit the file `/usr/local/etc/libvirt/qemu.conf` by adding the following line:
