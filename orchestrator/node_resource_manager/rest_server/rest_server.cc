@@ -1199,6 +1199,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_out_id[id].c_str());
 											}
 										}
+#endif
 									}//identify vlan end-points
 									else if(ep_name == VLAN)
 									{
