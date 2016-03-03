@@ -58,7 +58,15 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	if(isEthType)
 		message.set_match().set_eth_type(ethType);
 	if(isVlanID || isEndpointVlanID)
-		message.set_match().set_vlan_vid(vlanID);
+	{
+		/**
+		*	This field is vlan_tci and, according to the documentation provided at
+		*		http://openvswitch.org/support/dist-docs/ovs-ofctl.8.txt
+		*	requires that the VLAN ID is put in OR with 0x1000.
+		*	Thanks to Roberto Bonafiglia for his help :D !
+		*/		
+		message.set_match().set_vlan_vid(vlanID | 0x1000 );
+	}
 	else if(isAnyVlan)
 		message.set_match().set_vlan_present();
 	else if(isNoVlan)

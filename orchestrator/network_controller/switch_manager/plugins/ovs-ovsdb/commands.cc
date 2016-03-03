@@ -58,7 +58,7 @@ map<string, string> dpdkr_to_uuid;
  */
 string build_port_uuid_name(const string& port_name, uint64_t bridge_no)
 {
-	string p_lc = port_name;
+	string p_lc = "x" + port_name;
 
 	std::transform(p_lc.begin(), p_lc.end(), p_lc.begin(), ::tolower);
 
@@ -620,13 +620,10 @@ string find_free_dpdkr()
 }
 #endif
 
-string commands::add_port(string p_, uint64_t dnumber, bool is_nf_port, int s, PortType port_type)
+string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type)
 {
 	int r = 0;
     ssize_t nwritten;
-
-	string p;
-	p = "xxx" + p_;
 
 	char ifac[BUF_SIZE];
 	char read_buf[BUFFER_SIZE];

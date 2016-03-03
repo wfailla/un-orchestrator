@@ -34,12 +34,6 @@
 #define JSON_C_TYPE				"application/json"
 #define NO_CACHE				"no-cache"
 
-/*
-*	Costants in the JSON describing the graph
-*	XXX: the list of supported matches and actions MUST be aligned with those
-*	in [orchestrator]/node_resource_manager/virtualizer/constants.py
-*/
-
 #define TCP			"tcp"
 
 #define FORWARDING_GRAPH	"forwarding-graph"
@@ -65,6 +59,7 @@
 		#define EP_REM			"remote_endpoint_id"
 		#define EP_PR			"prepare_connection_to_remote_endpoint_ids"
 		//#define EP_IFACE   		"interface"
+		#define EP_INTERNAL		"internal"
 		#define EP_IFACE_OUT	"interface-out"
 			#define NODE_ID			"node-id"
 			#define SW_ID			"switch-id"

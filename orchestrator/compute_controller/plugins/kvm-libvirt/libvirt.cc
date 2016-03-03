@@ -78,63 +78,6 @@ void Libvirt::disconnect()
 }
 #endif
 
-#ifdef VSWITCH_IMPLEMENTATION_ERFS
-//#define VSWITCH_IMPLEMENTATION_ERFS_DIRECT_KVM
-#endif
-
-#ifdef VSWITCH_IMPLEMENTATION_ERFS_DIRECT_KVM
-// No need for command line generator, ERFS generates the command line for Qemu
-bool Libvirt::startNF(StartNFIn sni)
-{
-    const char *a = QEMU_BIN_PATH;
-    const char *b = OVS_BASE_SOCK_PATH;
-    if (a == b);
-
-    stringstream ports;
-    list<string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
-    int port_id = 0;
-    for(list<string>::iterator name = namesOfPortsOnTheSwitch.begin(); name != namesOfPortsOnTheSwitch.end(); name++) {
-        PortType port_type = description->getPortTypes().at(port_id);
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "KVM VNF Port %d (%s) is of type %d", port_id, (*name).c_str(), port_type);
-        ports << port_id + 1 << ",";
-        port_id++;
-    }
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "ports: (%s)", ports.str().c_str());
-
-    // Get image name
-    stringstream command;
-    char image_path[512];
-    command << "cat " << description->getURI().c_str() << " | grep 'source file' | awk -F '\"' '{print $2}'";
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "command for getting image file: %s", command.str().c_str());
-    FILE *out = popen(command.str().c_str(), "r");
-    if (out) {
-        int res = fscanf(out, "%s", image_path);
-        if (res) {
-            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "image path: (%s)", image_path);
-        }
-        else {
-            logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "error in getting image path");
-            return false;
-        }
-    }
-    else {
-        logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "can not open file");
-        return false;
-    }
-
-    // TODO: number of cores and core mask is to be added
-    command.str("");
-    command.clear();
-    command << QEMU_ERFS << " " << sni.getLsiID() << " " << sni.getNfName();
-    command << " " << image_path << " " << ports.str().c_str();
-    logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "command for starting KVM: (%s)", command.str().c_str());
-
-    int retVal = system(command.str().c_str());
-    if(retVal != 0)
-        return false;
-    return true;
-}
-#else
 #if not defined(DIRECT_KVM_IVSHMEM)
 bool Libvirt::startNF(StartNFIn sni)
 {
@@ -632,7 +575,6 @@ after_parsing:
 	return true;
 }
 #endif // if not defined(ENABLE_KVM_IVSHMEM)
-#endif // ERFS_DIRECT_KVM
 
 bool Libvirt::stopNF(StopNFIn sni)
 {

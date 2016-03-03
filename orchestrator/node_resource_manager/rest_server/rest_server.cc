@@ -658,6 +658,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 	//for each endpoint (vlan), contains the pair vlan id, interface
 	map<string, pair<string, string> > vlan_id; //XXX: currently, this information is ignored
 
+	/**
+	*	The graph is defined according to this schema:
+	*		https://github.com/netgroup-polito/nffg-library/blob/master/schema.json
+	*/
 	try
 	{
 		Object obj = value.getObject();
@@ -665,13 +669,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		vector<Object> gre_array(256);
 
 		Object big_switch, ep_gre;
-
 	  	bool foundFlowGraph = false;
 
 	  	int ii = 0;
 
-		//Identify the flow rules
-		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
+		//Iterates on the json received
+		for(Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
 		{
 	 		const string& name  = i->first;
 			const Value&  value = i->second;
@@ -679,13 +682,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 			//Identify the forwarding graph
 			if(name == FORWARDING_GRAPH)
 			{
-		    		foundFlowGraph = true;
+	    		foundFlowGraph = true;
 
-		    		bool foundVNFs = false, foundEP = false, foundGRE = false, foundFlowRules = false;
-		    		vector<string> id_gre (256);
+	    		bool foundEP = false, foundGRE = false;
+	    		vector<string> id_gre (256);
 
 				Object forwarding_graph;
-
 				try
 				{
 		  			forwarding_graph = value.getObject();
@@ -696,7 +698,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 				}
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
 		    	{
-					bool e_if = false, e_if_out = false, e_vlan = false;
+					bool e_if = false, e_vlan = false;
+#if 0
+					bool e_if_out = false
+#endif
 
 					string id, v_id, node, iface, e_name, node_id, sw_id, interface;
 
@@ -721,8 +726,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 					//Identify the VNFs
 					else if(fg_name == VNFS)
 					{
-						try{
-							try{
+						try
+						{
+							try
+							{
 								fg_value.getArray();
 							} catch(exception& e)
 							{
@@ -736,13 +743,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							//*	graph with only physical ports
 							//*	update of a graph that only adds new flows
 							//However, when there are no VNFs, we provide a warning
-					    		if(vnfs_array.size() != 0)
-							    	foundVNFs = true;
 
-					    		//Itearate on the VNFs
-					    		for( unsigned int vnf = 0; vnf < vnfs_array.size(); ++vnf )
+					    	//Itearate on the VNFs
+					    	for( unsigned int vnf = 0; vnf < vnfs_array.size(); ++vnf )
 							{
-								try{
+								try
+								{
 									vnfs_array[vnf].getObject();
 								} catch(exception& e)
 								{
@@ -750,22 +756,31 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									return false;
 								}
 
-								//This is a VNF, with an ID and a template
+								/**
+								*	According to https://github.com/netgroup-polito/nffg-library/blob/master/schema.json , a VNF can contain:
+								*		- id
+								*		- name	(mandatory)
+								*		- vnf_template
+								*		- domain
+								*		- ports
+								*			- id
+								*			- name
+								*			- mac
+								*			- unify-ip
+								*		- unify-control
+								*		- groups
+								*/
+
 								Object network_function = vnfs_array[vnf].getObject();
-	#ifdef POLITO_MESSAGE
-								bool foundTemplate = false;
-	#endif
+
 								bool foundName = false;
 
-								map<string,string> ipv4_addresses; 	//port name, ipv4 address
-								map<string,string> ipv4_masks;		//port name, ipv4 address
-
 								string id, name, vnf_template, groups, port_id, port_name;
-	#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								int vnf_tcp_port, host_tcp_port;
 								//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
 								list<pair<string, string> > controlPorts;
-	#endif
+#endif
 								//list of four element port id, port name, mac address and ip address related by the VNF
 								list<vector<string> > portS;
 
@@ -781,7 +796,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										foundName = true;
 										if(!graph.addNetworkFunction(nf_value.getString()))
 										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;
 										}
 
@@ -794,9 +809,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_TEMPLATE,nf_value.getString().c_str());
 										vnf_template = nf_value.getString();
-	#ifdef POLITO_MESSAGE
-										foundTemplate = true;
-	#endif
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found. It is ignored in the current implementation of the %s",VNF_TEMPLATE,MODULE_NAME);
 									}
 									else if(nf_name == _ID)
 									{
@@ -807,10 +820,10 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(nf_name == VNF_CONTROL)
 									{
-	#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",VNF_CONTROL,MODULE_NAME);
 										continue;
-	#else
+#else
 										try{
 											nf_value.getArray();
 										} catch(exception& e)
@@ -876,7 +889,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 											controlPorts.push_back(make_pair(ss.str(), sss.str()));
 										}
-	#endif
+#endif
 									}
 									else if(nf_name == VNF_PORTS)
 									{
@@ -941,15 +954,16 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												}
 												else if(p_name == PORT_IP)
 												{
-	#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
 													logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",PORT_IP,MODULE_NAME);
 													continue;
-	#else
+
+#else
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
 
 													port_config.ip_address = p_value.getString();
 													port_descr[3] = port_config.ip_address;
-	#endif
+#endif
 												}
 												else
 												{
@@ -964,7 +978,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											//Add NF ports descriptions
 											if(!graph.addNetworkFunctionPortConfiguration(name, vnf_port_config))
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 												return false;
 											}
 
@@ -974,8 +988,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									else if(nf_name == VNF_GROUPS)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_GROUPS,nf_value.getString().c_str());
-
 										groups = nf_value.getString();
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found. It is ignored in the current implementation of the %s",VNF_GROUPS,MODULE_NAME);
 									}
 									else
 									{
@@ -983,26 +997,22 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										return false;
 									}
 								}
-								if(
-	#ifdef POLITO_MESSAGE
-								!foundTemplate ||
-	#endif
-								!foundName)
+								if(!foundName)
 								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or both not found in an element of \"%s\"",_NAME,VNF_TEMPLATE,VNFS);
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in an element of \"%s\"",_NAME,VNFS);
 									return false;
 								}
 
-	#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, controlPorts);
-	#else
+#else
 								highlevel::VNFs vnfs(id, name, groups, vnf_template, portS);
-	#endif
+#endif
 								graph.addVNF(vnfs);
 								portS.clear();
-	#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								controlPorts.clear();
-	#endif
+#endif
 							}
 						}
 						catch(exception& e)
@@ -1010,12 +1020,14 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", VNFS, e.what());
 							return false;
 						}
-			    		}
+			    	}
 					//Identify the end-points
 					else if(fg_name == END_POINTS)
-				    	{
-						try{
-							try{
+				    {
+						try
+						{
+							try
+							{
 								fg_value.getArray();
 							} catch(exception& e)
 							{
@@ -1023,28 +1035,40 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								return false;
 							}
 
-					    		const Array& end_points_array = fg_value.getArray();
+							/**
+							*	According to https://github.com/netgroup-polito/nffg-library/blob/master/schema.json , an endpoint can contain:
+							*	- id
+							*	- name
+							*	- type
+							*		- internal
+							*		- interface
+							*		- interface-out		-> NOT SUPPORTED
+							*		- gre-tunnel
+							*		- vlan
+							*	- Other information that depend on the type
+							*/
 
-							foundEP = true;
+					    	const Array& end_points_array = fg_value.getArray();
+
+							foundEP = true;	//this variable is valid only for the current iteration
 
 							logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",END_POINTS);
 
 							int i = 0;
 
-					    		//Iterate on the end-points
-					    		for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
+				    		//Iterate on the end-points
+				    		for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
 							{
 								try{
 									end_points_array[ep].getObject();
 								} catch(exception& e)
 								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNF_PORTS);
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", END_POINTS);
 									return false;
 								}
 
 								//This is a endpoints, with a name, a type, and an interface
 								Object end_points = end_points_array[ep].getObject();
-
 								for(Object::const_iterator aep = end_points.begin(); aep != end_points.end(); aep++)
 								{
 									const string& ep_name  = aep->first;
@@ -1062,31 +1086,30 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									else if(ep_name == _NAME)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,_NAME,ep_value.getString().c_str());
-
 										e_name = ep_value.getString();
 									}
 									else if(ep_name == EP_TYPE)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_TYPE,ep_value.getString().c_str());
-
 										string type = ep_value.getString();
 									}
 									else if(ep_name == EP_REM)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_REM,ep_value.getString().c_str());
-
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_REM,MODULE_NAME);
 										//XXX: currently, this information is ignored
 									}
 									else if(ep_name == EP_PR)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_PR,ep_value.getString().c_str());
-
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,MODULE_NAME);
 										//XXX: currently, this information is ignored
 									}
 									//identify interface end-points
 									else if(ep_name == IFACE)
 									{
-										try{
+										try
+										{
 											ep_value.getObject();
 										} catch(exception& e)
 										{
@@ -1095,7 +1118,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 
 										Object ep_iface = ep_value.getObject();
-
 										e_if = true;
 
 										for(Object::const_iterator epi = ep_iface.begin(); epi != ep_iface.end(); epi++)
@@ -1106,13 +1128,13 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											if(epi_name == NODE_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,NODE_ID,epi_value.getString().c_str());
-
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,NODE_ID);
 												node_id = epi_value.getString();
 											}
 											else if(epi_name == SW_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,SW_ID,epi_value.getString().c_str());
-
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,SW_ID);
 												sw_id = epi_value.getString();
 											}
 											else if(epi_name == IFACE)
@@ -1120,15 +1142,24 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,IFACE,epi_value.getString().c_str());
 
 												interface = epi_value.getString();
-
 												iface_id[id] = epi_value.getString();
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_id[id].c_str());
 											}
 										}
 									}
+									else if(ep_name == EP_INTERNAL)
+									{
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s. This type of end-point is not supported!", EP_INTERNAL,MODULE_NAME);
+									}
 									//identify interface-out end-points
 									else if(ep_name == EP_IFACE_OUT)
 									{
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s. This type of end-point is not supported!", EP_IFACE_OUT,MODULE_NAME);
+										//IVANO: I comment this code because this end-point
+										//	* has never been defined
+										//	* is not actually supported by the UN (does it make sense for the UN?)
+										//	* has never been tested
+#if 0
 										try{
 											ep_value.getObject();
 										} catch(exception& e)
@@ -1168,8 +1199,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_out_id[id].c_str());
 											}
 										}
-									}
-									//identify vlan end-points
+									}//identify vlan end-points
 									else if(ep_name == VLAN)
 									{
 										try{
@@ -1192,25 +1222,21 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											if(epi_name == V_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,VLAN_ID,epi_value.getString().c_str());
-
 												v_id = epi_value.getString();
 											}
 											else if(epi_name == IFACE)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,IFACE,epi_value.getString().c_str());
-
 												interface = epi_value.getString();
 											}
 											else if(epi_name == SW_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,SW_ID,epi_value.getString().c_str());
-
 												sw_id = epi_value.getString();
 											}
 											else if(epi_name == NODE_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,NODE_ID,epi_value.getString().c_str());
-
 												node_id = epi_value.getString();
 											}
 										}
@@ -1220,7 +1246,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(ep_name == EP_GRE)
 									{
-										try{
+										try
+										{
 											ep_value.getObject();
 										} catch(exception& e)
 										{
@@ -1229,45 +1256,43 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										}
 
 										ep_gre = ep_value.getObject();
-
 										gre_array[i] = ep_gre;
-
 										foundGRE = true;
-
 										i++;
 									}
 									else
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());
-								}
+								}//End of iteration on the elements of an endpoint
+
 								//add interface end-points
 								if(e_if)
 								{
+									//FIXME: are we sure that "interface" has been specified?
+									//FIXME: node_id and sw_id should be ignored
 									highlevel::EndPointInterface ep_if(id, e_name, node_id, sw_id, interface);
-
 									graph.addEndPointInterface(ep_if);
-
 									e_if = false;
 								}
+#if 0
 								//add interface-out end-points
 								else if(e_if_out)
 								{
 									highlevel::EndPointInterfaceOut ep_if_out(id, e_name, node_id, sw_id, interface);
-
 									graph.addEndPointInterfaceOut(ep_if_out);
 
 									e_if_out = false;
 								}
+#endif
 								//add vlan end-points
 								else if(e_vlan)
 								{
+									//FIXME: are we sure that "interface" and "v_id" have been specified?
+									//FIXME: node_id and sw_id should be ignored
 									highlevel::EndPointVlan ep_vlan(id, e_name, v_id, node_id, sw_id, interface);
-
 									graph.addEndPointVlan(ep_vlan);
-
 									e_vlan = false;
 								}
-							}
-
+							}//End iteration on the endpoints
 							ii = i;
 						}
 						catch(exception& e)
@@ -1275,7 +1300,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", END_POINTS, e.what());
 							return false;
 						}
-					}
+					}//End if(fg_name == END_POINTS)
 					//Identify the big-switch
 					else if(fg_name == BIG_SWITCH)
 					{
@@ -1288,12 +1313,16 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 						}
 
 						big_switch = fg_value.getObject();
+						//The content of the "big-switch" element will be parsed later.
+						//In fact it requires that the "end-points" element and the "VNFs" element will be found
 					}
 					else
 					{
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",fg_name.c_str(),FORWARDING_GRAPH);
 						return false;
 					}
+
+					//Since we found the element "end-points", we can now parse the content of "big-switch"
 					if(foundEP)
 					{
 						//Iterate on the gre-tunnel
@@ -1391,522 +1420,523 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", EP_GRE, e.what());
 								return false;
 							}
-						}
+						}//End if(foundGRE)
 
 						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",BIG_SWITCH);
 						foundEP = false;
 
-						/*Iterate on the big-switch*/
-						for(Object::const_iterator bs = big_switch.begin(); bs != big_switch.end(); bs++)
+		    		}//end if(foundEP)
+				}// End iteration on the elements of "forwarding-graph"
+
+				/*******************************************/
+				// Iterate on the element of the big-switch
+				bool foundFlowRules = false;
+				for(Object::const_iterator bs = big_switch.begin(); bs != big_switch.end(); bs++)
+				{
+					const string& bs_name  = bs->first;
+					const Value&  bs_value = bs->second;
+
+					if (bs_name == FLOW_RULES)
+					{
+						foundFlowRules = true;
+
+						try
 						{
-							const string& bs_name  = bs->first;
-							const Value&  bs_value = bs->second;
-
-							if (bs_name == FLOW_RULES)
+							try{
+								bs_value.getArray();
+							} catch(exception& e)
 							{
-								try{
-									try{
-										bs_value.getArray();
-									} catch(exception& e)
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", FLOW_RULES);
+								return false;
+							}
+
+							const Array& flow_rules_array = bs_value.getArray();
+
+#ifndef UNIFY_NFFG
+							//FIXME: put the flowrules optional also in case of "standard| nffg?
+							if(flow_rules_array.size() == 0)
+							{
+								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" without rules",FLOW_RULES);
+								return false;
+							}
+#endif
+							//Itearate on the flow rules
+							for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
+							{
+								//This is a rule, with a match, an action, and an ID
+								Object flow_rule = flow_rules_array[fr].getObject();
+								highlevel::Action *action = NULL;
+								list<GenericAction*> genericActions;
+								highlevel::Match match;
+								string ruleID;
+								uint64_t priority = 0;
+
+								bool foundAction = false;
+								bool foundMatch = false;
+								bool foundID = false;
+
+								//Parse the rule
+								for(Object::const_iterator afr = flow_rule.begin(); afr != flow_rule.end(); afr++)
+								{
+									const string& fr_name  = afr->first;
+									const Value&  fr_value = afr->second;
+									if(fr_name == _ID)
 									{
-										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", FLOW_RULES);
-										return false;
+										foundID = true;
+										ruleID = fr_value.getString();
 									}
-
-									const Array& flow_rules_array = bs_value.getArray();
-
-									foundFlowRules = true;
-	#ifndef UNIFY_NFFG
-									//FIXME: put the flowrules optional also in case of "standard| nffg?
-									if(flow_rules_array.size() == 0)
+									else if(fr_name == F_DESCR)
 									{
-										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" without rules",FLOW_RULES);
-										return false;
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FLOW_RULES,F_DESCR,fr_value.getString().c_str());
+
+										//XXX: currently, this information is ignored
 									}
-	#endif
-									//Itearate on the flow rules
-									for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
+									else if(fr_name == PRIORITY)
 									{
-										//This is a rule, with a match, an action, and an ID
-										Object flow_rule = flow_rules_array[fr].getObject();
-										highlevel::Action *action = NULL;
-										list<GenericAction*> genericActions;
-										highlevel::Match match;
-										string ruleID;
-										uint64_t priority = 0;
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",FLOW_RULES,PRIORITY,fr_value.getInt());
 
-										bool foundAction = false;
-										bool foundMatch = false;
-										bool foundID = false;
-
-										//Parse the rule
-										for(Object::const_iterator afr = flow_rule.begin(); afr != flow_rule.end(); afr++)
-										{
-											const string& fr_name  = afr->first;
-											const Value&  fr_value = afr->second;
-											if(fr_name == _ID)
+										priority = fr_value.getInt();
+									}
+									else if(fr_name == MATCH)
+									{
+										try{
+											foundMatch = true;
+											if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action),nfs_ports_found,nfs_id,iface_id,iface_out_id,vlan_id,graph))
 											{
-												foundID = true;
-												ruleID = fr_value.getString();
-											}
-											else if(fr_name == F_DESCR)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FLOW_RULES,F_DESCR,fr_value.getString().c_str());
-
-												//XXX: currently, this information is ignored
-											}
-											else if(fr_name == PRIORITY)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",FLOW_RULES,PRIORITY,fr_value.getInt());
-
-												priority = fr_value.getInt();
-											}
-											else if(fr_name == MATCH)
-											{
-												try{
-													foundMatch = true;
-													if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action),nfs_ports_found,nfs_id,iface_id,iface_out_id,vlan_id,graph))
-													{
-														return false;
-													}
-												} catch(exception& e)
-												{
-													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\"", MATCH);
-													return false;
-												}
-											}
-											else if(fr_name == ACTIONS)
-											{
-												try
-												{
-													try
-													{
-														fr_value.getArray();
-													} catch(exception& e)
-													{
-														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", ACTIONS);
-														return false;
-													}
-
-													const Array& actions_array = fr_value.getArray();
-
-													//One and only one output_to_port is allowed
-													bool foundOneOutputToPort = false;
-
-													//Itearate on all the actions specified for this flowrule
-													for( unsigned int ac = 0; ac < actions_array.size(); ++ac )
-													{
-														foundAction = true;
-														try{
-															actions_array[ac].getObject();
-														} catch(exception& e)
-														{
-															logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", ACTIONS);
-															return false;
-														}
-
-														//A specific action of the array can have a single keyword inside
-														Object theAction = actions_array[ac].getObject();
-														assert(theAction.size() == 1);
-														if(theAction.size() != 1)
-														{
-															logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Too many keywords in an element of \"%s\"",ACTIONS);
-															return false;
-														}
-
-														for(Object::const_iterator a = theAction.begin(); a != theAction.end(); a++)
-														{
-															const string& a_name  = a->first;
-															const Value&  a_value = a->second;
-
-															if(a_name == OUTPUT)
-															{
-																//The action is "output_to_port"
-
-																string port_in_name = a_value.getString();
-																string realName;
-																const char *port_in_name_tmp = port_in_name.c_str();
-																char vnf_name_tmp[BUFFER_SIZE];
-
-																//Check the name of port
-																char delimiter[] = ":";
-															 	char * pnt;
-
-																int p_type = 0;
-
-																char tmp[BUFFER_SIZE];
-																strcpy(tmp,(char *)port_in_name_tmp);
-																pnt=strtok(tmp, delimiter);
-																int i = 0;
-
-																//The "output_to_port" action can refer to:
-																//	- an endpoint
-																//	- the port of a VNF
-																while( pnt!= NULL )
-																{
-																	switch(i)
-																	{
-																		case 0:
-																			//VNFs port type
-																			if(strcmp(pnt,VNF) == 0)
-																			{
-																				p_type = 0;
-																			}
-																			//end-points port type
-																			else if (strcmp(pnt,ENDPOINT) == 0)
-																			{
-																				p_type = 1;
-																			}
-																			break;
-																		case 1:
-																			if(p_type == 0)
-																			{
-																				strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
-																				strcat(vnf_name_tmp, ":");
-																			}
-																			break;
-																		case 3:
-																			if(p_type == 0)
-																			{
-																				strcat(vnf_name_tmp,pnt);
-																			}
-																	}
-
-																	pnt = strtok( NULL, delimiter );
-																	i++;
-																}
-
-																if(foundOneOutputToPort)
-																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT_IN,VNF,ENDPOINT,ACTIONS);
-																	return false;
-																}
-																foundOneOutputToPort = true;
-
-																if(p_type == 0)
-																{
-																	//This is an output action referred to a VNF port
-
-																	//convert char *vnf_name_tmp to string vnf_name
-																	string vnf_name(vnf_name_tmp, strlen(vnf_name_tmp));
-
-																	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,VNF,vnf_name.c_str());
-
-																	string name = MatchParser::nfName(vnf_name);
-																	char *tmp_vnf_name = new char[BUFFER_SIZE];
-																	strcpy(tmp_vnf_name, (char *)vnf_name.c_str());
-																	unsigned int port = MatchParser::nfPort(string(tmp_vnf_name));
-																	bool is_port = MatchParser::nfIsPort(string(tmp_vnf_name));
-
-																	if(name == "" || !is_port)
-																	{
-																		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" is not valid. It must be in the form \"name:port\"",vnf_name.c_str());
-																		return false;
-																	}
-
-																	/*nf port starts from 0*/
-																	port++;
-
-																	action = new highlevel::ActionNetworkFunction(name, string(port_in_name_tmp), port);
-
-																	set<unsigned int> ports_found;
-																	if(nfs_ports_found.count(name) != 0)
-																		ports_found = nfs_ports_found[name];
-																	ports_found.insert(port);
-																	nfs_ports_found[name] = ports_found;
-																}
-																//end-points port type
-																else if(p_type == 1)
-																{
-																	//This is an output action referred to an endpoint
-
-																	bool iface_found = false, vlan_found = false;
-
-																	char *s_a_value = new char[BUFFER_SIZE];
-																	strcpy(s_a_value, (char *)a_value.getString().c_str());
-																	string eP = MatchParser::epName(a_value.getString());
-																	if(eP != "")
-																	{
-																		map<string,string>::iterator it = iface_id.find(eP);
-																		map<string,string>::iterator it1 = iface_out_id.find(eP);
-																		map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
-																		if(it != iface_id.end())
-																		{
-																			//physical port
-																			realName.assign(iface_id[eP]);
-																			iface_found = true;
-																		}
-																		else if(it1 != iface_out_id.end())
-																		{
-																			//physical port
-																			realName.assign(iface_out_id[eP]);
-																			iface_found = true;
-																		}
-																		else if(it2 != vlan_id.end())
-																		{
-																			//vlan
-																			vlan_found = true;
-																		}
-																	}
-																	//physical endpoint
-																	if(iface_found)
-																	{
-																			action = new highlevel::ActionPort(realName, string(s_a_value));
-																			graph.addPort(realName);
-																	}
-																	//vlan endpoint
-																	else if(vlan_found)
-																	{
-																		vlan_action_t actionType;
-																		unsigned int vlanID = 0;
-
-																		actionType = ACTION_ENDPOINT_VLAN;
-
-																		sscanf(vlan_id[eP].first.c_str(),"%u",&vlanID);
-
-																		/*add "push_vlan" action*/
-																		GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
- 																		action->addGenericAction(ga);
-
-																		/*add "output_port" action*/
-																		action = new highlevel::ActionPort(vlan_id[eP].second, string(s_a_value));
-																		graph.addPort(vlan_id[eP].second);
-																	}
-																	//gre-tunnel endpoint
-																	else
-																	{
-																		unsigned int endPoint = MatchParser::epPort(string(s_a_value));
-																		if(endPoint == 0)
-																		{
-																			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
-																			return false;
-																		}
-																		action = new highlevel::ActionEndPoint(endPoint, string(s_a_value));
-																	}
-																}
-															}//End action == output_to_port
-															else if(a_name == SET_VLAN_ID)
-															{
-																logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_VLAN_ID,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == SET_VLAN_PRIORITY)
-															{
-																logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_VLAN_PRIORITY,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == VLAN_PUSH)
-															{
-																//The action is "push_vlan"
-
-																//bool foundVlanID = false;
-
-																vlan_action_t actionType;
-																unsigned int vlanID = 0;
-
-																actionType = ACTION_VLAN_PUSH;
-
-																string strVlanID = a_value.getString();
-																vlanID = strtol (strVlanID.c_str(),NULL,0);
-
-																//IVANO: probably this check is wrong
-/*																if(actionType == ACTION_VLAN_PUSH && !foundVlanID)
-																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",VLAN_ID,VLAN_PUSH);
-																	return false;
-																}*/
-																//Finally, we are sure that the command is correct!
-
-																GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
-																genericActions.push_back(ga);
-
-															}//end if(a_name == VLAN_PUSH)
-															else if(a_name == VLAN_POP)
-															{
-																//A vlan pop action is required
-																vlan_action_t actionType;
-																unsigned int vlanID = 0;
-
-																bool is_vlan_pop = a_value.getBool();
-																if(is_vlan_pop)
-																{
-																	actionType = ACTION_VLAN_POP;
-
-																	//Finally, we are sure that the command is correct!
-																	GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
-																	genericActions.push_back(ga);
-																}
-															}//end if(a_name == VLAN_POP)
-															else if(a_name == SET_ETH_SRC_ADDR)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_ETH_SRC_ADDR);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_ETH_SRC_ADDR,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == SET_ETH_DST_ADDR)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_ETH_DST_ADDR);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_ETH_DST_ADDR,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == SET_IP_SRC_ADDR)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_SRC_ADDR);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_SRC_ADDR,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == SET_IP_DST_ADDR)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_DST_ADDR);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_DST_ADDR,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == SET_IP_TOS)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_TOS);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_TOS,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == SET_L4_SRC_PORT)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_L4_SRC_PORT);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_L4_SRC_PORT,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == SET_L4_DST_PORT)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_L4_DST_PORT);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_L4_DST_PORT,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == OUT_TO_QUEUE)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,OUT_TO_QUEUE);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,OUT_TO_QUEUE,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == DROP)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,DROP);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,DROP,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else if(a_name == OUTPUT_TO_CTRL)
-															{
-																logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,OUTPUT_TO_CTRL);
-
-																logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,OUTPUT_TO_CTRL,a_value.getString().c_str());
-
-																//XXX: currently, this information is ignored
-															}
-															else
-															{
-																logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",a_name.c_str(),ACTIONS);
-																return false;
-															}
-														}//end iteration on the keywords of an action element (remember that a single keywork is allowed in each element)
-
-
-													}//Here terminates the loop on the array actions
-													if(!foundOneOutputToPort)
-													{
-														//"output_to_port" is a mandatory action
-														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",OUTPUT,ACTIONS);
-														return false;
-													}
-													assert(action != NULL);
-													for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
-														action->addGenericAction(*ga);
-												}//end of try
-												catch(exception& e)
-												{
-													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", ACTIONS, e.what());
-													return false;
-												}
-											}//end if(fr_name == ACTION)
-											else
-											{
-												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a rule of \"%s\"",name.c_str(),FLOW_RULES);
 												return false;
 											}
-										}
-
-										if(!foundAction || !foundMatch || !foundID)
+										} catch(exception& e)
 										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or key \"%s\", or all of them not found in an elmenet of \"%s\"",_ID,MATCH,ACTIONS,FLOW_RULES);
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\"", MATCH);
 											return false;
-										}
-
-										highlevel::Rule rule(match,action,ruleID,priority);
-
-										if(!graph.addRule(rule))
-										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",ruleID.c_str());
-											return false;
-										}
-
-									}//for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
-
-									bool same_priority = false;
-									list<highlevel::Rule> rules = graph.getRules();
-									for(list<highlevel::Rule>::iterator r = rules.begin(); r != rules.end(); r++)
-									{
-										list<highlevel::Rule>::iterator next_rule = r;
-										next_rule++;
-										if(next_rule != rules.end())
-										{
-											uint64_t priority = (*r).getPriority();
-											for(list<highlevel::Rule>::iterator r1 = next_rule; r1 != rules.end(); r1++)
-											{
-												if((*r1).getPriority() == priority)
-													same_priority = true;
-											}
 										}
 									}
-
-									if(same_priority)
+									else if(fr_name == ACTIONS)
 									{
-										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "One or more flow rule with the same priority...");
-										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Note that, if they match the same port, they may cause a conflict on the vSwitch!");
+										try
+										{
+											try
+											{
+												fr_value.getArray();
+											} catch(exception& e)
+											{
+												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", ACTIONS);
+												return false;
+											}
+
+											const Array& actions_array = fr_value.getArray();
+
+											//One and only one output_to_port is allowed
+											bool foundOneOutputToPort = false;
+
+											//Itearate on all the actions specified for this flowrule
+											for( unsigned int ac = 0; ac < actions_array.size(); ++ac )
+											{
+												foundAction = true;
+												try{
+													actions_array[ac].getObject();
+												} catch(exception& e)
+												{
+													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", ACTIONS);
+													return false;
+												}
+
+												//A specific action of the array can have a single keyword inside
+												Object theAction = actions_array[ac].getObject();
+												assert(theAction.size() == 1);
+												if(theAction.size() != 1)
+												{
+													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Too many keywords in an element of \"%s\"",ACTIONS);
+													return false;
+												}
+
+												for(Object::const_iterator a = theAction.begin(); a != theAction.end(); a++)
+												{
+													const string& a_name  = a->first;
+													const Value&  a_value = a->second;
+
+													if(a_name == OUTPUT)
+													{
+														//The action is "output_to_port"
+
+														string port_in_name = a_value.getString();
+														string realName;
+														const char *port_in_name_tmp = port_in_name.c_str();
+														char vnf_name_tmp[BUFFER_SIZE];
+
+														//Check the name of port
+														char delimiter[] = ":";
+													 	char * pnt;
+
+														int p_type = 0;
+
+														char tmp[BUFFER_SIZE];
+														strcpy(tmp,(char *)port_in_name_tmp);
+														pnt=strtok(tmp, delimiter);
+														int i = 0;
+
+														//The "output_to_port" action can refer to:
+														//	- an endpoint
+														//	- the port of a VNF
+														while( pnt!= NULL )
+														{
+															switch(i)
+															{
+																case 0:
+																	//VNFs port type
+																	if(strcmp(pnt,VNF) == 0)
+																	{
+																		p_type = 0;
+																	}
+																	//end-points port type
+																	else if (strcmp(pnt,ENDPOINT) == 0)
+																	{
+																		p_type = 1;
+																	}
+																	break;
+																case 1:
+																	if(p_type == 0)
+																	{
+																		strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
+																		strcat(vnf_name_tmp, ":");
+																	}
+																	break;
+																case 3:
+																	if(p_type == 0)
+																	{
+																		strcat(vnf_name_tmp,pnt);
+																	}
+															}
+
+															pnt = strtok( NULL, delimiter );
+															i++;
+														}
+
+														if(foundOneOutputToPort)
+														{
+															logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT_IN,VNF,ENDPOINT,ACTIONS);
+															return false;
+														}
+														foundOneOutputToPort = true;
+
+														if(p_type == 0)
+														{
+															//This is an output action referred to a VNF port
+
+															//convert char *vnf_name_tmp to string vnf_name
+															string vnf_name(vnf_name_tmp, strlen(vnf_name_tmp));
+
+															logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,VNF,vnf_name.c_str());
+
+															string name = MatchParser::nfName(vnf_name);
+															char *tmp_vnf_name = new char[BUFFER_SIZE];
+															strcpy(tmp_vnf_name, (char *)vnf_name.c_str());
+															unsigned int port = MatchParser::nfPort(string(tmp_vnf_name));
+															bool is_port = MatchParser::nfIsPort(string(tmp_vnf_name));
+
+															if(name == "" || !is_port)
+															{
+																logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" is not valid. It must be in the form \"name:port\"",vnf_name.c_str());
+																return false;
+															}
+
+															/*nf port starts from 0*/
+															port++;
+
+															action = new highlevel::ActionNetworkFunction(name, string(port_in_name_tmp), port);
+
+															set<unsigned int> ports_found;
+															if(nfs_ports_found.count(name) != 0)
+																ports_found = nfs_ports_found[name];
+															ports_found.insert(port);
+															nfs_ports_found[name] = ports_found;
+														}
+														//end-points port type
+														else if(p_type == 1)
+														{
+															//This is an output action referred to an endpoint
+
+															bool iface_found = false, vlan_found = false;
+
+															char *s_a_value = new char[BUFFER_SIZE];
+															strcpy(s_a_value, (char *)a_value.getString().c_str());
+															string eP = MatchParser::epName(a_value.getString());
+															if(eP != "")
+															{
+																map<string,string>::iterator it = iface_id.find(eP);
+																map<string,string>::iterator it1 = iface_out_id.find(eP);
+																map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
+																if(it != iface_id.end())
+																{
+																	//physical port
+																	realName.assign(iface_id[eP]);
+																	iface_found = true;
+																}
+																else if(it1 != iface_out_id.end())
+																{
+																	//physical port
+																	realName.assign(iface_out_id[eP]);
+																	iface_found = true;
+																}
+																else if(it2 != vlan_id.end())
+																{
+																	//vlan
+																	vlan_found = true;
+																}
+															}
+															//physical endpoint
+															if(iface_found)
+															{
+																	action = new highlevel::ActionPort(realName, string(s_a_value));
+																	graph.addPort(realName);
+															}
+															//vlan endpoint
+															else if(vlan_found)
+															{
+																vlan_action_t actionType;
+																unsigned int vlanID = 0;
+
+																actionType = ACTION_ENDPOINT_VLAN;
+
+																sscanf(vlan_id[eP].first.c_str(),"%u",&vlanID);
+
+																/*add "output_port" action*/
+																action = new highlevel::ActionPort(vlan_id[eP].second, string(s_a_value));
+																graph.addPort(vlan_id[eP].second);
+
+																/*add "push_vlan" action*/
+																GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
+																action->addGenericAction(ga);
+															}
+															//gre-tunnel endpoint
+															else
+															{
+																unsigned int endPoint = MatchParser::epPort(string(s_a_value));
+																if(endPoint == 0)
+																{
+																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
+																	return false;
+																}
+																action = new highlevel::ActionEndPoint(endPoint, string(s_a_value));
+															}
+														}
+													}//End action == output_to_port
+													else if(a_name == SET_VLAN_ID)
+													{
+														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_VLAN_ID,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == SET_VLAN_PRIORITY)
+													{
+														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_VLAN_PRIORITY,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == VLAN_PUSH)
+													{
+														//The action is "push_vlan"
+
+														vlan_action_t actionType;
+														unsigned int vlanID = 0;
+
+														actionType = ACTION_VLAN_PUSH;
+
+														string strVlanID = a_value.getString();
+														vlanID = strtol (strVlanID.c_str(),NULL,0);
+
+														GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
+														genericActions.push_back(ga);
+
+													}//end if(a_name == VLAN_PUSH)
+													else if(a_name == VLAN_POP)
+													{
+														//A vlan pop action is required
+														vlan_action_t actionType;
+														unsigned int vlanID = 0;
+
+														bool is_vlan_pop = a_value.getBool();
+														if(is_vlan_pop)
+														{
+															actionType = ACTION_VLAN_POP;
+
+															//Finally, we are sure that the command is correct!
+															GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
+															genericActions.push_back(ga);
+														}
+													}//end if(a_name == VLAN_POP)
+													else if(a_name == SET_ETH_SRC_ADDR)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_ETH_SRC_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_ETH_SRC_ADDR,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == SET_ETH_DST_ADDR)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_ETH_DST_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_ETH_DST_ADDR,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == SET_IP_SRC_ADDR)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_SRC_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_SRC_ADDR,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == SET_IP_DST_ADDR)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_DST_ADDR);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_DST_ADDR,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == SET_IP_TOS)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_IP_TOS);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_IP_TOS,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == SET_L4_SRC_PORT)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_L4_SRC_PORT);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_L4_SRC_PORT,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == SET_L4_DST_PORT)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,SET_L4_DST_PORT);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,SET_L4_DST_PORT,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == OUT_TO_QUEUE)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,OUT_TO_QUEUE);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,OUT_TO_QUEUE,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == DROP)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,DROP);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,DROP,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else if(a_name == OUTPUT_TO_CTRL)
+													{
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "\"%s\" \"%s\" not available",ACTIONS,OUTPUT_TO_CTRL);
+
+														logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,OUTPUT_TO_CTRL,a_value.getString().c_str());
+
+														//XXX: currently, this information is ignored
+													}
+													else
+													{
+														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",a_name.c_str(),ACTIONS);
+														return false;
+													}
+												}//end iteration on the keywords of an action element (remember that a single keywork is allowed in each element)
+
+
+											}//Here terminates the loop on the array actions
+											if(!foundOneOutputToPort)
+											{
+												//"output_to_port" is a mandatory action
+												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",OUTPUT,ACTIONS);
+												return false;
+											}
+											assert(action != NULL);
+											for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
+												action->addGenericAction(*ga);
+										}//end of try
+										catch(exception& e)
+										{
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", ACTIONS, e.what());
+											return false;
+										}
+									}//end if(fr_name == ACTION)
+									else
+									{
+										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a rule of \"%s\"",name.c_str(),FLOW_RULES);
+										return false;
 									}
 								}
-								catch(exception& e)
+
+								if(!foundAction || !foundMatch || !foundID)
 								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", FLOW_RULES, e.what());
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or key \"%s\", or all of them not found in an elmenet of \"%s\"",_ID,MATCH,ACTIONS,FLOW_RULES);
 									return false;
 								}
-							}// end  if (fg_name == FLOW_RULES)
+
+								highlevel::Rule rule(match,action,ruleID,priority);
+
+								if(!graph.addRule(rule))
+								{
+									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",ruleID.c_str());
+									return false;
+								}
+
+							}//for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
+
+							bool same_priority = false;
+							list<highlevel::Rule> rules = graph.getRules();
+							for(list<highlevel::Rule>::iterator r = rules.begin(); r != rules.end(); r++)
+							{
+								list<highlevel::Rule>::iterator next_rule = r;
+								next_rule++;
+								if(next_rule != rules.end())
+								{
+									uint64_t priority = (*r).getPriority();
+									for(list<highlevel::Rule>::iterator r1 = next_rule; r1 != rules.end(); r1++)
+									{
+										if((*r1).getPriority() == priority)
+											same_priority = true;
+									}
+								}
+							}
+
+							if(same_priority)
+							{
+								logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "One or more flow rule with the same priority...");
+								logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Note that, if they match the same port, they may cause a conflict on the vSwitch!");
+							}
 						}
-		    			}
-				}
-		    		if(!foundFlowRules)
+						catch(exception& e)
+						{
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", FLOW_RULES, e.what());
+							return false;
+						}
+					}// end  if (fg_name == FLOW_RULES)
+					else
+					{
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",bs_name.c_str());
+						return false;
+					}
+				}//End iteration on the elements inside "big-switch"
+
+				if(!foundFlowRules)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",FLOW_RULES,FORWARDING_GRAPH);
 					return false;
 				}
-				if(!foundVNFs)
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",VNFS,FORWARDING_GRAPH);
-			}
+
+
+			}//End if(name == FORWARDING_GRAPH)
 			else
 			{
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",name.c_str());
@@ -1924,10 +1954,9 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		return false;
 	}
 
-#ifndef UNIFY_NFFG
-	//XXX The number of ports is provided by the name resolver, and should not depend on the flows inserted. In fact,
+	//FIXME The number of ports is provided by the name resolver, and should not depend on the flows inserted. In fact,
 	//it should be possible to start VNFs without setting flows related to such a function!
-    	for(map<string,set<unsigned int> >::iterator it = nfs_ports_found.begin(); it != nfs_ports_found.end(); it++)
+    for(map<string,set<unsigned int> >::iterator it = nfs_ports_found.begin(); it != nfs_ports_found.end(); it++)
 	{
 		set<unsigned int> ports = it->second;
 		assert(ports.size() != 0);
@@ -1958,8 +1987,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		for(set<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
 	}
-#endif
-
 	return true;
 }
 

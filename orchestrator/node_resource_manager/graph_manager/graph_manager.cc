@@ -698,7 +698,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	use separated virtual links in case of endpoint.
 	*/
 	unsigned int numberOfVLrequired = 0;
+#if 0
+	//IVANO: I have commented this check, which prevents the creation of a simple graph like:
+	//	phy_port -> VNF_port 
+	//According to Patrick, it has been introduced to avoid creation of useless vlinks in case
+	//of usage of GRE tunnels. When we will really use GRE tunnels, we will find a clean solution 
+	//to this problem.
 	if(vlPhyPorts.size() != 0)
+#endif
 		numberOfVLrequired = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new LSI with LSI-0",numberOfVLrequired);
@@ -1266,7 +1273,14 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 
 	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)
 	unsigned int numberOfVLrequired = 0;
+#if 0
+	//IVANO: I have commented this check, which prevents the creation of a simple graph like:
+	//	phy_port -> VNF_port 
+	//According to Patrick, it has been introduced to avoid creation of useless vlinks in case
+	//of usage of GRE tunnels. When we will really use GRE tunnels, we will find a clean solution 
+	//to this problem.
 	if(vlPhyPorts.size() != 0)
+#endif
 		numberOfVLrequired = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);

@@ -132,7 +132,7 @@ Set up DPDK (after each reboot of the physical machine):
 Start `ovsdb-server`:
 
     $ sudo ovsdb-server --remote=punix:/usr/local/var/run/openvswitch/db.sock \
-        --remote=db:Open_vSwitch,Open_vSwitch,manager_options  --pidfile --detach
+        --remote=db:Open_vSwitch,Open_vSwitch,manager_options --remote=ptcp:6632  --pidfile --detach
 	
 The first time after the ovsdb database creation, initialize it:
 
