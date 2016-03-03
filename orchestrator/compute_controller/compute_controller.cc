@@ -23,11 +23,11 @@ void ComputeController::setCoreMask(uint64_t core_mask)
 			cores[nextCore] = mask;
 			nextCore++;
 		}
-			
+
 		mask = mask << 1;
 	}
 	nextCore = 0;
-	
+
 	for(unsigned int i = 0; i < cores.size(); i++)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Mask of an available core: \"%d\"",cores[i]);
 }
@@ -155,7 +155,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 		string nf_name;
 
 		bool foundNports = false;
-		unsigned int numports = 0;		
+		unsigned int numports = 0;
 		bool foundTextDescription = false;
 
 		//A first sacan of the json is done in order to read the number of ports of the VNF.
@@ -270,7 +270,7 @@ bool ComputeController::parseAnswer(string answer, string nf)
 						else if(el_name == "ports")
 						{
 							foundPorts = true;
-							
+
 					    	const Array& ports_array = el_value.getArray();
 
 					    	if (ports_array.size() == 0)
@@ -327,14 +327,14 @@ bool ComputeController::parseAnswer(string answer, string nf)
 							return false;
 						}
 					}
-					
+
 					if(next)
 					{
 						//The current network function is of a type not supported by the orchestrator
 						next = false;
 						continue;
 					}
-					
+
 					if(!foundURI || !foundType)
 					{
 						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"uri\", key \"type\", or both are not found into an implementation description");
@@ -431,13 +431,13 @@ bool ComputeController::parseAnswer(string answer, string nf)
 
 		NF *new_nf = new NF(nf_name);
 		assert(possibleDescriptions.size() != 0);
-		
+
 		if(possibleDescriptions.size() == 0)
 		{
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Cannot find a supported implementation for the network function \"%s\"",nf.c_str());
 			return false;
-		}		
-		
+		}
+
 		for(list<Description*>::iterator impl = possibleDescriptions.begin(); impl != possibleDescriptions.end(); impl++)
 			new_nf->addDescription(*impl);
 
@@ -670,7 +670,7 @@ bool ComputeController::selectImplementation()
 
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "No available description for NF \'%s\'", nf->first.c_str());
 				return false;
-				
+
 			}
 
 			current->setSelectedDescription(selectedImplementation);
@@ -682,7 +682,7 @@ bool ComputeController::selectImplementation()
 	if(allSelected()){
 		return true;
 	}
-	
+
 	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Some network functions do not have a supported description!");
 
 	return false;
@@ -738,13 +738,13 @@ void ComputeController::setLsiID(uint64_t lsiID)
 }
 
 bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	, list<port_mapping_t > controlConfiguration
 #endif
 	)
 {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Starting the NF \"%s\"", nf_name.c_str());
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	if(!controlConfiguration.empty())
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tControl (%d):",controlConfiguration.size());
@@ -761,9 +761,9 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 	//map<unsigned int, port_network_config_t >::iterator it1 = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator it = namesOfPortsOnTheSwitch.begin(); it != namesOfPortsOnTheSwitch.end(); it++) {
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%d : %s", it->first, it->second.c_str());
-		
+
 		port_network_config_t configuration = portsConfiguration[it->first];
-		
+
 		if(!configuration.mac_address.empty())
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tMAC address : %s", configuration.mac_address.c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
@@ -782,10 +782,10 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
-	
-	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, portsConfiguration, 
+
+	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, portsConfiguration,
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		controlConfiguration, 
+		controlConfiguration,
 #endif
 		calculateCoreMask(nfsManager->getCores()));
 
@@ -821,15 +821,15 @@ bool ComputeController::stopNF(string nf_name)
 
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
-	
+
 	StopNFIn sni(lsiID,nf_name);
-	
+
 	if(!nfsManager->stopNF(sni))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while stopping the NF \"%s\"",nf_name.c_str());
 		return false;
 	}
-	
+
 	nf->setRunning(false);
 
 	return true;
@@ -871,3 +871,43 @@ void ComputeController::printInfo(int graph_id)
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tName: '%s'%s\t-\tType: %s\t-\tStatus: %s",nf->first.c_str(),(nf->first.length()<=7)? "\t" : "", str.c_str(),(nf->second->getRunning())?"running":"stopped");
 	}
 }
+
+#ifdef ENABLE_DIRECT_VM2VM
+bool ComputeController::sendCommand(string nf_name, string command, string & response)
+{
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+			"Executing the command \"%s\" on the NF \"%s\"",
+			command.c_str(),nf_name.c_str());
+
+	if(nfs.count(nf_name) == 0)
+	{
+		assert(0);
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__,
+				"Unknown NF with name \"%s\"",nf_name.c_str());
+		return false;
+	}
+
+	NF *nf = nfs[nf_name];
+	NFsManager *nfsManager = nf->getSelectedDescription();
+
+	Libvirt * libvirt = dynamic_cast<Libvirt *>(nfsManager);
+
+	if(!libvirt)
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__,
+				"Instance '%s' is not a libvirt one", nf_name.c_str());
+		/* XXX: should it raises a worst exeception? */
+		return false;
+	}
+
+	if(!libvirt->sendCommand(lsiID, nf_name, command, response))
+	{
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__,
+				"An error occurred while executing the command '\'%s\'' the NF \"%s\"",
+				command.c_str(),nf_name.c_str());
+		return false;
+	}
+
+	return true;
+}
+#endif

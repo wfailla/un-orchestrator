@@ -63,7 +63,7 @@
 #include <fstream>
 
 class GraphManager;
-			
+
 class RestServer
 {
 private:
@@ -88,29 +88,33 @@ private:
 
 	static int doPut(struct MHD_Connection *connection, const char *url, void **con_cls);
 	static bool parsePutBody(struct connection_info_struct &con_info,highlevel::Graph &graph, bool newGraph);
-	
+
 	static int doDelete(struct MHD_Connection *connection,const char *url, void **con_cls);
-	
+
 	static int createGraphFromFile(string toBeCreated);
 	static bool parseGraphFromFile(string toBeCreated,highlevel::Graph &graph, bool newGraph);
-	
+
 	static bool parseGraph(Value value, highlevel::Graph &graph, bool newGraph);
-	
+
 	static bool readGraphFromFile(char *nffg_filename);
 
 	static bool checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbm);
-	
+
+#ifdef ENABLE_DIRECT_VM2VM
+	static int doPutCommandReletedToPort(struct MHD_Connection *connection, void **con_cls);
+#endif
+
 public:
 	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface, char *ipsec_certificate);
-	
+
 	static void terminate();
 
 	static int answer_to_connection (void *cls, struct MHD_Connection *connection,
 						const char *url, const char *method, const char *version,
 						const char *upload_data,size_t *upload_data_size, void **con_cls);
-						
+
 	static void request_completed (void *cls, struct MHD_Connection *connection, void **con_cls,
-						enum MHD_RequestTerminationCode toe);						
+						enum MHD_RequestTerminationCode toe);
 };
 
 #endif //REST_SERVER_H_

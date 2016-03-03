@@ -56,17 +56,17 @@ typedef enum{NFManager_OK,NFManager_SERVER_ERROR, NFManager_NO_NF}nf_manager_ret
 class ComputeController
 {
 private:
-	
+
 	/**
 	*	@brief: mutex used to select the core to be allocated to a (DPDK) NF
 	*/
 	static pthread_mutex_t nfs_manager_mutex;
-	
+
 	/**
 	*	@brief: the CPU cores that can be allocated to DPDK NFs
 	*/
 	static map<int,uint64_t> cores;
-	
+
 	/**
 	*	@brief: position, in the vector above, of the next CPU core to be
 	*	allocated to a DPDK NF
@@ -77,7 +77,7 @@ private:
 	* 	@brief: the pair is <network function name, network function>
 	**/
 	map<string, NF*> nfs;
-	
+
 	/**
 	*	@brief: identifier of the LSI attached to the NFs
 	**/
@@ -90,14 +90,14 @@ private:
 	*	@param:	nf		Name of the network function whose description must be in the asnwer
 	*/
 	bool parseAnswer(string answer, string nf);
-	
+
 	/**
 	*	@brief: calculate the core mask for a DPDK NF
 	*
 	*	@param:	coresRequired	Number of cores required
 	*/
 	uint64_t calculateCoreMask(string coresRequired);
-	
+
 	/**
 	*	@brief: For all the NF without an already selected implementation, select
 	*	an implementation of the desired type, if at least one implementation
@@ -106,7 +106,7 @@ private:
 	*	@param:	desiredType	Type of the implementation to be selected
 	*/
 	void selectImplementation(nf_t desiredType);
-	
+
 	/**
 	*	@brief: Check if an implementation for all the NFs has been selected. In this
 	*	case the return value is true, otherwise it is false
@@ -130,7 +130,7 @@ public:
 	*	@param:	nf	Name of a network function
 	*/
 	nf_manager_ret_t retrieveDescription(string nf);
-	
+
 	/**
 	*	@brief: For each NF, select an implementation. Currently, if a Docker implementation
 	*	is available and Docker is running with the LXC engine, Docker is selected.
@@ -143,14 +143,14 @@ public:
 	*		- KVM
 	*/
 	bool selectImplementation();
-	
+
 	/**
 	*	@brief: Return the type selected for a specific NF
 	*
 	*	@param:	name	Name of a network function
 	*/
 	nf_t getNFType(string name);
-	
+
 	/**
 	 *	@brief: Returns the description of the selected NF implementation.
 	 *
@@ -164,9 +164,9 @@ public:
 	*	@param:	lsiID	Identifier of an LSI
 	*/
 	void setLsiID(uint64_t lsiID);
-	
+
 	/**
-	*	@brief: Start the NF with a specific name, with a proper number of ports. 
+	*	@brief: Start the NF with a specific name, with a proper number of ports.
 	*
 	*	@param:	nf_name					Name of the network function to be started
 	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started
@@ -178,19 +178,19 @@ public:
 		, list<port_mapping_t > controlConfiguration
 #endif
 		);
-	
+
 	/**
 	*	@brief: Stop all the running NFs
 	*/
 	void stopAll();
-	
+
 	/**
 	*	@brief: Stop a specific NF
 	*
 	*	@param:	nf_name	Name of the network function to be stopped
 	*/
 	bool stopNF(string nf_name);
-	
+
 	/**
 	*	@brief: Set the core mask representing the cores to be used for DPDK processes. The available cores will
 	*	be allocated to DPDK NFs in a round robin fashion, and each DPDK network functions will have just one
@@ -199,11 +199,18 @@ public:
 	*	@param:	core_mask	Mask representing the cores to be allocated to DPDK network functions
 	*/
 	static void setCoreMask(uint64_t core_mask);
-	
+
 	/**
 	*	@brief: prints information on the VNFs deployed
 	*/
 	void printInfo(int graph_id);
+
+#ifdef ENABLE_DIRECT_VM2VM
+	/**
+	*	@brief: Executes a given command, related to a given network function, through the hypervisor
+	*/
+	bool sendCommand(string nf_name, string command, string & response);
+#endif
 };
 
 #endif //COMPUTE_CONTROLLER_H_

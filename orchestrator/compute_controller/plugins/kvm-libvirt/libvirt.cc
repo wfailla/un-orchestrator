@@ -288,11 +288,11 @@ bool Libvirt::startNF(StartNFIn sni)
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
 	map<unsigned int, port_network_config_t >::iterator pd = portsConfiguration.begin();
-	
+
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	list<port_mapping_t > control_ports = sni.getControlPorts();	
+	list<port_mapping_t > control_ports = sni.getControlPorts();
 	if(control_ports.size() != 0)
-		logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by KVM type", control_ports.size(),nf_name.c_str());	
+		logger(ORCH_WARNING, KVM_MODULE_NAME, __FILE__, __LINE__, "Required %d control connections for VNF '%s'. Control connections are not supported by KVM type", control_ports.size(),nf_name.c_str());
 #endif
 
 	for(map<unsigned int, string>::iterator p = namesOfPortsOnTheSwitch.begin(); p != namesOfPortsOnTheSwitch.end(); p++, pd++)
@@ -351,7 +351,7 @@ bool Libvirt::startNF(StartNFIn sni)
 				xmlNodePtr mac_addr = xmlNewChild(ifn, NULL, BAD_CAST "mac", NULL);
 				xmlNewProp(mac_addr, BAD_CAST "address", BAD_CAST port_mac_address.c_str());
 			}
-	
+
 			xmlNodePtr srcn = xmlNewChild(ifn, NULL, BAD_CAST "source", NULL);
 			xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
@@ -410,7 +410,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
         IvshmemCmdLineGenerator ivshmemCmdGenerator;
 
-#if 1
+#ifndef ENABLE_DIRECT_VM2VM
         if(!ivshmemCmdGenerator.get_single_cmdline(cmdline, sizeof(cmdline), domain_name, ivshmemPorts)) {
             return false;
         }
@@ -462,7 +462,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	/* Final XML Cleanup */
 	xmlFreeDoc(doc);
-	
+
 	/**
 	*	IVANO: the following function MUST not be called here. In fact, according to the documentation
 	*	"If your application is multithreaded or has a plugin support calling this may crash the application has
@@ -693,3 +693,39 @@ bool Libvirt::stopNF(StopNFIn sni)
 	return true;
 }
 
+
+#ifdef ENABLE_DIRECT_VM2VM
+bool Libvirt::sendCommand(uint64_t lsiID, string name,
+							string command, string & response)
+{
+	virDomainPtr dom;
+	char vm_name[64];
+	char * reply;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+		"Sending command '%s' to the virtual machine", command.c_str());
+
+	sprintf(vm_name, "%" PRIu64 "_%s", lsiID, name.c_str());
+	dom = virDomainLookupByName(connection, vm_name);
+	if(dom == NULL)
+	{
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__,
+			"Unable to find domain '%s')", vm_name);
+		return false;
+	}
+
+	if(virDomainQemuMonitorCommand(dom, command.c_str(), &reply,
+		VIR_DOMAIN_QEMU_MONITOR_COMMAND_HMP) != 0)
+	{
+		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__,
+			"Unable to send command");
+		return false;
+	}
+
+	response.assign(reply);
+
+	free(reply);
+
+	return true;
+}
+#endif

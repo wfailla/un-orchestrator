@@ -14,6 +14,7 @@
 #include <string.h>
 #include <locale>
 #include <libvirt/libvirt.h>
+#include <libvirt/libvirt-qemu.h>
 #include <libvirt/virterror.h>
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
@@ -43,7 +44,7 @@ class Libvirt : public NFsManager
 private:
 
 #ifndef DIRECT_KVM_IVSHMEM
-	
+
 	/**
 	*	@bfief: Connection towards Libvirt
 	*/
@@ -60,7 +61,7 @@ private:
 	*		the next VM to be executed
 	*/
 	static unsigned int next_tcp_port;
-	
+
 	/**
 	*	@brief: The map associates each VNF with the TCP port to
 	*		be used to connect to it
@@ -74,28 +75,32 @@ private:
 	*	@brief:	Open a connection with QEMU/KVM
 	*/
 	void connect();
-	
+
 	/**
 	*	@brief: Disconnect from QEMU/KVM
 	*/
 	void disconnect();
-	
+
 	/**
 	*	@brief: Custom error handler
 	*/
 	static void customErrorFunc(void *userdata, virErrorPtr err);
-	
+
 #endif
 
 public:
 
 	Libvirt();
 	~Libvirt();
-	
+
 	bool isSupported(Description&);
-	
+
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
+
+#ifdef ENABLE_DIRECT_VM2VM
+	bool sendCommand(uint64_t lsiID, string name, string command, string & response);
+#endif
 };
 
 #endif //LIBVIRT_H_

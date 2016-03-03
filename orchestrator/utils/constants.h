@@ -16,6 +16,10 @@
 #define REST_URL 				"http://localhost"
 #define REQ_SIZE 				2*1024*1024
 
+#ifdef ENABLE_DIRECT_VM2VM
+	#define BASE_URL_DIRECT_VM2VM	"direct_vm2vm"
+#endif
+
 /*
 *	Rest methods
 */
@@ -74,7 +78,7 @@
 			#define SAFE			"secure"
 		#define VLAN			"vlan"
 			#define V_ID			"vlan-id"
-						
+
 	#define BIG_SWITCH		"big-switch"
 		#define FLOW_RULES		"flow-rules"
 			#define _ID				"id"
@@ -144,7 +148,15 @@
 				#define OUT_TO_QUEUE		"output_to_queue"
 				#define DROP 				"drop"
 				#define OUTPUT_TO_CTRL		"output_to_controller"
-			
+
+#ifdef ENABLE_DIRECT_VM2VM
+	/*
+	*	Costants in the JSON describing the command for the direct vm2vm
+	*/
+	#define DIRECT_VM2VM_PORT	"port"
+	#define DIRECT_VM2VM_COMMAND	"command"
+#endif
+
 /*
 *	Misc
 */

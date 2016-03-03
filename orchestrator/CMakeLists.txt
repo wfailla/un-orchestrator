@@ -4,13 +4,13 @@ PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
         ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
-        
-# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function         
-        
+
+# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function
+
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
         ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
-        
+
 # -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
@@ -103,6 +103,15 @@ OPTION(
 	"Turn on to compile the code to generate the command line needed to add ivshmem device in the VM"
 	OFF
 )
+
+OPTION(ENABLE_DIRECT_VM2VM
+	"Turn on the support to direct VM2VM channels"
+	OFF
+)
+
+IF(ENABLE_DIRECT_VM2VM)
+	ADD_DEFINITIONS(-DENABLE_DIRECT_VM2VM)
+ENDIF(ENABLE_DIRECT_VM2VM)
 
 #################################################################################################################
 
@@ -243,6 +252,8 @@ SET(SOURCES
 	node_resource_manager/graph_manager/virtual_link.cc
 	node_resource_manager/graph_manager/fileParser.h
 	node_resource_manager/graph_manager/fileParser.cc
+	node_resource_manager/graph_manager/switchPortsAssociation.h
+	node_resource_manager/graph_manager/switchPortsAssociation.cc
 
 	node_resource_manager/graph/match.h
 	node_resource_manager/graph/match.cc
@@ -335,7 +346,7 @@ IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
 		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
 		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
-		              
+
 		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClient.h
     )
 ELSE()
@@ -388,7 +399,7 @@ IF(ENABLE_KVM)
     SET(SOURCES3
     ${SOURCES2}
 	compute_controller/plugins/kvm-libvirt/libvirt.cc
-	compute_controller/plugins/kvm-libvirt/libvirt.h	
+	compute_controller/plugins/kvm-libvirt/libvirt.h
 	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.cc
 	compute_controller/plugins/kvm-libvirt/ivshmem_cmdline_generator.h
 	)
@@ -474,7 +485,7 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	-lrt
 )
 
-#Links specific for double decker 
+#Links specific for double decker
 IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 	TARGET_LINK_LIBRARIES( node-orchestrator
 		liburcu.so
@@ -498,6 +509,7 @@ ENDIF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
 IF(ENABLE_KVM)
 	TARGET_LINK_LIBRARIES( node-orchestrator
 		libvirt.so
+		libvirt-qemu.so
 	)
 ENDIF(ENABLE_KVM)
 
@@ -507,7 +519,7 @@ IF(ENABLE-DPDK-CMDLINE-GENERATOR)
 	IF(NOT DEFINED ENV{RTE_SDK})
 		message(FATAL_ERROR "Please define RTE_SDK environment variable (it must point to the DPDK folder)")
 	ENDIF(NOT DEFINED ENV{RTE_SDK})
-	
+
 	IF(NOT DEFINED ENV{RTE_TARGET})
 		message(FATAL_ERROR "Please define RTE_TARGET environment variable as follows: 'export RTE_TARGET=x86_64-ivshmem-linuxapp-gcc'")
 	ENDIF(NOT DEFINED ENV{RTE_TARGET})
@@ -517,7 +529,7 @@ IF(ENABLE-DPDK-CMDLINE-GENERATOR)
 	IF (IVSHMEM_RING_ALIAS)
 		SET(CMDLINEGEN_MAKE_PREARGS EXTRA_CFLAGS="-DIVSHMEM_RING_ALIAS")
 	ENDIF(IVSHMEM_RING_ALIAS)
-	  
+
 	ADD_CUSTOM_TARGET(
 		cmd_line_generator
 		COMMAND ${CMDLINEGEN_MAKE_PREARGS} make
