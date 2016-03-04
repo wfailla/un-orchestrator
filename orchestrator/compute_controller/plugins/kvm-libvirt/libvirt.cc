@@ -426,7 +426,7 @@ bool Libvirt::startNF(StartNFIn sni)
 bool Libvirt::stopNF(StopNFIn sni)
 {
 	/*image_name*/
-	char *vm_name = new char[64];
+	char vm_name[64];
 	sprintf(vm_name, "%" PRIu64 "_%s", sni.getLsiID(), sni.getNfName().c_str());
 
 	assert(connection != NULL);
