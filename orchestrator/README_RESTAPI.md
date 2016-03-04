@@ -7,16 +7,6 @@ etc.) are detailed in this document.
 
 ## Main REST commands accepted by the un-orchestrator
 
-Authentication on the universal node (optional, it must be enabled during the compilation of the un-orchestrator)
-
-	POST /login	HTTP/1.1
-	Content-Type : application/json
-
-    	{
-            "username":"admin", 
-            "password":"admin"
-	}
-
 Deploy an NF-FG called ``myGraph'' (the NF-FG description must be based on the
 formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 
@@ -144,7 +134,26 @@ Retrieve information on the available physical interfaces:
 
 	GET /interfaces HTTP/1.1
 
-For the previously method if authentication is required, insert in a X-Auth-Token header the token presents in a POST response
+## User authentication
+
+The universal node supports user authentication, which has to be enabled during the compilation of the module.
+In case this feature is turned on, all the interactions with the UN must start with an authentication message, which looks like the following:
+
+    POST /login	HTTP/1.1
+    Content-Type : application/json
+
+    {
+        "username":"admin", 
+        "password":"admin"
+    }
+    
+If the authentication is successful, this method will return a token in the response.
+
+The returned token has to be used by creating an additional 'X-Auth-Token' header in all the requests you send to the UN.
+In this way the UN will know the identity of the user and it will be able to check whether the user has the right to perform the requested operation or not.
+
+Users and permissions are stored in a local SQLite database.
+
 
 ## Send commands to the un-orchestrator
 
