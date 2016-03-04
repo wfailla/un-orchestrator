@@ -584,7 +584,7 @@ void *startNF(void *arguments)
 
     if(!args->computeController->startNF(args->nf_name, args->namesOfPortsOnTheSwitch, args->portsConfiguration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	 
-	    , args->controlConfiguration
+	    , args->controlConfiguration, args->environmentVariables
 #endif
 	))
     	return (void*) 0;
@@ -682,8 +682,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions();
 	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	map<string, list<port_mapping_t > > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
+	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
 #endif
 	map<string, vector<string> > endpoints = graph->getEndPoints();
 	
@@ -855,10 +856,13 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tNF %s:",it->c_str());
 
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-		list<port_mapping_t > nfs_control_configuration = lsi->getNetworkFunctionsControlConfiguration(*it);
-		if(!nfs_control_configuration.empty())
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		
+		if(network_functions_control_configuration.count(*it) != 0)
 		{
+			list<port_mapping_t > nfs_control_configuration = network_functions_control_configuration[*it];
+			
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tControl interfaces (%d):",nfs_control_configuration.size());
 			for(list<port_mapping_t >::iterator n = nfs_control_configuration.begin(); n != nfs_control_configuration.end(); n++)
 			{
@@ -866,6 +870,19 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
 			}
 		}
+		
+		if(network_functions_environment_variables.count(*it) != 0)
+		{
+			list<string> nfs_environment_variables = network_functions_environment_variables[*it];
+			
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tEnvironment variables (%d):",nfs_environment_variables.size());
+			for(list<string>::iterator ev = nfs_environment_variables.begin(); ev != nfs_environment_variables.end(); ev++)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s",ev->c_str());
+			}
+		}
+		
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 #endif
 		
 		map<string,unsigned int> nfs_ports = lsi->getNetworkFunctionsPorts(*it);
@@ -961,7 +978,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
 		thr[i].portsConfiguration = lsi->getNetworkFunctionsPortsConfiguration(nf->first);
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-		thr[i].controlConfiguration = lsi->getNetworkFunctionsControlConfiguration(nf->first);
+		thr[i].controlConfiguration = network_functions_control_configuration[nf->first];
+		thr[i].environmentVariables = network_functions_environment_variables[nf->first];
 #endif
 
 #ifdef STARTVNF_SINGLE_THREAD
@@ -1446,10 +1464,12 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		map<unsigned int, port_network_config_t > nfs_ports_configuration = lsi->getNetworkFunctionsPortsConfiguration(nf->first);
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 		list<port_mapping_t > nfs_control_configuration = lsi->getNetworkFunctionsControlConfiguration(nf->first);
+		list<string> environment_variables_tmp; //TODO: here just to compile. The graph update wrongly manage all the
+		//new keywords!
 #endif
 		if(!computeController->startNF(nf->first, nfPortIdToNameOnSwitch, nfs_ports_configuration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION			
-			, nfs_control_configuration
+			, nfs_control_configuration, environment_variables_tmp
 #endif		
 		))
 		{

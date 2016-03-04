@@ -50,6 +50,11 @@ private:
 	*	@brief: list of control ports associated with the network function
 	*/
 	list<port_mapping_t > controlPorts;
+	
+	/**
+	*	@brief: list of environment variables to be configured in the network function
+	*/
+	list<string> environmentVariables;
 #endif
 		
 	/**
@@ -61,12 +66,12 @@ private:
 protected:
 	StartNFIn(uint64_t lsiID, string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration, 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	list<port_mapping_t > controlPorts,
+	list<port_mapping_t > controlPorts, list<string> environmentVariables,
 #endif	
 		uint64_t coreMask = 0x0)
 			: lsiID(lsiID), nf_name(nf_name), namesOfPortsOnTheSwitch(namesOfPortsOnTheSwitch), portsConfiguration(portsConfiguration), 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-			controlPorts(controlPorts),
+			controlPorts(controlPorts), environmentVariables(environmentVariables),
 #endif
 			coreMask(coreMask)
 	{
@@ -98,6 +103,11 @@ public:
 	const list<port_mapping_t >& getControlPorts() const
 	{
 		return controlPorts;
+	}
+	
+	const list<string>& getEnvironmentVariables() const
+	{
+		return environmentVariables;
 	}
 #endif
 	

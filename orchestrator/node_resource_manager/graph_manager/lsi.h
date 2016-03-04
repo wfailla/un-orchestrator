@@ -114,6 +114,7 @@ private:
 	*		The map is
 	*			<nf name, list<pair<host TCP port, VNF TCP port>> >
 	*/
+	//TODO: remove this parameter and all the functions associated with it. It is in fact useless.
 	map<string, list<port_mapping_t > > network_functions_control_configuration;
 #endif
 	

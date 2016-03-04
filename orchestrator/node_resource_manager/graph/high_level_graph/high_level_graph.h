@@ -41,9 +41,15 @@ class Graph
 public:
 	typedef map<string, list<unsigned int> > t_nfs_ports_list;
 	typedef map<string, map<unsigned int, port_network_config_t > > t_nfs_configuration;
+	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	typedef map<string, list<port_mapping_t > > t_nfs_control;
+	typedef map<string, list<string> > t_nfs_env_variables;
+#endif
 
-private:	
+private:
+	//FIXME: this class contains a lot of information already specified in the class VNFs. 
+	
 	/**
 	*	@brief: for each NF attached to the graph specifies a list of ports. For
 	*		instance, if in the graph there is NF:1 and NF:2,
@@ -59,10 +65,17 @@ private:
 	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
-	*	@brief: for each VNF attached to the graph specifies a list of pair elements 
+	*	@brief: for each VNF attached to the graph, specifies a list of pair elements 
 	* 		(host TCP port, VNF TCP port), which are the control connections for the VNF
 	*/
 	t_nfs_control networkFunctionsControlPorts;
+	
+	/**
+	*	@brief: for each VNF attached to the graph, specifies a list of environment variables
+	*		to be set to the VNF itself. Each element of the list is in the form "variable=value"
+	*
+	*/
+	t_nfs_env_variables networkFunctionsEnvironmentVariables;
 #endif	
 
 	/**
@@ -157,9 +170,17 @@ public:
 	*	@brief: Add a VNF control port to the graph
 	*
 	*	@param:	nf	Name of the network function to be added
-	*	@param: control port. It is a pair of value <vnf_tcp_port, host_tcp_port>
+	*	@param: control_port. It is a pair of value <vnf_tcp_port, host_tcp_port>
 	*/
-	bool addNetworkFunctionControlPort(string nf, port_mapping_t control);
+	void addNetworkFunctionControlPort(string nf, port_mapping_t control_port);
+	
+	/**
+	*	@brief: Add an environment variable for a specific VNF
+	*
+	*	@param:	nf	Name of the network function to be added
+	*	@param: env_vairiable. Environment variable in the for "variable=value"
+	*/
+	void addNetworkFunctionEnvironmentVariable(string nf, string env_variable);
 #endif
 	
 	/**
@@ -186,6 +207,11 @@ public:
 	*	@brief: Return the VNFs of the graph and the control ports they require
 	*/
 	t_nfs_control getNetworkFunctionsControlPorts();
+	
+	/**
+	*	@brief: Return the VNFs of the graph and the environment variables they require
+	*/
+	t_nfs_env_variables getNetworkFunctionsEnvironmentVariables();
 #endif
 
 	/**
