@@ -133,6 +133,11 @@ map<string, list<port_mapping_t > > Graph::getNetworkFunctionsControlPorts()
 {
 	return networkFunctionsControlPorts;
 }
+
+map<string, list<string> > Graph::getNetworkFunctionsEnvironmentVariables()
+{
+	return networkFunctionsEnvironmentVariables;
+}
 #endif
 
 list<Rule> Graph::getRules()
@@ -173,11 +178,14 @@ bool Graph::addNetworkFunctionPortConfiguration(string nf, map<unsigned int, por
 }
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-bool Graph::addNetworkFunctionControlPort(string nf, port_mapping_t control)
+void Graph::addNetworkFunctionControlPort(string nf, port_mapping_t control)
 {
 	networkFunctionsControlPorts[nf].push_back(control);
-	
-	return true;
+}
+
+void Graph::addNetworkFunctionEnvironmentVariable(string nf, string env_var)
+{
+	networkFunctionsEnvironmentVariables[nf].push_back(env_var);
 }
 #endif
 

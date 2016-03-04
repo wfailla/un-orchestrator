@@ -4,7 +4,7 @@ namespace highlevel
 {
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports) :
+VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports, list<string> environment_variables) :
 	id(id), name(name), groups(groups), vnf_template(vnf_template)
 #else
 VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports) :
@@ -17,10 +17,8 @@ VNFs::VNFs(string id, string name, string groups, string vnf_template, list<vect
 	}
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
-	{
-		this->control_ports.push_back((*c));
-	}
+	this->control_ports.insert(this->control_ports.end(),control_ports.begin(),control_ports.end());
+	this->environment_variables.insert(this->environment_variables.end(),environment_variables.begin(),environment_variables.end());
 #endif
 }
 
@@ -80,20 +78,25 @@ void VNFs::print()
 			if(!(*p)[3].empty())
 				cout << "\t\t\tip: " << (*p)[3] << endl;
 		}
-		cout << "\t\t\tcontrol: " << endl << "\t\t{" << endl;
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		cout << "\t\t\tunify-control: " << endl << "\t\t{" << endl;
 		for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
 		{
 			cout << "\t\t\thost-tcp-port: " << (*c).first << endl;
 			cout << "\t\t\tvnf-tcp-port: " << (*c).second << endl;
 		}
 		cout << "\t\t}" << endl;
+#endif
 	}
 }
 
 Object VNFs::toJSON()
 {
 	Object vnf;
-	Array portS, ctrl_ports;
+	Array portS;
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+	Array ctrl_ports;
+#endif
 	
 	vnf[_ID] = id.c_str();
 	vnf[_NAME] = name.c_str();
@@ -112,7 +115,9 @@ Object VNFs::toJSON()
 		
 		portS.push_back(pp);
 	}
+	vnf[VNF_PORTS] = portS;
 	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
 	{
 		Object cc;
@@ -122,10 +127,9 @@ Object VNFs::toJSON()
 		
 		ctrl_ports.push_back(cc);
 	}
-	
-	vnf[VNF_PORTS] = portS;
-	vnf[VNF_CONTROL] = ctrl_ports;
-	
+	vnf[UNIFY_CONTROL] = ctrl_ports;
+#endif
+
 	return vnf;
 }
 

@@ -79,6 +79,18 @@ bool Docker::startNF(StartNFIn sni)
 			command << " " << control->host_port << " " << control->guest_port;
 		}
 	}
+	
+	list<string> environment_variables = sni.getEnvironmentVariables();
+	command << " " << environment_variables.size();
+	if(environment_variables.size() != 0)
+	{
+		logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "VNF '%s' requires %d environment variables",nf_name.c_str(), environment_variables.size());
+		for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
+		{
+			logger(ORCH_DEBUG, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t%s",ev->c_str());
+			command << " " << *ev;
+		}
+	}
 #else
 	command << " 0";
 #endif
