@@ -112,43 +112,43 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	xmlNodeSetPtr nodes = xpathObj->nodesetval;
 	int size = (nodes) ? nodes->nodeNr : 0;
-    logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "xpath return size: %d", size);
+	logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "xpath return size: %d", size);
 	int i;
 	for(i = size - 1; i >= 0; i--) {
 	  	xmlNodePtr node = nodes->nodeTab[i];
 
 		if (node != NULL) {
 			switch (node->type) {
-		   		case XML_ELEMENT_NODE:
-		   			if (xmlStrcmp(node->name, (xmlChar*)"name") == 0) {
-		   				xmlNodeSetContent(node, BAD_CAST domain_name);
-		   				update_flags |= DOMAIN_NAME_UPDATED;
-		   			}
-		   			else if (xmlStrcmp(node->name, (xmlChar*)"emulator") == 0) {
-		   				if (QEMU_BIN_PATH) {
-		   					xmlNodeSetContent(node, (xmlChar*)QEMU_BIN_PATH);
+				case XML_ELEMENT_NODE:
+					if (xmlStrcmp(node->name, (xmlChar*)"name") == 0) {
+						xmlNodeSetContent(node, BAD_CAST domain_name);
+						update_flags |= DOMAIN_NAME_UPDATED;
+					}
+					else if (xmlStrcmp(node->name, (xmlChar*)"emulator") == 0) {
+						if (QEMU_BIN_PATH) {
+							xmlNodeSetContent(node, (xmlChar*)QEMU_BIN_PATH);
 							update_flags |= EMULATOR_UPDATED;
-		   				}
-		   			}
-		   			else if (xmlStrcmp(node->name, (xmlChar*)"interface") == 0) {
-		   				// Currently we just remove any net interface device present in the template and re-create our own
-		   				// with the exception of bridged interfaces which are handy for managing the VM.
-		   				xmlChar* type = xmlGetProp(node, (xmlChar*)"type");
-		   				if (xmlStrcmp(type, (xmlChar*)"bridge") == 0) {
+						}
+					}
+					else if (xmlStrcmp(node->name, (xmlChar*)"interface") == 0) {
+						// Currently we just remove any net interface device present in the template and re-create our own
+						// with the exception of bridged interfaces which are handy for managing the VM.
+						xmlChar* type = xmlGetProp(node, (xmlChar*)"type");
+						if (xmlStrcmp(type, (xmlChar*)"bridge") == 0) {
 							xmlFree(type);
-		   					continue;
-		   				}
-		   				xmlUnlinkNode(node);
-		   				xmlFreeNode(node);
-		   			}
-		   			break;
-		   		case XML_ATTRIBUTE_NODE:
-		   			logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "ATTRIBUTE found here");
-		   			break;
-		   		default:
-		   			logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Other type");
-		   			break;
-		   	}
+							continue;
+						}
+						xmlUnlinkNode(node);
+						xmlFreeNode(node);
+					}
+					break;
+				case XML_ATTRIBUTE_NODE:
+					logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "ATTRIBUTE found here");
+					break;
+				default:
+					logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Other type");
+					break;
+			}
 		}
 
 		/*
@@ -160,26 +160,26 @@ bool Libvirt::startNF(StartNFIn sni)
 		 * element type. But node from the returned set may have been removed
 		 * by xmlNodeSetContent() resulting in access to freed data.
 		 * This can be exercised by running
-		 *       valgrind xpath2 test3.xml '//discarded' discarded
+		 *	   valgrind xpath2 test3.xml '//discarded' discarded
 		 * There is 2 ways around it:
 		 *   - make a copy of the pointers to the nodes from the result set
-		 *     then call xmlXPathFreeObject() and then modify the nodes
+		 *	 then call xmlXPathFreeObject() and then modify the nodes
 		 * or
 		 *   - remove the reference to the modified nodes from the node set
-		 *     as they are processed, if they are not namespace nodes.
+		 *	 as they are processed, if they are not namespace nodes.
 		 */
-		 if (nodes->nodeTab[i]->type != XML_NAMESPACE_DECL) {
-		      nodes->nodeTab[i] = NULL;
-		 }
+		if (nodes->nodeTab[i]->type != XML_NAMESPACE_DECL) {
+			 nodes->nodeTab[i] = NULL;
+		}
 	}
 
 	/* Cleanup of XPath data */
 	xmlXPathFreeObject(xpathObj);
 
-    /* Add domain name if not present */
-    if (0 == (update_flags & DOMAIN_NAME_UPDATED)) {
+	/* Add domain name if not present */
+	if (0 == (update_flags & DOMAIN_NAME_UPDATED)) {
 		xmlNewTextChild(xmlDocGetRootElement(doc), NULL, BAD_CAST "name", BAD_CAST domain_name);
-    }
+	}
 
 	/* Create xpath evaluation context for Libvirt domain/devices */
 	/* Evaluate xpath expression */
@@ -199,12 +199,12 @@ bool Libvirt::startNF(StartNFIn sni)
 		return 0;
 	}
 
-    xmlNodePtr devices = nodes->nodeTab[0];
+	xmlNodePtr devices = nodes->nodeTab[0];
 
-    /* Add emulator if not present and must be modified */
-    if ((0 == (update_flags & EMULATOR_UPDATED)) && (QEMU_BIN_PATH != NULL)) {
-    	xmlNewTextChild(devices, NULL, BAD_CAST "emulator", BAD_CAST QEMU_BIN_PATH);
-    }
+	/* Add emulator if not present and must be modified */
+	if ((0 == (update_flags & EMULATOR_UPDATED)) && (QEMU_BIN_PATH != NULL)) {
+		xmlNewTextChild(devices, NULL, BAD_CAST "emulator", BAD_CAST QEMU_BIN_PATH);
+	}
 
 	/* Create XML for VM */
 
@@ -261,14 +261,14 @@ bool Libvirt::startNF(StartNFIn sni)
 			xmlNewProp(drv_guestn, BAD_CAST "tso4", BAD_CAST "off");
 			xmlNewProp(drv_guestn, BAD_CAST "tso6", BAD_CAST "off");
 			xmlNewProp(drv_guestn, BAD_CAST "ecn", BAD_CAST "off");
-	    	}
-	    	else if (port_type == IVSHMEM_PORT) {
+		}
+		else if (port_type == IVSHMEM_PORT) {
 			ostringstream local_name;  // Name of the port as known by the VNF internally - We set a convention here
 			local_name << "p" << port_id;  // Will result in p<n>_tx and p<n>_rx rings
 
 			ivshmemPorts.push_back(pair<string, string>(port_name, local_name.str()));
-	    	}
-	    	else if (port_type == VHOST_PORT) {
+		}
+		else if (port_type == VHOST_PORT) {
 			xmlNodePtr ifn = xmlNewChild(devices, NULL, BAD_CAST "interface", NULL);
 			xmlNewProp(ifn, BAD_CAST "type", BAD_CAST "direct");
 
@@ -282,80 +282,80 @@ bool Libvirt::startNF(StartNFIn sni)
 			xmlNewProp(srcn, BAD_CAST "dev", BAD_CAST port_name.c_str());
 			xmlNewProp(srcn, BAD_CAST "mode", BAD_CAST "passthrough");
 
-		    xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
-		    xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
+			xmlNodePtr modeln = xmlNewChild(ifn, NULL, BAD_CAST "model", NULL);
+			xmlNewProp(modeln, BAD_CAST "type", BAD_CAST "virtio");
 
-		    xmlNodePtr virt = xmlNewChild(ifn, NULL, BAD_CAST "virtualport", NULL);
-		    xmlNewProp(virt, BAD_CAST "type", BAD_CAST "openvswitch");
-	    	}
-	    	else
-	    	{
-	    		assert(0 && "There is a BUG! You cannot be here!");
-	    		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
-	    		return false;
-	    	}
+			xmlNodePtr virt = xmlNewChild(ifn, NULL, BAD_CAST "virtualport", NULL);
+			xmlNewProp(virt, BAD_CAST "type", BAD_CAST "openvswitch");
+			}
+			else
+			{
+				assert(0 && "There is a BUG! You cannot be here!");
+				logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Something went wrong in the creation of the ports for the VNF...");
+				return false;
+			}
 	}
 
 	if (! ivshmemPorts.empty()) {
 		char cmdline[512];
-        vector<string> ivshmemCmdElems;
+		vector<string> ivshmemCmdElems;
 
 #ifdef VSWITCH_IMPLEMENTATION_ERFS
-        stringstream ports;
+		stringstream ports;
 
-        ostringstream cmd;
-        cmd << "group-ivshmems " << sni.getLsiID() << "." << sni.getNfName();
-        for (vector< pair<string, string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
-            cmd << " IVSHMEM:" << sni.getLsiID() << "-" << it->first;
-        }
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating IVSHMEM QEMU command line using ERFS cmd: %s", cmd.str().c_str());
+		ostringstream cmd;
+		cmd << "group-ivshmems " << sni.getLsiID() << "." << sni.getNfName();
+		for (vector< pair<string, string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
+			cmd << " IVSHMEM:" << sni.getLsiID() << "-" << it->first;
+		}
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating IVSHMEM QEMU command line using ERFS cmd: %s", cmd.str().c_str());
 
-        ostringstream oss;
-        oss << "echo " << cmd.str().c_str() << " | nc localhost 16632"; // FIXME: this should be a parameter later
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "final command: %s", oss.str().c_str());
+		ostringstream oss;
+		oss << "echo " << cmd.str().c_str() << " | nc localhost 16632"; // FIXME: this should be a parameter later
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "final command: %s", oss.str().c_str());
 
-        int r = system(oss.str().c_str());
-        if(r == -1 || WEXITSTATUS(r) == -1) {
-            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error executing command line generator");
-        }
+		int r = system(oss.str().c_str());
+		if(r == -1 || WEXITSTATUS(r) == -1) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error executing command line generator");
+		}
 
-        char name[256];
-        sprintf(name, "/tmp/ivshmem_qemu_cmdline_%lu.%s", sni.getLsiID(), sni.getNfName().c_str());
-        FILE *f = fopen(name, "r");
-        if(f == NULL) {
-            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error opening file");
-            return false;
-        }
-        if(fgets(cmdline, sizeof(cmdline), f) == NULL) {
-            logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"Error in reading file");
-            return false;
-        }
-        logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"commandline: %s", cmdline);
-        ivshmemCmdElems.push_back(cmdline);
+		char name[256];
+		sprintf(name, "/tmp/ivshmem_qemu_cmdline_%lu.%s", sni.getLsiID(), sni.getNfName().c_str());
+		FILE *f = fopen(name, "r");
+		if(f == NULL) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Error opening file");
+			return false;
+		}
+		if(fgets(cmdline, sizeof(cmdline), f) == NULL) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"Error in reading file");
+			return false;
+		}
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,"commandline: %s", cmdline);
+		ivshmemCmdElems.push_back(cmdline);
 #else
 
-        IvshmemCmdLineGenerator ivshmemCmdGenerator;
+		IvshmemCmdLineGenerator ivshmemCmdGenerator;
 
 #if 1
-        if(!ivshmemCmdGenerator.get_single_cmdline(cmdline, sizeof(cmdline), domain_name, ivshmemPorts)) {
-            return false;
-        }
+		if(!ivshmemCmdGenerator.get_single_cmdline(cmdline, sizeof(cmdline), domain_name, ivshmemPorts)) {
+			return false;
+		}
 
-        logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Command line for ivshmem '%s'", cmdline);
-        ivshmemCmdElems.push_back(cmdline);
+		logger(ORCH_DEBUG_INFO, KVM_MODULE_NAME, __FILE__, __LINE__, "Command line for ivshmem '%s'", cmdline);
+		ivshmemCmdElems.push_back(cmdline);
 #else
-        // Mempool(s)
-    	if(!ivshmemCmdGenerator.get_mempool_cmdline(cmdline, sizeof(cmdline))) {
-    		return false;
-    	}
-        ivshmemCmdElems.push_back(cmdline);
-        // Port rings
-        for (vector< pair<string,string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
-            if(!ivshmemCmdGenerator.get_port_cmdline((it->first).c_str(), (it->second).c_str(), cmdline, sizeof(cmdline))) {
-                return false;
-            }
-            ivshmemCmdElems.push_back(cmdline);
-        }
+		// Mempool(s)
+		if(!ivshmemCmdGenerator.get_mempool_cmdline(cmdline, sizeof(cmdline))) {
+			return false;
+		}
+		ivshmemCmdElems.push_back(cmdline);
+		// Port rings
+		for (vector< pair<string,string> >::iterator it = ivshmemPorts.begin(); it != ivshmemPorts.end(); ++it) {
+			if(!ivshmemCmdGenerator.get_port_cmdline((it->first).c_str(), (it->second).c_str(), cmdline, sizeof(cmdline))) {
+				return false;
+			}
+			ivshmemCmdElems.push_back(cmdline);
+		}
 #endif // 1
 #endif // ERFS
 
@@ -366,9 +366,9 @@ bool Libvirt::startNF(StartNFIn sni)
 				const char* START_KEY = "-device ";
 				if (it->compare(0, sizeof(START_KEY), START_KEY) == 0) {
 					xmlNodePtr argEl = xmlNewChild(cmdLineEl, NULL, BAD_CAST "qemu:arg", NULL);
-				    xmlNewProp(argEl, BAD_CAST "value", BAD_CAST it->substr(0, sizeof(START_KEY)-1).c_str());
-				    argEl = xmlNewChild(cmdLineEl, NULL, BAD_CAST "qemu:arg", NULL);
-				    xmlNewProp(argEl, BAD_CAST "value", BAD_CAST it->substr(sizeof(START_KEY)).c_str());
+					xmlNewProp(argEl, BAD_CAST "value", BAD_CAST it->substr(0, sizeof(START_KEY)-1).c_str());
+					argEl = xmlNewChild(cmdLineEl, NULL, BAD_CAST "qemu:arg", NULL);
+					xmlNewProp(argEl, BAD_CAST "value", BAD_CAST it->substr(sizeof(START_KEY)).c_str());
 				}
 				else {
 					logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Unexpected result from IVSHMEM command line generation: %s", it->c_str());
@@ -411,7 +411,7 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	dom = virDomainCreateXML(connection, xmlconfig, 0);
 	if (!dom) {
-//		virDomainFree(dom);
+		//virDomainFree(dom);
 		logger(ORCH_ERROR, KVM_MODULE_NAME, __FILE__, __LINE__, "Domain definition failed");
 		return false;
 	}
