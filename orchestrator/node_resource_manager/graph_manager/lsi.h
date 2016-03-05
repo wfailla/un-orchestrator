@@ -22,6 +22,13 @@ class VLink;
 class LSI
 {
 //XXX: this class is a mess!
+
+/**
+*	@brief: This class in indended to represent the current situation on the LSI.
+*		The it MUST only contain inforation related to the LSI used to implement
+*		a single graph.
+*/
+
 friend class GraphManager;
 
 private:
@@ -108,16 +115,6 @@ private:
 	*/
 	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration;
 	
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	/**
-	*	@brief: For each VNF, describes its TCP control connections
-	*		The map is
-	*			<nf name, list<pair<host TCP port, VNF TCP port>> >
-	*/
-	//TODO: remove this parameter and all the functions associated with it. It is in fact useless.
-	map<string, list<port_mapping_t > > network_functions_control_configuration;
-#endif
-	
 	/**
 	*	@brief: virtual links attached to the LSI
 	*	FIXME although supported in this class VLink, the code does not support vlinks connected to multiple LSIs
@@ -146,9 +143,6 @@ public:
 
 	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, 
 		map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration, 
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-		map<string, list <port_mapping_t > > network_functions_control_configuration, 
-#endif
 		map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
@@ -167,9 +161,6 @@ public:
 	set<string> getNetworkFunctionsName();
 	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
 	map<unsigned int, port_network_config > getNetworkFunctionsPortsConfiguration(string nf);
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	list<port_mapping_t > getNetworkFunctionsControlConfiguration(string nf);
-#endif
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
 	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
