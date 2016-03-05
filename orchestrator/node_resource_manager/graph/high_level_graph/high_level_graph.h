@@ -34,7 +34,8 @@ namespace highlevel
 {
 
 /**
-*	@brief: describes the graph required from the extern
+*	@brief: describes the graph as it has been required from the extern, through
+*		the REST API exported by the un-orchestrator
 */
 class Graph
 {

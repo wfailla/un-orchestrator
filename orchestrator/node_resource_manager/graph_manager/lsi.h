@@ -24,7 +24,8 @@ class LSI
 /**
 *	@brief: This class in indended to represent the current situation on the LSI.
 *		The it MUST only contain inforation related to the LSI used to implement
-*		a single graph.
+*		a single graph (and not information related to the configururation of the 
+*		VNFs).
 */
 
 friend class GraphManager;
