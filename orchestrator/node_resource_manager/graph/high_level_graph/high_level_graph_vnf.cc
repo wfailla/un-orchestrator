@@ -96,6 +96,7 @@ Object VNFs::toJSON()
 	Array portS;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	Array ctrl_ports;
+	Array env_variables;
 #endif
 	
 	vnf[_ID] = id.c_str();
@@ -128,6 +129,15 @@ Object VNFs::toJSON()
 		ctrl_ports.push_back(cc);
 	}
 	vnf[UNIFY_CONTROL] = ctrl_ports;
+	
+	for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
+	{
+		Object var;
+		
+		var[VARIABLE] = ev->c_str();
+		env_variables.push_back(var);
+	}
+	vnf[UNIFY_ENV_VARIABLES] = env_variables;
 #endif
 
 	return vnf;
