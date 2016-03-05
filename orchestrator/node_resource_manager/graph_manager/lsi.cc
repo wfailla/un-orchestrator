@@ -10,7 +10,7 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 	return ss.str();
 }
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration,
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,
 	map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
@@ -30,9 +30,6 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 	//fill the map of endpoints
 	for(map<string,vector<string> >::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
 		this->endpoints_ports[ep->first] = ep->second;
-		
-	//fill the map of NF ports configuration
-	this->network_functions_ports_configuration = network_functions_ports_configuration;
 }
 
 string LSI::getControllerAddress()
@@ -243,11 +240,6 @@ map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
 	struct nfData& nf_data = network_functions[nf];
 
 	return nf_data.ports_switch_id;
-}
-
-map<unsigned int, port_network_config > LSI::getNetworkFunctionsPortsConfiguration(string nf)
-{
-	return network_functions_ports_configuration[nf];
 }
 
 vector<VLink> LSI::getVirtualLinks()

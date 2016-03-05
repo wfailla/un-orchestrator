@@ -6,8 +6,6 @@
 #include "virtual_link.h"
 #include "../../compute_controller/description.h"
 
-#include "../graph/high_level_graph/nf_port_configuration.h"
-
 #include <map>
 #include <set>
 #include <list>
@@ -107,14 +105,7 @@ private:
 	*			<nf name, nfData >
 	*/
 	map<string, struct nfData>  network_functions;
-	
-	/**
-	*	@brief: NFs connected to the LSI.
-	*		The map is
-	*			<nf name, list<pair<mac address, ip address>> >
-	*/
-	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration;
-	
+		
 	/**
 	*	@brief: virtual links attached to the LSI
 	*	FIXME although supported in this class VLink, the code does not support vlinks connected to multiple LSIs
@@ -142,7 +133,6 @@ private:
 public:
 
 	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, 
-		map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration, 
 		map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
@@ -160,7 +150,6 @@ public:
 
 	set<string> getNetworkFunctionsName();
 	map<string,unsigned int> getNetworkFunctionsPorts(string nf);
-	map<unsigned int, port_network_config > getNetworkFunctionsPortsConfiguration(string nf);
 	list<string> getNetworkFunctionsPortNames(string nf);
 	PortType getNetworkFunctionPortType(string nf, string port);
 	map<string, list< struct nf_port_info> > getNetworkFunctionsPortsInfo();
