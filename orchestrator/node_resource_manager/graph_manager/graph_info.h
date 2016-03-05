@@ -12,10 +12,27 @@ class Controller;
 
 class GraphInfo
 {
+/**
+*	@brief: This class contains information on a specific graph.
+**/
+
 private:
+	/**
+	*	@brief: The Openflow controller the controls the LSI used to implement this graph
+	*/
 	Controller *controller;
+	/**
+	*	@brief: Data structure that describes the situation on the LSI used to implement this graph
+	*/
 	LSI *lsi;
+	/**
+	*	@brief: Compute controller used to handle the VNF of this graph
+	*/
 	ComputeController *computeController;
+	/**
+	*	@brief: Data structure that represents the graph as it has been received through the REST
+	*		API (i.e., it includes VNFs, end-points, big switch, and it has not been split yet)
+	*/
 	highlevel::Graph *graph;
 
 	//FIXME: PUT the following methods protected, and the GraphCreator as a friend?
