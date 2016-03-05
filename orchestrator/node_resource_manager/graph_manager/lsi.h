@@ -22,7 +22,7 @@ class LSI
 //XXX: this class is a mess!
 
 /**
-*	@brief: This class in indended to represent the current situation on the LSI.
+*	@brief: This class is indended to represent the current situation on the LSI.
 *		The it MUST only contain inforation related to the LSI used to implement
 *		a single graph (and not information related to the configururation of the 
 *		VNFs).
