@@ -1,0 +1,241 @@
+{
+  "forwarding-graph": {
+    "id": "00000001",
+    "name": "Elastic Router graph",
+    "VNFs": [
+      {
+        "id": "00000001",
+        "name": "ctrl1",
+		"unify-control": [
+		{
+		  "host-tcp-port": 2000,
+		  "vnf-tcp-port": 22
+		}
+		],
+        "ports": [
+          {
+            "id": "inout:0",
+            "name": "control-port",
+			"unify-ip": "10.0.10.100/24"
+          }
+        ]
+      },
+      {
+        "id": "00000002",
+        "name": "ovs1",
+		"unify-env-variables": [
+		{
+			"variable": "CONTROLLER=tcp:10.0.10.100:6633"
+		},
+		{
+			"variable": "VNF_NAME=ovs1"
+		}
+		],
+		"unify-control": [
+		{
+		  "host-tcp-port": 3000,
+		  "vnf-tcp-port": 1000
+		}
+		],
+        "ports": [
+          {
+            "id": "inout:0",
+            "name": "ovs1-control-port",
+			"mac": "00:00:00:00:00:01",
+			"unify-ip": "10.0.10.1/24"
+          },
+          {
+            "id": "inout:1",
+            "name": "ovs1-port1"
+          },
+          {
+            "id": "inout:2",
+            "name": "ovs1-port2"
+          },
+          {
+            "id": "inout:3",
+            "name": "ovs1-port3"
+          },
+          {
+            "id": "inout:4",
+            "name": "ovs1-port4"
+          }
+        ]
+      }
+    ],
+    "end-points": [
+      {
+        "id": "00000001",
+        "name": "sap1",
+        "type": "interface",
+        "interface": {
+          "interface": "veth0un"
+        }
+      },
+      {
+        "id": "00000002",
+        "name": "sap2",
+        "type": "interface",
+        "interface": {
+          "interface": "veth1un"
+        }
+      },
+      {
+        "id": "00000003",
+        "name": "sap3",
+        "type": "interface",
+        "interface": {
+          "interface": "veth2un"
+        }
+      },
+      {
+        "id": "00000004",
+        "name": "sap4",
+        "type": "interface",
+        "interface": {
+          "interface": "veth3un"
+        }
+      }
+    ],
+    "big-switch": {
+      "flow-rules": [
+        {
+          "id": "000000001",
+          "priority": 1,
+          "match": {
+            "port_in": "endpoint:00000001"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000002:inout:1"
+            }
+          ]
+        },
+        {
+          "id": "000000002",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000002:inout:1"
+          },
+          "actions": [
+            {
+              "output_to_port": "endpoint:00000001"
+            }
+          ]
+        },
+		{
+          "id": "000000003",
+          "priority": 1,
+          "match": {
+            "port_in": "endpoint:00000002"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000002:inout:2"
+            }
+          ]
+        },
+        {
+          "id": "000000004",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000002:inout:2"
+          },
+          "actions": [
+            {
+              "output_to_port": "endpoint:00000002"
+            }
+          ]
+        },
+		{
+          "id": "000000005",
+          "priority": 1,
+          "match": {
+            "port_in": "endpoint:00000003"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000002:inout:3"
+            }
+          ]
+        },
+        {
+          "id": "000000006",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000002:inout:3"
+          },
+          "actions": [
+            {
+              "output_to_port": "endpoint:00000003"
+            }
+          ]
+        },
+		{
+          "id": "000000007",
+          "priority": 1,
+          "match": {
+            "port_in": "endpoint:00000004"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000002:inout:4"
+            }
+          ]
+        },
+        {
+          "id": "000000008",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000002:inout:4"
+          },
+          "actions": [
+            {
+              "output_to_port": "endpoint:00000004"
+            }
+          ]
+        },
+		{
+          "id": "000000009",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000001:inout:0",
+			"ether_type": "0x800",
+            "dest_ip": "10.0.10.1"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000002:inout:0"
+            }
+          ]
+        },
+		{
+          "id": "000000010",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000001:inout:0",
+			"ether_type": "0x806",
+			"dest_mac": "00:00:00:00:00:01"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000002:inout:0"
+            }
+          ]
+        },
+        {
+          "id": "000000011",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000002:inout:0"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000001:inout:0"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
