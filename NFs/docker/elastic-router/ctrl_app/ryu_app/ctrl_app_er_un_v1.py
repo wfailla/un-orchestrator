@@ -168,9 +168,12 @@ class ElasticRouter(app_manager.RyuApp):
                 linked_DP.add_port(ifname2, port_type=DPPort.Internal, linked_port=linked_port1)
                 linked_port2 = linked_DP.get_port(ifname2)
                 new_DP.get_port(ifname1).linked_port = linked_port2
+                self.logger.info('linked {0} to {1}'.format(ifname1, ifname2))
 
+        '''
         # add new_DPs to nffg
-        nffg_intermediate = copy.deepcopy(self.nffg_xml)
+        #nffg_intermediate = copy.deepcopy(self.nffg_xml)
+        nffg_intermediate = copy.deepcopy(self.nffg_json)
         for new_DP in new_DP_list:
             self.logger.debug('add vnf to nffg: {0}'.format(new_DP.name))
             nffg_intermediate = add_vnf(nffg_intermediate, new_DP.id, new_DP.name, new_DP.name, len(new_DP.ports))
@@ -203,16 +206,19 @@ class ElasticRouter(app_manager.RyuApp):
         file = open('ER_scaled_out_final1.nffg', 'w')
         file.write(nffg_scaled_out)
         file.close()
+        '''
 
+
+        '''
         #self.logger.info('add SAPs to scaled nffg: {0} ports'.format(len(scale_out_port_dict)))
 
         # then add new links (this causes error in UN...)
-        '''
-        In the same nffg update is not possible to delete a flowentry and add a new one with the same port.
-        So to change it, you must first delete the flow, send the nffg to edit-config
-        and then send a new nffg with that port in a new flowentry.
-        Can you change this so this can be done in 1 nffg action?
-        '''
+
+        #In the same nffg update is not possible to delete a flowentry and add a new one with the same port.
+        #So to change it, you must first delete the flow, send the nffg to edit-config
+        #and then send a new nffg with that port in a new flowentry.
+        #Can you change this so this can be done in 1 nffg action?
+
         nffg_scaled_out2 = copy.deepcopy(nffg_scaled_out)
         for old_port in scale_out_port_dict:
             new_port = scale_out_port_dict[old_port]
@@ -224,6 +230,7 @@ class ElasticRouter(app_manager.RyuApp):
         file.close()
 
         return nffg_scaled_out2
+        '''
 
     def scale_finish(self):
         # send final scaled nffg
@@ -267,6 +274,7 @@ class ElasticRouter(app_manager.RyuApp):
             self.logger.info('found OVS name:{0} port: {1}'.format(ovs_name, p.name))
             this_DP = self.DP_instances.get(ovs_name)
             if not this_DP:
+                self.logger.info('found OVS name:{0} not in DP_instances'.format(ovs_name))
                 continue
 
             # set port number assigned by orchestrator to this interface
@@ -282,7 +290,7 @@ class ElasticRouter(app_manager.RyuApp):
                           p.state, p.curr, p.advertised,
                           p.supported, p.peer, p.curr_speed,
                           p.max_speed))
-        self.logger.debug('OFPPortDescStatsReply received: %s', ports)
+        #self.logger.debug('OFPPortDescStatsReply received: %s', ports)
 
         if not this_DP:
             return

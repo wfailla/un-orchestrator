@@ -4,7 +4,7 @@
 sleep 3
 
 #DD command
-#./ryu_ddclient.py -k /a-keys.json -d tcp://172.17.0.1:7777 ryu a
+./ryu_ddclient.py -k /a-keys.json -d tcp://172.17.0.1:7777 ryu a
 
 echo "Control app container started"
 

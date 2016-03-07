@@ -20,9 +20,12 @@ class DP:
         self.ports = []
         for port in ports:
             if isinstance(port, basestring):
-                new_port = DPPort(port)
+                port_id = len(self.ports)+1
+                new_port = DPPort(port, port_id)
+                new_port.DP = self
                 self.ports.append(new_port)
             elif isinstance(port, DPPort):
+                port.DP = self
                 self.ports.append(port)
 
         self.mac_to_port = {}
@@ -44,6 +47,24 @@ class DP:
             if port.number == number:
                 return port
 
+    def add_port(self,  ifname, port_type=None, linked_port=None ):
+        port_id = len(self.ports)+1
+        new_port = DPPort(ifname, port_id, DP_parent=self, port_type=port_type, linked_port=linked_port)
+        self.ports.append(new_port)
+        return new_port
+
+    def check_connected(self, linked_DP):
+        """
+        return true is linked_DP is connected with a port to this DP
+        """
+        for port in self.ports:
+            try:
+                if port.linked_port.DP is linked_DP:
+                    return True
+            except:
+                continue
+        return False
+
 
 class DPPort:
     """
@@ -52,11 +73,16 @@ class DPPort:
 
     Internal = 1
     External = 2
+    SAP = 3
 
-    def __init__(self, ifname, port_number=None):
+    def __init__(self, ifname, id, port_number=None, DP_parent=None, port_type=None, linked_port=None):
         self.ifname = ifname
+        self.id = id #port id in nffg
         self.number = port_number
-        self.link_type = None #internal or external (SAP) link
+        self.port_type = port_type #internal or external or SAP link
+        self.DP = DP_parent
+        self.linked_port = linked_port
+        #self.virtualizer_port = virtualizer_port # virtualizer port object
 
     @staticmethod
     def get_datapath_name(ifname):

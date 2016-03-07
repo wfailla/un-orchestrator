@@ -28,6 +28,9 @@ def process_nffg(nffg_json):
             logging.debug("found ovs NF: %s", ovsName)
             ovs_instances.setdefault(ovsName, {'id': 0, 'ports': []})
             for port in vnf.ports:
+                # do not add control port of the DP
+                if 'control' in port.name: continue
+
                 portName = port.name
                 portId = port.id
                 new_port = DPPort(portName, portId)
@@ -59,6 +62,15 @@ def process_nffg(nffg_json):
                     linked_port.linked_port = new_port
 
     return ovs_instances
+
+def add_vnf(nffg_json, id, name, vnftype, numports):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    #new_ovs = VNF()
+
+    return nffg.getJSON()
 
 
 if __name__ == "__main__":

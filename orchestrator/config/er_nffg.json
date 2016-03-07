@@ -6,6 +6,11 @@
       {
         "id": "00000001",
         "name": "ctrl1",
+		"unify-env-variables": [
+		{
+			"variable": "CFOR=172.17.0.1:8080"
+		}
+		],
 		"unify-control": [
 		{
 		  "host-tcp-port": 2000,
@@ -33,7 +38,7 @@
 		],
 		"unify-control": [
 		{
-		  "host-tcp-port": 3000,
+		  "host-tcp-port": 1000,
 		  "vnf-tcp-port": 1000
 		}
 		],
@@ -46,19 +51,19 @@
           },
           {
             "id": "inout:1",
-            "name": "ovs1-port1"
+            "name": "ovs1_eth0"
           },
           {
             "id": "inout:2",
-            "name": "ovs1-port2"
+            "name": "ovs1_eth1"
           },
           {
             "id": "inout:3",
-            "name": "ovs1-port3"
+            "name": "ovs1_eth2"
           },
           {
             "id": "inout:4",
-            "name": "ovs1-port4"
+            "name": "ovs1_eth3"
           }
         ]
       }
