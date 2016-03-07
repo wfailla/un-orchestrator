@@ -532,7 +532,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_SRC,value.getString().c_str());
 					return false;
 				}
-				match.setIpv4Src((char*)value.getString().c_str());		
+				match.setIpv4Dst((char*)value.getString().c_str());		
 				foundProtocolField = true;
 			}		
 		}
