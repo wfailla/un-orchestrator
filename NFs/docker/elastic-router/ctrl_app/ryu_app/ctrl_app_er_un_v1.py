@@ -168,9 +168,11 @@ class ElasticRouter(app_manager.RyuApp):
                 linked_DP.add_port(ifname2, port_type=DPPort.Internal, linked_port=linked_port1)
                 linked_port2 = linked_DP.get_port(ifname2)
                 new_DP.get_port(ifname1).linked_port = linked_port2
+                self.logger.info('linked {0} to {1}'.format(ifname1, ifname2))
 
         # add new_DPs to nffg
-        nffg_intermediate = copy.deepcopy(self.nffg_xml)
+        #nffg_intermediate = copy.deepcopy(self.nffg_xml)
+        nffg_intermediate = copy.deepcopy(self.nffg_json)
         for new_DP in new_DP_list:
             self.logger.debug('add vnf to nffg: {0}'.format(new_DP.name))
             nffg_intermediate = add_vnf(nffg_intermediate, new_DP.id, new_DP.name, new_DP.name, len(new_DP.ports))
@@ -267,6 +269,7 @@ class ElasticRouter(app_manager.RyuApp):
             self.logger.info('found OVS name:{0} port: {1}'.format(ovs_name, p.name))
             this_DP = self.DP_instances.get(ovs_name)
             if not this_DP:
+                self.logger.info('found OVS name:{0} not in DP_instances'.format(ovs_name))
                 continue
 
             # set port number assigned by orchestrator to this interface
@@ -282,7 +285,7 @@ class ElasticRouter(app_manager.RyuApp):
                           p.state, p.curr, p.advertised,
                           p.supported, p.peer, p.curr_speed,
                           p.max_speed))
-        self.logger.debug('OFPPortDescStatsReply received: %s', ports)
+        #self.logger.debug('OFPPortDescStatsReply received: %s', ports)
 
         if not this_DP:
             return

@@ -60,6 +60,15 @@ def process_nffg(nffg_json):
 
     return ovs_instances
 
+def add_vnf(nffg_json, id, name, vnftype, numports):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    #new_ovs = VNF()
+
+    return nffg.getJSON()
+
 
 if __name__ == "__main__":
     json_file = open('er_nffg.json').read()
