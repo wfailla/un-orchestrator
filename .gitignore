@@ -1,5 +1,6 @@
 *.pyc
-nffglib.py
 virtualizer3.py
 *~
 orchestrator/virtualizer
+NFs/docker/elastic-router/ctrl_app/ryu_app/.idea
+

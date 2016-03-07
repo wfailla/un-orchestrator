@@ -352,27 +352,83 @@
             }
           ]
         },
-        {
+		{
           "id": "000000018",
           "priority": 1,
           "match": {
-            "port_in": "vnf:00000003:inout:1"
+            "port_in": "vnf:00000001:inout:0",
+			"ether_type": "0x800",
+            "dest_ip": "10.0.10.4"
           },
           "actions": [
             {
-              "output_to_port": "vnf:00000004:inout:1"
+              "output_to_port": "vnf:00000005:inout:0"
+            }
+          ]
+        },
+		{
+          "id": "000000019",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000001:inout:0",
+			"ether_type": "0x806",
+			"dest_mac": "00:00:00:00:00:04"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000005:inout:0"
             }
           ]
         },
         {
-          "id": "000000019",
+          "id": "000000020",
           "priority": 1,
           "match": {
-            "port_in": "vnf:00000004:inout:1"
+            "port_in": "vnf:00000005:inout:0"
           },
           "actions": [
             {
-              "output_to_port": "vnf:00000003:inout:1"
+              "output_to_port": "vnf:00000001:inout:0"
+            }
+          ]
+        },
+		{
+          "id": "000000021",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000001:inout:0",
+			"ether_type": "0x800",
+            "dest_ip": "10.0.10.5"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000006:inout:0"
+            }
+          ]
+        },
+		{
+          "id": "000000022",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000001:inout:0",
+			"ether_type": "0x806",
+			"dest_mac": "00:00:00:00:00:05"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000006:inout:0"
+            }
+          ]
+        },
+        {
+          "id": "000000023",
+          "priority": 1,
+          "match": {
+            "port_in": "vnf:00000006:inout:0"
+          },
+          "actions": [
+            {
+              "output_to_port": "vnf:00000001:inout:0"
             }
           ]
         }
