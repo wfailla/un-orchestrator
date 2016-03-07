@@ -1083,7 +1083,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 		throw GraphManagerException();
 	}
-				
+
 	return true;
 }
 
