@@ -78,8 +78,7 @@ public:
 	~VNFs();
 	
 	bool operator==(const VNFs &other) const;
-	bool operator<=(const VNFs &other) const;
-	
+		
 	void print();
 	Object toJSON();
 };
