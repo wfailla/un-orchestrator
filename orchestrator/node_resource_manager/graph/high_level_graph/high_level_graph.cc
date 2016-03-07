@@ -383,7 +383,7 @@ Object Graph::toJSON()
 	big_switch[FLOW_RULES] = flow_rules;
 	
 	forwarding_graph[BIG_SWITCH] = big_switch;
-	
+		
 	return forwarding_graph;
 }
 

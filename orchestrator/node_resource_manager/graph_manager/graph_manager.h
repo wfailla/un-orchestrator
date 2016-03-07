@@ -10,6 +10,7 @@
 #include "../../network_controller/openflow_controller/controller.h"
 #include "../../utils/constants.h"
 #include "../graph/high_level_graph/high_level_graph.h"
+#include "../graph/high_level_graph/high_level_graph_vnf.h"
 #include "../graph/low_level_graph/graph.h"
 #include "../graph/high_level_graph/high_level_output_action_nf.h"
 #include "../graph/high_level_graph/high_level_output_action_port.h"

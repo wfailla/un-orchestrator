@@ -6,7 +6,6 @@
 #include <list>
 #include <set>
 #include <string>
-#include <iostream>
 #include <sstream>
 
 #include "high_level_graph_endpoint_interface.h"
@@ -164,6 +163,7 @@ public:
 	*	@param:	nf	Name of the network function to be added
 	*	@param: description a pair of value <mac address, ip address>
 	*/
+	//FIXME: is the return value useful?
 	bool addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > description);
 	
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION

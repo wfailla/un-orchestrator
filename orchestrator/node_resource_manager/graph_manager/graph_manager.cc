@@ -1083,7 +1083,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 		throw GraphManagerException();
 	}
-			
+				
 	return true;
 }
 
@@ -1131,7 +1131,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 
 	//Retrieve the NFs already existing in the graph
 	highlevel::Graph::t_nfs_ports_list nfs = graph->getNetworkFunctions();
-	//Retrieve the NFs required by the update
+	
+	//Retrieve the NFs required by the update (this part is related to the network functions ports)
 	highlevel::Graph::t_nfs_ports_list new_nfs = newPiece->getNetworkFunctions();
 	for(highlevel::Graph::t_nfs_ports_list::iterator it = new_nfs.begin(); it != new_nfs.end(); it++)
 	{
@@ -1164,12 +1165,60 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 				}
 				if(p == ports.end())
 				{
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new port '%d' is required for NF '%s'", *np, it->first.c_str());
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "A new port '%d' is required for NF '%s'", *np, it->first.c_str());
 					return false;
 				}
 			}
 		}
 #endif
+	}
+	
+	//Retrieve the network functions already instantiated (and convert them in a set)
+	list<highlevel::VNFs> vnfs_already_there = graph->getVNFs();
+	//Retrieve the network functions required by the update, and their configuration
+	list<highlevel::VNFs> new_vnfs_required = newPiece->getVNFs();
+	map<string, list<port_mapping_t> > nfs_control_ports = newPiece->getNetworkFunctionsControlPorts();
+	map<string, list<string> > nfs_env_variables = newPiece->getNetworkFunctionsEnvironmentVariables();
+	for(list<highlevel::VNFs>::iterator it = new_vnfs_required.begin(); it != new_vnfs_required.end(); it++)
+	{
+		//Check if this VNF is already in the graph
+		bool alreadyThere = false;
+		for(list<highlevel::VNFs>::iterator there = vnfs_already_there.begin(); there != vnfs_already_there.end(); there++)
+		{
+			if((*there) == (*it))
+			{
+				alreadyThere = true;
+				break;
+			}
+		}
+		if(!alreadyThere)
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new VNF is required - ID: '%s' - name: '%s'", (it->getId()).c_str(),(it->getName()).c_str());
+			tmp->addVNF(*it);
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+			//We have to consider the configuration of this network function
+
+			//control connections
+			if(nfs_control_ports.count(it->getName()) != 0)
+			{
+				list<port_mapping_t> control_ports = nfs_control_ports[it->getName()];
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\tThis VNF requires %d control ports",control_ports.size());
+				
+				for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
+					tmp->addNetworkFunctionControlPort(it->getName(),*cp);
+			}
+			
+			//environment variables
+			if(nfs_env_variables.count(it->getName()) != 0)
+			{
+				list<string> environment_variables = nfs_env_variables[it->getName()];
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\tThis VNF requires %d environment variables",environment_variables.size());
+				
+				for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
+					tmp->addNetworkFunctionEnvironmentVariable(it->getName(),*ev);
+			}
+#endif
+		}
 	}
 	
 	//Retrieve the ports already existing in the graph
@@ -1203,8 +1252,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint %s is already in the graph",it.c_str());
 	}
 
-	//tmp contains only the new NFs, the new ports and the new endpoints that are not already into the graph
+	//tmp contains only the new VNFs (including their configuration aspects such as control ports and environment variables, 
+	//the new ports and the new endpoints that are not already into the graph
 
+	//TODO: extend this function in order to consider the parameters defined in Unify
 	if(!checkGraphValidity(tmp,computeController))
 	{
 		//This is an error in the request
@@ -1216,10 +1267,11 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	//The update is valid
 	
 	/**
-	*	1) update the high level graph
+	*	1) Update the high level graph
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 	
+	//Update the rules
 	list<highlevel::Rule> newRules = newPiece->getRules();
 	for(list<highlevel::Rule>::iterator rule = newRules.begin(); rule != newRules.end(); rule++)
 	{
@@ -1229,9 +1281,13 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			return false;
 		}
 	}
+	
+	//Update the physical ports
 	set<string> nps = tmp->getPorts();
 	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
 		graph->addPort(*port);
+		
+	//Update the network functions ports
 	highlevel::Graph::t_nfs_ports_list networkFunctions = tmp->getNetworkFunctions();
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
 	{
@@ -1244,6 +1300,28 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		}
 #endif
 	}
+	
+	//Update the network functions
+	list<highlevel::VNFs> vnfs_tobe_added = tmp->getVNFs();
+	map<string, list<port_mapping_t> > new_nfs_control_ports = tmp->getNetworkFunctionsControlPorts();
+	map<string, list<string> > new_nfs_env_variables = newPiece->getNetworkFunctionsEnvironmentVariables();
+	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
+	{
+		 graph->addVNF(*vtba);
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		//We have to consider the configuration of this network function
+		list<port_mapping_t> control_ports = new_nfs_control_ports[vtba->getName()];
+		for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
+			graph->addNetworkFunctionControlPort(vtba->getName(), *cp);
+			
+		//We have to consider the environment variables of this network function
+		list<string> environment_variables = new_nfs_env_variables[vtba->getName()];
+		for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
+			graph->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
+#endif
+	}
+	
+	//Update the endpoints
 	map<string, vector<string> > nep = tmp->getEndPoints();
 	for(map<string, vector<string> >::iterator mep = nep.begin(); mep != nep.end(); mep++)
 	{
@@ -1464,8 +1542,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		map<unsigned int, port_network_config_t > nfs_ports_configuration; //TODO: see next todo
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 		//TODO: the following information should be retrieved through the highlevel graph
-		list<port_mapping_t > nfs_control_configuration;  /*= lsi->getNetworkFunctionsControlConfiguration(nf->first);*/
-		list<string> environment_variables_tmp;
+		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->first];
+		list<string> environment_variables_tmp = new_nfs_env_variables[nf->first];
 #endif
 		if(!computeController->startNF(nf->first, nfPortIdToNameOnSwitch, nfs_ports_configuration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION			
