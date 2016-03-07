@@ -85,6 +85,7 @@ class ElasticRouterMonitor:
         if self.DP_ingress_rate[this_DP.name] > self.ingress_rate_upper_threshold:
             for port in this_DP.ports:
                 scaling_out_ports.append([port])
+                logging.info('scaling out: {0} ports: {1}'.format(this_DP.name, port.ifname))
 
         if len(scaling_out_ports) > 0:
             self.scaling_lock.acquire()

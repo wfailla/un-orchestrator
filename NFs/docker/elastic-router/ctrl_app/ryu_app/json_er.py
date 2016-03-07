@@ -28,6 +28,9 @@ def process_nffg(nffg_json):
             logging.debug("found ovs NF: %s", ovsName)
             ovs_instances.setdefault(ovsName, {'id': 0, 'ports': []})
             for port in vnf.ports:
+                # do not add control port of the DP
+                if 'control' in port.name: continue
+
                 portName = port.name
                 portId = port.id
                 new_port = DPPort(portName, portId)
