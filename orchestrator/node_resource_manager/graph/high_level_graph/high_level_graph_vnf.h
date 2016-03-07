@@ -47,16 +47,24 @@ private:
 	*	@brief: the list of ports configuration of the VNF
 	*/
 	list<vector<string> > ports;
-	
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
 	/**
 	*	@brief: the list of control ports configuration of the VNF
 	*/
 	list<pair<string, string> > control_ports;
 	
+	/**
+	*	@brief: list of environment variables to be set to the VNF.
+	*			Each element of the list is in the form "variable=value"
+	*/
+	list<string> environment_variables;
+#endif	
+
 public:
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports);
+	VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports, list<string> environment_variables);
 #else
 	VNFs(string id, string name, string groups, string vnf_template, list<vector<string> > ports);
 #endif
@@ -66,7 +74,6 @@ public:
 	string getGroups();
 	string getVnfTemplate();
 	list<vector<string> > getPorts();
-	list<pair<string, string> > getControlPorts();
 	
 	~VNFs();
 	

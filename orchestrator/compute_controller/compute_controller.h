@@ -172,10 +172,11 @@ public:
 	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started
 	*	@param: portsConfiguration		Ports configuration (mac address, ip address)
 	*	@param: controlConfiguration	Control ports configuration (host TCP port, VNF TCP port)
+	*	@param: environmentVariables	Environment variables to be set to the VNF
 	*/
 	bool startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		, list<port_mapping_t > controlConfiguration
+		, list<port_mapping_t > controlConfiguration, list<string> environmentVariables
 #endif
 		);
 	

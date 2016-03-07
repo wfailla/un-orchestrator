@@ -702,6 +702,7 @@ the `gre-tunnel` endpoint.
 A simple configuration mechanism is supported by the NF-FG formalism. In particular, it is possibile to:
 
   * assign the MAC address, IPv4 address and netmask to a specific VNF interface;
+  * set environment variable to the VNF;
   * create ports of the VNF connected to the Internet through the UN control interface, and not through the NF-FG itself. 
     This also requires the creation of a TCP port forwarding between a TCP port in the host (UN) and in the VNF.
     
@@ -736,7 +737,45 @@ following example:
   
 Given this NF-FG, the un-orchestrator properly configures the VNF ports as specified by the graph itself.
 
-### Create further VNF ports not connected to the NF-FG
+### Setting environment variables to the VNF
+
+This is possibile by using the element `unify-env-variables` within the description of a VNF. An example of usage 
+of such a feature is the following:
+
+	"VNFs": [
+	{
+		"id": "00000001",
+	   	"name": "firewall",
+	   	"unify-env-variables": [
+	   	{
+			"variable": "logginglevel=release"
+	   	},
+	   	{
+			"variable": "block=tcp"
+	   	}
+	   	],
+    	"ports": [
+    	{
+       		"id": "inout:0",
+       		"name": "data-port"
+    	},
+    	{
+    		"id": "inout:1",
+    		"name": "data-port"
+   		}
+		]
+  	}
+  	]
+  	
+This examples sets the follwoing environment variables to the `firewall` VNF: 
+
+  * `logginglevel` to the value `release`
+  * `block` to `tcp`
+  
+It is worth noting that the un-orchestrator ignores the meaning of the environment variables; it
+just set the specified variables into the VNF, without knowing their meaning and utility.
+
+### Creating further VNF ports not connected to the NF-FG
 
 It is possibile to create a further ports of VNFs, which are not connected to the NF-FG, but that will be connected 
 by the un-orchestrator to the default switch created by the execution environment (e.g., `Docker0` in case 

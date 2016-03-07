@@ -739,7 +739,7 @@ void ComputeController::setLsiID(uint64_t lsiID)
 
 bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	, list<port_mapping_t > controlConfiguration
+	, list<port_mapping_t > controlConfiguration, list<string> environmentVariables
 #endif
 	)
 {
@@ -755,6 +755,13 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 			if(!(n->guest_port).empty())
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tVnf tcp port -> %s",(n->guest_port).c_str());
 		}
+	}
+	
+	if(!environmentVariables.empty())
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tEnvironment variables (%d):",environmentVariables.size());
+		for(list<string>::iterator ev = environmentVariables.begin(); ev != environmentVariables.end(); ev++)
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s",ev->c_str());
 	}
 #endif
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports of the NF connected to the switch:");
@@ -785,7 +792,7 @@ bool ComputeController::startNF(string nf_name, map<unsigned int, string> namesO
 	
 	StartNFIn sni(lsiID, nf_name, namesOfPortsOnTheSwitch, portsConfiguration, 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		controlConfiguration, 
+		controlConfiguration, environmentVariables,
 #endif
 		calculateCoreMask(nfsManager->getCores()));
 
