@@ -150,6 +150,90 @@
             "name": "ovs3_eth3"
           }
         ]
+      },
+	  {
+        "id": "00000005",
+        "name": "ovs4",
+		"unify-env-variables": [
+		{
+			"variable": "CONTROLLER=tcp:10.0.10.100:6633"
+		},
+		{
+			"variable": "VNF_NAME=ovs4"
+		}
+		],
+		"unify-control": [
+		{
+		  "host-tcp-port": 4000,
+		  "vnf-tcp-port": 1000
+		}
+		],
+        "ports": [
+          {
+            "id": "inout:0",
+            "name": "ovs4-control-port",
+			"mac": "00:00:00:00:00:04",
+			"unify-ip": "10.0.10.4/24"
+          },
+          {
+            "id": "inout:1",
+            "name": "ovs4_eth0"
+          },
+          {
+            "id": "inout:2",
+            "name": "ovs4_eth1"
+          },
+          {
+            "id": "inout:3",
+            "name": "ovs4_eth2"
+          },
+          {
+            "id": "inout:4",
+            "name": "ovs4_eth3"
+          }
+        ]
+      },
+	  {
+        "id": "00000006",
+        "name": "ovs5",
+		"unify-env-variables": [
+		{
+			"variable": "CONTROLLER=tcp:10.0.10.100:6633"
+		},
+		{
+			"variable": "VNF_NAME=ovs5"
+		}
+		],
+		"unify-control": [
+		{
+		  "host-tcp-port": 4000,
+		  "vnf-tcp-port": 1000
+		}
+		],
+        "ports": [
+          {
+            "id": "inout:0",
+            "name": "ovs5-control-port",
+			"mac": "00:00:00:00:00:05",
+			"unify-ip": "10.0.10.5/24"
+          },
+          {
+            "id": "inout:1",
+            "name": "ovs5_eth0"
+          },
+          {
+            "id": "inout:2",
+            "name": "ovs5_eth1"
+          },
+          {
+            "id": "inout:3",
+            "name": "ovs5_eth2"
+          },
+          {
+            "id": "inout:4",
+            "name": "ovs5_eth3"
+          }
+        ]
       }
     ],
     "end-points": [
