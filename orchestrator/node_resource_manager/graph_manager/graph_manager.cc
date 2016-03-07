@@ -1277,21 +1277,25 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	
 	//Update the network functions
 	list<highlevel::VNFs> vnfs_tobe_added = tmp->getVNFs();
+	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = newPiece->getNetworkFunctionsConfiguration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > new_nfs_control_ports = newPiece->getNetworkFunctionsControlPorts();
 	map<string, list<string> > new_nfs_env_variables = newPiece->getNetworkFunctionsEnvironmentVariables();
 #endif
 	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
 	{
-		 graph->addVNF(*vtba);
+		string vnfname = vtba->getName();
+		graph->addVNF(*vtba);
+		if(new_nfs_ports_configuration.count(vnfname) != 0)
+			graph->addNetworkFunctionPortConfiguration(vtba->getName(),new_nfs_ports_configuration[vnfname]);
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		//We have to consider the configuration of this network function
-		list<port_mapping_t> control_ports = new_nfs_control_ports[vtba->getName()];
+		list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
 		for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
 			graph->addNetworkFunctionControlPort(vtba->getName(), *cp);
 			
 		//We have to consider the environment variables of this network function
-		list<string> environment_variables = new_nfs_env_variables[vtba->getName()];
+		list<string> environment_variables = new_nfs_env_variables[vnfname];
 		for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
 			graph->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
 #endif
@@ -1516,7 +1520,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
 		//TODO: the following information should be retrieved through the highlevel graph
-		map<unsigned int, port_network_config_t > nfs_ports_configuration;
+		map<unsigned int, port_network_config_t > nfs_ports_configuration = new_nfs_ports_configuration[nf->first];
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->first];
 		list<string> environment_variables_tmp = new_nfs_env_variables[nf->first];
