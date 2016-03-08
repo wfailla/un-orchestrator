@@ -12,7 +12,7 @@ extern "C" {
 
 typedef enum {
 	NFFG,
-	//TODO: add here the topics
+	//[+] add here other topics
 }topic_t;
 
 class DoubleDeckerClient
@@ -24,8 +24,17 @@ private:
 	*/
 	static zactor_t *client;
 
+	/**
+	*	@brief: wait for messages coming from the DoubleDecker network
+	*/
 	static void *loop(void *param);
 	
+	/**
+	*	@brief: given a topic, returns a string to be used on the
+	*		DoubleDecker network
+	*/
+	static char *topicToString(topic_t topic);
+
 	DoubleDeckerClient() {}
 	
 public:

@@ -65,5 +65,18 @@ void DoubleDeckerClient::publish(topic_t topic, char *message)
 	assert(client != NULL);
 
 	int len = strlen(message);
-	zsock_send(client,"sssb", "publish", "topic", message,&len, sizeof(len));
+	zsock_send(client,"sssb", "publish", topicToString(topic), message,&len, sizeof(len));
 }
+
+char *DoubleDeckerClient::topicToString(topic_t topic)
+{
+	switch(topic)
+	{
+		case NFFG:
+			return "NF-FG";
+		default:
+			assert(0 && "This is impossible!");
+			return "";
+	}
+}
+
