@@ -2,10 +2,7 @@
 #define PUB_SUB_H_ 1
 
 #include <czmq.h>
-
-extern "C" {
-	#include <dd.h>
-	}
+#include <dd.h>
 
 #include "../../utils/logger.h"
 #include "pub_sub_constants.h"
