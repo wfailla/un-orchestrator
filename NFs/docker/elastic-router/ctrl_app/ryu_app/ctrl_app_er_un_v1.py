@@ -41,7 +41,8 @@ class ElasticRouter(app_manager.RyuApp):
         super(ElasticRouter, self).__init__(*args, **kwargs)
 
         #self.logger.debug('starting zmq')
-        #zmq = er_zmq()
+        #self.zmq_ = er_zmq()
+        #self.zmq_thread = hub.spawn(self.test())
 
         # ovs switches attached to elastic router
         self.DP_instances = {}
@@ -65,6 +66,11 @@ class ElasticRouter(app_manager.RyuApp):
         self.monitorApp = ElasticRouterMonitor(self)
         # monitor function to trigger nffg change
         self.monitor_thread = hub.spawn(self._monitor)
+
+    def test(self):
+        while True:
+            hub.sleep(2)
+
 
     def parse_nffg(self, nffg):
         # check nffg and parse the ovs instances deployed
