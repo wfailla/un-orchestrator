@@ -99,6 +99,16 @@ IF(ENABLE_DOUBLE_DECKER_CONNECTION)
 	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER_CONNECTION)
 ENDIF(ENABLE_DOUBLE_DECKER_CONNECTION)
 
+OPTION(
+	ENABLE_RESOURCE_MANAGER
+	"Turn on to activate the 'resource manager')"
+	OFF
+)
+
+IF(ENABLE_RESOURCE_MANAGER)
+	ADD_DEFINITIONS(-DENABLE_RESOURCE_MANAGER)
+ENDIF(ENABLE_RESOURCE_MANAGER)
+
 
 OPTION(
 	ENABLE_KVM
@@ -458,6 +468,18 @@ ELSE()
     )
 ENDIF(ENABLE_DOUBLE_DECKER_CONNECTION)
 
+IF(ENABLE_RESOURCE_MANAGER)
+	SET(SOURCES8
+    ${SOURCES7}
+    node_resource_manager/resource_manager/resource_manager.h
+    node_resource_manager/resource_manager/resource_manager.cc
+    )
+ELSE()
+	SET(SOURCES8
+		${SOURCES7}
+    )
+ENDIF(ENABLE_RESOURCE_MANAGER)
+
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
@@ -466,7 +488,7 @@ INCLUDE_DIRECTORIES (
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES7}
+	${SOURCES8}
 )
 
 LINK_DIRECTORIES(

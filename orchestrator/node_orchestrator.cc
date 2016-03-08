@@ -11,6 +11,10 @@
 	#include "node_resource_manager/pub_sub/pub_sub.h"
 #endif
 
+#ifdef ENABLE_RESOURCE_MANAGER
+	#include "node_resource_manager/resource_manager/resource_manager.h"
+#endif
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -234,6 +238,10 @@ int main(int argc, char *argv[])
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 		exit(EXIT_FAILURE);	
 	}
+
+#ifdef ENABLE_RESOURCE_MANAGER
+	ResourceManager::publishDescriptionFromFile(descr_file_name);
+#endif
 
 	http_daemon = MHD_start_daemon (MHD_USE_SELECT_INTERNALLY, rest_port, NULL, NULL,&RestServer::answer_to_connection,
 		NULL, MHD_OPTION_NOTIFY_COMPLETED, &RestServer::request_completed, NULL,MHD_OPTION_END);
