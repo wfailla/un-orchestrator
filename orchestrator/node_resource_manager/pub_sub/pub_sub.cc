@@ -2,15 +2,15 @@
 
 zactor_t *DoubleDeckerClient::client = NULL;
 
-bool DoubleDeckerClient::init(char *clientName, char *brokerAddress)
+bool DoubleDeckerClient::init(char *clientName, char *brokerAddress, char *keyPath)
 {
 	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Inizializing the '%s'",DD_CLIENT_MODULE_NAME);
-	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD client name: '%s'",clientName,DD_CLIENT_MODULE_NAME);
-	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD broker address: '%s'",brokerAddress,DD_CLIENT_MODULE_NAME);
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD client name: '%s'",clientName);
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD broker address: '%s'",brokerAddress);
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD key to be used (path): '%s'",keyPath);
 	
-	//Start and register a DD client on the brocker.
-	//TODO: read the key from configuration file
-	client = start_ddactor((int)1, clientName, "a", brokerAddress,"a-keys.json");
+	//Start and register a DD client on the brocker
+	client = start_ddactor((int)1, clientName, "public", brokerAddress,keyPath);
 
 	//Start a new thread that waits for events
 	pthread_t thread[1];

@@ -44,7 +44,7 @@ public:
 	*	@param	brokerAddress: address:port of the brocker to be
 	*		connected to
 	*/
-	static bool init(char *clientName, char *brokerAddress);
+	static bool init(char *clientName, char *brokerAddress, char *keyPath);
 	
 	static void publish(topic_t topic, char *message);
 };

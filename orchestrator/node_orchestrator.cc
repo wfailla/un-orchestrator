@@ -45,7 +45,7 @@ SQLiteManager *dbm = NULL;
 *	Private prototypes
 */
 bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file, bool *init_db, char **pwd);
-bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, bool *control, char **control_interface, char **local_ip, char **ipsec_certificate);
+bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *control, char **control_interface, char **local_ip, char **ipsec_certificate);
 bool usage(void);
 void printUniversalNodeInfo();
 bool doChecks(void);
@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
 	char *descr_file_name = new char[BUFFER_SIZE], *t_descr_file_name = NULL;
 	char *client_name = new char[BUFFER_SIZE], *t_client_name = NULL;
 	char *broker_address = new char[BUFFER_SIZE], *t_broker_address = NULL;
+	char *key_path = new char[BUFFER_SIZE], *t_key_path = NULL;
 	char *control_interface = new char[BUFFER_SIZE], *t_control_interface = NULL;
 	char *local_ip = new char[BUFFER_SIZE], *t_local_ip = NULL;
 	char *ipsec_certificate = new char[BUFFER_SIZE], *t_ipsec_certificate = NULL;
@@ -114,7 +115,7 @@ int main(int argc, char *argv[])
 	if(!parse_command_line(argc,argv,&core_mask,&config_file_name,&init_db,&pwd))
 		exit(EXIT_FAILURE);
 
-	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name,&t_descr_file_name,&t_client_name,&t_broker_address,&t_control,&t_control_interface,&t_local_ip,&t_ipsec_certificate))
+	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name,&t_descr_file_name,&t_client_name,&t_broker_address,&t_key_path,&t_control,&t_control_interface,&t_local_ip,&t_ipsec_certificate))
 		exit(EXIT_FAILURE);
 
 	strcpy(ports_file_name, t_ports_file_name);
@@ -137,6 +138,11 @@ int main(int argc, char *argv[])
 		strcpy(broker_address, t_broker_address);
 	else	
 		broker_address = NULL;
+	
+	if(strcmp(t_key_path, "UNKNOWN") != 0)
+		strcpy(key_path, t_key_path);
+	else	
+		key_path = NULL;	
 		
 	if(strcmp(t_control_interface, "UNKNOWN") != 0)
 		strcpy(control_interface, t_control_interface);
@@ -216,7 +222,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
-	if(!DoubleDeckerClient::init(client_name, broker_address))
+	if(!DoubleDeckerClient::init(client_name, broker_address, key_path))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 		exit(EXIT_FAILURE);	
@@ -330,7 +336,7 @@ static struct option lgopts[] = {
 	return true;
 }
 
-bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, bool *control, char **control_interface, char **local_ip, char **ipsec_certificate)
+bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *control, char **control_interface, char **local_ip, char **ipsec_certificate)
 {
 	ports_file_name[0] = '\0';
 	nffg_file_name[0] = '\0';
@@ -377,6 +383,7 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	strcpy(temp_descr, (char *)reader.Get("publisher/subscriber", "description_file", "UNKNOWN").c_str());
 	*descr_file_name = temp_descr;
 	
+#ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	/* client name of Double Decker */
 	char *temp_cli = new char[64];
 	strcpy(temp_cli, (char *)reader.Get("publisher/subscriber", "client_name", "UNKNOWN").c_str());
@@ -386,6 +393,12 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	char *temp_dealer = new char[64];
 	strcpy(temp_dealer, (char *)reader.Get("publisher/subscriber", "broker_address", "UNKNOWN").c_str());
 	*broker_address = temp_dealer;
+	
+	/* client name of Double Decker */
+	char *temp_key = new char[64];
+	strcpy(temp_key, (char *)reader.Get("publisher/subscriber", "key_path", "UNKNOWN").c_str());
+	*key_path = temp_key;
+#endif
 	
 	/* contro in band or out of band */
 	*control = reader.GetBoolean("control", "is_in_band", true);
