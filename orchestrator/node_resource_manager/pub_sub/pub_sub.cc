@@ -2,15 +2,15 @@
 
 zactor_t *DoubleDeckerClient::client = NULL;
 
-bool DoubleDeckerClient::init()
+bool DoubleDeckerClient::init(char *clientName, char *brokerAddress)
 {
-
 	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Inizializing the '%s'",DD_CLIENT_MODULE_NAME);
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD client name: '%s'",clientName,DD_CLIENT_MODULE_NAME);
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD broker address: '%s'",brokerAddress,DD_CLIENT_MODULE_NAME);
 	
 	//Start and register a DD client on the brocker.
-	//TODO: read the parameters somewhere. Do not embed them in the code!
-	client = start_ddactor((int)1, "universal-node", "a", "tcp://127.0.0.1:5555",
-                  "/home/unify/a-keys.json");
+	//TODO: read the key from configuration file
+	client = start_ddactor((int)1, clientName, "a", brokerAddress,"a-keys.json");
 
 	//Start a new thread that waits for events
 	pthread_t thread[1];

@@ -41,8 +41,13 @@ public:
 	/**
 	*	@brief: Inizialize the client and connect it to the Double
 	*		Decker network
+	*
+	*	@param	clientName: name of the client in the Double Decker
+	*		network
+	*	@param	brokerAddress: address:port of the brocker to be
+	*		connected to
 	*/
-	static bool init();
+	static bool init(char *clientName, char *brokerAddress);
 	
 	static void publish(topic_t topic, char *message);
 };

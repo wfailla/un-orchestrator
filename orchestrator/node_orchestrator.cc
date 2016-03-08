@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
-	if(!DoubleDeckerClient::init())
+	if(!DoubleDeckerClient::init(client_name, broker_address))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 		exit(EXIT_FAILURE);	
