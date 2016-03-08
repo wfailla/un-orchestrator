@@ -11,7 +11,7 @@ extern "C" {
 #include "pub_sub_constants.h"
 
 typedef enum {
-	TOPIC
+	NFFG,
 	//TODO: add here the topics
 }topic_t;
 
@@ -26,9 +26,9 @@ private:
 
 	static void *loop(void *param);
 	
-public:
 	DoubleDeckerClient() {}
 	
+public:
 	/**
 	*	@brief: Inizialize the client and connect it to the Double
 	*		Decker network
