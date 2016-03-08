@@ -52,7 +52,7 @@ then
 		
 		echo [`date`]"[$0] Port remapping between host TCP port $host_port and VNF TCP port $docker_port"
 		
-		echo -ne "-p 127.0.0.1:$host_port:$docker_port " >> $tmp_file
+		echo -ne "-p $host_port:$docker_port " >> $tmp_file
 		
 		position_host_port=`expr $position_host_port + 2`
 		position_docker_port=`expr $position_docker_port + 2`
