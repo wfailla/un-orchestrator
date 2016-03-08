@@ -274,7 +274,7 @@
       "flow-rules": [
 		{
           "id": "000000012",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x800",
@@ -288,7 +288,7 @@
         },
 		{
           "id": "000000013",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x806",
@@ -302,7 +302,7 @@
         },
         {
           "id": "000000014",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000003:inout:0"
           },
@@ -314,7 +314,7 @@
         },
 		{
           "id": "000000015",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x800",
@@ -328,7 +328,7 @@
         },
 		{
           "id": "000000016",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x806",
@@ -342,7 +342,7 @@
         },
         {
           "id": "000000017",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000004:inout:0"
           },
@@ -354,7 +354,7 @@
         },
 		{
           "id": "000000018",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x800",
@@ -368,7 +368,7 @@
         },
 		{
           "id": "000000019",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x806",
@@ -382,7 +382,7 @@
         },
         {
           "id": "000000020",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000005:inout:0"
           },
@@ -394,7 +394,7 @@
         },
 		{
           "id": "000000021",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x800",
@@ -408,7 +408,7 @@
         },
 		{
           "id": "000000022",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x806",
@@ -422,7 +422,7 @@
         },
         {
           "id": "000000023",
-          "priority": 1,
+          "priority": 10,
           "match": {
             "port_in": "vnf:00000006:inout:0"
           },
