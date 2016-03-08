@@ -7,7 +7,7 @@
 	#include "node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h"
 #endif
 
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	#include "node_resource_manager/pub_sub/pub_sub.h"
 #endif
 
@@ -215,11 +215,13 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+#ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	if(!DoubleDeckerClient::init())
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 		exit(EXIT_FAILURE);	
 	}
+#endif
 
 	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name,s_local_ip,control,control_interface,ipsec_certificate))
 	{
