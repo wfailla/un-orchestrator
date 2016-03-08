@@ -2,7 +2,7 @@ FROM      ubuntu
 MAINTAINER iMinds
 
 RUN apt-get update
-RUN apt-get install -y openvswitch-switch openvswitch-common 
+RUN apt-get install -y openvswitch-switch openvswitch-common openssh-server
 
 
 ADD start.sh start.sh

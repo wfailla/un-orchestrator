@@ -37,6 +37,10 @@ class DP:
         self.port_rxrate = {}
         self.previous_monitor_time = {} #store time of monitor data to calculate correct timedelta and rx_rate
 
+        # openflow table of this DP
+        # contains tuple [(match_dict{}, actions[], priority),]
+        self.oftable = []
+
     def get_port(self, port_name=None):
         for port in self.ports:
             if port.ifname == port_name:
