@@ -434,6 +434,19 @@ ELSE()
     	)
 ENDIF(ENABLE_NATIVE)
 
+IF(ENABLE_UNIFY_PORTS_CONFIGURATION)
+	SET(SOURCES7
+    ${SOURCES6}
+    node_resource_manager/pub_sub/pub_sub_constants.h
+    node_resource_manager/pub_sub/pub_sub.h
+    node_resource_manager/pub_sub/pub_sub.cc
+    )
+ELSE()
+	SET(SOURCES7
+    	${SOURCES6}
+    )
+ENDIF(ENABLE_UNIFY_PORTS_CONFIGURATION)
+
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
@@ -442,7 +455,7 @@ INCLUDE_DIRECTORIES (
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES6}
+	${SOURCES7}
 )
 
 LINK_DIRECTORIES(
@@ -455,6 +468,8 @@ LINK_DIRECTORIES(
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
+	dd
+	czmq
 	/usr/local/lib/librofl_common.so
 	libjson_spirit.so
 	libmicrohttpd.so
@@ -477,6 +492,12 @@ IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 	)
 ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
+IF(ENABLE_UNIFY_PORTS_CONFIGURATION)
+	TARGET_LINK_LIBRARIES( node-orchestrator
+		libdd.so
+		libczmq.so
+	)
+ENDIF(ENABLE_UNIFY_PORTS_CONFIGURATION)
 
 #Links specific for ovs
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
