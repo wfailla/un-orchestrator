@@ -8,9 +8,8 @@ echo "Ubuntu started"
 echo "start ovs"
 service openvswitch-switch start
 
-echo "add controller interface 10.0.10.1/24 on eth0"
-#ifconfig eth0 0
-#ip addr add 10.0.10.1/24 dev eth0
+echo "start ssh"
+service ssh start
 
 NAME=$VNF_NAME
 

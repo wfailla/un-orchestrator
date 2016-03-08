@@ -37,9 +37,10 @@ class ElasticRouter(app_manager.RyuApp):
 
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     # Cf_Or interface available in docker container
-    cfor_env = os.environ['CFOR']
-    #REST_Cf_Or =  'http://172.17.0.1:8080'
-    REST_Cf_Or =  'http://' + cfor_env
+    REST_Cf_Or =  'http://172.17.0.1:8080'
+
+    #cfor_env = os.environ['CFOR']
+    #REST_Cf_Or =  'http://' + cfor_env
 
     def __init__(self, *args, **kwargs):
         super(ElasticRouter, self).__init__(*args, **kwargs)
@@ -48,7 +49,7 @@ class ElasticRouter(app_manager.RyuApp):
         self.logger.debug('Cf-Or interface: {0}'.format(self.REST_Cf_Or))
 
         #self.logger.debug('starting zmq')
-        #self.zmq_ = er_zmq()
+        self.zmq_ = er_zmq()
         #self.zmq_thread = hub.spawn(self.test())
 
         # ovs switches attached to elastic router

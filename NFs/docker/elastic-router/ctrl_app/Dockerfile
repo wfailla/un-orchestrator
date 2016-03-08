@@ -1,5 +1,5 @@
 FROM      osrg/ryu
-MAINTAINER iMinds
+MAINTAINER iMinds & Acreo
 
 #RUN apt-get update && apt-get install -y \
 #	iproute \
@@ -8,11 +8,23 @@ MAINTAINER iMinds
 #	curl
 
 RUN apt-get update
-RUN apt-get install -y iproute net-tools iputils-ping curl python-zmq
+RUN apt-get install -yq iproute net-tools iputils-ping curl python-zmq openssh-server
 
 COPY ./ryu_app ./ryu_app
 
-ADD start.sh start.sh
+ADD start_DD.sh start.sh
 RUN chmod +x start.sh
 
+ADD ryu_ddclient.py ryu_ddclient.py
+
+
+RUN apt-get install -yq python3 python3-zmq python3-pip libffi-dev libsodium-dev
+RUN pip3 install PyNaCl
+RUN wget https://github.com/acreo/DoubleDecker/archive/master.tar.gz -O dd.tar.gz
+RUN tar xzf dd.tar.gz && rm dd.tar.gz
+WORKDIR /root/DoubleDecker-master/python/
+RUN python3 setup.py build
+RUN python3 setup.py install
+
+WORKDIR /root/
 CMD ./start.sh
