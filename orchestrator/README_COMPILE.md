@@ -190,14 +190,11 @@ To compile OvS with the DPDK support, execute:
 Details on the DPDK ports, namely `user space vhost` and `ivshmem`, are available
 on the [DPDK website](http://dpdk.org/)
 
-Now, download the OpenvSwitch source code:
+Now, download and install Open vSwitch:
 
-    $ git clone https://github.com/openvswitch/ovs
-
-Then execute the following commands:
-
-    $ cd ovs
-	$ ./boot.sh
+	$ wget http://openvswitch.org/releases/openvswitch-2.5.0.tar.gz
+	$ tar -xf openvswitch-2.5.0.tar.gz
+	$ cd openvswitch-2.5.0
 	$ ./configure --with-dpdk=$DPDK_BUILD
 	$ make
 	$ sudo make install
