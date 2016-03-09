@@ -10,6 +10,13 @@ MAINTAINER iMinds & Acreo
 RUN apt-get update
 RUN apt-get install -yq iproute net-tools iputils-ping curl python-zmq openssh-server
 
+# setup ssh login
+RUN echo 'root:root' | chpasswd
+RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+ADD authorized_keys /root/.ssh/authorized_keys
+
+# setup ryu files
 COPY ./ryu_app ./ryu_app
 
 ADD start_DD.sh start.sh
@@ -17,7 +24,7 @@ RUN chmod +x start.sh
 
 ADD ryu_ddclient.py ryu_ddclient.py
 
-
+# setup DoubleDecker
 RUN apt-get install -yq python3 python3-zmq python3-pip libffi-dev libsodium-dev
 RUN pip3 install PyNaCl
 RUN wget https://github.com/acreo/DoubleDecker/archive/master.tar.gz -O dd.tar.gz
