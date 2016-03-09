@@ -1,6 +1,8 @@
 #include "ovsdb_manager.h"
 #include "ovsdb_constants.h"
 
+#include <iomanip>
+
 #include <algorithm>
 
 struct in_addr sIPaddr1;/* struct IP addr server*/
@@ -147,6 +149,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	char sw[BUF_SIZE], tcp_s[BUF_SIZE], ctr[BUF_SIZE], vrt[BUF_SIZE], trv[BUF_SIZE];
 	char of_version[BUF_SIZE];
 
+	stringstream datapath_id;
+
 	map<string,unsigned int> physical_ports;
 	map<string,map<string, unsigned int> >  network_functions_ports;
 	map<string,unsigned int >  endpoints_ports;
@@ -227,6 +231,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	row.clear();
     	first_obj.clear();
 
+	datapath_id << std::setfill('0') << std::setw(16) << std::hex << dnumber << std::dec;
+
 	/*insert a bridge*/
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Bridge";
@@ -257,6 +263,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 	peer2.push_back("disable-in-band");
 	peer2.push_back("true");
+	peer1.push_back(peer2);
+	peer2.clear();
+
+	peer2.push_back("datapath-id");
+	peer2.push_back(datapath_id.str().c_str());
 
 	peer1.push_back(peer2);
 	peer.push_back(peer1);
@@ -354,8 +365,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 		throw commandsException();
 	}
 
- 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-    	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+ 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+    	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
     	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
     	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 

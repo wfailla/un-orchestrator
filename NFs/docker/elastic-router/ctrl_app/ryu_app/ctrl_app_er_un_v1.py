@@ -20,6 +20,8 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 import urllib2
 import copy
 
+import os
+
 #from virtualizer_er import *
 from json_er import *
 from er_utils import *
@@ -37,11 +39,17 @@ class ElasticRouter(app_manager.RyuApp):
     # Cf_Or interface available in docker container
     REST_Cf_Or =  'http://172.17.0.1:8080'
 
+    #cfor_env = os.environ['CFOR']
+    #REST_Cf_Or =  'http://' + cfor_env
+
     def __init__(self, *args, **kwargs):
         super(ElasticRouter, self).__init__(*args, **kwargs)
 
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.debug('Cf-Or interface: {0}'.format(self.REST_Cf_Or))
+
         #self.logger.debug('starting zmq')
-        #self.zmq_ = er_zmq()
+        self.zmq_ = er_zmq()
         #self.zmq_thread = hub.spawn(self.test())
 
         # ovs switches attached to elastic router
@@ -59,8 +67,6 @@ class ElasticRouter(app_manager.RyuApp):
 
         self.scaled_nffg = None
 
-
-        self.logger.setLevel(logging.DEBUG)
         self.logger.debug('DP instances: {0}'.format(self.DP_instances))
 
         self.monitorApp = ElasticRouterMonitor(self)

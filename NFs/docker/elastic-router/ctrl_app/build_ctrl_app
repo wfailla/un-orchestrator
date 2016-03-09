@@ -1,0 +1,3 @@
+#!/bin/bash
+cp ../../../../orchestrator/config/er_nffg_scale_out_intermediate_base.json ./ryu_app/er_nffg_scale_out_intermediate.json
+sudo docker build --tag="ctrl1" .
