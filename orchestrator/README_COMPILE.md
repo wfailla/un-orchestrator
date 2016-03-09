@@ -42,7 +42,7 @@ mechanism, which is used by the un-orchestrator to export the configuration of t
 universal node.
 
 	; - libjson0-dev: JSON manipulation library l
-	; - iburcu-dev: userspace RCU (read-copy-update) library - development files
+	; - liburcu-dev: userspace RCU (read-copy-update) library - development files
 	$ sudo apt-get install libjson0-dev liburcu-dev
 
 	; Install libsodium (a modern and easy-to-use crypto library)
