@@ -60,6 +60,13 @@ void *DoubleDeckerClient::loop(void *param)
 	return NULL;
 }
 
+void DoubleDeckerClient::terminate()
+{
+	zsock_send(client, "s", "$TERM");
+	zactor_destroy (&client);
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "The connection with the Double Decker is terminated");
+}	
+
 void DoubleDeckerClient::publish(topic_t topic, char *message)
 {
 	assert(client != NULL);

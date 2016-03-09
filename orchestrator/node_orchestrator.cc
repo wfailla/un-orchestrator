@@ -68,7 +68,11 @@ void singint_handler(int sig)
 
 #ifdef ENABLE_DOUBLE_DECKER
 	client->terminateClient();
-#endif	
+#endif
+
+#ifdef ENABLE_DOUBLE_DECKER_CONNECTION
+	DoubleDeckerClient::terminate();
+#endif
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Bye :D");
 	exit(EXIT_SUCCESS);
