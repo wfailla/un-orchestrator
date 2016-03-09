@@ -34,6 +34,8 @@ ovs-vsctl set bridge $NAME datapath_type=netdev
 ovs-vsctl set bridge $NAME protocols=OpenFlow10,OpenFlow12,OpenFlow13
 ovs-vsctl set-fail-mode $NAME secure
 ovs-vsctl set bridge $NAME other_config:disable-in-band=true
+ovs-vsctl set bridge $NAME other-config:datapath-id=$OVS_DPID
+
 
 ovs-vsctl add-port $NAME ${NAME}_eth0
 ovs-vsctl add-port $NAME ${NAME}_eth1
