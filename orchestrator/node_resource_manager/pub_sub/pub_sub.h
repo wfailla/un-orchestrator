@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <unistd.h>
 
 #include <czmq.h>
 #include <dd.h>
@@ -47,6 +48,11 @@ private:
 	*		client
 	*/
 	static pthread_mutex_t connected_mutex;
+	
+	/**
+	*	@brief: this function just print an error message
+	*/
+	static void sigalarm_handler(int sig);
 
 	/**
 	*	@brief: wait for messages coming from the DoubleDecker network
