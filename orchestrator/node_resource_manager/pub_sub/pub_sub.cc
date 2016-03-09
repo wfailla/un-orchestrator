@@ -99,9 +99,12 @@ void DoubleDeckerClient::publish(topic_t topic, char *message)
 		publish.topic = topic;
 		publish.message = message;
 		messages.push_back(publish);
+		pthread_mutex_unlock(&connected_mutex);
 		return;
 	}
 	pthread_mutex_unlock(&connected_mutex);
+
+	logger(ORCH_DEBUG_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Publishing on topic '%s'",topicToString(topic));
 
 	int len = strlen(message);
 	zsock_send(client,"sssb", "publish", topicToString(topic), message,&len, sizeof(len));
