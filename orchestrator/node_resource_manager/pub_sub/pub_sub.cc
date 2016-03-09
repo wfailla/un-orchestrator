@@ -1,6 +1,9 @@
 #include "pub_sub.h"
 
 zactor_t *DoubleDeckerClient::client = NULL;
+bool DoubleDeckerClient::connected = false;
+list<publish_t> DoubleDeckerClient::messages;
+pthread_mutex_t DoubleDeckerClient::connected_mutex;
 
 bool DoubleDeckerClient::init(char *clientName, char *brokerAddress, char *keyPath)
 {
@@ -9,6 +12,8 @@ bool DoubleDeckerClient::init(char *clientName, char *brokerAddress, char *keyPa
 	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD broker address: '%s'",brokerAddress);
 	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "\t DD key to be used (path): '%s'",keyPath);
 	
+	pthread_mutex_init(&connected_mutex, NULL);
+
 	//Start and register a DD client on the brocker
 	client = start_ddactor((int)1, clientName, "public", brokerAddress,keyPath);
 
@@ -23,7 +28,6 @@ bool DoubleDeckerClient::init(char *clientName, char *brokerAddress, char *keyPa
 
 void *DoubleDeckerClient::loop(void *param)
 {
-
 	while(true)
 	{
 		//receive a message from the DD
@@ -35,8 +39,15 @@ void *DoubleDeckerClient::loop(void *param)
 		if(streq("reg",event))
 		{
 			//When the registration is successful
+			pthread_mutex_lock(&connected_mutex);
+			connected = true;
+			pthread_mutex_unlock(&connected_mutex);
 			logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Succcessfully registered on the Double Decker network!");
 			free(event);
+
+			//Let's send all the messages stored in the list
+			for(list<publish_t>::iterator m = messages.begin(); m != messages.end(); m++)
+				publish(m->topic,m->message);
 		}
 		else if (streq("discon",event))
 		{
@@ -55,6 +66,14 @@ void *DoubleDeckerClient::loop(void *param)
 			logger(ORCH_WARNING, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Received a 'data' event. This event is ignored");
 			free(event);
 		}
+		else if (streq("$TERM",event))
+		{
+			char * error = zmsg_popstr(msg);
+			logger(ORCH_ERROR, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Error while trying to connect to the Double Decker network: '%s'",error);
+			zactor_destroy(&client);
+			free(event);
+			logger(ORCH_ERROR, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "This situation is not handled by the code. Please reboot the orchestrator and check if the broker is running!");
+	    }
 	}
 	
 	return NULL;
@@ -70,6 +89,19 @@ void DoubleDeckerClient::terminate()
 void DoubleDeckerClient::publish(topic_t topic, char *message)
 {
 	assert(client != NULL);
+
+	pthread_mutex_lock(&connected_mutex);
+	if(!connected)
+	{
+		//The client is not connected yet with the Double Decker network, then
+		//add the message to a list
+		publish_t publish;
+		publish.topic = topic;
+		publish.message = message;
+		messages.push_back(publish);
+		return;
+	}
+	pthread_mutex_unlock(&connected_mutex);
 
 	int len = strlen(message);
 	zsock_send(client,"sssb", "publish", topicToString(topic), message,&len, sizeof(len));
