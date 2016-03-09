@@ -67,6 +67,7 @@ class ElasticRouter(app_manager.RyuApp):
         self.parse_nffg(self.nffg_json)
 
         self.scaled_nffg = None
+        self.VNFs_to_be_deleted = []
 
         self.logger.debug('DP instances: {0}'.format(self.DP_instances))
 
@@ -131,8 +132,8 @@ class ElasticRouter(app_manager.RyuApp):
                 # only scale out if 1 DP is in the nffg
                 scaling_ports =  self.monitorApp.check_scaling_out()
                 if len(scaling_ports) > 0:
-                    self.scaled_nffg = self.scale_out(scaling_ports)
-
+                    #self.scaled_nffg = self.scale_out(scaling_ports)
+                    self.VNFs_to_be_deleted = self.scale_out(scaling_ports)
             hub.sleep(1)
 
     def scale_out(self, scaling_out_ports):
@@ -262,10 +263,19 @@ class ElasticRouter(app_manager.RyuApp):
         file.write(nffg_intermediate)
         file.close()
 
-        '''
-        # send via cf-or
-        self.send_nffg(nffg_intermediate)
 
+        # send via cf-or
+        #self.send_nffg(nffg_intermediate)
+        self.send_nffg_json(nffg_intermediate)
+
+        VNFs_to_be_deleted = []
+        for old_port in scale_out_port_dict:
+            if old_port.DP.name not in VNFs_to_be_deleted:
+                VNFs_to_be_deleted.append(old_port.DP.name)
+
+        return VNFs_to_be_deleted
+
+        '''
         # create final scaled out nffg
         nffg_scaled_out = copy.deepcopy(nffg_intermediate)
 
@@ -305,6 +315,7 @@ class ElasticRouter(app_manager.RyuApp):
         '''
 
     def scale_finish(self):
+        '''
         # send final scaled nffg
         self.send_nffg(self.scaled_nffg)
         self.scaled_nffg = None
@@ -314,6 +325,21 @@ class ElasticRouter(app_manager.RyuApp):
         file = open('ER_scale_finish.nffg', 'w')
         file.write(self.nffg_xml)
         file.close()
+        '''
+
+        # move last flow entries?
+
+        # delete the old intermediate VNFs
+        for del_VNF in self.VNFs_to_be_deleted:
+            VNF_id = self.DP_instances[del_VNF].id
+            delete_VNF(self.nffg_json, VNF_id, self.REST_Cf_Or)
+
+        self.VNFs_to_be_deleted = []
+        self.scaled_nffg = None
+        self.nffg_json = self.get_nffg_json()
+        self.parse_nffg(self.nffg_json)
+
+        self.logger.info('scaling finished!')
 
 
     # new switch detected
@@ -324,6 +350,9 @@ class ElasticRouter(app_manager.RyuApp):
         ofproto = datapath.ofproto
         self.logger.info('OF version: {0}'.format(ofproto))
         #print 'switch entered send port desc request'
+
+        self.send_oftable(self.DPIDtoDP(datapath.id))
+
         self.send_port_desc_stats_request(datapath)
 
     # query ports of new detected switch
@@ -470,7 +499,7 @@ class ElasticRouter(app_manager.RyuApp):
 
         dpid = datapath.id
         if dpid not in self.DPIDtoDP:
-            self.logger.info( 'exception in packet_in handler')
+            self.logger.info( 'exception in packet_in handler: DPID: {0} not registered'.format(dpid))
             return
         source_DP = self.DPIDtoDP[dpid]
         # monitor packet_in rate per port
@@ -712,6 +741,14 @@ class ElasticRouter(app_manager.RyuApp):
     def send_nffg(self, xml_nffg):
         url = self.REST_Cf_Or + '/edit-config'
         req = urllib2.Request(url, xml_nffg)
+        response = urllib2.urlopen(req)
+        result = response.read()
+        self.logger.info(result)
+
+    def send_nffg_json(self, nffg_json):
+        url = self.REST_Cf_Or + '/NF-FG/NF-FG'
+        req = urllib2.Request(url, nffg_json)
+        req.get_method = lambda: 'PUT'
         response = urllib2.urlopen(req)
         result = response.read()
         self.logger.info(result)

@@ -6,6 +6,7 @@ import json
 import logging
 import xml.etree.ElementTree as ET
 import threading
+import urllib2
 
 #Set the logger
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
@@ -188,6 +189,27 @@ def add_flowentry(nffg_json, port_in, port_out, priority=10):
 
     return nffg.getJSON()
 
+def delete_VNF(nffg_json, vnf_id, RESTaddress):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    del_vnf = nffg.getVNF(vnf_id)
+    flows_out = nffg.getFlowRulesSendingTrafficFromVNF(del_vnf)
+    flows_in = nffg.getFlowRulesSendingTrafficToVNF(del_vnf)
+
+    flow_list = flows_out + flows_in
+
+    for flow in flow_list:
+        delete_flowrule(flow.id, RESTaddress)
+
+def delete_flowrule(rule_id, RESTaddress):
+    url = RESTaddress + '/NF-FG/NF-FG/' + rule_id
+    req = urllib2.Request(url)
+    req.get_method = lambda: 'DELETE'
+    response = urllib2.urlopen(req)
+    result = response.read()
+    logging.info(result)
 
 if __name__ == "__main__":
     json_file = open('er_nffg.json').read()
