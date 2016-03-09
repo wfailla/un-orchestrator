@@ -1,16 +1,26 @@
 #ifndef PUB_SUB_H_
 #define PUB_SUB_H_ 1
 
+#include <string>
+#include <list>
+
 #include <czmq.h>
 #include <dd.h>
 
 #include "../../utils/logger.h"
 #include "pub_sub_constants.h"
 
+using namespace std;
+
 typedef enum {
 	NFFG,
 	//[+] add here other topics
 }topic_t;
+
+struct publish_t{
+	topic_t topic;
+	char *message;
+};
 
 class DoubleDeckerClient
 {
@@ -20,6 +30,23 @@ private:
 	*		Decker bus
 	*/
 	static zactor_t *client;
+
+	/**
+	*	@brief: this variable is true when the connection with the
+	*		Double Decker is established
+	*/
+	static bool connected;
+
+	/**
+	*	@brief: list contaning messages to be sent (and the related topic)
+	*/
+	static list<publish_t> messages;
+
+	/**
+	*	@brief: semaphore to serialize some operations of the Double Decker
+	*		client
+	*/
+	static pthread_mutex_t connected_mutex;
 
 	/**
 	*	@brief: wait for messages coming from the DoubleDecker network
