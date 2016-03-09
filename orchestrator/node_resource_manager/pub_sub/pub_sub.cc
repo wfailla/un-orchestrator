@@ -73,6 +73,9 @@ void *DoubleDeckerClient::loop(void *param)
 			zactor_destroy(&client);
 			free(event);
 			logger(ORCH_ERROR, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "This situation is not handled by the code. Please reboot the orchestrator and check if the broker is running!");
+			signal(SIGALRM,sigalarm_handler);
+			alarm(1);
+			pthread_exit(NULL);
 	    }
 	}
 	
@@ -122,3 +125,9 @@ char *DoubleDeckerClient::topicToString(topic_t topic)
 	}
 }
 
+void DoubleDeckerClient::sigalarm_handler(int sig)
+{
+	logger(ORCH_ERROR, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Error while trying to connect to the Double Decker network!");
+	logger(ORCH_ERROR, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "This situation is not handled by the code. Please reboot the orchestrator and check if the broker is running!");
+	alarm(1);
+}
