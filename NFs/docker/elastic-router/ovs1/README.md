@@ -39,4 +39,5 @@ SSH login credentials for the VNF containers:
 
 To avoid password entering, a public key can be added to the `authorized_keys` file.
 The fingerprint of the container changes on each build. SSH login complains about this because the fingerprint stored in  .ssh/known_hosts has changed after a new build. (This can be a man-in-the-middle attack).
+
 To avoid this error, the  fingerprint of the container can be removed from .ssh/known_hosts or this command can be used to login via ssh: `ssh -o StrictHostKeyChecking=no root@localhost -p 9001`

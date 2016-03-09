@@ -37,10 +37,11 @@ class ElasticRouter(app_manager.RyuApp):
 
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     # Cf_Or interface available in docker container
-    REST_Cf_Or =  'http://172.17.0.1:8080'
+    #REST_Cf_Or =  'http://172.17.0.1:8080'
 
-    #cfor_env = os.environ['CFOR']
-    #REST_Cf_Or =  'http://' + cfor_env
+    # cf-or address set from the nnfg as ENV variable
+    cfor_env = os.environ['CFOR']
+    REST_Cf_Or =  'http://' + cfor_env
 
     def __init__(self, *args, **kwargs):
         super(ElasticRouter, self).__init__(*args, **kwargs)
@@ -227,6 +228,8 @@ class ElasticRouter(app_manager.RyuApp):
         # add new_DPs to nffg
         #nffg_intermediate = copy.deepcopy(self.nffg_xml)
         #nffg_intermediate = copy.deepcopy(self.nffg_json)
+
+        #get base nffg, add internal/external flowrules here
         nffg_intermediate = open('er_nffg_scale_out_intermediate.json').read()
         '''
         for new_DP in new_DP_list:
