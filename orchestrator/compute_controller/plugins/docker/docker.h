@@ -27,7 +27,7 @@ private:
 
 public:
 	bool isSupported(Description&);
-	
+
 	bool startNF(StartNFIn sni);
 	bool stopNF(StopNFIn sni);
 };

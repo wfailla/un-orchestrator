@@ -12,7 +12,7 @@ OVSDBManager::OVSDBManager()
 
 //Destroyer
 OVSDBManager::~OVSDBManager()
-{	
+{
 }
 
 //implementation of createLsi
@@ -42,7 +42,7 @@ void OVSDBManager::destroyNFPorts(DestroyNFportsIn dnpi){
 
 //implementation of destroyEndpoint
 void OVSDBManager::destroyEndpoint(DestroyEndpointIn depi){
-	c->cmd_editconfig_endpoint_delete(depi, s);	
+	c->cmd_editconfig_endpoint_delete(depi, s);
 }
 
 //implementation of destroyVirtualLink

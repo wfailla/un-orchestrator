@@ -24,7 +24,7 @@ private:
 	*	@brief: identifier of the LSI to which the VNF is connected
 	*/
 	uint64_t lsiID;
-	
+
 	/**
 	*	@brief: name of the network function
 	*/
@@ -35,14 +35,14 @@ protected:
 		: lsiID(lsiID), nf_name(nf_name)
 	{
 	}
-	
+
 public:
 
 	uint64_t getLsiID()
 	{
 		return lsiID;
 	}
-	
+
 	string getNfName()
 	{
 		return nf_name;

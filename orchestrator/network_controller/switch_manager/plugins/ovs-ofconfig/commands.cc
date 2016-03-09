@@ -6,7 +6,7 @@ struct nc_session* session = NULL;
 int rnumber = 1;
 uint64_t dnumber = 1;
 int pnumber = 0, nfnumber = 0;
-locale loc;	
+locale loc;
 
 /*map use to obtain name of switch from id*/
 map<uint64_t, string> switch_id;
@@ -27,9 +27,9 @@ commands::~commands(){
 
 //return the password related by username and hostname
 char *password(const char *username, const char *hostname){
-	
+
 	char *psw = new char[64];
-	int i = 0;	
+	int i = 0;
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Insert ssh password for OFConfig server on OvS:");
 
@@ -38,7 +38,7 @@ char *password(const char *username, const char *hostname){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error scanf.");
 		throw commandsException();
 	}
-	
+
 	return psw;
 }
 
@@ -149,7 +149,7 @@ int commands::cmd_connect(char *user) {
 
 	/* create the session */
 	session = nc_session_connect(NULL, 0, user, NULL);/*host = default 'localhost', port = default '830'*/
-	/* fail to create a session*/	
+	/* fail to create a session*/
 	if(session == NULL)
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Connecting to the localhost:830 failed.");
@@ -190,7 +190,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 	NC_EDIT_TESTOPT_TYPE testopt = NC_EDIT_TESTOPT_SET;
 	NC_DATASTORE target = NC_DATASTORE_RUNNING /*by default is running*/;
 	nc_rpc *rpc = NULL;
-	
+
 	//variable to write .xml file
 	int rc;
 	xmlDocPtr doc;
@@ -202,11 +202,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 	//list of ports
 	list<string> ports = cli.getPhysicalPortsName();
 
-	//list of nf	
+	//list of nf
 	set<string> nfs = cli.getNetworkFunctionsName();
 
-	//list of nft	
-	map<string,nf_t> nf_type = cli.getNetworkFunctionsType(); 	
+	//list of nft
+	map<string,nf_t> nf_type = cli.getNetworkFunctionsType();
 
 	list<uint64_t> vport = cli.getVirtualLinksRemoteLSI();
 
@@ -243,9 +243,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 	buf = xmlBufferCreate();
 	if(buf == NULL){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlWriterMemory: Error creating the xml buffer\n.");
-		throw commandsException();		
+		throw commandsException();
 	}
-	
+
 	/* Create a new XmlWriter for memory, with no compression.*/
     	writer = xmlNewTextWriterMemory(buf, 0);
     	if (writer == NULL) {
@@ -259,14 +259,14 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", BAD_CAST "urn:onf:config:yang");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteAttribute\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns:nc"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:nc",
 	        BAD_CAST "urn:ietf:params:xml:ns:netconf:base:1.0");
@@ -274,10 +274,10 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteAttribute\n");
 		throw commandsException();
 	}
-	
+
 	/*check if physical ports is 0*/
 	if(ports.size() !=0 || nfs.size() != 0){
-		/*create an element name "resources" as child of "capable-switch"*/		
+		/*create an element name "resources" as child of "capable-switch"*/
 		rc = xmlTextWriterStartElement(writer, BAD_CAST "resources");
 		if (rc < 0) {
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -291,13 +291,13 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 		/*for each port in the list of the ports*/
 		for(list<string>::iterator p = ports.begin(); p != ports.end(); p++){
-			/*create an element name "port as child of "resources""*/			
+			/*create an element name "port as child of "resources""*/
 			rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
 			if (rc < 0) {
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 				throw commandsException();
 			}
-					
+
 			/*add attribute "nc:operation"*/
 			rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "nc:operation",
 	                       	BAD_CAST "create");
@@ -313,7 +313,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
 			}
-			
+
 			/*add element "requested-number"*/
 			rc = xmlTextWriterWriteFormatElement(writer, BAD_CAST "requested-number", "%d", rnumber);
     			if (rc < 0) {
@@ -327,35 +327,35 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 				throw commandsException();
     			}
-					
+
 			/*add element "admin-state"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "admin-state", BAD_CAST "up");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
-			}	
+			}
 
 			/*add element "no-receive"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-receive",BAD_CAST "false");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
-			}				
-		
+			}
+
 			/*add element "no-forward"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-forward",BAD_CAST "false");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
-			}				
-				
+			}
+
 			/*add element "no-packet-in"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-packet-in",BAD_CAST "false");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
 			}
-				
+
 			/*close element "configuration"*/
 			rc = xmlTextWriterEndElement(writer);
     			if (rc < 0) {
@@ -373,26 +373,26 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 			/*increment the value of request-number*/
 			rnumber++;
 		}
-		
+
 	}
 
-	if(nfs.size() != 0){	
+	if(nfs.size() != 0){
 
 		nfnumber_old = rnumber;
-	
+
 		/*for each network function name in the list of nfs*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 		{
 			list<string> nfs_ports = cli.getNetworkFunctionsPortNames(*nf);
 			/*for each network function port in the list of nfs_ports*/
 			for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++){
-				/*create an element name "port as child of "resources""*/			
+				/*create an element name "port as child of "resources""*/
 				rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
 				if (rc < 0) {
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 					throw commandsException();
 				}
-					
+
 				/*add attribute "nc:operation"*/
 				rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "nc:operation", BAD_CAST "create");
 				if (rc < 0) {
@@ -410,7 +410,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 					throw commandsException();
 				}
-				
+
 				/*add element "requested-number"*/
 				rc = xmlTextWriterWriteFormatElement(writer, BAD_CAST "requested-number", "%d", rnumber);
 				if (rc < 0) {
@@ -424,35 +424,35 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 					throw commandsException();
 				}
-					
+
 				/*add element "admin-state"*/
 				rc = xmlTextWriterWriteElement(writer, BAD_CAST "admin-state", BAD_CAST "up");
 				if (rc < 0) {
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 					throw commandsException();
-				}	
+				}
 
 				/*add element "no-receive"*/
 				rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-receive",BAD_CAST "false");
 				if (rc < 0) {
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 					throw commandsException();
-				}				
-		
+				}
+
 				/*add element "no-forward"*/
 				rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-forward",BAD_CAST "false");
 				if (rc < 0) {
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 					throw commandsException();
-				}				
-				
+				}
+
 				/*add element "no-packet-in"*/
 				rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-packet-in",BAD_CAST "false");
 				if (rc < 0) {
 					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 					throw commandsException();
 				}
-			
+
 				/*close element "configuration"*/
 				rc = xmlTextWriterEndElement(writer);
 				if (rc < 0) {
@@ -482,7 +482,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 		}
 	}
 
-	/*create an element name "logical-switches" as child of "capable-switch"*/		
+	/*create an element name "logical-switches" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "logical-switches");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -511,12 +511,12 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 	dnumber_new = dnumber;
 
-	/*create an element name "id" as child of "switch"*/		
+	/*create an element name "id" as child of "switch"*/
 	rc = xmlTextWriterWriteElement(writer, BAD_CAST "id", BAD_CAST temp);
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
-	}		
+	}
 
 	/*fill the map switch_id*/
 	switch_id[dnumber] = string(temp);
@@ -524,7 +524,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 	/*copy the current name of a switch*/
 	strcpy(switch_name, temp);
 
-	/*create an element name "datapath-id" as child of "switch"*/		
+	/*create an element name "datapath-id" as child of "switch"*/
 	rc = xmlTextWriterWriteElement(writer, BAD_CAST "datapath-id", BAD_CAST num_to_string(dnumber));
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -583,13 +583,13 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 			/*increment request-number value*/
 			rnumber++;
 		}
-		
-	}	
+
+	}
 
 	if(nfs.size() != 0){
 
 		rnumber = nfnumber_old;
-	
+
 		/*for each network function name in the list of nfp*/
 		for(set<string>::iterator nf = nfs.begin(); nf != nfs.end(); nf++)
 		{
@@ -597,7 +597,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 			map<string,unsigned int> n_ports_1;
 
-			/*for each network function port in the list of nfs_ports*/				
+			/*for each network function port in the list of nfs_ports*/
 			for(list<string>::iterator nfp = nfs_ports.begin(); nfp != nfs_ports.end(); nfp++){
 
 				/*add element "port"*/
@@ -653,7 +653,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 		if (rc < 0) {
 	       		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterEndElement\n");
 			throw commandsException();
-		}	
+		}
 	}
 
 	/*add element "controllers"*/
@@ -773,7 +773,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 	fclose(fp);
 
-	xmlBufferFree(buf);	
+	xmlBufferFree(buf);
 
 	/* read the configuration */
 	doc = xmlReadFile(TMP_XML_FILE, NULL, XML_PARSE_NOBLANKS|XML_PARSE_NSCLEAN|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);
@@ -845,7 +845,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
 				throw commandsException();
 			}
-			
+
 			sprintf(cmdLine, PATH_SCRIPT_ID_PORT, bridge_name, vrt);
 
 			/*execute IdPort.sh*/
@@ -881,7 +881,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 
 			pnumber++;
 		}
-	}	
+	}
 
 	/*set string bash*/
 	sprintf(cmdLine, PATH_SCRIPT_OF_VERSION, switch_name, of_version);
@@ -892,7 +892,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
 		throw commandsException();
 	}
-	
+
 	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, virtual_links);
 
 	return clo;
@@ -902,7 +902,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpid, uint64_t id){
 	NC_EDIT_TESTOPT_TYPE testopt = NC_EDIT_TESTOPT_SET;
 	NC_DATASTORE target = NC_DATASTORE_RUNNING /*by default is running*/;
 	nc_rpc *rpc = NULL;
-	
+
 	//variable to write .xml file
 	int rc;
 	xmlDocPtr doc;
@@ -922,9 +922,9 @@ void commands::cmd_delete_virtual_link(uint64_t dpid, uint64_t id){
 	buf = xmlBufferCreate();
 	if(buf == NULL){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlWriterMemory: Error creating the xml buffer\n.");
-		throw commandsException();		
+		throw commandsException();
 	}
-	
+
 	/* Create a new XmlWriter for memory, with no compression.*/
     	writer = xmlNewTextWriterMemory(buf, 0);
     	if (writer == NULL) {
@@ -938,14 +938,14 @@ void commands::cmd_delete_virtual_link(uint64_t dpid, uint64_t id){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", BAD_CAST "urn:onf:config:yang");
 	if (rc < 0) {
        		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteAttribute\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns:nc"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:nc",
         	BAD_CAST "urn:ietf:params:xml:ns:netconf:base:1.0");
@@ -954,20 +954,20 @@ void commands::cmd_delete_virtual_link(uint64_t dpid, uint64_t id){
 		throw commandsException();
 	}
 
-	/*create an element name "resources" as child of "capable-switch"*/		
+	/*create an element name "resources" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "resources");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
 
-	/*create an element name "port as child of "resources""*/			
+	/*create an element name "port as child of "resources""*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-					
+
 	/*add attribute "nc:operation"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "nc:operation", BAD_CAST "remove");
 	if (rc < 0) {
@@ -997,7 +997,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpid, uint64_t id){
 		throw commandsException();
 	}
 
-	/*create an element name "logical-switches" as child of "capable-switch"*/		
+	/*create an element name "logical-switches" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "logical-switches");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1011,7 +1011,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpid, uint64_t id){
 		throw commandsException();
 	}
 
-	/*create an element name "id" as child of "switch"*/		
+	/*create an element name "id" as child of "switch"*/
 	rc = xmlTextWriterWriteElement(writer, BAD_CAST "id", BAD_CAST switch_id[dpid].c_str());
     	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1093,7 +1093,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpid, uint64_t id){
 
 	fclose(fp);
 
-	xmlBufferFree(buf);	
+	xmlBufferFree(buf);
 
 	/* read the configuration */
 	doc = xmlReadFile(TMP_XML_FILE, NULL, XML_PARSE_NOBLANKS|XML_PARSE_NSCLEAN|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);
@@ -1138,7 +1138,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 	NC_EDIT_TESTOPT_TYPE testopt = NC_EDIT_TESTOPT_SET;
 	NC_DATASTORE target = NC_DATASTORE_RUNNING /*by default is running*/;
 	nc_rpc *rpc = NULL;
-	
+
 	//variable to write .xml file
 	int rc;
 	xmlDocPtr doc;
@@ -1149,7 +1149,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 
 	char *config = TMP_XML_FILE;
 	FILE *output = NULL;
-	
+
 	list<uint64_t> ii;
 
 	/*for all virtual link ports*/
@@ -1161,9 +1161,9 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 	buf = xmlBufferCreate();
 	if(buf == NULL){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlWriterMemory: Error creating the xml buffer\n.");
-		throw commandsException();		
+		throw commandsException();
 	}
-	
+
 	/* Create a new XmlWriter for memory, with no compression.*/
     	writer = xmlNewTextWriterMemory(buf, 0);
     	if (writer == NULL) {
@@ -1177,14 +1177,14 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", BAD_CAST "urn:onf:config:yang");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteAttribute\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns:nc"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:nc",
 	        BAD_CAST "urn:ietf:params:xml:ns:netconf:base:1.0");
@@ -1193,7 +1193,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 		throw commandsException();
 	}
 
-	/*create an element name "logical-switches" as child of "capable-switch"*/		
+	/*create an element name "logical-switches" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "logical-switches");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1215,13 +1215,13 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 		throw commandsException();
 	}
 
-	/*create an element name "id" as child of "switch"*/		
+	/*create an element name "id" as child of "switch"*/
 	rc = xmlTextWriterWriteElement(writer, BAD_CAST "id", BAD_CAST switch_id[dpid].c_str());
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-	
+
 	/*close element "switch"*/
 	rc = xmlTextWriterEndElement(writer);
 	if (rc < 0) {
@@ -1242,7 +1242,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
        		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterEndElement\n");
 		throw commandsException();
 	}
-		
+
 	xmlFreeTextWriter(writer);
 
 	fp = fopen(config, "w");
@@ -1255,7 +1255,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 
 	fclose(fp);
 
-	xmlBufferFree(buf);	
+	xmlBufferFree(buf);
 
 	/* read the configuration */
 	doc = xmlReadFile(TMP_XML_FILE, NULL, XML_PARSE_NOBLANKS|XML_PARSE_NSCLEAN|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);
@@ -1288,7 +1288,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpid){
 	}
 
 	/* send the request and get the reply */
-	send_recv_process("edit-config", rpc, NULL, output);	
+	send_recv_process("edit-config", rpc, NULL, output);
 
 	/*remove file File.xml*/
 	if( remove( TMP_XML_FILE ) != 0 )
@@ -1301,7 +1301,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 	NC_EDIT_TESTOPT_TYPE testopt = NC_EDIT_TESTOPT_SET;
 	NC_DATASTORE target = NC_DATASTORE_RUNNING /*by default is running*/;
 	nc_rpc *rpc = NULL;
-	
+
 	//variable to write .xml file
 	int rc;
 	xmlDocPtr doc;
@@ -1327,9 +1327,9 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 	buf = xmlBufferCreate();
 	if(buf == NULL){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlWriterMemory: Error creating the xml buffer\n.");
-		throw commandsException();		
+		throw commandsException();
 	}
-	
+
 	/* Create a new XmlWriter for memory, with no compression.*/
     	writer = xmlNewTextWriterMemory(buf, 0);
     	if (writer == NULL) {
@@ -1343,14 +1343,14 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
        		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", BAD_CAST "urn:onf:config:yang");
 	if (rc < 0) {
        		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteAttribute\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns:nc"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:nc",
         	BAD_CAST "urn:ietf:params:xml:ns:netconf:base:1.0");
@@ -1360,7 +1360,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 	}
 
 	if(nfp.size() !=0){
-		/*create an element name "resources" as child of "capable-switch"*/		
+		/*create an element name "resources" as child of "capable-switch"*/
 		rc = xmlTextWriterStartElement(writer, BAD_CAST "resources");
 		if (rc < 0) {
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1375,13 +1375,13 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 			/*create name of port --> lsiId_portName*/
 			sprintf(temp, "%" PRIu64 "_%s", anpi.getDpid(), (*p).c_str());
 
-			/*create an element name "port as child of "resources""*/			
+			/*create an element name "port as child of "resources""*/
 			rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
 			if (rc < 0) {
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 				throw commandsException();
 			}
-					
+
 			/*add attribute "nc:operation"*/
 			rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "nc:operation", BAD_CAST "create");
 			if (rc < 0) {
@@ -1395,7 +1395,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
        				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
 			}
-				
+
 			/*add element "requested-number"*/
 			rc = xmlTextWriterWriteFormatElement(writer, BAD_CAST "requested-number", "%d", rnumber);
     			if (rc < 0) {
@@ -1409,35 +1409,35 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 				throw commandsException();
     			}
-					
+
 			/*add element "admin-state"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "admin-state", BAD_CAST "up");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
-			}	
+			}
 
 			/*add element "no-receive"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-receive",BAD_CAST "false");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
-			}				
-		
+			}
+
 			/*add element "no-forward"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-forward",BAD_CAST "false");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
-			}				
-				
+			}
+
 			/*add element "no-packet-in"*/
 			rc = xmlTextWriterWriteElement(writer, BAD_CAST "no-packet-in",BAD_CAST "false");
     			if (rc < 0) {
         			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 				throw commandsException();
 			}
-				
+
 			/*close element "configuration"*/
 			rc = xmlTextWriterEndElement(writer);
     			if (rc < 0) {
@@ -1466,10 +1466,10 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 		if (rc < 0) {
 	       		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterEndElement\n");
 			throw commandsException();
-		}	
+		}
 	}
 
-	/*create an element name "logical-switches" as child of "capable-switch"*/		
+	/*create an element name "logical-switches" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "logical-switches");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1483,7 +1483,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 		throw commandsException();
 	}
 
-	/*create an element name "id" as child of "switch"*/		
+	/*create an element name "id" as child of "switch"*/
 	rc = xmlTextWriterWriteElement(writer, BAD_CAST "id", BAD_CAST switch_id[anpi.getDpid()].c_str());
     	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1566,7 +1566,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
         	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterEndElement\n");
 		throw commandsException();
     	}
-	
+
 	xmlFreeTextWriter(writer);
 
 	fp = fopen(config, "w");
@@ -1579,7 +1579,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi){
 
 	fclose(fp);
 
-	xmlBufferFree(buf);	
+	xmlBufferFree(buf);
 
 	/* read the configuration */
 	doc = xmlReadFile(TMP_XML_FILE, NULL, XML_PARSE_NOBLANKS|XML_PARSE_NSCLEAN|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);
@@ -1627,7 +1627,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 	NC_EDIT_TESTOPT_TYPE testopt = NC_EDIT_TESTOPT_SET;
 	NC_DATASTORE target = NC_DATASTORE_RUNNING /*by default is running*/;
 	nc_rpc *rpc = NULL;
-	
+
 	//variable to write .xml file
 	int rc;
 	xmlDocPtr doc;
@@ -1647,9 +1647,9 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 	buf = xmlBufferCreate();
 	if(buf == NULL){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlWriterMemory: Error creating the xml buffer\n.");
-		throw commandsException();		
+		throw commandsException();
 	}
-	
+
 	/* Create a new XmlWriter for memory, with no compression.*/
     	writer = xmlNewTextWriterMemory(buf, 0);
     	if (writer == NULL) {
@@ -1663,14 +1663,14 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", BAD_CAST "urn:onf:config:yang");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteAttribute\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns:nc"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:nc",
 	        BAD_CAST "urn:ietf:params:xml:ns:netconf:base:1.0");
@@ -1680,7 +1680,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 	}
 
 	if(nfp.size() !=0){
-		/*create an element name "resources" as child of "capable-switch"*/		
+		/*create an element name "resources" as child of "capable-switch"*/
 		rc = xmlTextWriterStartElement(writer, BAD_CAST "resources");
 		if (rc < 0) {
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1689,13 +1689,13 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 
 		/*for each port in the list of the getNetworkFunctionsPorts*/
 		for(set<string>::iterator p = nfp.begin(); p != nfp.end(); p++){
-			/*create an element name "port as child of "resources""*/			
+			/*create an element name "port as child of "resources""*/
 			rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
 			if (rc < 0) {
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 				throw commandsException();
 			}
-					
+
 			/*add attribute "nc:operation"*/
 			rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "nc:operation",
 	                       	BAD_CAST "remove");
@@ -1728,13 +1728,13 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 		}
 	}
 
-	/*create an element name "logical-switches" as child of "capable-switch"*/		
+	/*create an element name "logical-switches" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "logical-switches");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-	
+
 	/*add element "switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "switch");
 	if (rc < 0) {
@@ -1742,7 +1742,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 		throw commandsException();
 	}
 
-	/*create an element name "id" as child of "switch"*/		
+	/*create an element name "id" as child of "switch"*/
 	rc = xmlTextWriterWriteElement(writer, BAD_CAST "id", BAD_CAST switch_id[dnpi.getDpid()].c_str());
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -1830,7 +1830,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi){
 
 	fclose(fp);
 
-	xmlBufferFree(buf);	
+	xmlBufferFree(buf);
 
 	/* read the configuration */
 	doc = xmlReadFile(TMP_XML_FILE, NULL, XML_PARSE_NOBLANKS|XML_PARSE_NSCLEAN|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);
@@ -1886,7 +1886,7 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli){
 	uint64_t port_id_1 = 0, port_id_2 = 0;
 
 	char cmdLine[4096];
-	
+
 	int pip = 0;
 
 	//int pnumber_old = 0;
@@ -1910,7 +1910,7 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error system.");
 		throw commandsException();
 	}
-	
+
 	sprintf(cmdLine, PATH_SCRIPT_ID_PORT, bridge_name, vrt);
 
 	/*execute IdPort.sh*/
@@ -1927,7 +1927,7 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli){
 	port_id_2 = system(cmdLine);
 
 	port_id_2 = port_id_2/256;
-	
+
 	/*store the information [port_id, bridge_name]*/
 	virtual_link_id[bridge_name].push_back(port_id_2);
 
@@ -1949,7 +1949,7 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 	NC_EDIT_TESTOPT_TYPE testopt = NC_EDIT_TESTOPT_SET;
 	NC_DATASTORE target = NC_DATASTORE_RUNNING /*by default is running*/;
 	nc_rpc *rpc = NULL;
-	
+
 	//variable to write .xml file
 	int rc;
 	xmlDocPtr doc;
@@ -1970,9 +1970,9 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 	buf = xmlBufferCreate();
 	if(buf == NULL){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlWriterMemory: Error creating the xml buffer\n.");
-		throw commandsException();		
+		throw commandsException();
 	}
-	
+
 	/* Create a new XmlWriter for memory, with no compression.*/
     	writer = xmlNewTextWriterMemory(buf, 0);
     	if (writer == NULL) {
@@ -1986,14 +1986,14 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", BAD_CAST "urn:onf:config:yang");
 	if (rc < 0) {
        		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteAttribute\n");
 		throw commandsException();
 	}
-			
+
 	/*add attribute "xmlns:nc"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:nc",
         	BAD_CAST "urn:ietf:params:xml:ns:netconf:base:1.0");
@@ -2002,20 +2002,20 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 		throw commandsException();
 	}
 
-	/*create an element name "resources" as child of "capable-switch"*/		
+	/*create an element name "resources" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "resources");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
 
-	/*create an element name "port as child of "resources""*/			
+	/*create an element name "port as child of "resources""*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 		throw commandsException();
 	}
-					
+
 	/*add attribute "nc:operation"*/
 	rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "nc:operation", BAD_CAST "remove");
 	if (rc < 0) {
@@ -2037,15 +2037,15 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
         	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterEndElement\n");
 		throw commandsException();
     	}
-	
-	if(dvli.getIdB() != 0){	
-		/*create an element name "port as child of "resources""*/			
+
+	if(dvli.getIdB() != 0){
+		/*create an element name "port as child of "resources""*/
 		rc = xmlTextWriterStartElement(writer, BAD_CAST "port");
 		if (rc < 0) {
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
 			throw commandsException();
 		}
-					
+
 		/*add attribute "nc:operation"*/
 		rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "nc:operation", BAD_CAST "remove");
 		if (rc < 0) {
@@ -2076,7 +2076,7 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 		throw commandsException();
 	}
 
-	/*create an element name "logical-switches" as child of "capable-switch"*/		
+	/*create an element name "logical-switches" as child of "capable-switch"*/
 	rc = xmlTextWriterStartElement(writer, BAD_CAST "logical-switches");
 	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -2090,7 +2090,7 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 		throw commandsException();
 	}
 
-	/*create an element name "id" as child of "switch"*/		
+	/*create an element name "id" as child of "switch"*/
 	rc = xmlTextWriterWriteElement(writer, BAD_CAST "id", BAD_CAST switch_id[dvli.getDpidA()].c_str());
     	if (rc < 0) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -2153,8 +2153,8 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 	       		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterWriteElement\n");
 			throw commandsException();
 		}
-	
-		/*create an element name "id" as child of "switch"*/		
+
+		/*create an element name "id" as child of "switch"*/
 		rc = xmlTextWriterWriteElement(writer, BAD_CAST "id", BAD_CAST switch_id[dvli.getDpidB()].c_str());
 	    	if (rc < 0) {
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "testXmlwriterMemory: Error at xmlTextWriterStartElement\n");
@@ -2237,7 +2237,7 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli){
 
 	fclose(fp);
 
-	xmlBufferFree(buf);	
+	xmlBufferFree(buf);
 
 	/* read the configuration */
 	doc = xmlReadFile(TMP_XML_FILE, NULL, XML_PARSE_NOBLANKS|XML_PARSE_NSCLEAN|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);

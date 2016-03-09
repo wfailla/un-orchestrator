@@ -119,7 +119,7 @@ bool Native::startNF(StartNFIn sni) {
 	std::string nf_name = sni.getNfName();
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
-	
+
 	std::stringstream uri;
 
 	try {
@@ -133,10 +133,10 @@ bool Native::startNF(StartNFIn sni) {
 
 	std::string uri_script = description->getURI();
 	uri << uri_script;
-	
+
 	std::stringstream command;
 	command << PULL_AND_RUN_NATIVE_NF << " " << lsiID << " " << nf_name << " " << uri.str() << " " << n_ports;
-	
+
 	//create the names of the ports
 	for(std::map<unsigned int, std::string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 		command << " " << pn->second;
@@ -145,10 +145,10 @@ bool Native::startNF(StartNFIn sni) {
 
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
-	
+
 	if(retVal == 0)
 		return false;
-		
+
 	return true;
 }
 
@@ -159,7 +159,7 @@ bool Native::stopNF(StopNFIn sni) {
 
 	std::stringstream command;
 	command << STOP_NATIVE_NF << " " << lsiID << " " << nf_name;
-	
+
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -174,18 +174,18 @@ unsigned int Native::convertNetmask(string netmask) {
 
 	unsigned int slash = 0;
 	unsigned int mask;
-	
+
 	int first, second, third, fourth;
 	sscanf(netmask.c_str(),"%d.%d.%d.%d",&first,&second,&third,&fourth);
 	mask = (first << 24) + (second << 16) + (third << 8) + fourth;
-	
+
 	for(int i = 0; i < 32; i++)
 	{
 		if((mask & 0x1) == 1)
 			slash++;
 		mask = mask >> 1;
 	}
-	
+
 	return slash;
 }
 

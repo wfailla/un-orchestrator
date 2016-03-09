@@ -23,17 +23,17 @@ bool Docker::startNF(StartNFIn sni)
 {
 	uint64_t lsiID = sni.getLsiID();
 	string nf_name = sni.getNfName();
-	
+
 	string uri_image = description->getURI();
-	
+
 	map<unsigned int, string> namesOfPortsOnTheSwitch = sni.getNamesOfPortsOnTheSwitch();
 	unsigned int n_ports = namesOfPortsOnTheSwitch.size();
-	
+
 	map<unsigned int, port_network_config_t > portsConfiguration = sni.getPortsConfiguration();
 	for(map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin(); configuration != portsConfiguration.end(); configuration++)
 	{
 		logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Network configuration for port: %s:%d",nf_name.c_str(),configuration->first);
-	
+
 		if(configuration->second.mac_address != "")
 			logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t MAC address: %s",(configuration->second.mac_address).c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
@@ -41,33 +41,33 @@ bool Docker::startNF(StartNFIn sni)
 			logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "\t IP address: %s",(configuration->second.ip_address).c_str());
 #endif
 	}
-	
+
 	stringstream command;
 	command << PULL_AND_RUN_DOCKER_NF << " " << lsiID << " " << nf_name << " " << uri_image << " " << n_ports;
-	
+
 	assert(portsConfiguration.size() == namesOfPortsOnTheSwitch.size());
 	//map<unsigned int, port_network_config_t >::iterator configuration = portsConfiguration.begin();
 	for(map<unsigned int, string>::iterator pn = namesOfPortsOnTheSwitch.begin(); pn != namesOfPortsOnTheSwitch.end(); pn++)
 	{
 		port_network_config_t configuration = portsConfiguration[pn->first];
-	
+
 		command << " "  << pn->second;
 		command << " ";
 		if(configuration.mac_address != "")
 			command <<  configuration.mac_address;
 		else
 			command << 0;
-			
+
 		command << " ";
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		if(configuration.ip_address != "")
 			command <<  configuration.ip_address;
 		else
 #endif
 			command << 0;
 	}
-		
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	list<port_mapping_t >  control_ports = sni.getControlPorts();
 	command << " " << control_ports.size();
 	if(control_ports.size() != 0)
@@ -79,7 +79,7 @@ bool Docker::startNF(StartNFIn sni)
 			command << " " << control->host_port << " " << control->guest_port;
 		}
 	}
-	
+
 	list<string> environment_variables = sni.getEnvironmentVariables();
 	command << " " << environment_variables.size();
 	if(environment_variables.size() != 0)
@@ -99,10 +99,10 @@ bool Docker::startNF(StartNFIn sni)
 
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
-	
+
 	if(retVal == 0)
 		return false;
-		
+
 	return true;
 }
 
@@ -113,7 +113,7 @@ bool Docker::stopNF(StopNFIn sni)
 
 	stringstream command;
 	command << STOP_DOCKER_NF << " " << lsiID << " " << nf_name;
-	
+
 	logger(ORCH_DEBUG_INFO, DOCKER_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 	int retVal = system(command.str().c_str());
 	retVal = retVal >> 8;
@@ -129,18 +129,18 @@ unsigned int Docker::convertNetmask(string netmask)
 {
 	unsigned int slash = 0;
 	unsigned int mask;
-	
+
 	int first, second, third, fourth;
 	sscanf(netmask.c_str(),"%d.%d.%d.%d",&first,&second,&third,&fourth);
 	mask = (first << 24) + (second << 16) + (third << 8) + fourth;
-	
+
 	for(int i = 0; i < 32; i++)
 	{
 		if((mask & 0x1) == 1)
 			slash++;
 		mask = mask >> 1;
 	}
-	
+
 	return slash;
 }
 #endif

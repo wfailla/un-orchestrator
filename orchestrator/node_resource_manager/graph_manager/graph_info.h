@@ -39,12 +39,12 @@ private:
 public:
 	GraphInfo();
 	~GraphInfo();
-	
+
 	void setController(Controller *controller);
 	void setLSI(LSI *lsi);
 	void setComputeController(ComputeController *computeController);
 	void setGraph(highlevel::Graph *graph);
-	
+
 	ComputeController *getComputeController();
 	LSI *getLSI();
 	Controller *getController();

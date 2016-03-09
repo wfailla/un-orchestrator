@@ -11,17 +11,17 @@ using namespace std;
 class PubSubClientManager
 {
 public:
-	
+
 	/**
 	*	@brief: Publish domain information at the boot time
 	*/
 	virtual bool publishBoot(char *, char *, char *) = 0;
-	
+
 	/**
 	*	@brief: Publish updating domain information
 	*/
 	virtual bool publishUpdating() = 0;
-	
+
 	/**
 	*	@brief: Terminate client
 	*/

@@ -24,7 +24,7 @@ class LSI
 /**
 *	@brief: This class is indended to represent the current situation on the LSI.
 *		The it MUST only contain inforation related to the LSI used to implement
-*		a single graph (and not information related to the configururation of the 
+*		a single graph (and not information related to the configururation of the
 *		VNFs).
 */
 
@@ -36,22 +36,22 @@ private:
 	*	@brief: this is the address of the OF controller for this LSI
 	*/
 	string controllerAddress;
-	
+
 	/**
 	*	@brief: this is the port used by the OF controller for the LSI
 	*/
 	string controllerPort;
-	
+
 	/**
 	*	@brief: data plane identifier
 	*/
 	uint64_t dpid;
-	
+
 	/**
 	*	@brief: the pair is <port name, port id>. It contains IDs assigned by the switch to the physical ports
 	*/
 	map<string,unsigned int> physical_ports;
-	
+
 	/**
 	*	@brief: the pair is <port name, port type>
 	*/
@@ -86,27 +86,27 @@ private:
 		 */
 		list<unsigned int> nf_ports_id;
 	};
-	
+
 	/**
-	*	@brief: endpoints connected to the LSI 
+	*	@brief: endpoints connected to the LSI
 	*		The map is
 	*  			<endpoint name, list params>
 	*				list params: gre key, local ip, remote ip
 	*/
 	map<string,vector<string> > endpoints_ports;
-	
+
 	/**
 	*	@brief: the pair is <endpoint name, endpoint id>
 	*/
 	map<string,unsigned int > endpoints_ports_id;
-	
+
 	/**
 	*	@brief: NFs connected to the LSI.
 	*		The map is
 	*			<nf name, nfData >
 	*/
 	map<string, struct nfData>  network_functions;
-		
+
 	/**
 	*	@brief: virtual links attached to the LSI
 	*	FIXME although supported in this class VLink, the code does not support vlinks connected to multiple LSIs
@@ -133,12 +133,12 @@ private:
 
 public:
 
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions, 
+	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions,
 		map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
-	
+
 	map<string,vector<string> > getEndpointsPorts();
 
 	map<string,unsigned int > getEndpointsPortsId();
@@ -182,7 +182,7 @@ protected:
 	bool setNfSwitchPortsID(string nf, map<string, unsigned int>);
 	void setVLinkIDs(unsigned int position, unsigned int localID, unsigned int remoteID);
 	bool setEndpointPortID(string ep, uint64_t id);
-	
+
 	void setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names);
 
 	int addVlink(VLink vlink);
@@ -190,7 +190,7 @@ protected:
 
 	bool addNF(string name, list< unsigned int> ports, const map<unsigned int, PortType>& nf_ports_type);
 	void removeNF(string nf);
-	
+
 	void addEndpoint(string name, vector<string> param);
 	void removeEndpoint(string ep);
 };

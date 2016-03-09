@@ -15,7 +15,7 @@ string MatchParser::nfName(string name_port)
 	{
 		return string(pnt);
 	}
-	
+
 	return "";
 }
 
@@ -37,11 +37,11 @@ unsigned int MatchParser::nfPort(string name_port)
 				return port;
 			break;
 		}
-		
+
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	
+
 	return port;
 }
 
@@ -63,11 +63,11 @@ bool MatchParser::nfIsPort(string name_port)
 				return true;
 			break;
 		}
-		
+
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	
+
 	return false;
 }
 
@@ -87,11 +87,11 @@ string MatchParser::epName(string name_port)
 				return pnt;
 			break;
 		}
-		
+
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	
+
 	return "";
 }
 
@@ -149,24 +149,24 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 {
 	if(!validateIpv4(netmask))
 		return false;
-		
+
 	bool zero = true;
 	unsigned int mask;
-	
+
 	int first, second, third, fourth;
 	sscanf(netmask.c_str(),"%d.%d.%d.%d",&first,&second,&third,&fourth);
 	mask = (first << 24) + (second << 16) + (third << 8) + fourth;
-	
+
 	for(int i = 0; i < 32; i++)
 	{
 		if(((mask & 0x1) == 0) && !zero)
 			return false;
 		if(((mask & 0x1) == 1) && zero)
 			zero = false;
-			
+
 		mask = mask >> 1;
 	}
-	
+
 	return true;
 }
 
@@ -180,7 +180,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 	{
 		const string& name  = i->first;
 		const Value&  value = i->second;
-	
+
 		if(name == PORT_IN)
 		{
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,PORT_IN,value.getString().c_str());
@@ -189,7 +189,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Only one between keys \"%s\", \"%s\" and \"%s\" are allowed in \"%s\"",PORT_IN,VNF,ENDPOINT,MATCH);
 				return false;
 			}
-		
+
 			foundOne = true;
 
 			string port_in_name = value.getString();
@@ -223,7 +223,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						//end-points port type
 						else if(strcmp(pnt,ENDPOINT) == 0){
 							p_type = 1;
-							match.setInputEndpoint(port_in_name_tmp);	
+							match.setInputEndpoint(port_in_name_tmp);
 						}
 						break;
 					case 1:
@@ -239,7 +239,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 							strcat(vnf_name_tmp,pnt);
 						}
 				}
-		
+
 				pnt = strtok( NULL, delimiter );
 				i++;
 			}
@@ -255,17 +255,17 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				strcpy(tmp_vnf_name, (char *)vnf_name.c_str());
 				unsigned int port = nfPort(string(tmp_vnf_name));
 				bool is_port = nfIsPort(string(tmp_vnf_name));
-							
+
 				if(nf_name == "" || !is_port)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" is not valid. It must be in the form \"name:port\"",vnf_name_tmp);
-					return false;	
+					return false;
 				}
 				/*nf port starts from 0*/
 				port++;
 
 				match.setNFport(nf_name,port);
-			
+
 				set<unsigned int> ports;
 				if(nfs.count(nf_name) != 0)
 					ports = nfs[nf_name];
@@ -285,21 +285,21 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
 					if(it != iface_id.end())
 					{
-						//physical port		
+						//physical port
 						realName.assign(iface_id[eP]);
-						iface_found = true;		
+						iface_found = true;
 					}
 					else if(it1 != iface_out_id.end())
 					{
-						//physical port		
-						realName.assign(iface_out_id[eP]);	
-						iface_found = true;	
+						//physical port
+						realName.assign(iface_out_id[eP]);
+						iface_found = true;
 					}
 					else if(it2 != vlan_id.end())
 					{
-						//vlan		
+						//vlan
 						v_id.assign(vlan_id[eP].first);
-						vlan_found = true;	
+						vlan_found = true;
 					}
 				}
 				/*physical endpoint*/
@@ -313,7 +313,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				{
 					uint32_t vlanID = 0;
 					vlan_action_t actionType = ACTION_VLAN_POP;
-					
+
 					if((sscanf(v_id.c_str(),"%"SCNd32,&vlanID) != 1) && (vlanID > 4094))
 					{
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_ID,value.getString().c_str());
@@ -337,14 +337,14 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					if(endPoint == 0)
 					{
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
-						return false;	
+						return false;
 					}
 					match.setEndPoint(endPoint);
-			
+
 					stringstream ss;
 					ss << match.getEndPoint();
 				}
-			} 		
+			}
 		}
 		else if(name == HARD_TIMEOUT)
 		{
@@ -352,7 +352,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,HARD_TIMEOUT,value.getString().c_str());
 
-			//XXX: currently, this information is ignored	
+			//XXX: currently, this information is ignored
 		}
 		else if(name == ETH_TYPE)
 		{
@@ -392,7 +392,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,VLAN_PRIORITY,value.getString().c_str());
 
-			//XXX: currently, this information is ignored	
+			//XXX: currently, this information is ignored
 		}
 		else if(name == ETH_SRC)
 		{
@@ -436,7 +436,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				return false;
 			}
 			match.setEthDstMask((char*)value.getString().c_str());
-			foundProtocolField = true;		
+			foundProtocolField = true;
 		}
 		else if(name == VLAN_PCP)
 		{
@@ -487,7 +487,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					return false;
 				}
 				match.setIpv6Src((char*)value.getString().c_str());
-				foundProtocolField = true;	
+				foundProtocolField = true;
 			//IPv4
 			} else {
 				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,IP_SRC,value.getString().c_str());
@@ -496,7 +496,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_SRC,value.getString().c_str());
 					return false;
 				}
-				match.setIpv4Src((char*)value.getString().c_str());		
+				match.setIpv4Src((char*)value.getString().c_str());
 				foundProtocolField = true;
 			}
 		}
@@ -532,9 +532,9 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_SRC,value.getString().c_str());
 					return false;
 				}
-				match.setIpv4Dst((char*)value.getString().c_str());		
+				match.setIpv4Dst((char*)value.getString().c_str());
 				foundProtocolField = true;
-			}		
+			}
 		}
 		else if(name == IPv4_DST_MASK)
 		{
@@ -553,7 +553,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",MATCH,TOS_BITS,value.getString().c_str());
 
-			//XXX: currently, this information is ignored	
+			//XXX: currently, this information is ignored
 		}
 		else if(name == PORT_SRC)
 		{
@@ -630,7 +630,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",SCTP_DST,value.getString().c_str());
 				return false;
 			}
-			match.setSctpDst(sctpDst & 0xFFFF);		
+			match.setSctpDst(sctpDst & 0xFFFF);
 			foundProtocolField = true;
 		}
 		else if(name == ICMPv4_TYPE)
@@ -818,7 +818,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				return false;
 			}
 			match.setIcmpv6Code(icmpv6Code & 0xFF);
-			foundProtocolField = true;				
+			foundProtocolField = true;
 		}
 		else if(name == MPLS_LABEL)
 		{
@@ -868,19 +868,19 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 			return false;
 		}
 	}
-	
+
 	if(!foundOne)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Neither Key \"%s\", nor key \"%s\" found in \"%s\"",PORT,_ID,MATCH);
 		return false;
 	}
-	
+
 	if(foundProtocolField && foundEndPointID && definedInCurrentGraph)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "A \"%s\" specifying an \"%s\" (defined in the current graph) and at least a protocol field was found. This is not supported.",MATCH,ENDPOINT);
 		return false;
 	}
-	
+
 	return true;
 }
 

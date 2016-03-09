@@ -15,17 +15,17 @@ class ActionPort : public Action
 {
 private:
 	string port;
-	
+
 	string input_port;
-	
+
 public:
 	~ActionPort();
 	ActionPort(string port, string input_port);
 	string getInfo();
 	string toString();
-	
+
 	bool operator==(const ActionPort &other) const;
-	
+
 	void print();
 	Object toJSON();
 };
