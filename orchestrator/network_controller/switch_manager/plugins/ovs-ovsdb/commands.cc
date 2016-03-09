@@ -1925,11 +1925,11 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s)
 
 	/*create virtual link*/
 	sprintf(vrt, "vport%d", pnumber);
-
 	pnumber++;
 
 	/*create virtual link*/
 	sprintf(trv, "vport%d", pnumber);
+	pnumber++;
 
 	//Create the current name of a interface
 	sprintf(ifac, "iface%d", rnumber);

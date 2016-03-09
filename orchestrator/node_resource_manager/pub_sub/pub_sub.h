@@ -46,6 +46,11 @@ public:
 	*/
 	static bool init(char *clientName, char *brokerAddress, char *keyPath);
 	
+	/**
+	*	@brief: Disconnect the orchestrator from the Double Decker network
+	*/
+	static void terminate();
+	
 	static void publish(topic_t topic, char *message);
 };
 

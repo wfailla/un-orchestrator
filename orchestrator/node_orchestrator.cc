@@ -72,7 +72,11 @@ void singint_handler(int sig)
 
 #ifdef ENABLE_DOUBLE_DECKER
 	client->terminateClient();
-#endif	
+#endif
+
+#ifdef ENABLE_DOUBLE_DECKER_CONNECTION
+	DoubleDeckerClient::terminate();
+#endif
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Bye :D");
 	exit(EXIT_SUCCESS);
@@ -388,23 +392,23 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	
 	/* description file to export*/
 	char *temp_descr = new char[64];
-	strcpy(temp_descr, (char *)reader.Get("publisher/subscriber", "description_file", "UNKNOWN").c_str());
+	strcpy(temp_descr, (char *)reader.Get("resource-manager", "description_file", "UNKNOWN").c_str());
 	*descr_file_name = temp_descr;
 	
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	/* client name of Double Decker */
 	char *temp_cli = new char[64];
-	strcpy(temp_cli, (char *)reader.Get("publisher/subscriber", "client_name", "UNKNOWN").c_str());
+	strcpy(temp_cli, (char *)reader.Get("double-decker", "client_name", "UNKNOWN").c_str());
 	*client_name = temp_cli;
 	
 	/* broker address of Double Decker */
 	char *temp_dealer = new char[64];
-	strcpy(temp_dealer, (char *)reader.Get("publisher/subscriber", "broker_address", "UNKNOWN").c_str());
+	strcpy(temp_dealer, (char *)reader.Get("double-decker", "broker_address", "UNKNOWN").c_str());
 	*broker_address = temp_dealer;
 	
 	/* client name of Double Decker */
 	char *temp_key = new char[64];
-	strcpy(temp_key, (char *)reader.Get("publisher/subscriber", "key_path", "UNKNOWN").c_str());
+	strcpy(temp_key, (char *)reader.Get("double-decker", "key_path", "UNKNOWN").c_str());
 	*key_path = temp_key;
 #endif
 	
