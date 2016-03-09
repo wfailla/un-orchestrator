@@ -36,7 +36,7 @@
 			"variable": "VNF_NAME=ovs1"
 		},
 		{
-			"variable": "OVS_DPID=0000000000000001"
+			"variable": "OVS_DPID=9900000000000001"
 		}
 		],
 		"unify-control": [
