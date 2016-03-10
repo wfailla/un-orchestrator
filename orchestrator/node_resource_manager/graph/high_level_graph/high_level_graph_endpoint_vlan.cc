@@ -18,7 +18,7 @@ bool EndPointVlan::operator==(const EndPointVlan &other) const
 {
 	if(id == other.id && name == other.name)
 		return true;
-		
+
 	return false;
 }
 
@@ -71,19 +71,19 @@ void EndPointVlan::print()
 Object EndPointVlan::toJSON()
 {
 	Object EndPointVlan, vlan;
-	
+
 	EndPointVlan[_ID] = id.c_str();
 	EndPointVlan[_NAME] = name.c_str();
 	EndPointVlan[EP_TYPE] = VLAN;
-	
+
 	vlan[V_ID] = vlan_id.c_str();
 	vlan[NODE_ID] = node_id.c_str();
 	if(strcmp(sw_id.c_str(), "") != 0)
 		vlan[SW_ID] = sw_id.c_str();
 	vlan[IFACE] = interface.c_str();
-	
+
 	EndPointVlan[VLAN] = vlan;
-	
+
 	return EndPointVlan;
 }
 

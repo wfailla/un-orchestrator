@@ -780,6 +780,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								int vnf_tcp_port, host_tcp_port;
 								//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
 								list<pair<string, string> > controlPorts;
+								//list of environment variables in the form "variable=value"
+								list<string> environmentVariables;
 #endif
 								//list of four element port id, port name, mac address and ip address related by the VNF
 								list<vector<string> > portS;
@@ -818,41 +820,41 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 										//store value of VNF id
 										id.assign(nf_value.getString().c_str());
 									}
-									else if(nf_name == VNF_CONTROL)
+									else if(nf_name == UNIFY_CONTROL)
 									{
 #ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
-										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",VNF_CONTROL,MODULE_NAME);
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",UNIFY_CONTROL,MODULE_NAME);
 										continue;
 #else
 										try{
 											nf_value.getArray();
 										} catch(exception& e)
 										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", VNF_CONTROL);
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", UNIFY_CONTROL);
 											return false;
 										}
 
 										const Array& control_array = nf_value.getArray();
 
-										//Itearate on the control
+										//Itearate on the control ports
 										for( unsigned int ctrl = 0; ctrl < control_array.size(); ++ctrl )
 										{
 											try{
 												control_array[ctrl].getObject();
 											} catch(exception& e)
 											{
-												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNF_CONTROL);
+												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: element of \"%s\" should be an Object", UNIFY_CONTROL);
 												return false;
 											}
 
-											//This is a VNF control, with an host tcp port and a vnf tcp port
+											//This is a VNF control port, with an host TCP port and a vnf VNF port
 											Object control = control_array[ctrl].getObject();
 
 											port_mapping_t port_mapping;
 
 											vector<string> port_descr(4);
 
-											//Parse the control
+											//Parse the control port
 											for(Object::const_iterator c = control.begin(); c != control.end(); c++)
 											{
 												const string& c_name  = c->first;
@@ -860,14 +862,12 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 												if(c_name == HOST_PORT)
 												{
-													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",VNF_CONTROL,HOST_PORT,c_value.getInt());
-
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",UNIFY_CONTROL,HOST_PORT,c_value.getInt());
 													host_tcp_port = c_value.getInt();
 												}
 												else if(c_name == VNF_PORT)
 												{
-													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",VNF_CONTROL,VNF_PORT,c_value.getInt());
-
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",UNIFY_CONTROL,VNF_PORT,c_value.getInt());
 													vnf_tcp_port = c_value.getInt();
 												}
 											}
@@ -881,14 +881,67 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											port_mapping.guest_port = sss.str();
 
 											//Add VNF control port description
-											if(!graph.addNetworkFunctionControlPort(name, port_mapping))
+											graph.addNetworkFunctionControlPort(name, port_mapping);
+											controlPorts.push_back(make_pair(ss.str(), sss.str()));
+										}//end iteration on the control ports
+#endif
+									}
+									else if(nf_name == UNIFY_ENV_VARIABLES)
+									{
+#ifndef ENABLE_UNIFY_PORTS_CONFIGURATION
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" is ignored in this configuration of the %s!",UNIFY_ENV_VARIABLES,MODULE_NAME);
+										continue;
+#else
+
+										try{
+											nf_value.getArray();
+										} catch(exception& e)
+										{
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", UNIFY_CONTROL);
+											return false;
+										}
+
+										const Array& env_variables_array = nf_value.getArray();
+
+										//Itearate on the environment variables
+										for(unsigned int env_var = 0; env_var < env_variables_array.size(); ++env_var)
+										{
+											try{
+												env_variables_array[env_var].getObject();
+											} catch(exception& e)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
+												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: element of \"%s\" should be an Object", UNIFY_CONTROL);
 												return false;
 											}
 
-											controlPorts.push_back(make_pair(ss.str(), sss.str()));
-										}
+											//This is an envirnment variable
+											Object env_variable = env_variables_array[env_var].getObject();
+
+											stringstream theEnvVar;
+
+											//Parse the environment variable
+											for(Object::const_iterator ev = env_variable.begin(); ev != env_variable.end(); ev++)
+											{
+												const string& ev_name  = ev->first;
+												const Value&  ev_value = ev->second;
+
+												if(ev_name == VARIABLE)
+												{
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",UNIFY_ENV_VARIABLES,VARIABLE,(ev_value.getString()).c_str());
+													theEnvVar << ev_value.getString();
+												}
+												else
+												{
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in an element of \"%s\"",ev_name.c_str(),UNIFY_ENV_VARIABLES);
+													return false;
+												}
+											}
+
+											//Add an environment variable for the VNF
+											graph.addNetworkFunctionEnvironmentVariable(name, theEnvVar.str());
+											environmentVariables.push_back(theEnvVar.str());
+										}//end iteration on the environment variables
+
 #endif
 									}
 									else if(nf_name == VNF_PORTS)
@@ -1004,7 +1057,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								}
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-								highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, controlPorts);
+								highlevel::VNFs vnfs(id, name, groups, vnf_template, portS, controlPorts,environmentVariables);
 #else
 								highlevel::VNFs vnfs(id, name, groups, vnf_template, portS);
 #endif
@@ -1012,6 +1065,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 								portS.clear();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								controlPorts.clear();
+								environmentVariables.clear();
 #endif
 							}
 						}
@@ -1069,6 +1123,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 								//This is a endpoints, with a name, a type, and an interface
 								Object end_points = end_points_array[ep].getObject();
+								//Iterate on the elements of an endpoint
 								for(Object::const_iterator aep = end_points.begin(); aep != end_points.end(); aep++)
 								{
 									const string& ep_name  = aep->first;
@@ -1988,6 +2043,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		for(set<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
 	}
+
 	return true;
 }
 

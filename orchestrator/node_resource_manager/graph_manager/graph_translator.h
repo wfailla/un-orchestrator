@@ -24,7 +24,7 @@ protected:
 	*	If the match is expressed on an endpoint, the action must be expressed on a NF
 	*	If the action is expressed on an endpoint, the match must be expressed on a NF
 	*/
-	
+
 	/**
 	*	@brief: translate an high level graph into a rules to be sent to
 	*		the LSI-0
@@ -61,7 +61,7 @@ protected:
 	*			This rule does not appear in LSI-0
 	*/
 	static lowlevel::Graph lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int > &availableEndPoints, bool is_control_in_band = true, bool creating = true);
-	
+
 	/**
 	*	@brief: translate an high level graph into a rules to be sent to
 	*		the Tenant-LSI
@@ -92,7 +92,7 @@ protected:
 	*			endpoint and NF is translated into the port ID on tenant-LSI.
 	*/
 	static lowlevel::Graph lowerGraphToTenantLSI(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0);
-	
+
 	/**
 	*	@Rules used to assign generic actions associated with an high level action to a low level action:
 	*		phyPort -> phyPort:

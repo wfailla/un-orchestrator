@@ -20,6 +20,8 @@
 #zero, the next N*2 elements are: TCP port of the host - TCP port in the container. Note that
 #the request for port forwardings cause the creation of a further NIC connected to the docker0
 #bridge
+#The next parameter is a number indicated how many environment variable must be set up. If
+#not zero, the next N elements are in the form "env_variable_name=value"
 
 tmp_file="$1_$2_tmp"
 
@@ -50,7 +52,7 @@ then
 		
 		echo [`date`]"[$0] Port remapping between host TCP port $host_port and VNF TCP port $docker_port"
 		
-		echo -ne "-p 127.0.0.1:$host_port:$docker_port " >> $tmp_file
+		echo -ne "-p $host_port:$docker_port " >> $tmp_file
 		
 		position_host_port=`expr $position_host_port + 2`
 		position_docker_port=`expr $position_docker_port + 2`
@@ -64,6 +66,24 @@ else
 	
 	firstnicname=0
 	lastnicname=$4
+fi
+
+#Check if some environment variables myust be set up
+position_num_env_var=`expr $position_num_forwarding + $num_forwarding \* 2 + 1`
+num_env_var=${!position_num_env_var}
+if [ $num_env_var != 0 ]
+then
+	echo [`date`]"[$0] Some ($num_env_var) environment variable must be set up"
+	
+	position_env_var=`expr $position_num_env_var + 1`
+	for (( c=0; c<$num_env_var; c++ ))
+	do
+		variable=${!position_env_var}
+		echo [`date`]"[$0]environment variable: $variable"
+		position_env_var=`expr $position_env_var + 1`
+		
+		echo -ne "-e $variable " >> $tmp_file
+	done
 fi
 
 echo "--privileged=true  $3 " >> $tmp_file
@@ -128,7 +148,7 @@ do
 	
 	current=`expr $current + 3`
 	current_mac=`expr $current_mac + 3`
-	current_ip=`expr $current_ip + 3`
+	current_ip=`expr $current_ip + 3`	
 done
 
 exit 1

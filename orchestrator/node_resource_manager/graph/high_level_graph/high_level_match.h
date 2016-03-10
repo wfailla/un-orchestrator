@@ -46,7 +46,7 @@ private:
 	*		particular it indicates the graph ID.
 	*/
 	char *input;
-	
+
 	/**
 	*	@brief: in case the previous attribute is a NF, this
 	*		variable represents a port of that NF (e.g., 1).
@@ -54,26 +54,26 @@ private:
 	*		one identifies a NF port (e.g., NF:1, NF:2)
 	*/
 	int nf_port;
-	
+
 	/**
 	*	@brief: in case the input attribute is a graph ID, this
 	*		variable represents the endpoint idenfier within the
 	*		graph.
 	*/
 	unsigned int endpoint;
-	
+
 	/**
 	*	@brief: this attribute can either represent
 	*		a endpoint port (e.g. endpoint:00000001)
 	*/
 	char *input_endpoint;
-	
+
 	/**
 	*	@brief: this attribute can either represent
 	*		a vnf endpoint port (e.g. vnf:00000002:inout:0)
 	*/
 	char *nf_endpoint_port;
-	
+
 	/**
 	*	@brief: type of the match
 	*/
@@ -81,14 +81,14 @@ private:
 
 public:
 	Match();
-	
+
 	/**
 	*	@brief: set a physical port
 	*
 	*	@param: input_port	physical port (e.g., eth0)
 	*/
 	bool setInputPort(string input_port);
-	
+
 	/**
 	*	@brief: set a NF port
 	*
@@ -96,85 +96,85 @@ public:
 	*	@param: port				the port of the NF (e.g., 1)
 	*/
 	bool setNFport(string network_function, int port);
-	
+
 	/**
 	*	@brief: set a graph endpoint
 	*
 	*	@param: endpoint	identifier of the endpoint within the graph
 	*/
 	bool setEndPoint(unsigned int endpoint);
-	
+
 	/**
 	*	@brief: set a input endpoint
 	*
 	*	@param: input_endpoint	endpoint (e.g., endpoint:00000001)
 	*/
 	bool setInputEndpoint(string input_endpoint);
-	
+
 	/**
 	*	@brief: set a name of endpoint
 	*
 	*	@param: endpoint_name	name of endpoint (e.g., gre1)
 	*/
 	bool setEndpointName(string endpoint_name);
-	
+
 	/**
 	*	@brief: set a endpoint (type: vnf)
 	*
 	*	@param: nf_endpoint	the name of a vnf endpoint port (e.g., vnf:00000002:inout:0)
 	*/
 	bool setNFEndpointPort(string nf_endpoint_port);
-	
+
 	/**
 	*	@brief: return true if the match is on a physical port
 	*/
 	bool matchOnPort();
-	
+
 	/**
 	*	@brief: return true if the match is on a NF port
 	*/
 	bool matchOnNF();
-	
+
 	/**
 	*	@brief: return true if the match is on a graph endpoint
 	*/
 	bool matchOnEndPoint();
-	
+
 	/**
 	*	@brief: return the physical port (the match must be on a physical port)
 	*/
 	string getPhysicalPort();
-	
+
 	/**
 	*	@brief: get the NF name (the match must be on a NF port)
 	*/
 	string getNF();
-	
+
 	/**
 	*	@brief: get the port of a NF (the match must be on a NF port)
 	*/
 	int getPortOfNF();
-	
+
 	/**
 	*	@brief: get the graph ID of the graph defining the endpoint (the match must be on a graph endpoint)
 	*/
 	string getGraphID();
-	
+
 	/**
 	*	@brief: get the identifier of the endpoint within the graph defining it (the match must be on a graph endpoint)
 	*/
 	unsigned int getEndPoint();
-	
+
 	/**
 	*	@brief: get the full identifier of the endpoint within the graph defining it (the match must be on a graph endpoint)
 	*/
 	char *getInputEndpoint();
-	
+
 	/**
 	*	@brief: print the match in a json like style
 	*/
 	void print();
-	
+
 	/**
 	*	@brief: transform the match into a json
 	*/

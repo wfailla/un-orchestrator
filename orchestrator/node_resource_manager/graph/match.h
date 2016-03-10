@@ -34,7 +34,7 @@ class Match
 {
 
 protected:
-	
+
 	/*
 	*	Ethernet
 	*/
@@ -44,7 +44,7 @@ protected:
 	char *eth_dst_mask;
 	bool isEthType;
 	uint16_t ethType;
-	
+
 	/*
 	*	VLAN
 	*/
@@ -55,7 +55,7 @@ protected:
 	bool isVlanPCP;
 	uint8_t vlanPCP;
 	bool isEndpointVlanID;
-	
+
 	/*
 	*	IPv4
 	*/
@@ -69,7 +69,7 @@ protected:
 	char *ipv4_src_mask;
 	char *ipv4_dst;
 	char *ipv4_dst_mask;
-	
+
 	/*
 	*	TCP
 	*/
@@ -85,7 +85,7 @@ protected:
 	uint16_t udp_src;
 	bool isUdpDst;
 	uint16_t udp_dst;
-	
+
 	/*
 	*	SCTP
 	*/
@@ -93,7 +93,7 @@ protected:
 	uint16_t sctp_src;
 	bool isSctpDst;
 	uint16_t sctp_dst;
-	
+
 	/*
 	*	ICMPv4
 	*/
@@ -101,7 +101,7 @@ protected:
 	uint8_t icmpv4Type;
 	bool isIcmpv4Code;
 	uint8_t icmpv4Code;
-	
+
 	/*
 	*	ARP
 	*/
@@ -113,7 +113,7 @@ protected:
 	char *arp_tpa_mask;
 	char *arp_sha;
 	char *arp_tha;
-	
+
 	/*
 	*	IPv6
 	*/
@@ -126,7 +126,7 @@ protected:
 	char *ipv6_nd_target;
 	char *ipv6_nd_sll;
 	char *ipv6_nd_tll;
-	
+
 	/*
 	*	ICMPv6
 	*/
@@ -134,7 +134,7 @@ protected:
 	uint8_t icmpv6Type;
 	bool isIcmpv6Code;
 	uint8_t icmpv6Code;
-	
+
 	/*
 	*	MPLS
 	*/
@@ -142,12 +142,12 @@ protected:
 	uint32_t mplsLabel;
 	bool isMplsTC;
 	uint8_t mplsTC;
-	
+
 	/*
 	*	GRE
 	*/
 	char *gre_key;
-	
+
 	Match();
 
 	bool isEqual(const Match &other) const;
@@ -196,12 +196,12 @@ public:
 	void setIcmpv6Type(uint8_t icmpv6Type);
 	void setIcmpv6Code(uint8_t icmpv6Code);
 	void setMplsLabel(uint32_t mplsLabel);
-	void setMplsTC(uint8_t mplsTC);	
+	void setMplsTC(uint8_t mplsTC);
 	void setEndpointVlanID(uint16_t vlanID);
 	void setGreKey(char *gre_key);
-	
+
 	virtual void setAllCommonFields(Match match);
-	
+
 	virtual void print();
 	virtual string prettyPrint();
 	virtual void toJSON(Object &match);

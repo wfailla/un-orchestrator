@@ -1,6 +1,8 @@
 #include "ovsdb_manager.h"
 #include "ovsdb_constants.h"
 
+#include <iomanip>
+
 #include <algorithm>
 
 struct in_addr sIPaddr1;/* struct IP addr server*/
@@ -147,6 +149,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	char sw[BUF_SIZE], tcp_s[BUF_SIZE], ctr[BUF_SIZE], vrt[BUF_SIZE], trv[BUF_SIZE];
 	char of_version[BUF_SIZE];
 
+	stringstream datapath_id;
+
 	map<string,unsigned int> physical_ports;
 	map<string,map<string, unsigned int> >  network_functions_ports;
 	map<string,unsigned int >  endpoints_ports;
@@ -207,7 +211,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 	/*insert Controller*/
 	first_obj["op"] = "insert";
-    first_obj["table"] = "Controller";
+    	first_obj["table"] = "Controller";
 
 	row["target"] = tcp_s;
 
@@ -215,7 +219,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	row["connection_mode"] = "out-of-band";
 	row["is_connected"] = true;
 
-    first_obj["row"] = row;
+    	first_obj["row"] = row;
 
 	//create the current name of controller --> ctrl+dnumber
 	sprintf(ctr, "ctrl%" PRIu64, dnumber);
@@ -225,15 +229,17 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	params.push_back(first_obj);
 
 	row.clear();
-    first_obj.clear();
+    	first_obj.clear();
+
+	datapath_id << std::setfill('0') << std::setw(16) << std::hex << dnumber << std::dec;
 
 	/*insert a bridge*/
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Bridge";
 
-    row["name"] = sw;
+    	row["name"] = sw;
 
-    Array port;
+    	Array port;
 	Array port1;
 	Array port2;
 
@@ -257,6 +263,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 	peer2.push_back("disable-in-band");
 	peer2.push_back("true");
+	peer1.push_back(peer2);
+	peer2.clear();
+
+	peer2.push_back("datapath-id");
+	peer2.push_back(datapath_id.str().c_str());
 
 	peer1.push_back(peer2);
 	peer.push_back(peer1);
@@ -265,51 +276,51 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	row["datapath_type"] = "netdev";
 #endif
 
-    row["other_config"] = peer;
+	row["other_config"] = peer;
 
-    row["protocols"] = of_version;
+    	row["protocols"] = of_version;
 
-    first_obj["row"] = row;
+    	first_obj["row"] = row;
 
-    first_obj["uuid-name"] = sw;
+    	first_obj["uuid-name"] = sw;
 
-    params.push_back(first_obj);
+    	params.push_back(first_obj);
 
-    row.clear();
-    first_obj.clear();
+    	row.clear();
+    	first_obj.clear();
 	peer.clear();
-    peer1.clear();
-    peer2.clear();
+    	peer1.clear();
+    	peer2.clear();
 
-    dnumber_new = dnumber;
+    	dnumber_new = dnumber;
 
-    /*Object with four items [op, table, where, mutations]*/
-    Object second_obj;
-    second_obj["op"] = "mutate";
-    second_obj["table"] = "Open_vSwitch";
+    	/*Object with four items [op, table, where, mutations]*/
+    	Object second_obj;
+    	second_obj["op"] = "mutate";
+    	second_obj["table"] = "Open_vSwitch";
 
-    /*Empty array [where]*/
+    	/*Empty array [where]*/
    	Array where;
-    second_obj["where"] = where;
+    	second_obj["where"] = where;
 
-    /*Array with one element*/
-    Array w_array;
+    	/*Array with one element*/
+    	Array w_array;
 
-    /*Array  with three elements*/
-    Array m_array;
-    m_array.push_back("bridges");
-    m_array.push_back("insert");
+    	/*Array with three elements*/
+    	Array m_array;
+    	m_array.push_back("bridges");
+    	m_array.push_back("insert");
 
-    /*Array with two elements*/
-    i_array.push_back("set");
+    	/*Array with two elements*/
+    	i_array.push_back("set");
 
-    /*Array with one element*/
-    Array s_array;
+    	/*Array with one element*/
+    	Array s_array;
 
-    /*Array with two element*/
-    Array a_array;
-    a_array.push_back("named-uuid");
-    a_array.push_back(sw);
+    	/*Array with two element*/
+    	Array a_array;
+    	a_array.push_back("named-uuid");
+    	a_array.push_back(sw);
 
 	s_array.push_back(a_array);
 
@@ -323,7 +334,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
    	params.push_back(second_obj);
 
-    root["params"] = params;
+    	root["params"] = params;
 	root["id"] = tid;
 
 	w_array.clear();
@@ -340,46 +351,46 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
    	stringstream ss;
  	write_formatted(root, ss);
 
-    nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+    	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
 	if (nwritten == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 		throw commandsException();
 	}
 
-    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
 		throw commandsException();
 	}
 
- 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-    logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+ 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+    	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+    	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+    	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	//parse json response
 	Value value;
-    read( read_buf, value );
-    Object rootNode = value.getObject();
+    	read( read_buf, value );
+    	Object rootNode = value.getObject();
 
-    for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
-    {
-    	const string name = (*it).first;
-        const Value &node = (*it).second;
+    	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+    	{
+    		const string name = (*it).first;
+        	const Value &node = (*it).second;
 
-        if (name == "result")
-        {
-     		const Array &result = node.getArray();
+        	if (name == "result")
+        	{
+     			const Array &result = node.getArray();
 
-     		for(i=0;i<result.size();i++){
+     			for(i=0;i<result.size();i++){
 		 		Object uuidNode = result[i].getObject();
 
 		 		for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
 				{
 					const string name1 = (*it1).first;
-		    		const Value &node1 = (*it1).second;
+		    			const Value &node1 = (*it1).second;
 
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
@@ -389,8 +400,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 						throw commandsException();
 					}
 				}
-     		}
-        }
+     			}
+        	}
 	}
 
 	//store the switch-uuid
@@ -426,7 +437,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 				//insert this port name into port_l
 				string uuid_name = build_port_uuid_name(nfp->port_name, dnumber);
-				port_l[dnumber].push_back(uuid_name);
+				port_l[dnumber].push_back(name_on_switch);
 
 				/*fill the map ports*/
 				n_ports_1[nfp->port_name] = rnumber-1;
@@ -461,9 +472,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 			/*save the params of gre tunnel*/
 			strcpy(key, gre_param[0].c_str());
-		    strcpy(local_ip, gre_param[1].c_str());
-		    strcpy(remote_ip, gre_param[2].c_str());
-		    strcpy(is_safe, gre_param[4].c_str());
+		    	strcpy(local_ip, gre_param[1].c_str());
+		    	strcpy(remote_ip, gre_param[2].c_str());
+		    	strcpy(is_safe, gre_param[4].c_str());
 
 			sprintf(port_name, "gre%d", gnumber);
 
@@ -524,34 +535,34 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 		pnumber = nfnumber_old;
 	}
 
-    //increment switch number
-    dnumber++;
+	//increment switch number
+    	dnumber++;
 
-    root.clear();
-    params.clear();
-    row.clear();
-    first_obj.clear();
-    port2.clear();
-    port1.clear();
-    port.clear();
-    peer.clear();
-    peer1.clear();
-    peer2.clear();
+    	root.clear();
+    	params.clear();
+    	row.clear();
+    	first_obj.clear();
+    	port2.clear();
+    	port1.clear();
+    	port.clear();
+    	peer.clear();
+    	peer1.clear();
+    	peer2.clear();
 
-    uint64_t pi = 0;
+    	uint64_t pi = 0;
 
-    Array ma;
+    	Array ma;
 	Array maa;
 
 	Array third_object;
 	Array fourth_object;
 
 	//disconnect socket
-    cmd_disconnect(s);
+    	cmd_disconnect(s);
 
 	l = 0;
 
-    if(vport.size() != 0)
+    	if(vport.size() != 0)
 	{
 		for(list<uint64_t>::iterator nf = vport.begin(); nf != vport.end(); nf++)
 		{
@@ -593,7 +604,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 		}
 	}
 
-    clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
+    	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
 
 	return clo;
 }
@@ -623,7 +634,7 @@ string find_free_dpdkr()
 string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type)
 {
 	int r = 0;
-    ssize_t nwritten;
+    	ssize_t nwritten;
 
 	char ifac[BUF_SIZE];
 	char read_buf[BUFFER_SIZE];
@@ -645,9 +656,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_port(%s,type=%s)", p.c_str(), portTypeToString(port_type).c_str());
 
 	//connect socket
-    s = cmd_connect();
+    	s = cmd_connect();
 
-    //Default port name on the switch (may be overriden later for specific port types)
+    	//Default port name on the switch (may be overriden later for specific port types)
 	stringstream pnos;
 	pnos << dnumber << "_" << p;
 	string port_name_on_switch = pnos.str();
@@ -796,7 +807,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	params.push_back(first_obj);
 
 	//insert this port name into port_l
-	port_l[dnumber].push_back(uuid_name);
+	port_l[dnumber].push_back(port_name);
 
 	row.clear();
 	first_obj.clear();
@@ -919,7 +930,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 		throw commandsException();
 	}
 
-    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -932,8 +943,8 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	Value value;
-    read( read_buf, value );
-    Object rootNode = value.getObject();
+    	read( read_buf, value );
+    	Object rootNode = value.getObject();
 
 	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
@@ -977,7 +988,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	rnumber++;
 
 	//disconnect socket
-    cmd_disconnect(s);
+    	cmd_disconnect(s);
 
 	/**
 	*	Considerations:
@@ -995,9 +1006,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	*	Call a bash script that brings up the interface and disebled offloads on it. The script pools untill such interface
 	*	is created, thus ensuring that, when the VNF will be created, the ports are already attached to OvS.
 	*/
-    if(is_nf_port && ((port_type == VHOST_PORT) || (port_type == VETH_PORT)))
-    {
-    	stringstream command;
+    	if(is_nf_port && ((port_type == VHOST_PORT) || (port_type == VETH_PORT)))
+    	{
+    		stringstream command;
 		command << ACTIVATE_INTERFACE << " " << port_name;
 		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
 		int retVal = system(command.str().c_str());
@@ -1016,7 +1027,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 
 void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, char is_safe[BUF_SIZE])
 {
-    ssize_t nwritten;
+    	ssize_t nwritten;
 
 	char read_buf[BUFFER_SIZE] = "";
 
@@ -1034,7 +1045,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	Array fourth_object;
 
 	//connect socket
-    s = cmd_connect();
+    	s = cmd_connect();
 
 	root["method"] = "transact";
 
@@ -1095,7 +1106,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 
 	peer.push_back(peer1);
 
-    row["options"] = peer;
+    	row["options"] = peer;
 
 	first_obj["row"] = row;
 
@@ -1252,7 +1263,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 		throw commandsException();
 	}
 
-    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -1268,8 +1279,8 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	Value value;
-    read( read_buf, value );
-    Object rootNode = value.getObject();
+    	read( read_buf, value );
+    	Object rootNode = value.getObject();
 
 	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
@@ -1313,14 +1324,14 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	rnumber++;
 
 	//disconnect socket
-    cmd_disconnect(s);
+    	cmd_disconnect(s);
 }
 
 void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 {
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Deleting LSI with DPI '%d' switch '%s'",dpi, switch_id[dpi].c_str());
 
-    ssize_t nwritten = 0;
+    	ssize_t nwritten = 0;
 
 	int r = 0;
 
@@ -1447,7 +1458,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 		throw commandsException();
 	}
 
-    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -1466,7 +1477,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 	tid++;
 
 	//disconnect socket
-    cmd_disconnect(s);
+    	cmd_disconnect(s);
 }
 
 AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int socketNumber)
@@ -1491,7 +1502,8 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int socketNum
 	return anf;
 }
 
-AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
+AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s)
+{
 	AddEndpointOut *apf = NULL;
 
 	char port_name[BUF_SIZE], ifac[BUF_SIZE];
@@ -1526,9 +1538,9 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s){
 	return apf;
 }
 
-void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
-
-    ssize_t nwritten;
+void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s)
+{
+    	ssize_t nwritten;
 
 	char read_buf[BUFFER_SIZE];
 
@@ -1548,7 +1560,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 	Array fourth_object;
 
 	//connect socket
-    s = cmd_connect();
+    	s = cmd_connect();
 
 	if(nfp.size() != 0){
 
@@ -1701,7 +1713,7 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 			throw commandsException();
 		}
 
-    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    		r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 		if (r == sockFAILURE)
 		{
 			logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -1709,10 +1721,10 @@ void commands::cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s){
 		}
 		read_buf[r] = '\0';
 
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
-		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 		root.clear();
 		params.clear();
@@ -1748,7 +1760,7 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 	Array fourth_object;
 
 	//connect socket
-    s = cmd_connect();
+    	s = cmd_connect();
 
 	if(ep_name.compare("") != 0){
 
@@ -1877,7 +1889,7 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 			throw commandsException();
 		}
 
-    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    		r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 		if (r == sockFAILURE)
 		{
 			logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -1913,11 +1925,11 @@ AddVirtualLinkOut *commands::cmd_addVirtualLink(AddVirtualLinkIn avli, int s)
 
 	/*create virtual link*/
 	sprintf(vrt, "vport%d", pnumber);
-
 	pnumber++;
 
 	/*create virtual link*/
 	sprintf(trv, "vport%d", pnumber);
+	pnumber++;
 
 	//Create the current name of a interface
 	sprintf(ifac, "iface%d", rnumber);
@@ -1983,7 +1995,7 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE],
 	Array fourth_object;
 
 	//connect socket
-    s = cmd_connect();
+    	s = cmd_connect();
 
 	root["method"] = "transact";
 
@@ -2010,7 +2022,7 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE],
 	peer1.push_back(peer2);
 	peer.push_back(peer1);
 
-    row["options"] = peer;
+    	row["options"] = peer;
 
 	first_obj["row"] = row;
 
@@ -2167,7 +2179,7 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE],
 		throw commandsException();
 	}
 
-    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -2180,8 +2192,8 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE],
 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	Value value;
-    read( read_buf, value );
-    Object rootNode = value.getObject();
+    	read( read_buf, value );
+   	Object rootNode = value.getObject();
 
 	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
@@ -2225,7 +2237,7 @@ void commands::cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE],
 	rnumber++;
 
 	//disconnect socket
-    cmd_disconnect(s);
+    	cmd_disconnect(s);
 }
 
 void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s){
@@ -2258,7 +2270,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s)
 {
 	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "cmd_delete_virtual_link(dpi=%d, ipd=%d)",dpi,idp);
 
-    ssize_t nwritten;
+    	ssize_t nwritten;
 
 	char read_buf[4096] = "";
 
@@ -2276,7 +2288,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s)
 	Array fourth_object;
 
 	//connect socket
-    s = cmd_connect();
+    	s = cmd_connect();
 
 	root["method"] = "transact";
 
@@ -2407,7 +2419,7 @@ void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s)
 		throw commandsException();
 	}
 
-    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);

@@ -18,7 +18,7 @@ bool ActionPort::operator==(const ActionPort &other) const
 {
 	if(port == other.port && input_port == other.input_port)
 		return true;
-		
+
 	return false;
 }
 
@@ -48,10 +48,10 @@ Object ActionPort::toJSON()
 {
 	Object action;
 	action[OUTPUT] = input_port.c_str();
-	
+
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		(*ga)->toJSON(action);
-	
+
 	return action;
 }
 

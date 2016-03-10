@@ -10,10 +10,7 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 	return ss.str();
 }
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration,
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-	map<string, list <port_mapping_t > > network_functions_control_configuration,
-#endif	
+LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,
 	map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
@@ -29,18 +26,10 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 	{
 		addNF(nf->first, nf->second, a_nfs_ports_type[nf->first]);
 	}
-	
+
 	//fill the map of endpoints
 	for(map<string,vector<string> >::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
 		this->endpoints_ports[ep->first] = ep->second;
-		
-	//fill the map of NF ports configuration
-	this->network_functions_ports_configuration = network_functions_ports_configuration;
-
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION		
-	//fill the map of NF control configuration
-	this->network_functions_control_configuration = network_functions_control_configuration;	
-#endif
 }
 
 string LSI::getControllerAddress()
@@ -56,21 +45,21 @@ string LSI::getControllerPort()
 list<string> LSI::getPhysicalPortsName()
 {
 	list<string> names;
-	
+
 	map<string,unsigned int>::iterator p = physical_ports.begin();
 	for(; p != physical_ports.end(); p++)
 		names.push_back(p->first);
-	
+
 	return names;
 }
 
 set<string> LSI::getNetworkFunctionsName()
 {
 	set<string> names;
-	
+
 	for(map<string,struct nfData>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 		names.insert(nf->first);
-	
+
 	return names;
 }
 
@@ -92,7 +81,7 @@ list<string> LSI::getNetworkFunctionsPortNames(string nf)
 
 	for(map<string, unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
 		names.push_back(p->first);
-		
+
 	return names;
 }
 
@@ -151,11 +140,11 @@ map<unsigned int, string> LSI::getNetworkFunctionsPortsNameOnSwitchMap(string nf
 list<uint64_t> LSI::getVirtualLinksRemoteLSI()
 {
 	list<uint64_t> dpids;
-	
+
 	vector<VLink>::iterator vl = virtual_links.begin();
 	for(; vl != virtual_links.end(); vl++)
 		dpids.push_back(vl->remote_dpid);
-	
+
 	return dpids;
 }
 
@@ -171,7 +160,7 @@ bool LSI::setPhysicalPortID(string port, uint64_t id)
 		assert(0);
 		return false;
 	}
-	
+
 	physical_ports[port] = id;
 	return true;
 }
@@ -180,9 +169,9 @@ bool LSI::setNfSwitchPortsID(string nf, map<string, unsigned int> translation)
 {
 	if(network_functions.count(nf) == 0)
 		return false;
-	
+
 	struct nfData& nf_data = network_functions[nf];
-	
+
 	for(map<string, unsigned int>::iterator t = translation.begin(); t != translation.end(); t++)
 	{
 		if(nf_data.ports_switch_id.count(t->first) == 0)
@@ -200,7 +189,7 @@ bool LSI::setEndpointPortID(string ep, uint64_t id)
 		assert(0);
 		return false;
 	}
-	
+
 	endpoints_ports_id[ep] = id;
 	return true;
 }
@@ -253,18 +242,6 @@ map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
 	return nf_data.ports_switch_id;
 }
 
-map<unsigned int, port_network_config > LSI::getNetworkFunctionsPortsConfiguration(string nf)
-{
-	return network_functions_ports_configuration[nf];
-}
-
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
-list<port_mapping_t > LSI::getNetworkFunctionsControlConfiguration(string nf)
-{
-	return network_functions_control_configuration[nf];
-}
-#endif
-
 vector<VLink> LSI::getVirtualLinks()
 {
 	return virtual_links;
@@ -278,7 +255,7 @@ VLink LSI::getVirtualLink(uint64_t ID)
 		if(v->getID() == ID)
 			return *v;
 	}
-	
+
 	//cannot be here!
 	assert(0);
 	return *v;
@@ -288,17 +265,17 @@ VLink LSI::getVirtualLink(uint64_t ID)
 map<string, uint64_t> LSI::getNFsVlinks()
 {
 	return nfs_vlinks;
-}	
+}
 
 map<string, uint64_t> LSI::getPortsVlinks()
 {
 	return ports_vlinks;
-}	
+}
 
 map<string, uint64_t> LSI::getEndPointsVlinks()
 {
 	return endpoints_vlinks;
-}	
+}
 
 
 void LSI::setNFsVLinks(map<string, uint64_t> nfs_vlinks)
@@ -341,7 +318,7 @@ void LSI::removeNFvlink(string nf_port)
 		assert(0);
 		return;
 	}
-	
+
 	map<string,uint64_t>::iterator it = nfs_vlinks.find(nf_port);
 	nfs_vlinks.erase(it);
 }
@@ -353,7 +330,7 @@ void LSI::removePortvlink(string port)
 		assert(0);
 		return;
 	}
-	
+
 	map<string,uint64_t>::iterator it = ports_vlinks.find(port);
 	ports_vlinks.erase(it);
 }
@@ -365,7 +342,7 @@ void LSI::removeEndPointvlink(string endpoint)
 		assert(0);
 		return;
 	}
-	
+
 	map<string,uint64_t>::iterator it = endpoints_vlinks.find(endpoint);
 	endpoints_vlinks.erase(it);
 }
@@ -389,7 +366,7 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 	}
 
 	network_functions[nf_name] = nf_data;
-	
+
 	return true;
 }
 
@@ -403,7 +380,7 @@ int LSI::addVlink(VLink vlink)
 	//TODO: protect the next operation with a mutex
 	int retVal = virtual_links.size();
 	virtual_links.insert(virtual_links.end(),vlink);
-		
+
 	return retVal;
 }
 
@@ -417,7 +394,7 @@ void LSI::removeVlink(uint64_t ID)
 			return;
 		}
 	}
-	
+
 	assert(0);
 	return;
 }
@@ -436,6 +413,6 @@ void LSI::removeEndpoint(string ep)
 
 	map<string,vector<string> >::iterator it =  endpoints_ports.find(ep);
 	endpoints_ports.erase(it);
-	
+
 	return;
 }
