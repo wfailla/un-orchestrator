@@ -524,6 +524,11 @@ ENDIF(ENABLE-DPDK-CMDLINE-GENERATOR)
 
 #Check unsupported configurations
 
+IF(ENABLE_RESOURCE_MANAGER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
+	#The resource manager requires the DD connection
+	message(FATAL_ERROR "Resource manager requires to enable the double decker connection")
+ENDIF(ENABLE_RESOURCE_MANAGER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
+
 IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
 	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported
 	message(FATAL_ERROR "OvS not supported with Dpdk processes")
