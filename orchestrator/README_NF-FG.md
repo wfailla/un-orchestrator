@@ -811,3 +811,58 @@ arrives on the UN (by means of the control port) and directed to the TCP port 20
 VNF on its own TCP port 80. 
 Note that multiple port forwardings may be set up for a VNF; however, a single port connected to, e.g., 
 `Docker0`, is created, regardless of the number of port forwardings required.
+
+## Monitoring
+
+It is possible to associate a monitoring string to an NF-FG. Such a string must be written according to
+the MEASURE formalism defined in Unify. This can be done through the `unify-monitoring`, as shown in the
+following example:
+
+	{
+		"forwarding-graph": 
+		{
+			"id": "00000001",
+			"name": "Forwarding graph",
+			"unify-moitoring" : "string written according to the MEASURE syntax".
+			"VNFs": [
+		  	{
+		    	"id": "00000001",
+		    	"name": "monitor",
+        		"ports": [
+          		{
+            		"id": "inout:0",
+            		"name": "data-port"
+          		}
+        		]
+		  	}
+			],
+			"end-points": [
+		  	{
+		    	"id": "00000001",
+		    	"name": "ingress",
+		    	"type": "interface",
+		    	"interface": {
+		      		"interface": "eth1"
+		    	}
+		  	}
+			],
+			"big-switch": {
+		  		"flow-rules": [
+		    	{
+		      		"id": "00000001",
+		      		"priority": 1,
+		      		"match": {
+		        		"port_in": "endpoint:00000001"
+		      		},
+		      		"actions": [
+		        	{
+		        		"output_to_port": "vnf:00000001:inout:0"
+		        	}
+		      		]
+		    	}
+		  		]
+			}
+	  	}
+	}
+
+**WARNING**: the monitoring is supported only in case of Docker containers.
