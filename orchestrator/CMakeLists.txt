@@ -449,6 +449,7 @@ IF(ENABLE_UNIFY_MONITORING_CONTROLLER)
     ${SOURCES8}
     monitoring_controller/monitoring_controller.h
     monitoring_controller/monitoring_controller.cc
+    monitoring_controller/monitoring_controller_constants.h
     )
 ELSE()
 	SET(SOURCES9

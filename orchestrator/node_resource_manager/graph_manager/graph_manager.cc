@@ -1065,6 +1065,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "6) Create the monitoring controller related to the new graph");
 		MonitoringController *monitoringController = new MonitoringController();
 		graphInfoTenantLSI.setMonitoringController(monitoringController);
+		
+		monitoringController->setMonitoring(string("AAAAAAAAAAA"));
 #endif
 	} catch (SwitchManagerException e)
 	{
