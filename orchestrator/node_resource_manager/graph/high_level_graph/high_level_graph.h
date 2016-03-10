@@ -78,6 +78,10 @@ private:
 	t_nfs_env_variables networkFunctionsEnvironmentVariables;
 #endif
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	string measureString;
+#endif
+
 	/**
 	*	@brief: for each endpoint attached to the graph specifies a list of params
 	* 		(gre key, local ip, remote ip)
@@ -184,6 +188,15 @@ public:
 	void addNetworkFunctionEnvironmentVariable(string nf, string env_variable);
 #endif
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	/**
+	*	@brief: Set to the graph a string written in the MEASURE language
+	*
+	*	@param: measureString	String written according to the MEASURE language
+	*/
+	void setMeasureString(string measureString);
+#endif
+
 	/**
 	*	@brief: Update a NF by adding a port
 	*	//FIXME: is this useful?
@@ -213,6 +226,13 @@ public:
 	*	@brief: Return the VNFs of the graph and the environment variables they require
 	*/
 	t_nfs_env_variables getNetworkFunctionsEnvironmentVariables();
+#endif
+
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	/**
+	*	@brief: Return a string written according to the MEASURE language
+	*/
+	string getMeasureString();
 #endif
 
 	/**
