@@ -823,7 +823,7 @@ following example:
 		{
 			"id": "00000001",
 			"name": "Forwarding graph",
-			"unify-moitoring" : "string written according to the MEASURE syntax".
+			"unify-moitoring" : "string written according to the MEASURE syntax",
 			"VNFs": [
 		  	{
 		    	"id": "00000001",
