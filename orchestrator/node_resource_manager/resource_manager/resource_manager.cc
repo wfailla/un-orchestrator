@@ -40,7 +40,7 @@ void ResourceManager::publishDescriptionFromFile(char *descr_file)
 	fclose(fp);
   
 	//publish the domain description
-	DoubleDeckerClient::publish(dadsFROG_DOMAIN_DESCRIPTION, mesg);
+	DoubleDeckerClient::publish(FROG_DOMAIN_DESCRIPTION, mesg);
 }
 
 //TODO currently not used. It must be ported to use the new DD client
