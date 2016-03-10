@@ -216,7 +216,7 @@ MARK_AS_ADVANCED(
 )
 
 # Set source files
-SET(SOURCES
+SET(SOURCES1
 	node_orchestrator.cc
 
 	node_resource_manager/graph_manager/graph_manager.h
