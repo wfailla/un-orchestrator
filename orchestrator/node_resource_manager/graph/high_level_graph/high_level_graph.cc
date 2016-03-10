@@ -391,6 +391,9 @@ Object Graph::toJSON()
 
 	forwarding_graph[_ID] = ID;
 	forwarding_graph[_NAME] = name;
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	forwarding_graph[UNIFY_MONITORING] = measureString;
+#endif
 	if(end_points.size() != 0)
 		forwarding_graph[END_POINTS] = end_points;
 	if(vnf.size() != 0)

@@ -1086,7 +1086,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			stringstream name;
 			name << dpid << "_" << vnf->getName();
 			vnfsMapping.push_back(make_pair(vnf->getId(),name.str()));
-			
 			portsMapping.push_back(lsi->getNetworkFunctionsPortsNameOnSwitchMap(vnf->getName()));
 		}
 
