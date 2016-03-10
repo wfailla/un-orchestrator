@@ -827,7 +827,7 @@ following example:
 			"VNFs": [
 		  	{
 		    	"id": "00000001",
-		    	"name": "monitor",
+		    	"name": "sink",
         		"ports": [
           		{
             		"id": "inout:0",
