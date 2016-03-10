@@ -18,7 +18,7 @@ bool EndPointInterface::operator==(const EndPointInterface &other) const
 {
 	if(id == other.id && name == other.name)
 		return true;
-		
+
 	return false;
 }
 
@@ -65,18 +65,18 @@ void EndPointInterface::print()
 Object EndPointInterface::toJSON()
 {
 	Object EndPointInterface, iface;
-	
+
 	EndPointInterface[_ID] = id.c_str();
 	EndPointInterface[_NAME] = name.c_str();
 	EndPointInterface[EP_TYPE] = IFACE;
-	
+
 	iface[NODE_ID] = node_id.c_str();
 	if(strcmp(sw_id.c_str(), "") != 0)
 		iface[SW_ID] = sw_id.c_str();
 	iface[IFACE] = interface.c_str();
-	
+
 	EndPointInterface[IFACE] = iface;
-	
+
 	return EndPointInterface;
 }
 

@@ -45,7 +45,7 @@ private:
 	*	@brief: IPsec certificate
 	*/
 	string ipsec_certificate;
-	
+
 	/*
 	*	@brief: Map that, given a port name used by the VNF, provides the name of such a port on the switch.
 	*			It is needed in case of VETH ports, in which the name of the end given to the VNF is different with
@@ -56,11 +56,11 @@ public:
 	commands();
 
 	~commands();
-	
+
 	int cmd_connect();
-	
+
 	int cmd_disconnect(int s);
-	
+
 	/**
 	*	Example of command to create a new LSI
 	*
@@ -137,7 +137,7 @@ public:
 		}
 	*/
 	CreateLsiOut* cmd_editconfig_lsi (CreateLsiIn cli, int s);
-	
+
 	/**
 	*	Example of command to create a new SYSTEM PORT
 	*
@@ -220,7 +220,7 @@ public:
 	 * Add a port to the LSI identifed by dnumber. Returns the port name on as known on the switch.
 	 */
 	string add_port(string p, uint64_t dnumber, bool is_nf_port, int s, PortType port_type = UNDEFINED_PORT);
-	
+
 	/*
 	*	Example of command to create a new GRE PORT
 	*
@@ -338,7 +338,7 @@ public:
 		}
 	*/
 	void add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, char is_safe[BUF_SIZE]);
-	
+
 	/**
 	*	Example of command to create a new INTERNAL PORT
 	*
@@ -419,11 +419,11 @@ public:
 		}
 	*/
 	AddNFportsOut *cmd_editconfig_NFPorts(AddNFportsIn anpi, int s);
-	
+
 	AddEndpointOut* cmd_editconfig_endpoint (AddEndpointIn aepi, int s);
-	
+
 	AddVirtualLinkOut *cmd_addVirtualLink(AddVirtualLinkIn avli, int s);
-	
+
 	/*
 	*	Example of command to create a new PATCH PORT
 	*
@@ -525,9 +525,9 @@ public:
 		}
 	*/
 	void cmd_add_virtual_link(string vrt, string trv, char ifac[BUF_SIZE], uint64_t dpi, int s);
-	
+
 	void cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s);
-	
+
 	/*
 	*	Example of command to destroy a BRIDGE
 	*
@@ -570,7 +570,7 @@ public:
 		}
 	*/
 	void cmd_editconfig_lsi_delete(uint64_t dpid, int s);
-	
+
 	/*
 	*	Example of command to destroy a PORT
 	*
@@ -613,9 +613,9 @@ public:
 		}
 	*/
 	void cmd_editconfig_NFPorts_delete(DestroyNFportsIn dnpi, int s);
-	
+
 	void cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s);
-	
+
 	void cmd_delete_virtual_link(uint64_t dpid, uint64_t id, int s);
 
 };

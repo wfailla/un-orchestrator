@@ -22,19 +22,19 @@ class GenericAction
 
 public:
 	virtual ~GenericAction();
-	
+
 	virtual void print() = 0;
 	virtual void toJSON(Object &json) = 0;
-	
+
 	/**
 	*	@brief: insert the generic action into a flowmod message
 	*
 	*	@param: message		flowmod message
 	*/
 	virtual void fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsigned int *position) = 0;
-	
+
 	virtual string prettyPrint() = 0;
-	
+
 protected:
 	GenericAction();
 };

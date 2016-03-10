@@ -42,19 +42,19 @@ public:
 	*	@param: cli	Description of the network function to be started
 	*/
 	virtual bool startNF(StartNFIn sni) = 0;
-	
+
 	/**
 	*	@brief: stop the network function
 	*
 	*	@param: cli	Description of the network function to be stopped
 	*/
 	virtual bool stopNF(StopNFIn sni) = 0;
-		
+
 	/**
 	*	@brief: set the description of the network function to be handled by the manager
 	*/
 	void setDescription(Description *description);
-	
+
 	/**
 	*	@brief: set the description of the network function to be handled by the manager
 	*/
@@ -64,7 +64,7 @@ public:
 	*	@brief: provide the type of the network function handled by the manager
 	*/
 	nf_t getNFType();
-	
+
 	/**
 	*	@brief: returns the number of cores to be associated with the network function
 	*			handled by the manager. "" means that no core has to be bound to the

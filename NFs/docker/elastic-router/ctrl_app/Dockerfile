@@ -16,12 +16,6 @@ RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/ss
 
 ADD authorized_keys /root/.ssh/authorized_keys
 
-# setup ryu files
-COPY ./ryu_app ./ryu_app
-
-ADD start_DD.sh start.sh
-RUN chmod +x start.sh
-
 ADD ryu_ddclient.py ryu_ddclient.py
 
 # setup DoubleDecker
@@ -34,4 +28,11 @@ RUN python3 setup.py build
 RUN python3 setup.py install
 
 WORKDIR /root/
+
+# setup ryu files
+COPY ./ryu_app ./ryu_app
+
+ADD start_DD.sh start.sh
+RUN chmod +x start.sh
+
 CMD ./start.sh

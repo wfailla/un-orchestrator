@@ -25,7 +25,7 @@ private:
 	*	@brief: identifier of the lsi to which the endpoint must be removed
 	*/
 	uint64_t dpid;
-	
+
 	/**
 	*	@brief: name of the endpoint that must be destroyed
 	*/
@@ -36,19 +36,19 @@ protected:
 		: dpid(dpid), ep_name(ep_name)
 	{
 	}
-	
+
 public:
 
 	uint64_t getDpid()
 	{
 		return dpid;
 	}
-	
+
 	string getEPname()
 	{
 		return ep_name;
 	}
-	
+
 };
 
 

@@ -34,7 +34,7 @@ void VlanAction::toJSON(Object &action)
 		vlan_op = "push_vlan";
 	else
 		vlan_op = "pop_vlan";
-	
+
 	if(type != ACTION_ENDPOINT_VLAN)
 	{
 		stringstream s_label;

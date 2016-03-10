@@ -44,7 +44,7 @@ class ElasticRouterMonitor:
         # all datapaths are registered?
         if len(registered_DPs) != len(self.ERctrlapp.DP_instances):
             return False
-        # scaling phase ongoing?
+        # scaling phase ongoing and all DPs are detected?
         elif self.scaling_lock.locked():
             self.scaling_finish()
             return False

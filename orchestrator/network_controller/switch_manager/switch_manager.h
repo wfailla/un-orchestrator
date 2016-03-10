@@ -45,7 +45,7 @@ public:
 	*	@return:		Information related to the ports created
 	*/
 	virtual AddNFportsOut *addNFPorts(AddNFportsIn anpi) = 0;
-#ifdef VSWITCH_IMPLEMENTATION_OVSDB	
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 	/**
 	*	@brief: Create endpoint, on a specific lsi
 	*
@@ -75,7 +75,7 @@ public:
 	*	@brief: dnpi	Information related to the ports to be destroyed
 	*/
 	virtual void destroyNFPorts(DestroyNFportsIn dnpi) = 0;
-#ifdef VSWITCH_IMPLEMENTATION_OVSDB	
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 	/**
 	*	@brief: Destroy endpoint of a specific lsi
 	*
@@ -97,7 +97,7 @@ public:
 	*					by the node orchestrator through the virtual switch
 	*/
 	virtual void checkPhysicalInterfaces(set<CheckPhysicalPortsIn> cppi) = 0;
-	
+
 	/**
 	 * virtual destructor is needed
 	 */

@@ -38,45 +38,15 @@ In the following we list the steps required on an **Ubuntu 14.04**.
 	$ cp * ../../orchestrator/node_resource_manager/database_manager/SQLite
 
 The following libraries are required if you plan to enable the publisher/subscriber 
-mechanism, which is used by the un-orchestrator to export the configuration of the 
-universal node.
+mechanism, which is used by the un-orchestrator, for instance, to export the configuration
+of the universal node.
 
-	; - libjson0-dev: JSON manipulation library l
-	; - iburcu-dev: userspace RCU (read-copy-update) library - development files
-	$ sudo apt-get install libjson0-dev liburcu-dev
-
-	; Install libsodium (a modern and easy-to-use crypto library)
-	$ git clone git://github.com/jedisct1/libsodium.git
-    $ cd libsodium
-    $ ./autogen.sh
-    $ ./configure && make check
-    $ sudo make install
-    $ sudo ldconfig
-    $ cd ..
-    
-    ; Install libzmq (ZeroMQ core engine in C++, implements ZMTP/3.0)
-    $ git clone git://github.com/zeromq/libzmq.git
-    $ cd libzmq
-    $ ./autogen.sh
-    $ ./configure && make check
-    $ sudo make install
-    $ sudo ldconfig
-    $ cd ..
-    
-    ; Install czmq (High-level C binding for ØMQ)
-    $ git clone git://github.com/zeromq/czmq.git
-    $ cd czmq
-    $ ./autogen.sh
-    $ ./configure && make check
-    $ sudo make install
-    $ sudo ldconfig
-    $ cd ..
-    
-    ; Install DoubleDecker (Hierarchical messaging system)
-    ; a copy of DoubleDecker is provided in `[un-orchestrator]/contrib/double-decker-client-library.zip`
-
+	; Install Double Decker (hierarchical messaging system)
+	$ git clone https://github.com/Acreo/DoubleDecker
+	$ cd DobuleDecker/c/
+	
 	; Now install the above library according to the description provided
-	; in the cloned folder 
+	; in the cloned folder
 
 ## Install the proper virtual switch
 
@@ -233,7 +203,7 @@ Two flavors of virtual machines are supported:
 In order to start/stop virtual machines, a recent version of Libvirt must be used. 
 You can build it from sources using the following commands:
 
-	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev python-dev xsltproc autopoint uuid-dev
+	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev python-dev xsltproc autopoint uuid-dev libxml2-utils
 	$ git clone git://libvirt.org/libvirt.git
 	; select the commit that is known to work and have the necessary support
 	$ cd libvirt

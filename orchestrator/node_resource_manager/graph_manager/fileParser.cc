@@ -22,7 +22,7 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
 		throw new FileParserException();
 	}
-	
+
 	parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
 	if (parser_ctxt == NULL)
 	{
@@ -49,7 +49,7 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
 		throw new FileParserException();
 	}
-	
+
 	doc = xmlParseFile(fileName.c_str()); /*Parse the XML file*/
 	if (doc==NULL)
 	{
@@ -66,13 +66,13 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 		freeXMLResources(parser_ctxt, valid_ctxt, schema_doc, schema, doc);
 		throw new FileParserException();
 	}
-	
+
 	xmlNodePtr root = xmlDocGetRootElement(doc);
 
 	for(xmlNodePtr cur_root_child=root->xmlChildrenNode; cur_root_child!=NULL; cur_root_child=cur_root_child->next)
 	{
 		if ((cur_root_child->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(cur_root_child->name, (const xmlChar*)PORTS_ELEMENT)))
-		{		
+		{
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "PORTS");
 			xmlNodePtr ports = cur_root_child;
 			for(xmlNodePtr port = ports->xmlChildrenNode; port != NULL; port = port->next)
@@ -80,7 +80,7 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 				if ((port->type == XML_ELEMENT_NODE)&&(!xmlStrcmp(port->name, (const xmlChar*)PORT_ELEMENT)))
 				{
 					//Element <port>
-		
+
 					xmlChar* attr_name = xmlGetProp(port, (const xmlChar*)NAME_ATTRIBUTE);
 					xmlChar* attr_type = xmlGetProp(port, (const xmlChar*)TYPE_ATTRIBUTE);
 					xmlChar* attr_side = xmlGetProp(port, (const xmlChar*)SIDE_ATTRIBUTE);
@@ -97,14 +97,14 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 
 					physicalPortType_t ptype = (type == TYPE_ETHERNET)? ETHERNET_PORT : WIFI_PORT;
 					physicalPortSide_t pside = (side == SIDE_CORE)? CORE : ( (side == SIDE_EDGE)? EDGE : NONE );
-	
+
 					CheckPhysicalPortsIn cppi(name,ptype,pside);
-					physicalPorts.insert(cppi);					
-				}			
+					physicalPorts.insert(cppi);
+				}
 			}
 		}//end <ports>
 	}
-	
+
 	return physicalPorts;
 }
 

@@ -1,5 +1,12 @@
 import re
 import urllib2
+import copy
+
+from ryu.ofproto import ofproto_v1_3, ofproto_v1_3_parser
+from ryu.lib.packet import ether_types, ethernet, ipv4, tcp, arp, udp, icmp, vlan, ipv6, lldp
+import logging
+#Set the logger
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 class DP:
     """
@@ -38,8 +45,112 @@ class DP:
         self.previous_monitor_time = {} #store time of monitor data to calculate correct timedelta and rx_rate
 
         # openflow table of this DP
-        # contains tuple [(match_dict{}, actions[], priority),]
+        # contains tuple [(match_dict{}, actions[], priority),
         self.oftable = []
+        self.set_default_oftable_new()
+
+        # oftable to translate upon scaling out
+        self.scale_out_port_dict = {}
+
+    def set_default_oftable_new(self):
+        # send new ARP packets to controller
+        priority = 2
+        match_dict = create_dictionary(eth_type=ether_types.ETH_TYPE_ARP)
+        ofproto = ofproto_v1_3
+        parser = ofproto_v1_3_parser
+        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
+                                          ofproto.OFPCML_NO_BUFFER)]
+        self.oftable.append((match_dict, actions, priority))
+
+        # send new ipv4 packets to controller
+        priority = 2
+        match_dict = create_dictionary(eth_type=ether_types.ETH_TYPE_IP)
+        ofproto = ofproto_v1_3
+        parser = ofproto_v1_3_parser
+        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
+                                          ofproto.OFPCML_NO_BUFFER)]
+        self.oftable.append((match_dict, actions, priority))
+
+        # drop all other packets
+        priority = 1
+        match_dict = create_dictionary()
+        actions = []
+        self.oftable.append((match_dict, actions, priority))
+
+    # call this function when new DP is registered and port numbers are known
+    def set_default_oftable_scale_out(self):
+        # add default flow entries for new DP
+        external_ports = [port for port in self.ports if port.port_type == DPPort.External]
+        internal_ports = [port for port in self.ports if port.port_type == DPPort.Internal]
+        # assume only 1 external port possible
+        if len(external_ports) == 1:
+            out_port_number = external_ports[0].number
+            for int_port in internal_ports:
+                priority = 20
+                match_dict = create_dictionary(in_port=int_port.number)
+                parser = ofproto_v1_3_parser
+                actions = [parser.OFPActionOutput(out_port_number)]
+                self.oftable.append((match_dict, actions, priority))
+         # for multiple external ports, use VLAN IDs
+
+
+    # call this function when new DP is registered and port numbers are known
+    def translate_oftable_scale_out(self):
+        scale_out_port_dict = self.scale_out_port_dict
+        # add new flow_entries
+        for old_port in scale_out_port_dict:
+            old_DP = old_port.DP
+            ofproto = old_DP.datapath.ofproto
+            new_port = scale_out_port_dict[old_port]
+            new_DP = new_port.DP
+
+            # new_DP should be the same as self
+            if new_DP.name is not self.name:
+                logging.info('This scale out port translation is not correct? this DP:{0} checked DP: {1}'.format(self.name, new_DP.name))
+                return
+
+            for match_dict, actions, priority  in old_DP.oftable:
+                logging.info('old DP match dict: {0}'.format(match_dict))
+                logging.info('old_port number: {0}'.format(old_port.number))
+                # check if this oftable entry contains a port to be translated
+                # (the default port entries have other match entries eg. eth_type)
+                if 'in_port' not in match_dict:
+                    continue
+
+                if match_dict['in_port'] == old_port.number:
+                    new_match_dict = copy.deepcopy(match_dict)
+                    new_match_dict['in_port'] = new_port.number
+                    new_actions = list(actions)
+                    for i in range(0, len(actions)):
+                        if actions[i].port == ofproto.OFPP_FLOOD:
+                            new_actions[i].port = ofproto.OFPP_FLOOD
+                        else:
+                            old_outportno = actions[i].port
+                            old_outport = old_DP.get_port_by_number(old_outportno)
+                            logging.info('old out port: {0}'.format(old_outport.ifname))
+
+                            for port in scale_out_port_dict:
+                                logging.info('scale_out_port_dict: {0}'.format(port.ifname))
+
+                            new_outport = scale_out_port_dict[old_outport]
+                            dest_DP = new_outport.DP
+
+                            if dest_DP.name == self.name:
+                                # in and out port are on the same DP
+                                new_outportno = new_outport.number
+                                new_actions[i].port = new_outportno
+                                break
+                            for port in dest_DP.ports:
+                                if port.port_type == DPPort.External: continue
+                                # out port is located on another DP as in port, check the internal ports
+                                if port.linked_port.DP.name == self.name:
+                                    new_outportno = port.number
+                                    new_actions[i].port = new_outportno
+                                    break
+                    self.oftable.append((new_match_dict, new_actions, priority))
+        # reset dictionary
+        self.scale_out_port_dict = {}
+
 
     def get_port(self, port_name=None):
         for port in self.ports:
