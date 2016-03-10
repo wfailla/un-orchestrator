@@ -20,7 +20,7 @@ typedef enum {
 
 struct publish_t{
 	topic_t topic;
-	char *message;
+	const char *message;
 };
 
 class DoubleDeckerClient
@@ -84,7 +84,7 @@ public:
 	*/
 	static void terminate();
 	
-	static void publish(topic_t topic, char *message);
+	static void publish(topic_t topic, const char *message);
 };
 
 #endif //PUB_SUB_H_ 1
