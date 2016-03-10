@@ -2,11 +2,6 @@
 #include "utils/logger.h"
 #include "node_resource_manager/rest_server/rest_server.h"   
 
-#ifdef ENABLE_DOUBLE_DECKER
-	#include "node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h"
-	#include "node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h"
-#endif
-
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	#include "node_resource_manager/pub_sub/pub_sub.h"
 #endif
@@ -41,10 +36,6 @@ struct MHD_Daemon *http_daemon = NULL;
 */
 SQLiteManager *dbm = NULL;
 
-#ifdef ENABLE_DOUBLE_DECKER
-	DDClientManager *client = new DDClientManager();
-#endif
-
 /**
 *	Private prototypes
 */
@@ -69,10 +60,6 @@ void singint_handler(int sig)
 
 	if(dbm != NULL)
 		dbm->eraseAllToken();
-
-#ifdef ENABLE_DOUBLE_DECKER
-	client->terminateClient();
-#endif
 
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	DoubleDeckerClient::terminate();
@@ -216,18 +203,6 @@ int main(int argc, char *argv[])
 	sigset_t mask;
 	sigfillset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
-
-#ifdef ENABLE_DOUBLE_DECKER
-	/*Client pub/sub*/
-	if(!client->publishBoot(descr_file_name, client_name, broker_address))
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the Double Decker client. The %s cannot be run.",MODULE_NAME);
-
-		client->terminateClient();
-
-		exit(EXIT_FAILURE);
-	}
-#endif
 
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	if(!DoubleDeckerClient::init(client_name, broker_address, key_path))

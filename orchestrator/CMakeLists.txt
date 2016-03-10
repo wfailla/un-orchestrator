@@ -127,19 +127,6 @@ OPTION(
 
 #################################################################################################################
 
-# Rather complicated CMake code for selecting the PubSub implementation
-SET(ENABLE_PUB_SUB "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
-SET(ENABLE_PUB_SUB_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
-SET_PROPERTY(CACHE ENABLE_PUB_SUB PROPERTY STRINGS ${ENABLE_PUB_SUB_VALUES})
-LIST(FIND ENABLE_PUB_SUB_VALUES ${ENABLE_PUB_SUB} ENABLE_PUB_SUB_INDEX)
-
-IF(${ENABLE_PUB_SUB_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${ENABLE_PUB_SUB} not supported, valid entries are ${ENABLE_PUB_SUB_VALUES}")
-ENDIF()
-IF(${ENABLE_PUB_SUB_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER)
-ENDIF()
-
 OPTION(
 	RUN_NFS
 	"Turn on the actually run the NFs"
@@ -227,16 +214,6 @@ ENDIF(IVSHMEM_RING_ALIAS)
 MARK_AS_ADVANCED(
 	DEBUG_KVM DEBUG_OPENFLOW LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD IVSHMEM_RING_ALIAS
 )
-
-#Set some options to the compiler, which are only required when the support to double decker is enabled
-IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-	IF(CMAKE_COMPILER_IS_GNUCXX)
-		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
-	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
-	IF(CMAKE_COMPILER_IS_GNUCC)
-		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
-	ENDIF(CMAKE_COMPILER_IS_GNUCC)
-ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
 # Set source files
 SET(SOURCES
@@ -339,22 +316,6 @@ SET(SOURCES
 	utils/sockutils.h
 	utils/sockutils.c
 )
-
-IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-    SET(SOURCES1
-    ${SOURCES}
-		node_resource_manager/pub_sub_manager/PubSubManager.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
-		              
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClient.h
-    )
-ELSE()
-     SET(SOURCES1
-         ${SOURCES}
-    	)
-ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
     SET(SOURCES2
@@ -512,18 +473,6 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	libcrypto.so
 	-lrt
 )
-
-#Links specific for double decker 
-IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-	TARGET_LINK_LIBRARIES( node-orchestrator
-		liburcu.so
-		libzmq.so
-		libczmq.so
-		libsodium.so
-		libjson.so
-		libddclient.so
-	)
-ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
 
 IF(ENABLE_DOUBLE_DECKER_CONNECTION)
 	TARGET_LINK_LIBRARIES( node-orchestrator
