@@ -117,8 +117,8 @@ char *DoubleDeckerClient::topicToString(topic_t topic)
 {
 	switch(topic)
 	{
-		case NFFG:
-			return "NF-FG";
+		case FROG_DOMAIN_DESCRIPTION:
+			return "frog:domain-description";
 		default:
 			assert(0 && "This is impossible!");
 			return "";
