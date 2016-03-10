@@ -94,9 +94,12 @@ int main(int argc, char *argv[])
 	char *ports_file_name = new char[BUFFER_SIZE], *t_ports_file_name = NULL;
 	char *nffg_file_name = new char[BUFFER_SIZE], *t_nffg_file_name = NULL;
 	char *descr_file_name = new char[BUFFER_SIZE], *t_descr_file_name = NULL;
-	char *client_name = new char[BUFFER_SIZE], *t_client_name = NULL;
-	char *broker_address = new char[BUFFER_SIZE], *t_broker_address = NULL;
-	char *key_path = new char[BUFFER_SIZE], *t_key_path = NULL;
+#ifdef ENABLE_DOUBLE_DECKER_CONNECTION
+	char *client_name = new char[BUFFER_SIZE];
+	char *broker_address = new char[BUFFER_SIZE];
+	char *key_path = new char[BUFFER_SIZE];
+#endif
+	char *t_client_name = NULL, *t_broker_address = NULL, *t_key_path = NULL;
 	char *control_interface = new char[BUFFER_SIZE], *t_control_interface = NULL;
 	char *local_ip = new char[BUFFER_SIZE], *t_local_ip = NULL;
 	char *ipsec_certificate = new char[BUFFER_SIZE], *t_ipsec_certificate = NULL;
@@ -124,6 +127,7 @@ int main(int argc, char *argv[])
 	else
 		descr_file_name = NULL;
 
+#ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	if(strcmp(t_client_name, "UNKNOWN") != 0)
 		strcpy(client_name, t_client_name);
 	else
@@ -138,7 +142,8 @@ int main(int argc, char *argv[])
 		strcpy(key_path, t_key_path);
 	else	
 		key_path = NULL;	
-		
+#endif
+
 	if(strcmp(t_control_interface, "UNKNOWN") != 0)
 		strcpy(control_interface, t_control_interface);
 	else
