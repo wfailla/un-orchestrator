@@ -454,8 +454,8 @@ ENDIF(ENABLE_RESOURCE_MANAGER)
 IF(ENABLE_MONITORING_CONTROLLER)
 	SET(SOURCES9
     ${SOURCES8}
-    node_resource_manager/monitoring_controller/monitoring_controller.h
-    node_resource_manager/monitoring_controller/monitoring_controller.cc
+    monitoring_controller/monitoring_controller.h
+    monitoring_controller/monitoring_controller.cc
     )
 ELSE()
 	SET(SOURCES9
