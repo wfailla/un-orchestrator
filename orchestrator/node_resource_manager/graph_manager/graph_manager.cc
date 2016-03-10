@@ -1342,6 +1342,11 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		string tmp_ep = mep->first;
 	}
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	//Update the measure string
+	graph->setMeasureString(newPiece->getMeasureString());
+#endif
+
 	graph->print();
 
 	/**
@@ -1603,6 +1608,31 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		tenantController->installNewRules(graphTenant.getRules());
 
 		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+		/**
+		*	6) Starts the monitoring controller
+		*/
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "6) Starting the monitoring controller related to the new graph");
+
+		MonitoringController *monitoringController = (tenantLSIs.find(graphID))->second.getMonitoringController();
+
+		//XXX super ad hoc code that makes assumptions on how the compute controller creates the names 
+		list< pair<string, string> > vnfsMapping;
+		list<map<unsigned int, string> > portsMapping;
+		
+		list<highlevel::VNFs> vnfs = graph->getVNFs();
+		for(list<highlevel::VNFs>::iterator vnf = vnfs.begin(); vnf != vnfs.end(); vnf++)
+		{
+			stringstream name;
+			name << dpid << "_" << vnf->getName();
+			vnfsMapping.push_back(make_pair(vnf->getId(),name.str()));
+			
+			portsMapping.push_back(lsi->getNetworkFunctionsPortsNameOnSwitchMap(vnf->getName()));
+		}
+
+		monitoringController->startMonitoring(graph->getMeasureString(),vnfsMapping,portsMapping);
+#endif
 
 	} catch (SwitchManagerException e)
 	{
