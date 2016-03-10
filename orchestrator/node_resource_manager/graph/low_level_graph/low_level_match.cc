@@ -24,7 +24,7 @@ bool Match::operator==(const Match &other) const
 	if((isInput_port && !other.isInput_port) ||
 		(!isInput_port && other.isInput_port) )
 		return false;
-		
+
 	if(input_port != other.input_port)
 		return false;
 
@@ -39,19 +39,19 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 		message.set_match().set_in_port(input_port);
 	if(is_local_port)
 		message.set_match().set_in_port(rofl::openflow::OFPP_LOCAL);
-		
+
 	if(eth_src != NULL)
 	{
-		if(eth_src_mask)	
-			message.set_match().set_eth_src(cmacaddr(eth_src), cmacaddr(eth_src_mask));		
+		if(eth_src_mask)
+			message.set_match().set_eth_src(cmacaddr(eth_src), cmacaddr(eth_src_mask));
 		else
 			message.set_match().set_eth_src(cmacaddr(eth_src));
 	}
-		
+
 	if(eth_dst != NULL)
 	{
 		if(eth_dst_mask)
-			message.set_match().set_eth_dst(cmacaddr(eth_dst), cmacaddr(eth_dst_mask));		
+			message.set_match().set_eth_dst(cmacaddr(eth_dst), cmacaddr(eth_dst_mask));
 		else
 			message.set_match().set_eth_dst(cmacaddr(eth_dst));
 	}
@@ -64,7 +64,7 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 		*		http://openvswitch.org/support/dist-docs/ovs-ofctl.8.txt
 		*	requires that the VLAN ID is put in OR with 0x1000.
 		*	Thanks to Roberto Bonafiglia for his help :D !
-		*/		
+		*/
 		message.set_match().set_vlan_vid(vlanID | 0x1000 );
 	}
 	else if(isAnyVlan)
@@ -100,25 +100,25 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	if(isUdpSrc)
 		message.set_match().set_udp_src(udp_src);
 	if(isUdpDst)
-		message.set_match().set_udp_dst(udp_dst);	
+		message.set_match().set_udp_dst(udp_dst);
 	if(isSctpSrc)
 		message.set_match().set_sctp_src(sctp_src);
 	if(isSctpDst)
-		message.set_match().set_sctp_dst(sctp_dst);		
+		message.set_match().set_sctp_dst(sctp_dst);
 	if(isIcmpv4Type)
 		message.set_match().set_icmpv4_type(icmpv4Type);
 	if(isIcmpv4Code)
-		message.set_match().set_icmpv4_code(icmpv4Code);	
+		message.set_match().set_icmpv4_code(icmpv4Code);
 	if(isArpOpcode)
 		message.set_match().set_arp_opcode(arpOpcode);
-	if(arp_spa)	
+	if(arp_spa)
 	{
 		if(arp_spa_mask)
 			message.set_match().set_arp_spa(caddress_in4(arp_spa),caddress_in4(arp_spa_mask));
 		else
 			message.set_match().set_arp_spa(caddress_in4(arp_spa));
 	}
-	if(arp_tpa)	
+	if(arp_tpa)
 	{
 		if(arp_tpa_mask)
 			message.set_match().set_arp_tpa(caddress_in4(arp_tpa),caddress_in4(arp_tpa_mask));
@@ -149,11 +149,11 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 		message.set_match().set_icmpv6_type(icmpv6Type);
 	if(isIcmpv6Code)
 		message.set_match().set_icmpv6_code(isIcmpv6Code);
-	if(ipv6_nd_target)	
+	if(ipv6_nd_target)
 		message.set_match().set_ipv6_nd_target(caddress_in6(ipv6_nd_target));
-	if(ipv6_nd_sll)	
+	if(ipv6_nd_sll)
 		message.set_match().set_ipv6_nd_sll(cmacaddr(ipv6_nd_sll));
-	if(ipv6_nd_tll)	
+	if(ipv6_nd_tll)
 		message.set_match().set_ipv6_nd_tll(cmacaddr(ipv6_nd_tll));
 	if(isMplsLabel)
 		message.set_match().set_mpls_label(mplsLabel);
@@ -162,7 +162,7 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	if(gre_key)
 	{
 		unsigned int key = 0;
-		
+
 		sscanf(gre_key, "%u", &key);
 		message.set_match().set_tunnel_id(key);
 	}
@@ -206,11 +206,11 @@ string Match::prettyPrint(LSI *lsi0,map<string,LSI *> lsis)
 		{
 			ss << it->first << graph::Match::prettyPrint();
 			return ss.str();
-		}		
+		}
 	}
-	
+
 	//The port corresponds to a virtual link... we search the corresponding graph
-	
+
 	for(map<string,LSI *>::iterator it = lsis.begin(); it != lsis.end(); it++)
 	{
 		vector<VLink> vlinks = it->second->getVirtualLinks();
@@ -219,19 +219,19 @@ string Match::prettyPrint(LSI *lsi0,map<string,LSI *> lsis)
 			if(vl->getRemoteID() == input_port)
 			{
 				ss << input_port << " (graph: " << it->first << ")";
-				return ss.str();	
+				return ss.str();
 			}
 		}
 	}
-	
+
 	if(is_local_port)
 		ss << "LOCAL" << " (LOCAL graph)";
 	else
-	{	
+	{
 		//The code could be here only when a SIGINT is received and all the graph are going to be removed
 		ss << input_port << " (unknown graph)";
 	}
-	
+
 	return ss.str();
 }
 

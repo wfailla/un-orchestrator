@@ -40,12 +40,12 @@ private:
 	*	@brief: name of the physical port
 	*/
 	string name;
-	
+
 	/**
 	*	@brief: type of the physical port
 	*/
 	physicalPortType_t type;
-	
+
 	/**
 	*	@brief: side of the physical port, with respect to the node
 	*/
@@ -56,24 +56,24 @@ protected:
 		: name(name), type(type), side(side)
 	{
 	}
-	
+
 public:
-	
+
 	string getPortName() const
 	{
 		return name;
 	}
-		
+
 	physicalPortType_t getPortType() const
 	{
 		return type;
 	}
-	
+
 	physicalPortSide_t getPortSide()
 	{
 		return side;
 	}
-	
+
 	string getPortTypeToString()
 	{
 		switch(type)
@@ -89,7 +89,7 @@ public:
 				return "";
 		}
 	}
-	
+
 	string getPortSideToString() const
 	{
 		switch(side)
@@ -108,7 +108,7 @@ public:
 				return "";
 		}
 	}
-	
+
 	//XXX this operator is required to put an object of this class into a set
 	bool operator< (const CheckPhysicalPortsIn& lhs) const
 	{

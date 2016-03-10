@@ -18,7 +18,7 @@ bool EndPointGre::operator==(const EndPointGre &other) const
 {
 	if(id == other.id && name == other.name)
 		return true;
-		
+
 	return false;
 }
 
@@ -83,11 +83,11 @@ void EndPointGre::print()
 Object EndPointGre::toJSON()
 {
 	Object EndPointGre, iface;
-	
+
 	EndPointGre[_ID] = id.c_str();
 	EndPointGre[_NAME] = name.c_str();
 	EndPointGre[EP_TYPE] = EP_GRE;
-	
+
 	iface[LOCAL_IP] = local_ip.c_str();
 	iface[REMOTE_IP] = remote_ip.c_str();
 	iface[IFACE] = interface.c_str();
@@ -95,9 +95,9 @@ Object EndPointGre::toJSON()
 	if(strcmp(ttl.c_str(), "") != 0)
 		iface[TTL] = ttl.c_str();
 	iface[SAFE] = is_safe;
-	
+
 	EndPointGre[EP_GRE] = iface;
-	
+
 	return EndPointGre;
 }
 

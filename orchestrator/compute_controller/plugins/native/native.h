@@ -29,12 +29,12 @@ private:
 	*	@param:	netmask	Netmask to be converted
 	*/
 	unsigned int convertNetmask(string netmask);
-	
+
 	/**
 	*	@brief: contains the list of capabilities available through the node
 	*/
 	static std::map<std::string, Capability> *capabilities;
-	
+
 	static void freeXMLResources(xmlSchemaParserCtxtPtr parser_ctxt, xmlSchemaValidCtxtPtr valid_ctxt, xmlDocPtr schema_doc, xmlSchemaPtr schema, xmlDocPtr doc);
 
 

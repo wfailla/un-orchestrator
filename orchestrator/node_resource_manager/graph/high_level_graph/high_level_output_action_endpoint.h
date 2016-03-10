@@ -15,17 +15,17 @@ namespace highlevel
 class ActionEndPoint : public Action
 {
 private:
-	
+
 	/**
 	*	@brief: endpoint identifier
 	*/
 	unsigned int endpoint;
-	
+
 	/**
 	*	@brief: the name of the endpoint (e.g., endpoint:00000001)
 	*/
 	string input_endpoint;
-	
+
 public:
 
 	ActionEndPoint(unsigned int endpoint, string input_endpoint);
@@ -33,9 +33,9 @@ public:
 	unsigned int getPort();
 	string getInputEndpoint();
 	string toString();
-	
+
 	bool operator==(const ActionEndPoint &other) const;
-	
+
 	void print();
 	Object toJSON();
 };

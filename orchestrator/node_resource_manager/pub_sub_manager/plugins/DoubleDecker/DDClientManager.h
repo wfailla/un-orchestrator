@@ -30,19 +30,19 @@ private:
 	*	@brief: Double decker client pointer
 	*/
 	ddclient_t *client;
-	
+
 public:
 
 	DDClientManager();
-	
+
 	~DDClientManager();
-	
+
 	bool publishBoot(char *descr_file, char *client_name, char *dealer_name);
-	
+
 	bool publishUpdating();
-	
+
 	void terminateClient();
-	
+
 	ddclient_t *getClient();
 };
 

@@ -27,12 +27,12 @@ private:
 	*	@brief: the match of this rule
 	*/
 	Match match;
-	
+
 	/**
 	*	@brief: the action of this rule
 	*/
 	Action *action;
-	
+
 	/**
 	*	@brief: the priority of this rule
 	*/
@@ -46,7 +46,7 @@ private:
 
 public:
 	Rule(Match match, Action *action,string flowID, uint64_t priority);
-	
+
 	void print();
 	Object toJSON();
 
@@ -54,7 +54,7 @@ public:
 	uint64_t getPriority();
 	Match getMatch();
 	Action *getAction();
-	
+
 	/**
 	*	@brief: two rules are equal if they have the same flow ID
 	*/

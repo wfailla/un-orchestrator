@@ -19,10 +19,10 @@ bool Action::operator==(const Action &other) const
 {
 	if((type == other.type) && (port_id == other.port_id))
 		return true;
-		
+
 	return false;
 }
-	
+
 openflow::ofp_action_type Action::getActionType()
 {
 	return type;
@@ -41,7 +41,7 @@ void Action::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 		case OFP_10:
 			if(is_local_port)
 				message.set_actions().add_action_output(cindex(position)).set_port_no(rofl::openflow::OFPP_LOCAL);
-			else	
+			else
 				message.set_actions().add_action_output(cindex(position)).set_port_no(port_id);
 			break;
 		case OFP_12:
@@ -50,7 +50,7 @@ void Action::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(position)).set_port_no(rofl::openflow::OFPP_LOCAL);
 			else
 				message.set_instructions().set_inst_apply_actions().set_actions().add_action_output(cindex(position)).set_port_no(port_id);
-			break;	
+			break;
 	}
 }
 
@@ -64,7 +64,7 @@ void Action::print()
 		else
 			cout << "\t\t\tOUTPUT: " << port_id << endl;
 		for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
-			(*ga)->print();		
+			(*ga)->print();
 		cout << "\t\t}" << endl;
 	}
 }
@@ -82,11 +82,11 @@ string Action::prettyPrint(LSI *lsi0,map<string,LSI *> lsis)
 		{
 			ss << it->first;
 			return ss.str();
-		}		
+		}
 	}
-	
+
 	//The port corresponds to a virtual link... we search the corresponding graph
-	
+
 	for(map<string,LSI *>::iterator it = lsis.begin(); it != lsis.end(); it++)
 	{
 		vector<VLink> vlinks = it->second->getVirtualLinks();
@@ -99,7 +99,7 @@ string Action::prettyPrint(LSI *lsi0,map<string,LSI *> lsis)
 			}
 		}
 	}
-	
+
 	if(is_local_port)
 		ss << "LOCAL" << " (LOCAL graph)";
 	else
@@ -107,12 +107,12 @@ string Action::prettyPrint(LSI *lsi0,map<string,LSI *> lsis)
 		//The code could be here only when a SIGINT is received and all the graph are going to be removed
 		ss << port_id << " (unknown graph)";
 	}
-	
+
 conclude:
-	
+
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		ss << (*ga)->prettyPrint();
-	
+
 	return ss.str();
 }
 

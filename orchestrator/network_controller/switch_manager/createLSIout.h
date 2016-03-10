@@ -22,12 +22,12 @@ friend class GraphManager;
 
 private:
 	uint64_t dpid;
-	
+
 	/**
 	* @brief: list of physical port name, identifier on the lsi
 	*/
 	map<string,unsigned int> physical_ports;
-		
+
 	/**
 	*	@brief: map of network functions name, map of network function ports name, network function ports identifier on the lsi
 	*		The name of the network function ports is that selected by the node resource manager based on the graph, and will
@@ -49,24 +49,24 @@ private:
 	*		vSwitch can be the same.
 	*/
 	map<string,list<string> > nf_ports_name_on_switch;
-	
+
 	/**
 	*	@brief: list of virtual link identifier on the new lsi, virtual link identifier on the remote lsi
 	*/
 	list<pair<unsigned int, unsigned int> > virtual_links;
-	
+
 protected:
 
 	uint64_t getDpid()
 	{
 		return dpid;
 	}
-	
+
 	map<string,unsigned int> getPhysicalPorts()
 	{
 		return physical_ports;
 	}
-	
+
 	map<string,map<string, unsigned int> > getNetworkFunctionsPorts()
 	{
 		return network_functions_ports;
@@ -81,7 +81,7 @@ protected:
 	{
 		return nf_ports_name_on_switch;
 	}
-	
+
 	list<pair<unsigned int, unsigned int> > getVirtualLinks()
 	{
 		return virtual_links;

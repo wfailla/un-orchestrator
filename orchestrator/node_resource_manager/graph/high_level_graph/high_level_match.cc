@@ -13,11 +13,11 @@ bool Match::setInputPort(string input_port)
 {
 	if(type != MATCH_GENERIC)
 		return false;
-		
+
 	input = (char*)malloc(sizeof(char)*(input_port.length()+1));
 	strcpy(input,input_port.c_str());
 	type = MATCH_PORT;
-	
+
 	return true;
 }
 
@@ -30,7 +30,7 @@ bool Match::setNFport(string network_function, int port)
 	strcpy(input,network_function.c_str());
 	this->nf_port = port;
 	type = MATCH_NF;
-	
+
 	return true;
 }
 
@@ -41,7 +41,7 @@ bool Match::setEndPoint(unsigned int endpoint)
 
 	this->endpoint = endpoint;
 	type = MATCH_ENDPOINT;
-	
+
 	return true;
 }
 
@@ -49,18 +49,18 @@ bool Match::setInputEndpoint(string input_endpoint)
 {
 	this->input_endpoint = (char*)malloc(sizeof(char)*(input_endpoint.length()+1));
 	strcpy(this->input_endpoint,input_endpoint.c_str());
-	
+
 	input = (char*)malloc(sizeof(char)*(input_endpoint.length()+1));
 	strcpy(input,input_endpoint.c_str());
-	
+
 	return true;
 }
-	
+
 bool Match::setNFEndpointPort(string nf_endpoint_port)
 {
 	this->nf_endpoint_port = (char*)malloc(sizeof(char)*(nf_endpoint_port.length()+1));
 	strcpy(this->nf_endpoint_port,nf_endpoint_port.c_str());
-	
+
 	return true;
 }
 
@@ -112,14 +112,14 @@ string Match::getGraphID()
 unsigned int Match::getEndPoint()
 {
 	assert(type == MATCH_ENDPOINT);
-		
+
 	return endpoint;
 }
 
 char *Match::getInputEndpoint()
 {
 	assert(type == MATCH_ENDPOINT);
-		
+
 	//Check the name of port
 	char delimiter[] = ":";
 	char * pnt;
@@ -138,11 +138,11 @@ char *Match::getInputEndpoint()
 			case 1:
 				str = string(pnt);
 		}
-		
+
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	
+
 	return (char *)str.c_str();
 }
 
@@ -151,22 +151,22 @@ void Match::print()
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
 		cout << "\t\tmatch:" << endl << "\t\t{" << endl;
-	
-		if(type == MATCH_PORT || type == MATCH_ENDPOINT)	
+
+		if(type == MATCH_PORT || type == MATCH_ENDPOINT)
 			cout << "\t\t\tport_in: " << input << endl;
 		else
 			cout << "\t\t\tport_in: " << input << ":" << nf_port << endl;
-		
+
 		graph::Match::print();
-	
+
 		cout << "\t\t}" << endl;
 	}
 }
 
 Object Match::toJSON()
 {
-	Object match;	
-	
+	Object match;
+
 	if(type == MATCH_PORT || type == MATCH_ENDPOINT)
 		match[PORT_IN]  = input_endpoint;
 	else if(type == MATCH_NF)
@@ -175,9 +175,9 @@ Object Match::toJSON()
 		nf << input << ":" << nf_port;
 		match[PORT_IN] = nf_endpoint_port;
 	}
-	
+
 	graph::Match::toJSON(match);
-	
+
 	return match;
 }
 

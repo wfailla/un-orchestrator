@@ -27,7 +27,7 @@ public:
 	*		related to the physical ports to be connected to the node itself
 	*/
 	static set<CheckPhysicalPortsIn> parseConfigurationFile(string fileName);
-	
+
 };
 
 class FileParserException: public exception

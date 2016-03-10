@@ -44,7 +44,7 @@ of the universal node.
 	; Install Double Decker (hierarchical messaging system)
 	$ git clone https://github.com/Acreo/DoubleDecker
 	$ cd DobuleDecker/c/
-
+	
 	; Now install the above library according to the description provided
 	; in the cloned folder
 
@@ -203,7 +203,7 @@ Two flavors of virtual machines are supported:
 In order to start/stop virtual machines, a recent version of Libvirt must be used. 
 You can build it from sources using the following commands:
 
-	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev python-dev xsltproc autopoint uuid-dev
+	$ sudo apt-get install libxml-xpath-perl libyajl-dev libdevmapper-dev libpciaccess-dev libnl-dev python-dev xsltproc autopoint uuid-dev libxml2-utils
 	$ git clone git://libvirt.org/libvirt.git
 	; select the commit that is known to work and have the necessary support
 	$ cd libvirt

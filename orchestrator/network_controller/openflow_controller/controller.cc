@@ -19,9 +19,9 @@ void Controller::start()
 void Controller::handle_dpt_open(crofdpt& dpt)
 {
 	pthread_mutex_lock(&controller_mutex);
-	
+
 	logger(ORCH_DEBUG_INFO, OFCONTROLLER_MODULE_NAME, __FILE__, __LINE__, "Connection with the datapath is open!");
-	
+
 	dpt.flow_mod_reset();
 	switch(OFP_VERSION)
 	{
@@ -34,14 +34,14 @@ void Controller::handle_dpt_open(crofdpt& dpt)
 			break;
 	}
 
-	
-	
+
+
 
 	this->dpt = &dpt;
 	isOpen = true;
 
 	installNewRulesIntoLSI(graph.getRules());
-	
+
 	pthread_mutex_unlock(&controller_mutex);
 }
 
@@ -64,14 +64,14 @@ bool Controller::installNewRule(Rule rule)
 
 	list<Rule> rules;
 	rules.push_back(rule);
-	
+
 	//Add the rule to the whole graph
 	graph.addRule(rule);
 
 	bool retVal = installNewRulesIntoLSI(rules);
-	
+
 	pthread_mutex_unlock(&controller_mutex);
-	
+
 	return retVal;
 }
 
@@ -81,11 +81,11 @@ bool Controller::installNewRules(list<Rule> rules)
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 		graph.addRule(*r);
-		
+
 	bool retVal = installNewRulesIntoLSI(rules);
-	
+
 	pthread_mutex_unlock(&controller_mutex);
-	
+
 	return retVal;
 }
 
@@ -95,8 +95,8 @@ bool Controller::removeRules(list<Rule> rules)
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 		graph.removeRule(*r);
-		
-	//TODO: removes, from LSI, only rules that do not still appear in the graph	
+
+	//TODO: removes, from LSI, only rules that do not still appear in the graph
 	bool retVal = removeRulesFromLSI(rules);
 	pthread_mutex_unlock(&controller_mutex);;
 	return retVal;
@@ -106,13 +106,13 @@ bool Controller::removeRuleFromID(string ID)
 {
 	//FIXME: is retVal useful?
 	bool retVal = false;
-	
+
 	pthread_mutex_lock(&controller_mutex);
 
 	try
-	{	
+	{
 		Rule rule = graph.getRule(ID);
-	
+
 		if(!graph.removeRuleFromID(ID))
 		{
 			//The graph does not contain another rule equal to the
@@ -127,16 +127,16 @@ bool Controller::removeRuleFromID(string ID)
 		//This is ok, since some rules have a lowering just into the LSI-0 or tenant-LSI.
 	}
 	pthread_mutex_unlock(&controller_mutex);
-	
+
 	return retVal;
 }
 
 bool Controller::installNewRulesIntoLSI(list<Rule> rules)
-{	
+{
 	if(isOpen)
 	{
 		logger(ORCH_DEBUG_INFO, OFCONTROLLER_MODULE_NAME, __FILE__, __LINE__, "Installing (%d) new rules!",rules.size());
-		
+
 		list<Rule>::iterator rule = rules.begin();
 		for(; rule != rules.end(); rule++)
 		{
@@ -162,7 +162,7 @@ bool Controller::removeRulesFromLSI(list<Rule> rules)
 	if(isOpen)
 	{
 		logger(ORCH_DEBUG_INFO, OFCONTROLLER_MODULE_NAME, __FILE__, __LINE__, "Removing (%d) rules!",rules.size());
-		
+
 		list<Rule>::iterator rule = rules.begin();
 		for(; rule != rules.end(); rule++)
 		{
@@ -194,12 +194,12 @@ void *Controller::loop(void *param)
 		rofl::logging::set_debug_level(7);
 
 	logger(ORCH_DEBUG_INFO, OFCONTROLLER_MODULE_NAME, __FILE__, __LINE__, "Openflow controller is going to start...");
-	
+
 	rofl::cioloop::get_loop().run();
 
 	assert(0 && "Cannot be here!");
-	
+
 	rofl::cioloop::get_loop().shutdown();
-	
+
 	return NULL;
 }

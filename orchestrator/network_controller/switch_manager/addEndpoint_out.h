@@ -30,7 +30,7 @@ private:
 	*	@brief: id of the endpoint
 	*/
 	unsigned int ep_id;
-	
+
 protected:
 
 	string getEPname()
@@ -48,7 +48,7 @@ public:
 		: ep_name(ep_name), ep_id(ep_id)
 	{
 	}
-	
+
 };
 
 
