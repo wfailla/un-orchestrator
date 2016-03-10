@@ -165,7 +165,7 @@ def add_flowentry(nffg_json, port_in, port_out, priority=10):
     flow_id = get_next_flowrule_id(nffg_json)
 
     match_vnf = nffg.getVNF(port_in.DP.id)
-    logging.info('id of DP port_in: {0}'.format(port_in.DP.id))
+    #logging.info('id of DP port_in: {0}'.format(port_in.DP.id))
     match_port_id = ''
     for port in match_vnf.ports:
         if port_in.ifname in port.name:
@@ -202,6 +202,7 @@ def delete_VNF(nffg_json, vnf_id, RESTaddress):
 
     for flow in flow_list:
         delete_flowrule(flow.id, RESTaddress)
+
 
 def delete_flowrule(rule_id, RESTaddress):
     url = RESTaddress + '/NF-FG/NF-FG/' + rule_id

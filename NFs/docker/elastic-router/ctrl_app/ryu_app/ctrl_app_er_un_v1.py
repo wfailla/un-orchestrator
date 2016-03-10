@@ -165,8 +165,11 @@ class ElasticRouter(app_manager.RyuApp):
                 new_port = new_DP.add_port(new_ifname, port_type=DPPort.External, linked_port=old_port.linked_port)
 
                 scale_out_port_dict[old_port] = new_port
+                new_DP.scale_out_port_dict[old_port] = new_port
 
             new_DP_list.append(new_DP)
+
+
 
         # add internal ports/links to new DP
         for new_DP in new_DP_list:
@@ -186,8 +189,29 @@ class ElasticRouter(app_manager.RyuApp):
                 linked_port2 = linked_DP.get_port(ifname2)
                 new_DP.get_port(ifname1).linked_port = linked_port2
                 self.logger.info('linked {0} to {1}'.format(ifname1, ifname2))
+            '''
+            # add default flow entries for new DP
+            external_ports = [port for port in new_DP.ports if port.port_type == DPPort.External]
+            internal_ports = [port for port in new_DP.ports if port.port_type == DPPort.Internal]
+            # assume only 1 external port possible
+            if len(external_ports) == 1:
+                for int_port in internal_ports:
+                    priority = 20
+                    #match_dict = create_dictionary(in_port=int_port.number)
+                    #parser = ofproto_v1_3_parser
+                    out_port = external_ports[0]
+                    #out_port_number = external_ports[0].number
+                    #actions = [parser.OFPActionOutput(out_port_number)]
+                    #new_DP.oftable.append((match_dict, actions, priority))
 
+                    match_dict = create_dictionary(in_port=int_port)
+                    action_dict = create_dictionary(out_port=out_port)
+                    new_DP.oftable_scale_out.append((match_dict, action_dict, priority))
 
+            # for multiple external ports, use VLAN IDs
+            '''
+
+        '''
         # add new flow_entries
         for old_port in scale_out_port_dict:
             old_DP = old_port.DP
@@ -197,7 +221,8 @@ class ElasticRouter(app_manager.RyuApp):
             for match_dict, actions, priority  in old_DP.oftable:
                 if match_dict['in_port'] == old_port.number:
                     new_match_dict = copy.deepcopy(match_dict)
-                    new_match_dict['in_port'] = new_port.number
+                    #new_match_dict['in_port'] = new_port.number
+                    new_match_dict['in_port'] = new_port
                     new_actions = list(actions)
                     for i in range(0,len(actions)) :
                         if actions[i].port == ofproto.OFPP_FLOOD:
@@ -220,6 +245,7 @@ class ElasticRouter(app_manager.RyuApp):
                                     new_actions[i].port = new_outportno
                                     break
                     new_DP.oftable.append((new_match_dict, new_actions, priority))
+        '''
 
                     # TODO set flow entries when DP is detected
                     #parser = new_DP.datapath.ofproto_parser
@@ -339,8 +365,29 @@ class ElasticRouter(app_manager.RyuApp):
         self.nffg_json = self.get_nffg_json()
         self.parse_nffg(self.nffg_json)
 
+        file = open('ER_scale_finish.json', 'w')
+        file.write(self.nffg_json)
+        file.close()
+
         self.logger.info('scaling finished!')
 
+    @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
+    def switch_features_handler(self, ev):
+        datapath = ev.msg.datapath
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        # install table-miss flow entry
+        #
+        # We specify NO BUFFER to max_len of the output action due to
+        # OVS bug. At this moment, if we specify a lesser number, e.g.,
+        # 128, OVS will send Packet-In with invalid buffer_id and
+        # truncated packet data. In that case, we cannot output packets
+        # correctly.  The bug has been fixed in OVS v2.1.0.
+        match = parser.OFPMatch()
+        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
+                                          ofproto.OFPCML_NO_BUFFER)]
+        self.add_flow(datapath, 0, match, actions)
 
     # new switch detected
     @set_ev_cls(EventSwitchEnter)
@@ -350,8 +397,6 @@ class ElasticRouter(app_manager.RyuApp):
         ofproto = datapath.ofproto
         self.logger.info('OF version: {0}'.format(ofproto))
         #print 'switch entered send port desc request'
-
-        self.send_oftable(self.DPIDtoDP(datapath.id))
 
         self.send_port_desc_stats_request(datapath)
 
@@ -401,6 +446,9 @@ class ElasticRouter(app_manager.RyuApp):
         this_DP.registered = True
         self.DPIDtoDP[this_DP.datapath_id] = this_DP
         self.logger.info('stored OF switch id: %s' % this_DP.datapath_id)
+
+        # fill switch flow entries
+        self.send_oftable(this_DP)
 
     # query port statistics
     def port_stats_request(self, datapath):
@@ -482,7 +530,7 @@ class ElasticRouter(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         in_port = msg.match['in_port']
-        priority = 1
+        priority = 20
 
         pkt = packet.Packet(msg.data)
         '''
@@ -524,6 +572,7 @@ class ElasticRouter(app_manager.RyuApp):
 
             match_dict = create_dictionary(in_port=in_port, eth_dst=mac_dst)
             source_DP.oftable.append((match_dict, actions, priority))
+            self.logger.debug('added flow: in_port:{0} mac_dst:{1} out_port:{2}'.format(in_port, mac_dst, out_port))
             match = parser.OFPMatch(**match_dict)
             #match = parser.OFPMatch(in_port=in_port, eth_dst=mac_dst)
 
@@ -769,6 +818,10 @@ class ElasticRouter(app_manager.RyuApp):
         datapath.send_msg(mod)
 
     def send_oftable(self, DP):
+        # assume scale_out
+        DP.set_default_oftable_scale_out()
+        DP.translate_oftable_scale_out()
+
         parser = DP.datapath.ofproto_parser
         self.logger.info('{0} adding {1} flows'.format(DP.name,len(DP.oftable)))
         for match_dict, actions, priority  in DP.oftable:
