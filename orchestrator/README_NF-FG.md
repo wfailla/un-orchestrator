@@ -814,7 +814,7 @@ Note that multiple port forwardings may be set up for a VNF; however, a single p
 
 ## Monitoring
 
-It is possible to associate a monitoring string to an NF-FG. Such a string must be written according to
+It is possible to associate a monitoring string to an NF-FG; such a string must be written according to
 the MEASURE formalism defined in Unify. This can be done through the `unify-monitoring`, as shown in the
 following example:
 
