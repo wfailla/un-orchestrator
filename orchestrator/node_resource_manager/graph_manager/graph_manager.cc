@@ -1913,7 +1913,6 @@ next2:
 	}
 #endif
 
-#ifndef UNIFY_NFFG
 	//Remove NFs, if they no longer appear in the graph
 	for(list<string>::iterator nf = rri.nfs.begin(); nf != rri.nfs.end(); nf++)
 	{
@@ -1946,7 +1945,6 @@ next2:
 			}
 		}
 	}
-#endif
 
 	//Remove physical ports, if they no longer appear in the graph
 	for(list<string>::iterator p = rri.ports.begin(); p != rri.ports.end(); p++)
