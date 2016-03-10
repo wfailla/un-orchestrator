@@ -14,7 +14,7 @@
 using namespace std;
 
 typedef enum {
-	NFFG,
+	FROG_DOMAIN_DESCRIPTION,
 	//[+] add here other topics
 }topic_t;
 
