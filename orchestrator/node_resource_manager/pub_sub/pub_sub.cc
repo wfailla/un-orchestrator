@@ -119,6 +119,8 @@ char *DoubleDeckerClient::topicToString(topic_t topic)
 	{
 		case FROG_DOMAIN_DESCRIPTION:
 			return "frog:domain-description";
+		case UNIFY_MPP:
+			return "unify:mpp";
 		default:
 			assert(0 && "This is impossible!");
 			return "";

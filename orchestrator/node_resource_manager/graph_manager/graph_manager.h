@@ -8,6 +8,9 @@
 #include "graph_translator.h"
 #include "fileParser.h"
 #include "../../network_controller/openflow_controller/controller.h"
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	#include "../../monitoring_controller/monitoring_controller.h"
+#endif
 #include "../../utils/constants.h"
 #include "../graph/high_level_graph/high_level_graph.h"
 #include "../graph/low_level_graph/graph.h"

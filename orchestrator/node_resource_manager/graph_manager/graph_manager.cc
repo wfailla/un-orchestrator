@@ -1058,6 +1058,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+		/**
+		*	6) Starts the monitoring controller related to this graph
+		*/
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "6) Create the monitoring controller related to the new graph");
+		MonitoringController *monitoringController = new MonitoringController();
+		graphInfoTenantLSI.setMonitoringController(monitoringController);
+#endif
 	} catch (SwitchManagerException e)
 	{
 #ifdef RUN_NFS
