@@ -484,8 +484,6 @@ LINK_DIRECTORIES(
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
-	dd
-	czmq
 	/usr/local/lib/librofl_common.so
 	libjson_spirit.so
 	libmicrohttpd.so
