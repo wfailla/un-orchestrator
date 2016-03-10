@@ -31,7 +31,7 @@ bool VNFs::operator==(const VNFs &other) const
 {
 	if(id == other.id && name == other.name)
 		return true;
-		
+
 	return false;
 }
 
@@ -94,46 +94,46 @@ Object VNFs::toJSON()
 {
 	Object vnf;
 	Array portS;
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION	
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	Array ctrl_ports;
 	Array env_variables;
 #endif
-	
+
 	vnf[_ID] = id.c_str();
 	vnf[_NAME] = name.c_str();
 	vnf[VNF_TEMPLATE] = vnf_template.c_str();
 	if(strcmp(groups.c_str(), "") != 0)
 		vnf[VNF_GROUPS] = groups;
-	
+
 	for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
 	{
 		Object pp;
-		
+
 		pp[_ID] = (*p)[0].c_str();
 		pp[_NAME] = (*p)[1].c_str();
 		pp[PORT_MAC] = (*p)[2].c_str();
 		pp[PORT_IP] = (*p)[3].c_str();
-		
+
 		portS.push_back(pp);
 	}
 	vnf[VNF_PORTS] = portS;
-	
+
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
 	{
 		Object cc;
-		
+
 		cc[HOST_PORT] = (*c).first.c_str();
 		cc[VNF_PORT] = (*c).second.c_str();
-		
+
 		ctrl_ports.push_back(cc);
 	}
 	vnf[UNIFY_CONTROL] = ctrl_ports;
-	
+
 	for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
 	{
 		Object var;
-		
+
 		var[VARIABLE] = ev->c_str();
 		env_variables.push_back(var);
 	}

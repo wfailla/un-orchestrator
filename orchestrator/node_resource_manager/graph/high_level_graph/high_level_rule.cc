@@ -9,11 +9,11 @@ Rule::Rule(Match match, Action *action,string flowID, uint64_t priority) :
 }
 
 bool Rule::operator==(const Rule &other) const
-{	
+{
 	if(flowID == other.flowID)
 		//The two rules have the same ID
-		return true;	
-	
+		return true;
+
 	return false;
 }
 
@@ -53,13 +53,13 @@ Object Rule::toJSON()
 {
 	Object rule;
 	Array actions;
-	
+
 	rule[_ID] = flowID.c_str();
 	rule[PRIORITY] = priority;
 	rule[MATCH] = match.toJSON();
 	actions.push_back(action->toJSON());
 	rule[ACTIONS] = actions;
-		
+
 	return rule;
 }
 

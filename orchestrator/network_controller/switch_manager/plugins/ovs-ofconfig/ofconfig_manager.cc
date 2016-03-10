@@ -1,6 +1,6 @@
 #include "ofconfig_manager.h"
 
-char *host = NULL, *user = NULL;	
+char *host = NULL, *user = NULL;
 
 commands *c = NULL;
 
@@ -29,14 +29,14 @@ OVSManager::OVSManager()
 {
 
 	char user[64] = "";
-	
+
 	int i = 0;
 
 	c = new commands();/*create a new object commands*/
 
 	/* initiate libnetconf - all subsystems */
 	nc_init(NC_INIT_ALL);
-		
+
 	/* set verbosity and function to print libnetconf's messages */
 	nc_verbosity(NC_VERB_WARNING);//print error and warning messages
 	nc_callback_print(clb_print);//set a specific message printing function via callback
@@ -58,7 +58,7 @@ OVSManager::OVSManager()
 
 //Destroyer
 OVSManager::~OVSManager()
-{	
+{
 	/*disconnect to a of-config server*/
 	c->cmd_disconnect();
 }

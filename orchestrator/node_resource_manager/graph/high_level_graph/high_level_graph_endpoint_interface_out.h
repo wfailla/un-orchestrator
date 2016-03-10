@@ -27,27 +27,27 @@ private:
 	*	@brief: the id of the endpoint port (e.g., 00000003)
 	*/
 	string id;
-	
+
 	/**
 	*	@brief: the name of the endpoint port (e.g., ingress)
 	*/
 	string name;
-	
+
 	/**
 	*	@brief: the id of the port (e.g., 10.0.0.1)
 	*/
 	string node_id;
-	
+
 	/**
 	*	@brief: the switch id of the port (e.g., 1)
 	*/
 	string sw_id;
-	
+
 	/**
 	*	@brief: the interface of the port (e.g., eth0)
 	*/
 	string interface;
-	
+
 public:
 
 	EndPointInterfaceOut(string id, string name, string node_id, string sw_id, string interface);
@@ -56,11 +56,11 @@ public:
 	string getNodeId();
 	string getSwId();
 	string getInterface();
-	
+
 	~EndPointInterfaceOut();
-	
+
 	bool operator==(const EndPointInterfaceOut &other) const;
-	
+
 	void print();
 	Object toJSON();
 };

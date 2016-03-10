@@ -19,7 +19,7 @@ using namespace std;
 class SQLiteManager
 {
 private:
-	
+
 	/**
 	*	@brief: Database pointer
 	*/
@@ -34,43 +34,43 @@ private:
 	*	@brief:	Open a connection with given database db_name
 	*/
 	int connect(char *db_name);
-	
+
 	/**
 	*	@brief: Disconnect from given database
 	*/
 	void disconnect();
-	
+
 	/**
 	*	@brief: SELECT callback
 	*/
 	static int callback(void *NotUsed, int argc, char **argv, char **azColName);
-	
+
 public:
 
 	SQLiteManager(char *db_name);
-	
+
 	~SQLiteManager();
-	
+
 	bool createTable();
-	
+
 	bool insertUsrPwd(char *user, char *pwd);
-	
+
 	bool selectUsrPwd(char *user, char *pwd);
-	
+
 	bool selectToken(char *token);
-	
+
 	bool selectAllTable();
-	
+
 	bool updateTokenAndTimestamp(char *user, char *token, char *timestamp);
 
 	bool updatePwd(char *user, char *pwd);
 
 	bool eraseAllToken();
-	
+
 	char *getUser();
-	
+
 	char *getPwd();
-	
+
 	char *getToken();
 };
 

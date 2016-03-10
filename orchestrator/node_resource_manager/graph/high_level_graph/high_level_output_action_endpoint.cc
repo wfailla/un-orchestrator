@@ -6,13 +6,13 @@ namespace highlevel
 ActionEndPoint::ActionEndPoint(unsigned int endpoint, string input_endpoint) :
 	Action(ACTION_ON_ENDPOINT), endpoint(endpoint), input_endpoint(input_endpoint)
 {
-}	
+}
 
 bool ActionEndPoint::operator==(const ActionEndPoint &other) const
 {
 	if((endpoint == other.endpoint))
 		return true;
-		
+
 	return false;
 }
 
@@ -46,11 +46,11 @@ string ActionEndPoint::getInputEndpoint()
 			case 1:
 				str = string(pnt);
 		}
-		
+
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	
+
 	return str;
 }
 
@@ -58,7 +58,7 @@ string ActionEndPoint::toString()
 {
 	stringstream ss;
 	ss << endpoint;
-	
+
 	return ss.str();
 }
 
@@ -80,10 +80,10 @@ Object ActionEndPoint::toJSON()
 	stringstream ep;
 	ep << endpoint;
 	action[OUTPUT] = input_endpoint.c_str();
-	
+
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		(*ga)->toJSON(action);
-	
+
 	return action;
 }
 

@@ -31,22 +31,22 @@ private:
 	*	@brief: IPv4 address of the Openflow controller
 	*/
 	string controllerAddress;
-	
+
 	/**
 	*	@brief: TCP port of the Openflow controller
 	*/
 	string controllerPort;
-	
+
 	/**
 	*	@brief: list of physical ports to be connected to the lsi
 	*/
 	list<string> physicalPortsName;
-	
+
 	/**
 	*	@brief: map of network functions name, network functions type
 	*/
 	map<string,nf_t>  nf_types;
-	
+
 	/**
 	*	@brief: set of network functions name
 	*/
@@ -62,17 +62,17 @@ private:
 	*	@brief: map of network functions, list of network function ports
 	*/
 	map<string,list<struct nf_port_info> > netFunctionsPortsInfo;
-	
+
 	/**
 	*	@brief: list of lsis with which the new one must be connected
 	*/
 	list<uint64_t> vlinksRemoteLsi;
-	
+
 	/**
 	*	@brief: local IP of the lsi0
 	*/
 	string local_ip;
-	
+
 	/**
 	*	@brief: IPsec certificate
 	*/
@@ -96,7 +96,7 @@ protected:
 	}
 
 public:
-	
+
 	string getControllerAddress()
 	{
 		return controllerAddress;
@@ -106,19 +106,19 @@ public:
 	{
 		return controllerPort;
 	}
-	
+
 	list<string> getPhysicalPortsName()
-	{	
+	{
 		return physicalPortsName;
 	}
-	
+
 	map<string,nf_t> getNetworkFunctionsType()
 	{
 		return nf_types;
 	}
 
 	set<string> getNetworkFunctionsName()
-	{			
+	{
 		return networkFunctionsName;
 	}
 
@@ -126,22 +126,22 @@ public:
 	{
 		return endpointsPortsName;
 	}
-	
+
 	list<struct nf_port_info> getNetworkFunctionsPortsInfo(string nf)
 	{
 		return netFunctionsPortsInfo[nf];
 	}
-	
+
 	list<uint64_t> getVirtualLinksRemoteLSI()
 	{
 		return vlinksRemoteLsi;
 	}
-	
+
 	string getLocalIP()
 	{
 		return local_ip;
 	}
-	
+
 	string getIPsecCertificate()
 	{
 		return ipsec_certificate;

@@ -30,7 +30,7 @@ bool Match::isEqual(const Match &other) const
 	if((eth_src == NULL && other.eth_src != NULL) ||
 		(eth_src != NULL && other.eth_src == NULL))
 		return false;
-		
+
 	if(eth_src != NULL && other.eth_src != NULL)
 	{
 		if(strcmp(eth_src,other.eth_src) != 0)
@@ -40,17 +40,17 @@ bool Match::isEqual(const Match &other) const
 	if((eth_src_mask == NULL && other.eth_src_mask != NULL) ||
 		(eth_src_mask != NULL && other.eth_src_mask == NULL))
 		return false;
-		
+
 	if(eth_src_mask != NULL && other.eth_src_mask != NULL)
 	{
 		if(strcmp(eth_src_mask,other.eth_src_mask) != 0)
 			return false;
 	}
-	
+
 	if((eth_dst == NULL && other.eth_dst != NULL) ||
 		(eth_dst != NULL && other.eth_dst == NULL))
 		return false;
-		
+
 	if(eth_dst != NULL && other.eth_dst != NULL)
 	{
 		if(strcmp(eth_dst,other.eth_dst) != 0)
@@ -60,18 +60,18 @@ bool Match::isEqual(const Match &other) const
 	if((eth_dst_mask == NULL && other.eth_dst_mask != NULL) ||
 		(eth_dst_mask != NULL && other.eth_dst_mask == NULL))
 		return false;
-		
+
 	if(eth_dst_mask != NULL && other.eth_dst_mask != NULL)
 	{
 		if(strcmp(eth_dst_mask,other.eth_dst_mask) != 0)
 			return false;
 	}
-	
+
 	if((isEthType && !other.isEthType) || (!isEthType && other.isEthType))
 		return false;
 	if(isEthType && ethType != other.ethType)
 		return false;
-	
+
 	/*
 	*	VLAN
 	*/
@@ -79,18 +79,18 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isVlanID && vlanID != other.vlanID)
 		return false;
-		
+
 	if((isNoVlan && !other.isNoVlan) || (!isNoVlan && other.isNoVlan))
 		return false;
-		
+
 	if((isAnyVlan && !other.isAnyVlan) || (!isAnyVlan && other.isAnyVlan))
 		return false;
-		
+
 	if((isVlanPCP && !other.isVlanPCP) || (!isVlanPCP && other.isVlanPCP))
 		return false;
 	if(isVlanPCP && vlanPCP != other.vlanPCP)
 		return false;
-		
+
 	/*
 	*	IPv4
 	*/
@@ -98,21 +98,21 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isIpDSCP && ipDSCP != other.ipDSCP)
 		return false;
-		
+
 	if((isIpECN && !other.isIpECN) || (!isIpECN && other.isIpECN))
 		return false;
 	if(isIpECN && ipECN != other.ipECN)
 		return false;
-	
+
 	if((isIpProto && !other.isIpProto) || (!isIpProto && other.isIpProto))
 		return false;
 	if(isIpProto && ipProto != other.ipProto)
 		return false;
-		
+
 	if((ipv4_src == NULL && other.ipv4_src != NULL) ||
 		(ipv4_src != NULL && other.ipv4_src == NULL))
 		return false;
-		
+
 	if(ipv4_src != NULL && other.ipv4_src != NULL)
 	{
 		if(strcmp(ipv4_src,other.ipv4_src) != 0)
@@ -122,17 +122,17 @@ bool Match::isEqual(const Match &other) const
 	if((ipv4_src_mask == NULL && other.ipv4_src_mask != NULL) ||
 		(ipv4_src_mask != NULL && other.ipv4_src_mask == NULL))
 		return false;
-		
+
 	if(ipv4_src_mask != NULL && other.ipv4_src_mask != NULL)
 	{
 		if(strcmp(ipv4_src_mask,other.ipv4_src_mask) != 0)
 			return false;
 	}
-	
+
 	if((ipv4_dst == NULL && other.ipv4_dst != NULL) ||
 		(ipv4_dst != NULL && other.ipv4_dst == NULL))
 		return false;
-		
+
 	if(ipv4_dst != NULL && other.ipv4_dst != NULL)
 	{
 		if(strcmp(ipv4_dst,other.ipv4_dst) != 0)
@@ -142,13 +142,13 @@ bool Match::isEqual(const Match &other) const
 	if((ipv4_dst_mask == NULL && other.ipv4_dst_mask != NULL) ||
 		(ipv4_dst_mask != NULL && other.ipv4_dst_mask == NULL))
 		return false;
-		
+
 	if(ipv4_dst_mask != NULL && other.ipv4_dst_mask != NULL)
 	{
 		if(strcmp(ipv4_dst_mask,other.ipv4_dst_mask) != 0)
 			return false;
 	}
-	
+
 	/*
 	*	TCP
 	*/
@@ -156,7 +156,7 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isTcpSrc && tcp_src != other.tcp_src)
 		return false;
-	
+
 	if((isTcpDst && !other.isTcpDst) || (!isTcpDst && other.isTcpDst))
 		return false;
 	if(isTcpDst && tcp_dst != other.tcp_dst)
@@ -169,12 +169,12 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isUdpSrc && udp_src != other.udp_src)
 		return false;
-	
+
 	if((isUdpDst && !other.isUdpDst) || (!isUdpDst && other.isUdpDst))
 		return false;
 	if(isUdpDst && udp_dst != other.udp_dst)
 		return false;
-	
+
 	/*
 	*	SCTP
 	*/
@@ -182,12 +182,12 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isSctpSrc && sctp_src != other.sctp_src)
 		return false;
-	
+
 	if((isSctpDst && !other.isSctpDst) || (!isSctpDst && other.isSctpDst))
 		return false;
 	if(isSctpDst && sctp_dst != other.sctp_dst)
 		return false;
-	
+
 	/*
 	*	ICMPv4
 	*/
@@ -200,7 +200,7 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isIcmpv4Code && icmpv4Code != other.icmpv4Code)
 		return false;
-	
+
 	/*
 	*	ARP
 	*/
@@ -212,17 +212,17 @@ bool Match::isEqual(const Match &other) const
 	if((arp_spa == NULL && other.arp_spa != NULL) ||
 		(arp_spa != NULL && other.arp_spa == NULL))
 		return false;
-		
+
 	if(arp_spa != NULL && other.arp_spa != NULL)
 	{
 		if(strcmp(arp_spa,other.arp_spa) != 0)
 			return false;
 	}
-	
+
 	if((arp_spa_mask == NULL && other.arp_spa_mask != NULL) ||
 		(arp_spa_mask != NULL && other.arp_spa_mask == NULL))
 		return false;
-		
+
 	if(arp_spa_mask != NULL && other.arp_spa_mask != NULL)
 	{
 		if(strcmp(arp_spa_mask,other.arp_spa_mask) != 0)
@@ -232,17 +232,17 @@ bool Match::isEqual(const Match &other) const
 	if((arp_tpa == NULL && other.arp_tpa != NULL) ||
 		(arp_tpa != NULL && other.arp_tpa == NULL))
 		return false;
-		
+
 	if(arp_tpa != NULL && other.arp_tpa != NULL)
 	{
 		if(strcmp(arp_tpa,other.arp_tpa) != 0)
 			return false;
 	}
-	
+
 	if((arp_tpa_mask == NULL && other.arp_tpa_mask != NULL) ||
 		(arp_tpa_mask != NULL && other.arp_tpa_mask == NULL))
 		return false;
-		
+
 	if(arp_tpa_mask != NULL && other.arp_tpa_mask != NULL)
 	{
 		if(strcmp(arp_tpa_mask,other.arp_tpa_mask) != 0)
@@ -252,7 +252,7 @@ bool Match::isEqual(const Match &other) const
 	if((arp_sha == NULL && other.arp_sha != NULL) ||
 		(arp_sha != NULL && other.arp_sha == NULL))
 		return false;
-		
+
 	if(arp_sha != NULL && other.arp_sha != NULL)
 	{
 		if(strcmp(arp_sha,other.arp_sha) != 0)
@@ -262,7 +262,7 @@ bool Match::isEqual(const Match &other) const
 	if((arp_tha == NULL && other.arp_tha != NULL) ||
 		(arp_tha != NULL && other.arp_tha == NULL))
 		return false;
-		
+
 	if(arp_tha != NULL && other.arp_tha != NULL)
 	{
 		if(strcmp(arp_tha,other.arp_tha) != 0)
@@ -276,7 +276,7 @@ bool Match::isEqual(const Match &other) const
 	if((ipv6_src == NULL && other.ipv6_src != NULL) ||
 		(ipv6_src != NULL && other.ipv6_src == NULL))
 		return false;
-		
+
 	if(ipv6_src != NULL && other.ipv6_src != NULL)
 	{
 		if(strcmp(ipv6_src,other.ipv6_src) != 0)
@@ -286,18 +286,18 @@ bool Match::isEqual(const Match &other) const
 	if((ipv6_src_mask == NULL && other.ipv6_src_mask != NULL) ||
 		(ipv6_src_mask != NULL && other.ipv6_src_mask == NULL))
 		return false;
-		
+
 	if(ipv6_src_mask != NULL && other.ipv6_src_mask != NULL)
 	{
 		if(strcmp(ipv6_src_mask,other.ipv6_src_mask) != 0)
 			return false;
 	}
 
-	
+
 	if((ipv6_dst == NULL && other.ipv6_dst != NULL) ||
 		(ipv6_dst != NULL && other.ipv6_dst == NULL))
 		return false;
-		
+
 	if(ipv6_dst != NULL && other.ipv6_dst != NULL)
 	{
 		if(strcmp(ipv6_dst,other.ipv6_dst) != 0)
@@ -307,7 +307,7 @@ bool Match::isEqual(const Match &other) const
 	if((ipv6_dst_mask == NULL && other.ipv6_dst_mask != NULL) ||
 		(ipv6_dst_mask != NULL && other.ipv6_dst_mask == NULL))
 		return false;
-		
+
 	if(ipv6_dst_mask != NULL && other.ipv6_dst_mask != NULL)
 	{
 		if(strcmp(ipv6_dst_mask,other.ipv6_dst_mask) != 0)
@@ -322,7 +322,7 @@ bool Match::isEqual(const Match &other) const
 	if((ipv6_nd_target == NULL && other.ipv6_nd_target != NULL) ||
 		(ipv6_nd_target != NULL && other.ipv6_nd_target == NULL))
 		return false;
-		
+
 	if(ipv6_nd_target != NULL && other.ipv6_nd_target != NULL)
 	{
 		if(strcmp(ipv6_nd_target,other.ipv6_nd_target) != 0)
@@ -332,7 +332,7 @@ bool Match::isEqual(const Match &other) const
 	if((ipv6_nd_sll == NULL && other.ipv6_nd_sll != NULL) ||
 		(ipv6_nd_sll != NULL && other.ipv6_nd_sll == NULL))
 		return false;
-		
+
 	if(ipv6_nd_sll != NULL && other.ipv6_nd_sll != NULL)
 	{
 		if(strcmp(ipv6_nd_sll,other.ipv6_nd_sll) != 0)
@@ -342,13 +342,13 @@ bool Match::isEqual(const Match &other) const
 	if((ipv6_nd_tll == NULL && other.ipv6_nd_tll != NULL) ||
 		(ipv6_nd_tll != NULL && other.ipv6_nd_tll == NULL))
 		return false;
-		
+
 	if(ipv6_nd_tll != NULL && other.ipv6_nd_tll != NULL)
 	{
 		if(strcmp(ipv6_nd_tll,other.ipv6_nd_tll) != 0)
 			return false;
 	}
-	
+
 	/*
 	*	ICMPv6
 	*/
@@ -361,7 +361,7 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isIcmpv6Code && icmpv6Code != other.icmpv6Code)
 		return false;
-	
+
 	/*
 	*	MPLS
 	*/
@@ -374,14 +374,14 @@ bool Match::isEqual(const Match &other) const
 		return false;
 	if(isMplsTC && mplsTC != other.mplsTC)
 		return false;
-	
+
 	/*
 	*	GRE
 	*/
 	if((gre_key == NULL && other.gre_key != NULL) ||
 		(gre_key != NULL && other.gre_key == NULL))
 		return false;
-		
+
 	if(gre_key != NULL && other.gre_key != NULL)
 	{
 		if(strcmp(gre_key,other.gre_key) != 0)
@@ -393,7 +393,7 @@ bool Match::isEqual(const Match &other) const
 
 
 void Match::setAllCommonFields(Match match)
-{	
+{
 	/*
 	*	Ethernet
 	*/
@@ -407,7 +407,7 @@ void Match::setAllCommonFields(Match match)
 		setEthDstMask(match.eth_dst_mask);
 	if(match.isEthType)
 		setEthType(match.ethType);
-	
+
 	/*
 	*	VLAN
 	*/
@@ -416,7 +416,7 @@ void Match::setAllCommonFields(Match match)
 	else if(match.isAnyVlan)
 		setVlanIDAnyVlan();
 	else if(match.isNoVlan)
-		setVlanIDNoVlan();	
+		setVlanIDNoVlan();
 	if(match.isVlanPCP)
 		setVlanPCP(match.vlanPCP);
 
@@ -437,7 +437,7 @@ void Match::setAllCommonFields(Match match)
 		setIpv4Dst(match.ipv4_dst);
 	if(match.ipv4_dst_mask)
 		setIpv4DstMask(match.ipv4_dst_mask);
-	
+
 	/*
 	*	TCP
 	*/
@@ -453,7 +453,7 @@ void Match::setAllCommonFields(Match match)
 		setUdpSrc(match.udp_src);
 	if(match.isUdpDst)
 		setUdpDst(match.udp_dst);
-	
+
 	/*
 	*	SCTP
 	*/
@@ -461,7 +461,7 @@ void Match::setAllCommonFields(Match match)
 		setSctpSrc(match.sctp_src);
 	if(match.isSctpDst)
 		setSctpDst(match.sctp_dst);
-	
+
 	/*
 	*	ICMPv4
 	*/
@@ -469,7 +469,7 @@ void Match::setAllCommonFields(Match match)
 		setIcmpv4Type(match.icmpv4Type);
 	if(match.isIcmpv4Code)
 		setIcmpv4Code(match.icmpv4Code);
-	
+
 	/*
 	*	ARP
 	*/
@@ -487,7 +487,7 @@ void Match::setAllCommonFields(Match match)
 		setArpSha(match.arp_sha);
 	if(match.arp_tha)
 		setArpTha(match.arp_tha);
-	
+
 	/*
 	*	IPv6
 	*/
@@ -507,7 +507,7 @@ void Match::setAllCommonFields(Match match)
 		setIpv6NdSll(match.ipv6_nd_sll);
 	if(match.ipv6_nd_tll)
 		setIpv6NdTll(match.ipv6_nd_tll);
-	
+
 	/*
 	*	ICMPv6
 	*/
@@ -515,15 +515,15 @@ void Match::setAllCommonFields(Match match)
 		setIcmpv6Type(match.icmpv6Type);
 	if(match.isIcmpv6Code)
 		setIcmpv6Code(match.icmpv6Code);
-	
+
 	/*
 	*	MPLS
 	*/
 	if(match.isMplsLabel)
 		setMplsLabel(match.mplsLabel);
 	if(match.isMplsTC)
-		setMplsTC(match.mplsTC);	
-		
+		setMplsTC(match.mplsTC);
+
 	/*
 	*	GRE
 	*/
@@ -573,15 +573,15 @@ void Match::setVlanIDNoVlan()
 {
 	isVlanID = false;
 	isAnyVlan = false;
-	
+
 	isNoVlan = true;
 }
-	
+
 void Match::setVlanIDAnyVlan()
 {
-	isVlanID = false;	
+	isVlanID = false;
 	isNoVlan = false;
-	
+
 	isAnyVlan = true;
 }
 
@@ -824,7 +824,7 @@ void Match::print()
 			cout << "\t\t\tethernet dst mask: " << eth_dst_mask << endl;
 		if(isEthType)
 			cout << "\t\t\tethertype: " <<  "0x" << hex << ethType << endl;
-	
+
 		/*
 		*	VLAN
 		*/
@@ -834,12 +834,12 @@ void Match::print()
 			cout << "\t\t\tVLAN ID: ANY" << endl;
 		else if(isNoVlan)
 			cout << "\t\t\tNO VLAN" << endl;
-			
+
 		if(isVlanPCP)
 		{
 			cout << "\t\t\tVLAN PCP: " << int(vlanPCP) << endl;
 		}
-	
+
 		/*
 		*	IPv4
 		*/
@@ -873,7 +873,7 @@ void Match::print()
 			cout << "\t\t\tUDP src port: " << udp_src << endl;
 		if(isUdpDst)
 			cout << "\t\t\tUDP dst port: " << udp_dst << endl;
-	
+
 		/*
 		*	SCTP
 		*/
@@ -881,7 +881,7 @@ void Match::print()
 			cout << "\t\t\tSCTP src port: " << sctp_src << endl;
 		if(isSctpDst)
 			cout << "\t\t\tSCTP dst port: " << sctp_dst << endl;
-	
+
 		/*
 		*	ICMPv4
 		*/
@@ -889,7 +889,7 @@ void Match::print()
 			cout << "\t\t\tICMPv4 type: " << int(icmpv4Type) << endl;
 		if(isIcmpv4Code)
 			cout << "\t\t\tICMPv4 code: " << int(icmpv4Code) << endl;
-	
+
 		/*
 		*	ARP
 		*/
@@ -907,7 +907,7 @@ void Match::print()
 			cout << "\t\t\tARP sha: " << arp_sha << endl;
 		if(arp_tha)
 			cout << "\t\t\tARP tha: " << arp_tha << endl;
-	
+
 		/*
 		*	IPv6
 		*/
@@ -927,7 +927,7 @@ void Match::print()
 			 cout << "\t\t\tIPv6 nd sll: " << ipv6_nd_sll << endl;
 		if(ipv6_nd_tll)
 			cout << "\t\t\tIPv6 nd tll: " << ipv6_nd_tll << endl;
-	
+
 		/*
 		*	ICMPv6
 		*/
@@ -935,7 +935,7 @@ void Match::print()
 			cout << "\t\t\tICMPv6 type: "<<  int(icmpv6Type) << endl;
 		if(isIcmpv6Code)
 			cout << "\t\t\tICMPv6 code: " << int(icmpv6Code) << endl;
-	
+
 		/*
 		*	MPLS
 		*/
@@ -943,7 +943,7 @@ void Match::print()
 			cout << "\t\t\tMPLS label: " << mplsLabel << endl;
 		if(isMplsTC)
 			cout << "\t\t\tMPLS tc: " << int(mplsTC) << endl;
-			
+
 		/*
 		*	GRE
 		*/
@@ -971,7 +971,7 @@ void Match::toJSON(Object &match)
 		ethtype << hex << ethType;
 		match[ETH_TYPE] = ethtype.str().c_str();
 	}
-	
+
 	/*
 	*	VLAN
 	*/
@@ -985,7 +985,7 @@ void Match::toJSON(Object &match)
 		match[VLAN_ID] = ANY_VLAN;
 	else if(isNoVlan)
 		match[VLAN_ID] = NO_VLAN;
-		
+
 	if(isVlanPCP)
 	{
 		stringstream vlanpcp;
@@ -1164,7 +1164,7 @@ void Match::toJSON(Object &match)
 		mplstc << mplsTC;
 		match[MPLS_TC] = mplstc.str().c_str();
 	}
-		
+
 	/*
 	*	GRE
 	*/
@@ -1180,7 +1180,7 @@ string Match::prettyPrint()
 
 	/*
 	*	Ethernet
-	*/	
+	*/
 	if(eth_src != NULL)
 		ss << " # ethernet src: " << eth_src;
 	if(eth_dst != NULL)
@@ -1201,7 +1201,7 @@ string Match::prettyPrint()
 		ss << " # VLAN ID: ANY";
 	else if(isNoVlan)
 		ss << " # NO VLAN";
-		
+
 	if(isVlanPCP)
 		ss << " # VLAN PCP: " << int(vlanPCP);
 
@@ -1308,7 +1308,7 @@ string Match::prettyPrint()
 		ss << " # MPLS label: " << mplsLabel;
 	if(isMplsTC)
 		ss << " # MPLS tc: " << int(mplsTC);
-		
+
 	/*
 	*	GRE
 	*/

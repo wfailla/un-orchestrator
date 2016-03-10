@@ -71,7 +71,7 @@
 			#define SAFE			"secure"
 		#define VLAN			"vlan"
 			#define V_ID			"vlan-id"
-						
+
 	#define BIG_SWITCH		"big-switch"
 		#define FLOW_RULES		"flow-rules"
 			#define _ID				"id"
@@ -141,7 +141,7 @@
 				#define OUT_TO_QUEUE		"output_to_queue"
 				#define DROP 				"drop"
 				#define OUTPUT_TO_CTRL		"output_to_controller"
-			
+
 /*
 *	Misc
 */

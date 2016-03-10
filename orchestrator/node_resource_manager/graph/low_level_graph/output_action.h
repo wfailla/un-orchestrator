@@ -29,31 +29,31 @@ private:
 	openflow::ofp_action_type type;
 	uint32_t port_id;
 	bool is_local_port;
-	
+
 	/**
 	*	The outuput action contains a list of generic actions!
 	*	The code is organized in this way, because the output action is
 	*	mandatory in each rule.
 	**/
 	list<GenericAction*> genericActions;
-	
+
 public:
 	Action(uint32_t port_id);
 	Action(bool is_local_port);
 	openflow::ofp_action_type getActionType();
-	
+
 	bool operator==(const Action &other) const;
-	
+
 	/**
 	*	@brief: insert the action into a flowmod message
 	*
 	*	@param: message		flowmod message
 	*/
 	void fillFlowmodMessage(rofl::openflow::cofflowmod &message);
-	
+
 	void print();
 	string prettyPrint(LSI *lsi0,map<string,LSI *> lsis);
-	
+
 	/**
 	*	Associate a generic action with this output action
 	*/

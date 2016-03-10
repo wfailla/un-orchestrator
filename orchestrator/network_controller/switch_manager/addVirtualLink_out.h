@@ -20,7 +20,7 @@ private:
 	*	@brief: identifier of the virtual link on the lsi A
 	*/
 	uint64_t idA;
-	
+
 	/**
 	*	@brief: identifier of the virtual link on the lsi B
 	*/
@@ -31,7 +31,7 @@ public:
 	{
 		return idA;
 	}
-	
+
 	uint64_t getIdB()
 	{
 		return idB;
@@ -41,7 +41,7 @@ public:
 		: idA(idA), idB(idB)
 	{
 	}
-	
+
 };
 
 

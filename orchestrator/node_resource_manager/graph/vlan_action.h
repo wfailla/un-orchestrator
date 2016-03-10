@@ -18,14 +18,14 @@ private:
 	vlan_action_t type;
 	string vlan_endpoint;
 	uint16_t label;
-	
+
 public:
 	VlanAction(vlan_action_t type, string vlan_endpoint, uint16_t label = 0);
 	~VlanAction();
-	
+
 	void print();
 	void toJSON(Object &json);
-	
+
 	/**
 	*	@brief: insert the generic action into a flowmod message
 	*
@@ -33,7 +33,7 @@ public:
 	*	@param: position	position, in the flowmod, in which the action must be inserted
 	*/
 	void fillFlowmodMessage(rofl::openflow::cofflowmod &message, unsigned int *position);
-	
+
 	string prettyPrint();
 };
 

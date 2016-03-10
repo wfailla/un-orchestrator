@@ -14,19 +14,19 @@ protected:
 
 	static string nfName(string name_port);
 	static unsigned int nfPort(string name_port);
-	static bool nfIsPort(string name_port);	
+	static bool nfIsPort(string name_port);
 
 	static string epName(string name_port);
 	static unsigned int epPort(string name_port);
-	
+
 	static bool parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, highlevel::Graph &graph);
-	
+
 private:
 	static bool validateMac(const char* mac);
 	static bool validateIpv4(const string &ipAddress);
 	static bool validateIpv6(const string &ipAddress);
 	static bool validateIpv4Netmask(const string &netmask);
-	
+
 public:
 	static string graphID(string name_port);
 };
