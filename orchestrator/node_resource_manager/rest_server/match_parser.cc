@@ -170,7 +170,7 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 	return true;
 }
 
-bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, highlevel::Graph &graph)
+bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, map<string,string> &gre_id, highlevel::Graph &graph)
 {
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
@@ -275,7 +275,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 			//end-points port type
 			else if(p_type == 1)
 			{
-				bool iface_found = false, vlan_found = false;
+				bool iface_found = false, vlan_found = false, gre_found=false;
 				char *s_value = new char[BUFFER_SIZE];
 				strcpy(s_value, (char *)value.getString().c_str());
 				string eP = epName(value.getString());
@@ -283,6 +283,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					map<string,string>::iterator it = iface_id.find(eP);
 					map<string,string>::iterator it1 = iface_out_id.find(eP);
 					map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
+					map<string,string>::iterator it3 = gre_id.find(eP);
 					if(it != iface_id.end())
 					{
 						//physical port
@@ -300,6 +301,11 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						//vlan
 						v_id.assign(vlan_id[eP].first);
 						vlan_found = true;
+					}
+					else if(it3 != gre_id.end())
+					{
+						//gre
+						gre_found = true;
 					}
 				}
 				/*physical endpoint*/
@@ -331,7 +337,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					action.addGenericAction(ga);
 				}
 				/*gre-tunnel endpoint*/
-				else
+				else if(gre_found)
 				{
 					unsigned int endPoint = epPort(string(s_value));
 					if(endPoint == 0)
@@ -532,7 +538,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",IP_SRC,value.getString().c_str());
 					return false;
 				}
-				match.setIpv4Dst((char*)value.getString().c_str());
+				match.setIpv4Src((char*)value.getString().c_str());
 				foundProtocolField = true;
 			}
 		}
