@@ -210,7 +210,7 @@ def delete_flowrule(rule_id, RESTaddress):
     req.get_method = lambda: 'DELETE'
     response = urllib2.urlopen(req)
     result = response.read()
-    logging.info(result)
+    #logging.info(result)
 
 if __name__ == "__main__":
     json_file = open('er_nffg.json').read()

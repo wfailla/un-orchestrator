@@ -137,6 +137,7 @@ class ElasticRouter(app_manager.RyuApp):
             hub.sleep(1)
 
     def scale_out(self, scaling_out_ports):
+        self.logger.info("scale out started!")
         # need to scale both nffg and internal objects
         # because we need the translation between old and new DPs
         # list of DPs to add
@@ -165,7 +166,6 @@ class ElasticRouter(app_manager.RyuApp):
                 new_port = new_DP.add_port(new_ifname, port_type=DPPort.External, linked_port=old_port.linked_port)
 
                 scale_out_port_dict[old_port] = new_port
-                new_DP.scale_out_port_dict[old_port] = new_port
 
             new_DP_list.append(new_DP)
 
@@ -173,6 +173,10 @@ class ElasticRouter(app_manager.RyuApp):
 
         # add internal ports/links to new DP
         for new_DP in new_DP_list:
+
+            # need all scaled out ports for trnaslation of oftable
+            new_DP.scale_out_port_dict = scale_out_port_dict
+
             other_DPs = [new_DP2 for new_DP2 in new_DP_list if new_DP.name != new_DP2.name]
             for linked_DP in other_DPs:
                 # check if DPs are already connected
@@ -355,6 +359,8 @@ class ElasticRouter(app_manager.RyuApp):
 
         # move last flow entries?
 
+
+
         # delete the old intermediate VNFs
         for del_VNF in self.VNFs_to_be_deleted:
             VNF_id = self.DP_instances[del_VNF].id
@@ -387,7 +393,8 @@ class ElasticRouter(app_manager.RyuApp):
         match = parser.OFPMatch()
         actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
                                           ofproto.OFPCML_NO_BUFFER)]
-        self.add_flow(datapath, 0, match, actions)
+        # this flow entry is part of the default flow entry settings
+        #self.add_flow(datapath, 0, match, actions)
 
     # new switch detected
     @set_ev_cls(EventSwitchEnter)
@@ -815,6 +822,8 @@ class ElasticRouter(app_manager.RyuApp):
         else:
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
                                     match=match, instructions=inst)
+            print 'add flow2\n'
+
         datapath.send_msg(mod)
 
     def send_oftable(self, DP):

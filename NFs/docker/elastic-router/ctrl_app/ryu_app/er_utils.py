@@ -98,28 +98,35 @@ class DP:
     def translate_oftable_scale_out(self):
         scale_out_port_dict = self.scale_out_port_dict
         # add new flow_entries
-        for old_port in scale_out_port_dict:
-            old_DP = old_port.DP
+        for old_in_port in scale_out_port_dict:
+            old_DP = old_in_port.DP
             ofproto = old_DP.datapath.ofproto
-            new_port = scale_out_port_dict[old_port]
-            new_DP = new_port.DP
+            new_in_port = scale_out_port_dict[old_in_port]
+            new_DP = new_in_port.DP
 
             # new_DP should be the same as self
             if new_DP.name is not self.name:
-                logging.info('This scale out port translation is not correct? this DP:{0} checked DP: {1}'.format(self.name, new_DP.name))
-                return
+                logging.info('This DP:{0} checked DP: {1}, try next...'.format(self.name, new_DP.name))
+                continue
 
             for match_dict, actions, priority  in old_DP.oftable:
-                logging.info('old DP match dict: {0}'.format(match_dict))
-                logging.info('old_port number: {0}'.format(old_port.number))
+
                 # check if this oftable entry contains a port to be translated
                 # (the default port entries have other match entries eg. eth_type)
                 if 'in_port' not in match_dict:
                     continue
 
-                if match_dict['in_port'] == old_port.number:
+                logging.info('old DP match dict: {0}'.format(match_dict))
+                #logging.info('old_in_port number: {0}'.format(old_in_port.number))
+                logging.info('old_in_port : {0}'.format(old_in_port.ifname))
+                logging.info('new_in_port : {0}'.format(new_in_port.ifname))
+
+                if match_dict['in_port'] == old_in_port.number:
+                    # set new in_port
                     new_match_dict = copy.deepcopy(match_dict)
-                    new_match_dict['in_port'] = new_port.number
+                    new_match_dict['in_port'] = new_in_port.number
+
+                    # set new out_port
                     new_actions = list(actions)
                     for i in range(0, len(actions)):
                         if actions[i].port == ofproto.OFPP_FLOOD:
@@ -129,8 +136,8 @@ class DP:
                             old_outport = old_DP.get_port_by_number(old_outportno)
                             logging.info('old out port: {0}'.format(old_outport.ifname))
 
-                            for port in scale_out_port_dict:
-                                logging.info('scale_out_port_dict: {0}'.format(port.ifname))
+                            #for port in scale_out_port_dict:
+                            #    logging.info('scale_out_port_dict: {0}'.format(port.ifname))
 
                             new_outport = scale_out_port_dict[old_outport]
                             dest_DP = new_outport.DP
@@ -144,8 +151,12 @@ class DP:
                                 if port.port_type == DPPort.External: continue
                                 # out port is located on another DP as in port, check the internal ports
                                 if port.linked_port.DP.name == self.name:
-                                    new_outportno = port.number
-                                    new_actions[i].port = new_outportno
+                                    #logging.info('new out port remote: {0}'.format(port.ifname))
+                                    local_outport = port.linked_port
+                                    logging.info('new out port local: {0}'.format(local_outport.ifname))
+                                    new_outportno = local_outport.number
+                                    logging.info('new local out port number: {0}'.format(local_outport.number))
+                                    new_actions[i].port = int(new_outportno)
                                     break
                     self.oftable.append((new_match_dict, new_actions, priority))
         # reset dictionary
