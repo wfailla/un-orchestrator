@@ -8,9 +8,10 @@ This is acontainer based on a ubuntu container with openvswitch installed
 
 You can create the Docker image with the network function by launching the following command:
 
-    sudo docker build --tag="ovs5" .
+    sudo docker build --tag="ovs" .
 
-The name 'ovs1' must be used for alignment with the name-resolver and nffg file.
+In the name-resolver, different VNFs of this image are defines: `ovs1`, `ovs2`, `ovs3`, `ovs4`and `ovs5`.
+These names are referenced in the nffg file.
 This will create the Docker image starting from the base image specified in `Dockerfile`; the new image is stored in the Docker default folder on your filesystem (localhost).
 
 The script start.sh is executed at startup of the container.
@@ -28,7 +29,7 @@ So if multiple ovs containers are needed, they should be build with a different 
 
 ### SSH access
 The deployed containers expose a SSH login port to the public ip of the UN where they are deployed.
-Port 900# is forwarded to port 22 inside the ovs container.
+Port 900# is forwarded to port 22 inside the ovs container. This port mapping is defined in the nffg.
 eg. `ovs1` container has ssh login via port 9001 on the UN public ip address.
 
 SSH login can be done via `ssh root@localhost -p 9001` (to reach ovs1 container via exposed port 9001)

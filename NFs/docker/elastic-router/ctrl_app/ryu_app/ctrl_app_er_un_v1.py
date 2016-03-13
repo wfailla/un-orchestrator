@@ -99,6 +99,7 @@ class ElasticRouter(app_manager.RyuApp):
             if DP_name not in nffg_DPs:
                 self.DPIDtoDP.pop(self.DP_instances[DP_name].datapath_id)
                 self.DP_instances.pop(DP_name)
+                self.logger.info('Removed DP: {0}'.format(DP_name))
 
     # monitor stats and trigger scaling
     def _monitor(self):
@@ -289,7 +290,7 @@ class ElasticRouter(app_manager.RyuApp):
                 nffg_intermediate = add_flowentry_SAP(nffg_intermediate, port_SAP, port_in, priority=9)
 
         #self.logger.info('intermediate nffg: {0}'.format(nffg_intermediate))
-        file = open('ER_intermediate.nffg', 'w')
+        file = open('ER_scale_intermediate.json', 'w')
         file.write(nffg_intermediate)
         file.close()
 
@@ -550,7 +551,7 @@ class ElasticRouter(app_manager.RyuApp):
         mac_dst = eth.dst
         mac_src = eth.src
         dpid = datapath.id
-        #self.logger.info("packet in %s %s %s %s %s %s", dpid, mac_src, mac_dst, in_port, eth.ethertype)
+        self.logger.info("packet in {0} {1} {2} {3} {4}".format(dpid, mac_src, mac_dst, in_port, eth.ethertype))
 
         dpid = datapath.id
         if dpid not in self.DPIDtoDP:
@@ -566,12 +567,14 @@ class ElasticRouter(app_manager.RyuApp):
 
         #learn a mac address to avoid FLOOD next time.
         source_DP.mac_to_port[mac_src] = in_port
+        self.logger.info('{0} {1}'.format(source_DP.name, source_DP.mac_to_port))
         #no FLOOD -> loops in topology!
 
         if mac_dst in source_DP.mac_to_port:
             out_port = source_DP.mac_to_port[mac_dst]
         else:
             out_port = ofproto.OFPP_FLOOD
+            self.logger.info('flood packet')
 
         actions = [parser.OFPActionOutput(out_port)]
         # install a flow to avoid packet_in next time

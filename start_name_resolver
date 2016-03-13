@@ -1,4 +1,4 @@
 #start name -resolver
 cd  name-resolver
-sudo ./name-resolver --f ./config/example_er.xml
+sudo ./name-resolver --f ./config/example_er2.xml
 

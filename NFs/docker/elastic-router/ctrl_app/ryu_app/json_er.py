@@ -202,6 +202,7 @@ def delete_VNF(nffg_json, vnf_id, RESTaddress):
 
     for flow in flow_list:
         delete_flowrule(flow.id, RESTaddress)
+        logging.info("deleted flow id: {0}".format(flow.id))
 
 
 def delete_flowrule(rule_id, RESTaddress):
