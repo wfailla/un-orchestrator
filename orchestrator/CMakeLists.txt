@@ -4,17 +4,10 @@ PROJECT(node-orchestrator)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
         ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
-
-# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function
-
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 IF(CMAKE_COMPILER_IS_GNUCC)
         ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings)
-
-# -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
-
-
 
 # Rather complicated CMake code for setting the logging level
 SET(LOGGING_LEVEL "ORCH_WARNING" CACHE STRING "Orchestrator logging levels: ORCH_DEBUG, ORCH_DEBUG_INFO (recommended), ORCH_WARNING, ORCH_ERROR, ORCH_INFO")
@@ -90,6 +83,27 @@ IF(ENABLE_UNIFY_PORTS_CONFIGURATION)
 ENDIF(ENABLE_UNIFY_PORTS_CONFIGURATION)
 
 OPTION(
+	ENABLE_DOUBLE_DECKER_CONNECTION
+	"Turn on to connect the orchestrator to the Double Decker network (message bus)"
+	OFF
+)
+
+IF(ENABLE_DOUBLE_DECKER_CONNECTION)
+	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER_CONNECTION)
+ENDIF(ENABLE_DOUBLE_DECKER_CONNECTION)
+
+OPTION(
+	ENABLE_RESOURCE_MANAGER
+	"Turn on to activate the 'resource manager')"
+	OFF
+)
+
+IF(ENABLE_RESOURCE_MANAGER)
+	ADD_DEFINITIONS(-DENABLE_RESOURCE_MANAGER)
+ENDIF(ENABLE_RESOURCE_MANAGER)
+
+
+OPTION(
 	ENABLE_KVM
 	"Turn on to support NFs implemented in KVM-based virtual machines"
 	ON
@@ -114,19 +128,6 @@ IF(ENABLE_DIRECT_VM2VM)
 ENDIF(ENABLE_DIRECT_VM2VM)
 
 #################################################################################################################
-
-# Rather complicated CMake code for selecting the PubSub implementation
-SET(ENABLE_PUB_SUB "NONE" CACHE STRING "Pub/Sub implementation: NONE, DOUBLE-DECKER")
-SET(ENABLE_PUB_SUB_VALUES "NONE" "DOUBLE-DECKER") #Add here other implementations
-SET_PROPERTY(CACHE ENABLE_PUB_SUB PROPERTY STRINGS ${ENABLE_PUB_SUB_VALUES})
-LIST(FIND ENABLE_PUB_SUB_VALUES ${ENABLE_PUB_SUB} ENABLE_PUB_SUB_INDEX)
-
-IF(${ENABLE_PUB_SUB_INDEX} EQUAL -1)
-	message(FATAL_ERROR "Option ${ENABLE_PUB_SUB} not supported, valid entries are ${ENABLE_PUB_SUB_VALUES}")
-ENDIF()
-IF(${ENABLE_PUB_SUB_INDEX} EQUAL 1)
-	ADD_DEFINITIONS(-DENABLE_DOUBLE_DECKER)
-ENDIF()
 
 OPTION(
 	RUN_NFS
@@ -216,18 +217,8 @@ MARK_AS_ADVANCED(
 	DEBUG_KVM DEBUG_OPENFLOW LOG_1024X768 RUN_NFS STARTVNF_SINGLE_THREAD IVSHMEM_RING_ALIAS
 )
 
-#Set some options to the compiler, which are only required when the support to double decker is enabled
-IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-	IF(CMAKE_COMPILER_IS_GNUCXX)
-		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
-	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
-	IF(CMAKE_COMPILER_IS_GNUCC)
-		ADD_DEFINITIONS(-Wall -Werror -Wno-write-strings -Wno-pointer-sign -Werror -Wno-return-type -Werror -Wno-format-security -Werror -unused-function)
-	ENDIF(CMAKE_COMPILER_IS_GNUCC)
-ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-
 # Set source files
-SET(SOURCES
+SET(SOURCES1
 	node_orchestrator.cc
 
 	node_resource_manager/graph_manager/graph_manager.h
@@ -330,22 +321,6 @@ SET(SOURCES
 	utils/sockutils.c
 )
 
-IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-    SET(SOURCES1
-    ${SOURCES}
-		node_resource_manager/pub_sub_manager/PubSubManager.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager_constants.h
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClientManager.cc
-
-		node_resource_manager/pub_sub_manager/plugins/DoubleDecker/DDClient.h
-    )
-ELSE()
-     SET(SOURCES1
-         ${SOURCES}
-    	)
-ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 0)
     SET(SOURCES2
     ${SOURCES1}
@@ -445,6 +420,31 @@ ELSE()
     	)
 ENDIF(ENABLE_NATIVE)
 
+IF(ENABLE_DOUBLE_DECKER_CONNECTION)
+	SET(SOURCES7
+    ${SOURCES6}
+    node_resource_manager/pub_sub/pub_sub_constants.h
+    node_resource_manager/pub_sub/pub_sub.h
+    node_resource_manager/pub_sub/pub_sub.cc
+    )
+ELSE()
+	SET(SOURCES7
+    	${SOURCES6}
+    )
+ENDIF(ENABLE_DOUBLE_DECKER_CONNECTION)
+
+IF(ENABLE_RESOURCE_MANAGER)
+	SET(SOURCES8
+    ${SOURCES7}
+    node_resource_manager/resource_manager/resource_manager.h
+    node_resource_manager/resource_manager/resource_manager.cc
+    )
+ELSE()
+	SET(SOURCES8
+		${SOURCES7}
+    )
+ENDIF(ENABLE_RESOURCE_MANAGER)
+
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
@@ -453,7 +453,7 @@ INCLUDE_DIRECTORIES (
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES6}
+	${SOURCES8}
 )
 
 LINK_DIRECTORIES(
@@ -476,18 +476,12 @@ TARGET_LINK_LIBRARIES( node-orchestrator
 	-lrt
 )
 
-#Links specific for double decker
-IF(ENABLE_PUB_SUB_INDEX EQUAL 1)
+IF(ENABLE_DOUBLE_DECKER_CONNECTION)
 	TARGET_LINK_LIBRARIES( node-orchestrator
-		liburcu.so
-		libzmq.so
+		libdd.so
 		libczmq.so
-		libsodium.so
-		libjson.so
-		libddclient.so
 	)
-ENDIF(ENABLE_PUB_SUB_INDEX EQUAL 1)
-
+ENDIF(ENABLE_DOUBLE_DECKER_CONNECTION)
 
 #Links specific for ovs
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 1)
@@ -532,6 +526,11 @@ ENDIF(ENABLE-DPDK-CMDLINE-GENERATOR)
 ###############################################################################
 
 #Check unsupported configurations
+
+IF(ENABLE_RESOURCE_MANAGER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
+	#The resource manager requires the DD connection
+	message(FATAL_ERROR "Resource manager requires to enable the double decker connection")
+ENDIF(ENABLE_RESOURCE_MANAGER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
 
 IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
 	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported

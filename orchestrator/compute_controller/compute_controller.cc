@@ -815,9 +815,6 @@ void ComputeController::stopAll()
 
 bool ComputeController::stopNF(string nf_name)
 {
-	//FIXME: remove the NF from the map?
-	//FIXME: if not, remove at least the selected description?
-
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Stopping the NF \"%s\"",nf_name.c_str());
 
 	if(nfs.count(nf_name) == 0)
@@ -836,6 +833,17 @@ bool ComputeController::stopNF(string nf_name)
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while stopping the NF \"%s\"",nf_name.c_str());
 		return false;
 	}
+
+	map<string, NF*>::iterator it = nfs.begin();
+	for(;it != nfs.end(); it++)
+	{
+		if(it->first == nf_name)
+		{
+			nfs.erase(it);
+			break;
+		}
+	}
+	assert(it != nfs.end());
 
 	nf->setRunning(false);
 

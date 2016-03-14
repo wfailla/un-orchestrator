@@ -453,7 +453,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				tenantMatch.setInputPort(vlink->getLocalID());
 
 				//Search endpoint id
-				unsigned int e_id;
+				unsigned int e_id = 0;
 				map<string, unsigned int > epp = tenantLSI->getEndpointsPortsId();
 				for(map<string, unsigned int >::iterator ep = epp.begin(); ep != epp.end(); ep++){
 					if(strcmp(ep->first.c_str(), action_ep->getInputEndpoint().c_str()) == 0)
@@ -543,7 +543,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 			string action_info = action->getInfo();
 
 			//Search endpoint id
-			unsigned int e_id;
+			unsigned int e_id = 0;
 			map<string, unsigned int > epp = tenantLSI->getEndpointsPortsId();
 			for(map<string, unsigned int >::iterator ep = epp.begin(); ep != epp.end(); ep++){
 				if(strcmp(ep->first.c_str(), input_endpoint) == 0)
