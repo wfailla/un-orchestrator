@@ -476,7 +476,7 @@ put_malformed_url:
 		return ret;
 	}
 
-	/*	const char *c_type = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Content-Type");
+	const char *c_type = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Content-Type");
 	if(strcmp(c_type,JSON_C_TYPE) != 0)
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content-Type must be: "JSON_C_TYPE);
@@ -484,7 +484,7 @@ put_malformed_url:
 		int ret = MHD_queue_response (connection, MHD_HTTP_UNSUPPORTED_MEDIA_TYPE, response);
 		MHD_destroy_response (response);
 		return ret;
-	}*/
+	}
 
 	bool newGraph = !(gm->graphExists(graphID));
 
