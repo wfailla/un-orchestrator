@@ -22,6 +22,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y update \
                                                      python3 \
                                                      python3-zmq \
                                                      python3-requests \
+						     python3-setuptools \ 
+                                                     python3-pip \
+                                                     libffi-dev \
+                                                     libsodium-dev \
+                                                     python3-dev \
+                                                     build-essential \
 &&  DEBIAN_FRONTEND=noninteractive apt-get clean all
 
 #Install HBase and scripts
@@ -74,7 +80,7 @@ ADD serf-start.sh serf-join.sh /opt/sei-bin/
 # ADD ./doubledecker /opt/sei-bin/doubledecker
 ADD start_ddproxy.sh ddproxy.py /opt/sei-bin/
 WORKDIR /root
-RUN apt-get install -yq python3-setuptools python3-pip libffi-dev libsodium-dev
+
 RUN pip3 install PyNaCl
 ADD https://github.com/acreo/DoubleDecker/archive/master.tar.gz /root/
 RUN tar xzf master.tar.gz
@@ -86,6 +92,6 @@ RUN python3 setup.py install
 ENV CLIENT_NAME opentsdb
 ENV DEALER_PORT tcp://172.17.0.1:5555
 ENV CUSTOMER_NAME a
-
+RUN chmod +x /opt/sei-bin/*
 # default run command
 CMD /usr/bin/supervisord
