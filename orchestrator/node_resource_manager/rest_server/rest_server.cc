@@ -1,13 +1,10 @@
 #include "rest_server.h"
 
 GraphManager *RestServer::gm = NULL;
-
-/*
-*
-* SQLiteManager pointer
-*
-*/
 SQLiteManager *dbmanager = NULL;
+
+SecurityManager secmanager;
+
 bool client_auth = false;
 
 bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface, char *ipsec_certificate)
@@ -98,7 +95,6 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 			const char *upload_data,
 			size_t *upload_data_size, void **con_cls)
 {
-
 	if(NULL == *con_cls)
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "New %s request for %s using version %s", method, url, version);
@@ -106,11 +102,29 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 			MHD_get_connection_values (connection, MHD_HEADER_KIND, &print_out_key, NULL);
 
 		struct connection_info_struct *con_info;
-		con_info = (struct connection_info_struct*)malloc (sizeof (struct connection_info_struct));
+		con_info = (struct connection_info_struct*) malloc(
+				sizeof(struct connection_info_struct));
 
 		assert(con_info != NULL);
 		if (NULL == con_info)
 			return MHD_NO;
+
+		//if client authentication is required
+		if (dbmanager != NULL) {
+
+			bool accepted = secmanager.filterRequest(connection, dbmanager, method, url);
+
+			if (!accepted) {
+				struct MHD_Response *response = NULL;
+
+				response = MHD_create_response_from_buffer(0, (void*) "",
+						MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response(connection, MHD_HTTP_UNAUTHORIZED,
+						response);
+				MHD_destroy_response (response);
+				return ret;
+			}
+		}
 
 		if ((0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)) )
 		{
@@ -131,7 +145,8 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 
 	if (0 == strcmp (method, GET))
 		return doGet(connection,url);
-	else if( (0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)))
+
+	if( (0 == strcmp (method, PUT)) || (0 == strcmp (method, POST)) || (0 == strcmp (method, DELETE)))
 	{
 		struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
 		assert(con_info != NULL);
@@ -476,7 +491,7 @@ put_malformed_url:
 		return ret;
 	}
 
-	/*	const char *c_type = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Content-Type");
+	const char *c_type = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Content-Type");
 	if(strcmp(c_type,JSON_C_TYPE) != 0)
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content-Type must be: "JSON_C_TYPE);
@@ -484,7 +499,7 @@ put_malformed_url:
 		int ret = MHD_queue_response (connection, MHD_HTTP_UNSUPPORTED_MEDIA_TYPE, response);
 		MHD_destroy_response (response);
 		return ret;
-	}*/
+	}
 
 	bool newGraph = !(gm->graphExists(graphID));
 
@@ -507,20 +522,6 @@ put_malformed_url:
 	graph->print();
 	try
 	{
-		//if client authentication is required
-		if(dbmanager != NULL){
-			const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
-
-			if(!checkAuthentication(connection, token, dbmanager))
-			{
-				//User unauthenticated!
-				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
-				MHD_destroy_response (response);
-				return ret;
-			}
-		}
-
 		if(newGraph)
 		{
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");
@@ -1602,6 +1603,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 														char tmp[BUFFER_SIZE];
 														strcpy(tmp,(char *)port_in_name_tmp);
 														pnt=strtok(tmp, delimiter);
+
 														int i = 0;
 
 														//The "output_to_port" action can refer to:
@@ -2077,21 +2079,6 @@ get_malformed_url:
 		return ret;
 	}
 
-	//if client authentication is required
-	if(dbmanager != NULL)
-	{
-		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
-
-		if(!checkAuthentication(connection, token, dbmanager))
-		{
-			//User unauthenticated!
-			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
-			MHD_destroy_response (response);
-			return ret;
-		}
-	}
-
 	if(!request)
 		//request for a graph description
 		return doGetGraph(connection,graphID);
@@ -2109,7 +2096,7 @@ int RestServer::doGetGraph(struct MHD_Connection *connection,char *graphID)
 
 	if(!gm->graphExists(graphID))
 	{
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method GET is not supported for this resource");
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method GET is not supported for this resource (i.e. it does not exist)");
 		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 		MHD_add_response_header (response, "Allow", PUT);
 		ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
@@ -2239,20 +2226,6 @@ delete_malformed_url:
 		return ret;
 	}
 
-	//if client authentication is required
-	if(dbmanager != NULL){
-		const char *token = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "X-Auth-Token");
-
-		if(!checkAuthentication(connection, token, dbmanager))
-		{
-			//User unauthenticated!
-			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-			int ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, response);
-			MHD_destroy_response (response);
-			return ret;
-		}
-	}
-
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
 
 	if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
@@ -2306,31 +2279,6 @@ delete_malformed_url:
 		ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 		MHD_destroy_response (response);
 		return ret;
-	}
-}
-
-bool RestServer::checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbmanager)
-{
-
-	if(token == NULL)
-	{
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
-		return false;
-	}
-	else
-	{
-		dbmanager->selectToken((char *)token);
-		if(strcmp(dbmanager->getToken(), token) == 0){
-			//User authenticated!
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
-			return true;
-		}
-		else
-		{
-			//User unauthenticated!
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
-			return false;
-		}
 	}
 }
 

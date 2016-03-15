@@ -63,12 +63,21 @@ bool SQLiteManager::createTable(){
 	int rc = 0;
 	char *zErrMsg = 0, *sql = 0;
 
-	/* Create SQL statement */
+	/* Create SQL statement for creating the following tables:
+	 * - USERS
+	 * - PERMISSIONS
+	 * */
    	sql = "CREATE TABLE USERS("  \
     		"USER		TEXT PRIMARY KEY  NOT NULL," \
     	    	"PWD		TEXT    		  NOT NULL," \
         	"TOKEN		TEXT     		  NULL," \
- 		"TIMESTAMP	TEXT     		  NULL);";
+ 		"TIMESTAMP	TEXT     		  NULL);" \
+ 		"CREATE TABLE PERMISSIONS(" \
+		"USER TEXT NOT NULL," \
+		"HTTP_METHOD TEXT NOT NULL," \
+		"URL TEXT NOT NULL," \
+		"PRIMARY KEY (USER, HTTP_METHOD, URL)" \
+		");";
 
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
@@ -90,6 +99,27 @@ bool SQLiteManager::insertUsrPwd(char *user, char *pwd){
 
 	/* Create SQL statement */
 	sprintf(sql, "INSERT INTO USERS (USER, PWD) VALUES ('%s', '%s'); SELECT * FROM USERS;", user, pwd);
+
+	/*Execute SQL statement*/
+	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
+	if(rc != SQLITE_OK){
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.", zErrMsg);
+		return false;
+	} else{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Records created successfully.");
+	}
+
+	return true;
+}
+
+
+// Insert a sample permission for a user into the PERMISSIONS table
+bool SQLiteManager::insertUsrPermission(char *user, char *http_method, char *url){
+	int rc = 0;
+	char *zErrMsg = 0, sql[BUFFER_SIZE];
+
+	/* Create SQL statement */
+	sprintf(sql, "INSERT INTO PERMISSIONS (USER, HTTP_METHOD, URL) VALUES ('%s', '%s', '%s'); SELECT * FROM PERMISSIONS;", user, http_method, url);
 
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, callback, 0, &zErrMsg);
@@ -233,5 +263,35 @@ char *SQLiteManager::getPwd(){
 
 char *SQLiteManager::getToken(){
 	return token;
+}
+
+
+//SELECT COUNT callback
+int SQLiteManager::selectCountCallback(void *count, int argc, char **argv, char **azColName) {
+	int *c = (int *) count;
+	*c = atoi(argv[0]);
+	return 0;
+}
+
+bool SQLiteManager::hasPermission(const char *user, const char *http_method, const char *url) {
+	int count = -99, rc = 0;
+	char *zErrMsg = 0, sql[BUFFER_SIZE];
+
+	/* Create SQL statement */
+	sprintf(sql, "SELECT COUNT(*) from PERMISSIONS where USER = '%s' and HTTP_METHOD = '%s' and URL = '%s';", user,
+			http_method, url);
+
+	printf("Eseguo query: %s", sql);
+
+	/*Execute SQL statement*/
+	rc = sqlite3_exec(this->db, sql, selectCountCallback, &count, &zErrMsg);
+	if (rc != SQLITE_OK) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "SQL error: %s.",
+				zErrMsg);
+		return false;
+	}
+
+	printf("COUNT: %d\n", count);
+	return (count > 0);
 }
 

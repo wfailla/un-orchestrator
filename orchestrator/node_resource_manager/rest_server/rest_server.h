@@ -55,6 +55,8 @@
 
 #include "../database_manager/SQLite/SQLiteManager.h"
 
+#include "../security_manager/security_manager.h"
+
 #include <json_spirit/json_spirit.h>
 #include <json_spirit/value.h>
 #include <json_spirit/writer.h>
@@ -97,8 +99,6 @@ private:
 	static bool parseGraph(Value value, highlevel::Graph &graph, bool newGraph);
 
 	static bool readGraphFromFile(char *nffg_filename);
-
-	static bool checkAuthentication(struct MHD_Connection *connection,const char *token,SQLiteManager *dbm);
 
 public:
 	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface, char *ipsec_certificate);

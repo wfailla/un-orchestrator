@@ -45,6 +45,11 @@ private:
 	*/
 	static int callback(void *NotUsed, int argc, char **argv, char **azColName);
 
+	/**
+	 * @brief: Callback for SELECT COUNT statement
+	 */
+	static int selectCountCallback(void *count, int argc, char **argv, char **azColName);
+
 public:
 
 	SQLiteManager(char *db_name);
@@ -54,6 +59,8 @@ public:
 	bool createTable();
 
 	bool insertUsrPwd(char *user, char *pwd);
+
+	bool insertUsrPermission(char *user, char *http_method, char *url);
 
 	bool selectUsrPwd(char *user, char *pwd);
 
@@ -72,6 +79,8 @@ public:
 	char *getPwd();
 
 	char *getToken();
+
+	bool hasPermission(const char *user, const char *http_method, const char *url);
 };
 
 class SQLiteManagerException : public exception
