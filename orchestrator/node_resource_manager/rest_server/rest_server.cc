@@ -1278,6 +1278,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											return false;
 										}
 
+										//In order to get e-d-point ID (it wil be parsed later)
 										Object::const_iterator aep2 = aep;
 										aep2++;
 										for(; aep2 != end_points.end(); aep2++)
