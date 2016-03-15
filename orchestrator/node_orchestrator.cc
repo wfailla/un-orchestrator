@@ -1,6 +1,6 @@
 #include "utils/constants.h"
 #include "utils/logger.h"
-#include "node_resource_manager/rest_server/rest_server.h"   
+#include "node_resource_manager/rest_server/rest_server.h"
 
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	#include "node_resource_manager/pub_sub/pub_sub.h"
@@ -137,11 +137,11 @@ int main(int argc, char *argv[])
 		strcpy(broker_address, t_broker_address);
 	else
 		broker_address = NULL;
-	
+
 	if(strcmp(t_key_path, "UNKNOWN") != 0)
 		strcpy(key_path, t_key_path);
-	else	
-		key_path = NULL;	
+	else
+		key_path = NULL;
 #endif
 
 	if(strcmp(t_control_interface, "UNKNOWN") != 0)
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 	if(!DoubleDeckerClient::init(client_name, broker_address, key_path))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
-		exit(EXIT_FAILURE);	
+		exit(EXIT_FAILURE);
 	}
 #endif
 
@@ -384,7 +384,7 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	char *temp_dealer = new char[64];
 	strcpy(temp_dealer, (char *)reader.Get("double-decker", "broker_address", "UNKNOWN").c_str());
 	*broker_address = temp_dealer;
-	
+
 	/* client name of Double Decker */
 	char *temp_key = new char[64];
 	strcpy(temp_key, (char *)reader.Get("double-decker", "key_path", "UNKNOWN").c_str());
