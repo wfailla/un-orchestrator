@@ -416,7 +416,7 @@ bool Graph::stillExistNF(string nf)
 	}
 
 	networkFunctions.erase(nf);
-	
+
 	list<VNFs>::iterator vnf = vnfs.begin();
 	for(; vnf != vnfs.end(); vnf++)
 	{
@@ -426,9 +426,9 @@ bool Graph::stillExistNF(string nf)
 			break;
 		}
 	}
-	
+
 	assert(vnf != vnfs.end());
-	
+
 	return false;
 }
 
