@@ -10,7 +10,7 @@ GraphManager *RestServer::gm = NULL;
 SQLiteManager *dbmanager = NULL;
 bool client_auth = false;
 
-bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface, char *ipsec_certificate)
+bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string un_address, bool orchestrator_in_band, char *un_interface, char *ipsec_certificate)
 {
 	char *nffg_file_name = new char[BUFFER_SIZE];
 	if(nffg_filename != NULL && strcmp(nffg_filename, "") != 0)
@@ -20,7 +20,7 @@ bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int
 
 	try
 	{
-		gm = new GraphManager(core_mask,string(ports_file_name),local_ip,control,string(control_interface),string(ipsec_certificate));
+		gm = new GraphManager(core_mask,string(ports_file_name),un_address,orchestrator_in_band,string(un_interface),string(ipsec_certificate));
 
 	}catch (...)
 	{
@@ -1546,6 +1546,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 											const Array& actions_array = fr_value.getArray();
 
+											enum port_type { VNF_PORT_TYPE, EP_PORT_TYPE };
+
 											//One and only one output_to_port is allowed
 											bool foundOneOutputToPort = false;
 
@@ -1588,7 +1590,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 														char delimiter[] = ":";
 													 	char * pnt;
 
-														int p_type = 0;
+														port_type p_type = VNF_PORT_TYPE;
 
 														char tmp[BUFFER_SIZE];
 														strcpy(tmp,(char *)port_in_name_tmp);
@@ -1606,23 +1608,23 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																	//VNFs port type
 																	if(strcmp(pnt,VNF) == 0)
 																	{
-																		p_type = 0;
+																		p_type = VNF_PORT_TYPE;
 																	}
 																	//end-points port type
 																	else if (strcmp(pnt,ENDPOINT) == 0)
 																	{
-																		p_type = 1;
+																		p_type = EP_PORT_TYPE;
 																	}
 																	break;
 																case 1:
-																	if(p_type == 0)
+																	if(p_type == VNF_PORT_TYPE)
 																	{
 																		strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 																		strcat(vnf_name_tmp, ":");
 																	}
 																	break;
 																case 3:
-																	if(p_type == 0)
+																	if(p_type == VNF_PORT_TYPE)
 																	{
 																		strcat(vnf_name_tmp,pnt);
 																	}
@@ -1639,7 +1641,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 														}
 														foundOneOutputToPort = true;
 
-														if(p_type == 0)
+														if(p_type == VNF_PORT_TYPE)
 														{
 															//This is an output action referred to a VNF port
 
@@ -1672,7 +1674,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															nfs_ports_found[name] = ports_found;
 														}
 														//end-points port type
-														else if(p_type == 1)
+														else if(p_type == EP_PORT_TYPE)
 														{
 															//This is an output action referred to an endpoint
 

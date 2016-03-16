@@ -175,6 +175,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
 	bool is_tcp = false;
+	enum port_type { VNF_PORT_TYPE, EP_PORT_TYPE };
 
 	for(Object::const_iterator i = object.begin(); i != object.end(); i++)
 	{
@@ -202,7 +203,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 			char delimiter[] = ":";
 		 	char * pnt;
 
-			int p_type = 0;
+			port_type p_type = VNF_PORT_TYPE;
 
 			char tmp[BUFFER_SIZE];
 			strcpy(tmp,(char *)port_in_name_tmp);
@@ -217,24 +218,24 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						//VNFs port type
 						if(strcmp(pnt,VNF) == 0)
 						{
-							p_type = 0;
+							p_type = VNF_PORT_TYPE;
 							match.setNFEndpointPort(port_in_name_tmp);
 						}
 						//end-points port type
 						else if(strcmp(pnt,ENDPOINT) == 0){
-							p_type = 1;
+							p_type = EP_PORT_TYPE;
 							match.setInputEndpoint(port_in_name_tmp);
 						}
 						break;
 					case 1:
-						if(p_type == 0)
+						if(p_type == VNF_PORT_TYPE)
 						{
 							strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 							strcat(vnf_name_tmp,":");
 						}
 						break;
 					case 3:
-						if(p_type == 0)
+						if(p_type == VNF_PORT_TYPE)
 						{
 							strcat(vnf_name_tmp,pnt);
 						}
@@ -245,7 +246,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 			}
 
 			//VNFs port type
-			if(p_type == 0)
+			if(p_type == VNF_PORT_TYPE)
 			{
 				//convert char *vnf_name_tmp to string vnf_name
 				string vnf_name(vnf_name_tmp, strlen(vnf_name_tmp));
@@ -273,7 +274,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				nfs[nf_name] = ports;
 			}
 			//end-points port type
-			else if(p_type == 1)
+			else if(p_type == EP_PORT_TYPE)
 			{
 				bool iface_found = false, vlan_found = false, gre_found=false;
 				char *s_value = new char[BUFFER_SIZE];
