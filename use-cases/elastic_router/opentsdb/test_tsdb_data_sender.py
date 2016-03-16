@@ -28,104 +28,54 @@ __license__ = """
 
 import argparse
 import logging
-
-from doubledecker.clientSafe import ClientSafe
-from jsonrpcclient.request import Request, Notification
-
-import time
-import random
 import json
-from pprint import pprint
-import sys
+import random
+import zmq
+from doubledecker.clientSafe import ClientSafe
 
-
-
-
-
-
-
-
+# Inherit ClientSafe and implement the abstract classes
+# ClientSafe does encryption and authentication using ECC (libsodium/nacl)
 
 
 class SecureCli(ClientSafe):
     def __init__(self, name, dealerurl, customer, keyfile):
         super().__init__(name, dealerurl, customer, keyfile)
+        self.send_loop = zmq.eventloop.ioloop.PeriodicCallback(self.send_data, 1000)
 
-    # callback called automatically everytime a point to point is sent at
-    # destination to the current client
     def on_data(self, src, msg):
-        print("DATA from %s: %s" % (str(src), str(msg)))
-        jsonobj = json.loads(msg.decode())
-        pprint(jsonobj)
+        logging.info("DATA from %s: %s" % (str(src), str(msg)))
 
     # callback called upon registration of the client with its broker
     def on_reg(self):
-        print("The client is now connected")
+        logging.info("The client is now connected")
+        self.send_loop.start()
 
-        # this function notifies the broker that the client is interested
-
-        data = dict()
-        data['MEASURE'] = "measurestring"
-        data['VNFs'] = [{"id": 1,
-                         "name": "docker-983249873294",
-                         "ports": [
-                             {"id": 1, "name": "veth0"},
-                             {"id": 2, "name": "veth1"}
-                         ]
-                         },
-                        {"id": 2,
-                         "name": "docker-1545145",
-                         "ports": [
-                             {"id": 1, "name": "veth33"},
-                             {"id": 2, "name": "veth121"}
-                         ]
-                         },
-                        ]
-        print("Testing updateNFFG command...")
-        self.publish(topic="unify:mmp", message=str(Notification("updateNFFG", nffg=data)))
-        print("Testing testNFFG command ..")
-        self.publish(topic="unify:mmp", message=str(Notification("testNFFG")))
-        pprint("Adding perioding measurement result publication..")
-        self._IOLoop.add_timeout(time.time()+1,self.send_measurement,"apeman")
-
-
-
-
-    def send_measurement(self, args):
-        result = {
-         "version":0,
-         "label":"ratemon",
-         "parameters":{"interface":"veth0"},
-         "results": {
-           "rate.rx":random.uniform(0,1),
-           "rate.tx":random.uniform(0,1),
-           "overload.risk.rx":random.uniform(0,1),
-           "overload.risk.tx":random.uniform(0,1)
-         }
+    def send_data(self):
+        res = {
+            "version": 0,
+            "label": "ratemon",
+            "parameters": {"interface": "veth0"},
+            "results": {
+                "rate.rx": random.uniform(0, 1),
+                "rate.tx": random.uniform(0, 1),
+                "overload.risk.rx": random.uniform(0, 1),
+                "overload.risk.tx": random.uniform(0, 1)
+            }
         }
-        self.publish(topic="measurement", message=str(Notification("measurement", result=result)))
-        self._IOLoop.add_timeout(time.time()+1,self.send_measurement,"apeman")
-
+        self.publish('measurement', json.dumps(res))
 
     # callback called when the client detects that the heartbeating with
     # its broker has failed, it can happen if the broker is terminated/crash
     # or if the link is broken
+    # The client will silently try to reconnect to the broker
     def on_discon(self):
-        print("The client got disconnected")
+        self.send_loop.stop()
 
-        # this function shuts down the client in a clean way
-        # in this example it exists as soon as the client is disconnected
-        # fron its broker
-        self.shutdown()
-
-    # callback called when the client receives an error message
     def on_error(self, code, msg):
-        print("ERROR n#%d : %s" % (code, msg))
+        logging.info("ERROR n#%d : %s", code, msg)
 
-    # callback called when the client receives a message on a topic he
-    # subscribed to previously
     def on_pub(self, src, topic, msg):
-        print("PUB %s from %s: %s" % (str(topic), str(src), str(msg)))
+        logging.info("PUB %s from %s: %s" % (str(topic), str(src), str(msg)))
 
 
 if __name__ == '__main__':

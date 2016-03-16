@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 # coding=utf-8
-__author__ = 'etamlva'
+__author__ = 'tamleva'
 __author__ = 'berpec'
 import json
 import argparse
 import requests
 import logging
+import time
 from doubledecker.clientSafe import ClientSafe
 
 
@@ -13,87 +14,43 @@ class DDProxy(ClientSafe):
     def __init__(self, name, dealerurl, customer, keyfile):
         # init DD client
         super().__init__(name, dealerurl, customer, keyfile)
+        self.tsdb_url = 'http://127.0.0.1:4242/api/put/'
+        self.session = requests.Session()
 
     def on_reg(self):
-        self.subscribe('measurements', 'all')
+        self.subscribe('measurement', 'all')
 
     def on_data(self, msg):
         try:
-            message = json.loads(msg[1].decode('utf-8'))
-            if "measurement" in message['type']:
-                self.push_opentsdb(message['data'])
+            message = json.loads(msg.decode('utf-8'))
+            self.push_opentsdb(message)
         except (TypeError, ValueError):
             logging.error(msg.pop(0), 'sent', msg)
 
     # Override DD client's receiving function to implement alert
     # displaying.
-    def on_pub(self, topic, data):
-        if topic == "measurements".encode():
-            try:
-                message = json.loads(data[0].decode('utf-8'))
-                logging.info("X", json.dumps(message['data']))
-                self.push_opentsdb(message['data'])
-            except (TypeError, ValueError):
-                logging.error("JSON type or value error during push")
-        else:
-            logging.warning("Subscribe recive:", data, "on", topic)
-
-    def push_opentsdb(self, data):
-        logging.info("push_to_opentsdb:", json.dumps(data))
+    def on_pub(self, src, topic, data):
         try:
-            if "os.cpu" in data['id']:
-                new_metric = {}
-                new_metric['metric'] = data['id']
-                new_metric['timestamp'] = data['time']
-                new_metric['value'] = data['value']
-                new_metric['tags'] = data['tags']
-                requests.post('http://127.0.0.1:4242/api/put',
-                              data=json.dumps(new_metric))
+            message = json.loads(data.decode('utf-8'))
+            logging.debug("%s", json.dumps(message))
+            self.push_opentsdb(src, message)
+        except (TypeError, ValueError):
+            logging.error("JSON type or value error during push")
 
-            if "os.mem" in data['id']:
-                new_metric = {}
-                new_metric['metric'] = data['id']
-                new_metric['timestamp'] = data['time']
-                new_metric['value'] = data['value']
-                new_metric['tags'] = data['tags']
-                requests.post('http://127.0.0.1:4242/api/put',
-                              data=json.dumps(new_metric))
-
-            if "overload" in data['id']:
-                new_metric = {}
-                new_metric['metric'] = data['id']+".tx"
-                new_metric['timestamp'] = data['time']
-                new_metric['value'] = data['value'][0]
-                new_metric['tags'] = data['tags']
-                requests.post('http://127.0.0.1:4242/api/put',
-                              data=json.dumps(new_metric))
-
-                new_metric = {}
-                new_metric['metric'] = data['id']+".rx"
-                new_metric['timestamp'] = data['time']
-                new_metric['value'] = data['value'][1]
-                new_metric['tags'] = data['tags']
-                requests.post('http://127.0.0.1:4242/api/put',
-                              data=json.dumps(new_metric))
-
-                new_metric = {}
-                new_metric['metric'] = data['id']+".rxr"
-                new_metric['timestamp'] = data['time']
-                new_metric['value'] = data['value'][2]
-                new_metric['tags'] = data['tags']
-                requests.post('http://127.0.0.1:4242/api/put',
-                              data=json.dumps(new_metric))
-
-                new_metric = {}
-                new_metric['metric'] = data['id']+".txr"
-                new_metric['timestamp'] = data['time']
-                new_metric['value'] = data['value'][3]
-                new_metric['tags'] = data['tags']
-                requests.post('http://127.0.0.1:4242/api/put',
-                              data=json.dumps(new_metric))
-
-        except requests.exceptions.ConnectionError:
-            logging.warning('Failed to push_opentsdb :(((')
+    def push_opentsdb(self, src, data):
+        for i, j in data['results'].items():
+            tsdb_json = {'metric': i,
+                         'timestamp': int(time.time()),
+                         'value': j,
+                         'tags': dict(list(data['parameters'].items()) +
+                                      list({'label': data['label']}.items()) +
+                                      list({'tool': src.decode()}.items()))
+                         }
+            logging.debug("push_to_opentsdb \n%s", json.dumps(tsdb_json, indent=2))
+            try:
+                self.session.post(self.tsdb_url, data=json.dumps(tsdb_json))
+            except requests.exceptions.ConnectionError:
+                logging.warning('Failed to push_opentsdb :(((')
 
     def on_discon(self):
         logging.info("The client got disconnected")
@@ -132,6 +89,12 @@ if __name__ == '__main__':
         default='')
 
     args = parser.parse_args()
+
+    numeric_level = getattr(logging, args.loglevel.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % args.loglevel)
+
+    logging.basicConfig(format='%(levelname)s:%(message)s', filename=args.logfile, level=numeric_level)
 
     logging.info("Safe client")
     dd_proxy = DDProxy(name=args.name.encode('utf8'),
