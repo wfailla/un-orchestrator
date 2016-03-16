@@ -53,28 +53,7 @@ ADD start_opentsdb.sh create_tsdb_tables.sh /opt/sei-bin/
 
 #Install Supervisord
 RUN mkdir -p /var/log/supervisor
-ADD supervisor-hbase.conf supervisor-serf.conf supervisor-system.conf supervisor-tsdb.conf supervisor-dd.conf /etc/supervisor/conf.d/
-
-#Configure SSHD properly
-#ADD supervisor-sshd.conf /etc/supervisor/conf.d/
-#RUN mkdir -p /root/.ssh
-#RUN chmod 0600 /root/.ssh
-#RUN sed -ri 's/UsePAM yes/#UsePAM yes/g; s/#UsePAM no/UsePAM no/g;' /etc/ssh/sshd_config
-#RUN mkdir -p /var/run/sshd
-#RUN chown 0:0 /var/run/sshd
-#RUN chmod 0744 /var/run/sshd
-#ADD create_ssh_key.sh /opt/sei-bin/
-
-#Install serf and scripts
-# ADD https://dl.bintray.com/mitchellh/serf/0.6.4_linux_amd64.zip /tmp/
-ADD https://dl.bintray.com/mitchellh/serf/0.1.0-dev.1382472282_linux_amd64.zip /tmp/
-RUN mkdir /tmp/serf_src/
-WORKDIR /tmp/serf_src/
-RUN unzip /tmp/0.1.0-dev.1382472282_linux_amd64.zip
-RUN mv /tmp/serf_src/serf /usr/bin
-RUN rm -rf /tmp/0.1.0-dev.1382472282_linux_amd64.zip /tmp/serf_src/
-
-ADD serf-start.sh serf-join.sh /opt/sei-bin/
+ADD supervisor-hbase.conf supervisor-system.conf supervisor-tsdb.conf supervisor-dd.conf /etc/supervisor/conf.d/ 
 
 # Install DoubleDecker proxy
 # ADD ./doubledecker /opt/sei-bin/doubledecker
