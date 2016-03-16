@@ -15,9 +15,10 @@ class DDProxy(ClientSafe):
         # init DD client
         super().__init__(name, dealerurl, customer, keyfile)
         self.tsdb_url = 'http://127.0.0.1:4242/api/put/'
+        self.session = requests.Session()
 
     def on_reg(self):
-        self.subscribe('measurements', 'all')
+        self.subscribe('measurement', 'all')
 
     def on_data(self, msg):
         try:
@@ -29,15 +30,12 @@ class DDProxy(ClientSafe):
     # Override DD client's receiving function to implement alert
     # displaying.
     def on_pub(self, src, topic, data):
-        if topic == "measurements".encode():
-            try:
-                message = json.loads(data.decode('utf-8'))
-                logging.debug("%s", json.dumps(message))
-                self.push_opentsdb(src, message)
-            except (TypeError, ValueError):
-                logging.error("JSON type or value error during push")
-        else:
-            logging.warning("Subscribe recived:", data, "on", topic, "from", src)
+        try:
+            message = json.loads(data.decode('utf-8'))
+            logging.debug("%s", json.dumps(message))
+            self.push_opentsdb(src, message)
+        except (TypeError, ValueError):
+            logging.error("JSON type or value error during push")
 
     def push_opentsdb(self, src, data):
         for i, j in data['results'].items():
@@ -50,7 +48,7 @@ class DDProxy(ClientSafe):
                          }
             logging.debug("push_to_opentsdb \n%s", json.dumps(tsdb_json, indent=2))
             try:
-                requests.post(self.tsdb_url, data=json.dumps(tsdb_json))
+                self.session.post(self.tsdb_url, data=json.dumps(tsdb_json))
             except requests.exceptions.ConnectionError:
                 logging.warning('Failed to push_opentsdb :(((')
 
