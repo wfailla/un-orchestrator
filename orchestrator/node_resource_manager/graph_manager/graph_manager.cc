@@ -8,8 +8,8 @@ void GraphManager::mutexInit()
 	pthread_mutex_init(&graph_manager_mutex, NULL);
 }
 
-GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bool is_control_in_band,string control_interface,string ipsec_certificate) :
-	local_ip(local_ip), is_control_in_band(is_control_in_band), control_interface(control_interface), ipsec_certificate(ipsec_certificate), switchManager()
+GraphManager::GraphManager(int core_mask,string portsFileName,string un_address,bool orchestrator_in_band,string un_interface,string ipsec_certificate) :
+	un_address(un_address), orchestrator_in_band(orchestrator_in_band), un_interface(un_interface), ipsec_certificate(ipsec_certificate), switchManager()
 {
 	//Parse the file containing the description of the physical ports to be managed by the node orchestrator
 	set<CheckPhysicalPortsIn> phyPortsRequired;
@@ -96,7 +96,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 		//Create a new LSI, which is the LSI-0 of the node
 
 		map<string,list<nf_port_info> > netFunctionsPortsInfo;
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI(), this->local_ip, this->ipsec_certificate);
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,lsi->getEndpointsPorts(),lsi->getVirtualLinksRemoteLSI(), this->un_address, this->ipsec_certificate);
 
 		CreateLsiOut *clo = switchManager.createLsi(cli);
 
@@ -160,31 +160,31 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string local_ip,bo
 	ComputeController::setCoreMask(core_mask);
 
 	//if control is in band install the default rules on LSI-0 otherwise skip this code
-	if(is_control_in_band && !control_interface.empty() && !local_ip.empty())
+	if(orchestrator_in_band && !un_interface.empty() && !un_address.empty())
 	{
 		//remove first " character
-		control_interface.erase(0,1);
+		un_interface.erase(0,1);
 		//remove last " character
-		control_interface.erase(control_interface.size()-1,1);
+		un_interface.erase(un_interface.size()-1,1);
 
 		//Install the default rules on LSI-0
 		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
-		if(lsi_ports.count((char *)control_interface.c_str()) == 0)
+		if(lsi_ports.count((char *)un_interface.c_str()) == 0)
 		{
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Control interface does not exist in a list of available plysical ports.");
 			throw GraphManagerException();
 		}
 
-		map<string,unsigned int>::iterator translation = lsi_ports.find((char *)control_interface.c_str());
-		lsi0Match.setArpSpa((char *)local_ip.c_str());
+		map<string,unsigned int>::iterator translation = lsi_ports.find((char *)un_interface.c_str());
+		lsi0Match.setArpSpa((char *)un_address.c_str());
 		lsi0Match.setEthType(2054 & 0xFFFF);
 		lsi0Match.setInputPort(translation->second);
 
-		lsi0Match0.setArpTpa((char *)local_ip.c_str());
+		lsi0Match0.setArpTpa((char *)un_address.c_str());
 		lsi0Match0.setEthType(2054 & 0xFFFF);
 		lsi0Match0.setInputPort(translation->second);
 
-		lsi0Match1.setIpv4Dst((char *)local_ip.c_str());
+		lsi0Match1.setIpv4Dst((char *)un_address.c_str());
 		lsi0Match1.setEthType(2048 & 0xFFFF);
 		lsi0Match1.setInputPort(translation->second);
 
@@ -382,7 +382,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Remove the rules from the LSI-0");
 
-	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),availableEndPoints,is_control_in_band,false);
+	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),availableEndPoints,orchestrator_in_band,false);
 	graphLSI0lowLevel.removeRules(graphLSI0.getRules());
 
 	//Remove rules from the LSI-0
@@ -1029,7 +1029,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	try
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(),availableEndPoints,is_control_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(),availableEndPoints,orchestrator_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New graph for LSI-0:");
 		graphLSI0.print();
 
@@ -1551,7 +1551,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		//creates the new rules for LSI-0 and for the tenant-LSI
 
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(newPiece,lsi,graphInfoLSI0.getLSI(),availableEndPoints,is_control_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(newPiece,lsi,graphInfoLSI0.getLSI(),availableEndPoints,orchestrator_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
 		graphLSI0.print();
 		graphLSI0lowLevel.addRules(graphLSI0.getRules());
