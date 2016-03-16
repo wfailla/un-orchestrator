@@ -160,7 +160,42 @@ class DP:
                                     break
                     self.oftable.append((new_match_dict, new_actions, priority))
         # reset dictionary
-        self.scale_out_port_dict = {}
+        #self.scale_out_port_dict = {}
+
+    # call this function when new DP is registered and port numbers are known
+    def translate_mactable_scale_out(self):
+
+        # first make port number translation for this DP
+        ER_old_in_portno_to_new = {}
+
+        # old DP, should be only 1 single instance for scale out.
+        old_DP = None
+
+        for old_in_port in self.scale_out_port_dict:
+            old_DP = old_in_port.DP
+            old_in_portno = old_in_port.number
+            new_in_port = self.scale_out_port_dict[old_in_port]
+            new_DP = new_in_port.DP
+            if new_DP.name == self.name:
+                ER_old_in_portno_to_new[old_in_portno] = new_in_port.number
+            else:
+                for port in new_DP.ports:
+                    if port.port_type == DPPort.External: continue
+                    if port.linked_port.DP.name == self.name:
+                        local_outport = port.linked_port
+                        new_outportno = local_outport.number
+                        ER_old_in_portno_to_new[old_in_portno] = new_outportno
+                        break
+
+        # if no scaling out occured
+        if old_DP is None:
+            return
+
+        # then translate mac table
+        for mac_src in old_DP.mac_to_port:
+            old_mac_portno = old_DP.mac_to_port[mac_src]
+            new_mac_portno = ER_old_in_portno_to_new[old_mac_portno]
+            self.mac_to_port[mac_src] =  new_mac_portno
 
 
     def get_port(self, port_name=None):

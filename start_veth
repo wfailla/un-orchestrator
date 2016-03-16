@@ -1,9 +1,9 @@
 #/bin/bash
 
-sudo ip link add veth0 type veth peer name veth0un
-sudo ip link add veth1 type veth peer name veth1un
-sudo ip link add veth2 type veth peer name veth2un
-sudo ip link add veth3 type veth peer name veth3un
+sudo ip link add veth0 type veth addr aa:00:00:0:00:00 peer name veth0un
+sudo ip link add veth1 type veth addr aa:00:00:0:00:01 peer name veth1un
+sudo ip link add veth2 type veth addr aa:00:00:0:00:02 peer name veth2un
+sudo ip link add veth3 type veth addr aa:00:00:0:00:03 peer name veth3un
 
 sudo ip link set veth0 up
 sudo ip link set veth0un up
