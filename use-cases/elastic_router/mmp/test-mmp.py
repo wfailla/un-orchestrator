@@ -36,37 +36,7 @@ import time
 import random
 import json
 from pprint import pprint
-
-# Inherit ClientSafe and implement the abstract classes
-# ClientSafe does encryption and authentication using ECC (libsodium/nacl)
-
-def configure():
-    from pprint import pprint
-    monitorconfig = {}
-    monitorconfig['prepare'] = None
-    monitorconfig['evaluate'] = [{'select':'select risk from view_all where risk > 0.7;',
-                                  'action':'Publish(topic="alarm", message="Overload")'},
-                                 {'select':'select throughput from view_all where throughput > 0.1;',
-                                  'action':'Publish(topic="alarm", message="overflow ...")'}]
-    monitorconfig['MFs'] = {'m1': {'prepare':'CREATE STREAM stream_m1 (lm float, lsd float); '
-                   'CREATE CONTINOUS VIEW view_m1 as select AVG(lm) as lm, AVG(lsd) as lsd from stream_m1; ',
-                                   'insert': 'insert into stream_m1 (lm, lsd) VALUES (%s,%s)%result[]',
-                                   'evaluate': [{'select':'select risk from view_m1 where risk > 0.7;',
-                                  'action':'Publish(topic="alarm", message="Overload")'},
-                                 {'select':'select throughput from view_m1 where throughput > 0.1;',
-                                  'action':'Publish(topic="alarm", message="overflow ...")'}]
-                                   },
-                            'm2': {'prepare':'CREATE STREAM stream_m2 (lm float, lsd float); '
-                            'CREATE CONTINOUS VIEW view_m2 as select AVG(lm) as lm, AVG(lsd) as lsd from stream_m2; ',
-                                   'insert': 'insert into stream_m2 (lm, lsd) VALUES (%s,%s)%result[]',
-                                   'evaluate': [{'select':'select risk from view_m2 where risk > 0.7;',
-                                  'action':'Publish(topic="alarm", message="Overload")'},
-                                 {'select':'select throughput from view_m2 where throughput > 0.1;',
-                                  'action':'Publish(topic="alarm", message="overflow ...")'}]
-                                   }
-                            }
-    monitorconfig['postpare'] = 'CREATE CONTINOUS VIEW view_all as SELECT AVG(m1,m2,m3,m4) from view_m1, view_m2..);'
-    pprint(monitorconfig)
+import sys
 
 
 
@@ -111,8 +81,11 @@ class SecureCli(ClientSafe):
                          ]
                          },
                         ]
-
-        self.publish(topic="mmp", message=str(Notification("updateNFFG", nffg=data)))
+        print("Testing updateNFFG command...")
+        self.publish(topic="unify:mmp", message=str(Notification("updateNFFG", nffg=data)))
+        print("Testing testNFFG command ..")
+        self.publish(topic="unify:mmp", message=str(Notification("testNFFG")))
+        pprint("Adding perioding measurement result publication..")
         self._IOLoop.add_timeout(time.time()+1,self.send_measurement,"apeman")
 
 
@@ -130,11 +103,7 @@ class SecureCli(ClientSafe):
            "overload.risk.tx":random.uniform(0,1)
          }
         }
-      #  self.publish(topic="measurement", message=str(Request("measurement", result=result)))
-      #  self.publish(topic="measurement", message=str(Notification("measurementt", result=result)))
-        self.publish(topic="measurement", message=str(Request("docker_information_request", name='kickass_kalam')))
-
-
+        self.publish(topic="measurement", message=str(Notification("measurement", result=result)))
         self._IOLoop.add_timeout(time.time()+1,self.send_measurement,"apeman")
 
 
