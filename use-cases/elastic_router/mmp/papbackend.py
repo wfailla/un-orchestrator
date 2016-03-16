@@ -1,7 +1,7 @@
 __author__ = 'eponsko'
 import json
 from pprint import pprint
-from jsonrpcserver.request import Request
+from jsonrpcclient.request import Request
 import logging
 class DictDiffer(object):
     """

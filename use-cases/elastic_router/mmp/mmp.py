@@ -60,15 +60,18 @@ MeasureString = """ measurements {
   m6 = rate.tx(interface = eth5);
 }
 zones {
- z1 = (AVG(val = m1, max_age = \"5 minute\") < 0.6);
- z2 = (AVG(val = m1, max_age = \"5 minute\") > 0.6);
- z3 = ((AVG(val = m2, max_age = \"5 minute\") + AVG(val = m3, max_age = \"1 minute\"))   > 0.6);
+ z1 = (AVG(val = m1, max_age = \"5 minute\") < 0.5);
+ z2 = (AVG(val = m1, max_age = \"5 minute\") > 0.5);
+ z3 = ((AVG(val = m2, max_age = \"5 minute\") + AVG(val = m3, max_age = \"1 minute\"))   > 0.5);
 
 }
 actions {
- z1->z2 = Publish(topic = \"alarms\", message = \"overload\"); Notify(target = \"alarms\", message = \"overload\");
- z2->z1 = Publish(topic = \"alarms\", message = \"fine\");
- z1 = Publish(topic = \"alarms\", message = \"help\");
+ z1->z2 = Publish(topic = \"alarms\", message = \"z1 to z2\"); Notify(target = \"alarms\", message = \"z1 to z2\");
+ z2->z1 = Publish(topic = \"alarms\", message = \"z2 to z\");
+ ->z1 = Publish(topic = \"alarms\", message = \"entered z1\");
+ z1-> = Publish(topic = \"alarms\", message = \"left z1\");
+ z1 = Publish(topic = \"alarms\", message = \"in z1\");
+ z2 = Publish(topic = \"alarms\", message = \"in z2\");
 }"""
 
 

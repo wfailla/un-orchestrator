@@ -17,6 +17,7 @@ import copy
 from jsonrpcclient.request import Request, Notification
 from jsonrpcserver.request import Request
 Request.notification_errors = True
+
 import pdb
 from pprint import pprint
 
@@ -67,7 +68,7 @@ class Aggregatorv2(ClientSafe):
         except ValueError:
             logging.error("Could not parse topics!")
             sys.exit(1)
-
+        logging.getLogger('jsonrpcserver').setLevel(logging.WARNING)
         connstr = 'dbname=' + dbname + ' user= ' + dbuser + ' password=' + dbpass + ' host=' + dbhost + ' port=' + dbport
         logging.info("Aggregator: attempting connection to " + connstr)
         self.conn = psycopg2.connect(connstr)
@@ -114,6 +115,8 @@ class Aggregatorv2(ClientSafe):
         else:
             logging.error("Recived bad JSON-RPC from %s \nRequest: %s\nResponose: %s"%(str(src), msg.decode(),str(response)))
 
+    def notify(self, target, message):
+        self.sendmsg(dst=target,msg=message)
 
 
 
@@ -162,6 +165,16 @@ class Aggregatorv2(ClientSafe):
                     self.actions[n['state']['in']].append((n['state'], n['calls']))
                 else:
                     self.actions[n['state']['in']] = [(n['state'], n['calls'])]
+            if 'enter' in n['state']:
+                if n['state']['enter'] in self.actions:
+                    self.actions[n['state']['enter']].append((n['state'], n['calls']))
+                else:
+                    self.actions[n['state']['enter']] = [(n['state'], n['calls'])]
+            if 'leave' in n['state']:
+                if n['state']['leave'] in self.actions:
+                    self.actions[n['state']['leave']].append((n['state'], n['calls']))
+                else:
+                    self.actions[n['state']['leave']] = [(n['state'], n['calls'])]
 
         pprint(["ACTIONS:", self.actions])
 
@@ -171,29 +184,65 @@ class Aggregatorv2(ClientSafe):
         select_string =  'SELECT  "rate.rx" FROM view_%s WHERE "rate.rx" > %f;'%(ddsrc,thresh)
         return self.perform_sql_silent_select(select_string)
 
+    def run_actions(self, cmds):
+        for n in cmds:
+            if n == 'Publish':
+                # TODO: check that the **cmd[n] is valid
+                self.publish(**cmds[n])
+            elif n == 'Notify':
+                self.notify(**cmds[n])
+            else:
+                logging.error("Unknown command in MEASURE: ", n)
+
+
+
 
     def check_results(self,ddsrc):
         newzstate = copy.deepcopy(self.zstate)
 
         for (select_str, zone) in self.selects[ddsrc]:
             newzstate[zone] = self.perform_sql_silent_select(select_str)
-            print("Zone %s is "%zone,newzstate[zone])
+#            print("Zone %s is "%zone,newzstate[zone])
 
-        print("old state: ", self.zstate)
-        print("new state: ", newzstate)
+        #print("old state: ", self.zstate, " new state: ", newzstate)
         for (select_str, zone) in self.selects[ddsrc]:
+            #pprint(["############ actions: \n", self.actions[zone]])
             for (state, cmds) in self.actions[zone]:
                 if 'from' in state:
                     if state['from'] in self.zstate and state['to'] in newzstate:
-                        if self.zstate[state['from']] == False and newzstate[state['to']] == True:
-                            print("Should take actions: ",cmds)
+                        new_from = newzstate[state['from']]
+                        old_from = self.zstate[state['from']]
+                        new_to = newzstate[state['to']]
+                        old_to = self.zstate[state['to']]
+
+                        if new_to and not old_to and old_from and not new_from:
+                            self.run_actions(cmds)
+                            #print("Transition from %s to %s, should take actions: "%(state['from'],state['to']),cmds)
 
                 if 'in' in state:
                     if state['in'] in newzstate:
                         if newzstate[state['in']] == True:
-                            print("Should take actions: ", cmds)
+                            self.run_actions(cmds)
+#                            print("IN  %s, should take actions: "%state['in'],cmds)
+                if 'enter' in state:
+                    if state['enter'] in newzstate and state['enter'] in self.zstate:
+                        old = self.zstate[state['enter']]
+                        new = newzstate[state['enter']]
+                        if not old and new:
+                            self.run_actions(cmds)
 
-        #evaluate the state transitions
+#                            print("Entered state %s, shoult take actions: "%state['enter'], cmds)
+
+                if 'leave' in state:
+                    if state['leave'] in newzstate and state['leave'] in self.zstate:
+                        old = self.zstate[state['leave']]
+                        new = newzstate[state['leave']]
+                        if old and not new:
+                            self.run_actions(cmds)
+
+#                            print("Left state %s, shoult take actions: "%state['leave'], cmds)
+
+
         self.zstate = newzstate
 
 ## called when new monitoring data arrives
@@ -241,22 +290,22 @@ class Aggregatorv2(ClientSafe):
         print('perform_sql: ' + str(sql))
 
     def perform_sql(self,sql):
-        logging.info('perform_sql: ' + str(sql))
+        logging.debug('perform_sql: ' + str(sql))
         try:
-            logging.info('perform_sql: self.conn==' + repr(self.conn))
+            logging.debug('perform_sql: self.conn==' + repr(self.conn))
             curs = self.conn.cursor()
             curs.execute(sql)
             # While testing ...
             try:
                 rows = curs.fetchall()
                 for row in rows:
-                    logging.info('perform_sql, result: ' + str(row))
+                    logging.debug('perform_sql, result: ' + str(row))
             except psycopg2.Error as e:
-                logging.warning('perform_sql, result error: ' + str(e))
+                logging.debug('perform_sql, result error: ' + str(e))
             # end while testing
 
         except psycopg2.Error as e:
-            logging.info('perform_sql, execute error: ' + str(e))
+            logging.error('perform_sql, execute error: ' + str(e))
             self.conn.rollback()
             raise e
 
@@ -272,12 +321,23 @@ class Aggregatorv2(ClientSafe):
             # end while testing
 
         except psycopg2.Error as e:
-            logging.info('perform_sql, execute error: ' + str(e))
+            logging.error('perform_sql, execute error: ' + str(e))
             self.conn.rollback()
             raise e
 
+    def perform_sql_insert_silent(self,sql):
+        try:
+            curs = self.conn.cursor()
+            curs.execute(sql)
+
+        except psycopg2.Error as e:
+            logging.error('perform_sql, execute error: ' + str(e))
+            self.conn.rollback()
+            raise e
+
+
     def perform_sql_silent_select(self,sql):
-        logging.info("perform_sql_silent_select %s"%sql)
+        logging.debug("perform_sql_silent_select %s"%sql)
         try:
             curs = self.conn.cursor()
             curs.execute(sql)
@@ -285,11 +345,11 @@ class Aggregatorv2(ClientSafe):
             try:
                 i = 0
                 for n in curs:
-                    logging.info("silent_select: len of curs %d got result %s"%(len(curs), n))
+                    logging.debug("silent_select: got result %s"%(n))
                     i += 1
                 if i > 0:
                     return True
-                logging.info("silent_select: no result")
+                logging.debug("silent_select: no result")
                 return False
 
             except psycopg2.Error as e:
@@ -297,13 +357,13 @@ class Aggregatorv2(ClientSafe):
             # end while testing
 
         except psycopg2.Error as e:
-            logging.info('perform_silent_select, execute error: ' + str(e))
+            logging.error('perform_silent_select, execute error: ' + str(e))
             self.conn.rollback()
             raise e
         return False
 
     def drop_all_cvs(self):
-        logging.info("removing existing continuous views")
+        logging.debug("removing existing continuous views")
         sql = 'SELECT name FROM pipeline_query'
         views = list()
         try:
@@ -314,7 +374,7 @@ class Aggregatorv2(ClientSafe):
             try:
                 rows = curs.fetchall()
                 for row in rows:
-                    logging.info('perform_sql, result: ' + row[0])
+                    logging.debug('perform_sql, result: ' + row[0])
                     views.append(row[0])
             except psycopg2.Error as e:
                 logging.warning('perform_sql, result error: ' + str(e))
@@ -339,6 +399,10 @@ class Aggregatorv2(ClientSafe):
 
     def perform_sql_with_commit_silent(self,sql):
         self.perform_sql_silent(sql)
+        self.perform_sql_commit()
+
+    def perform_sql_insert_commit(self,sql):
+        self.perform_sql_insert_silent(sql)
         self.perform_sql_commit()
 
     def perform_sql_with_commit_error_as_warning(self,sql):
@@ -479,19 +543,19 @@ initcond = '{0.0,0.0}'
 # no need to know what is actually in the results
     def insert_into_stream_json(self,ddsrc, result):
         insert_string = "INSERT INTO stream_%s (data) VALUES ('%s')"%(ddsrc, json.dumps(result['results']))
-        print("Insert string '%s'"%insert_string)
-        self.perform_sql_with_commit_silent(insert_string)
+        self.perform_sql_insert_commit(insert_string)
 
 ## DoubleDecker callbacks
     def on_reg(self):
-        msg = dict()
-        msg["type"] = "reg"
-        logging.info(json.dumps(msg))
-        for topic in self.mytopics:
-            logging.info("topic: " + repr(topic))
-            self.subscribe(*topic)
 
+        logging.info("Registered to Broker!")
+#        for topic in self.mytopics:
+ #           logging.info("topic: " + repr(topic))
+  #          self.subscribe(*topic)
+
+        logging.info("Subscribing to 'measurements' on 'node'")
         self.subscribe(topic="measurement",scope="node")
+        logging.info("Subscribing to 'aggregator' on 'node'")
         self.subscribe(topic="aggregator",scope="node")
 
 #        self.create_stream_json('mmpt')
@@ -499,17 +563,11 @@ initcond = '{0.0,0.0}'
 
 
     def on_discon(self):
-        msg = dict()
-        msg["type"] = "discon"
-        logging.info(json.dumps(msg))
+        logging.warning("Disconnected from Broker!")
 
 
     def on_error(self, code, error):
-        msg = dict()
-        msg["type"] = "error"
-        msg["code"] = code.decode()
-        msg["error"] = error.decode()
-        logging.error(json.dumps(msg))
+        logging.error("Got error: %d %s"%(code, error))
 
     def on_pub(self, src, topic, msg):
        self.handle_jsonrpc(src=src, msg=msg, topic=topic)
