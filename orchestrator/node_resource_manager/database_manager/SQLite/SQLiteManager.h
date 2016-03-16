@@ -56,7 +56,7 @@ public:
 
 	~SQLiteManager();
 
-	bool createTable();
+	bool createTables();
 
 	bool insertUsrPwd(char *user, char *pwd);
 

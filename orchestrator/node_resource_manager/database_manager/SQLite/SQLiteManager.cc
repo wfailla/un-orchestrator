@@ -59,7 +59,7 @@ int SQLiteManager::callback(void *NotUsed, int argc, char **argv, char **azColNa
 }
 
 //Create users table
-bool SQLiteManager::createTable(){
+bool SQLiteManager::createTables(){
 	int rc = 0;
 	char *zErrMsg = 0, *sql = 0;
 
