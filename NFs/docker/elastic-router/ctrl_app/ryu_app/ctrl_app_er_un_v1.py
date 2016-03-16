@@ -99,6 +99,7 @@ class ElasticRouter(app_manager.RyuApp):
             if DP_name not in nffg_DPs:
                 self.DPIDtoDP.pop(self.DP_instances[DP_name].datapath_id)
                 self.DP_instances.pop(DP_name)
+                self.logger.info('Removed DP: {0}'.format(DP_name))
 
     # monitor stats and trigger scaling
     def _monitor(self):
@@ -137,6 +138,7 @@ class ElasticRouter(app_manager.RyuApp):
             hub.sleep(1)
 
     def scale_out(self, scaling_out_ports):
+        self.logger.info("scale out started!")
         # need to scale both nffg and internal objects
         # because we need the translation between old and new DPs
         # list of DPs to add
@@ -165,7 +167,6 @@ class ElasticRouter(app_manager.RyuApp):
                 new_port = new_DP.add_port(new_ifname, port_type=DPPort.External, linked_port=old_port.linked_port)
 
                 scale_out_port_dict[old_port] = new_port
-                new_DP.scale_out_port_dict[old_port] = new_port
 
             new_DP_list.append(new_DP)
 
@@ -173,6 +174,10 @@ class ElasticRouter(app_manager.RyuApp):
 
         # add internal ports/links to new DP
         for new_DP in new_DP_list:
+
+            # need all scaled out ports for translation of oftable
+            new_DP.scale_out_port_dict = scale_out_port_dict
+
             other_DPs = [new_DP2 for new_DP2 in new_DP_list if new_DP.name != new_DP2.name]
             for linked_DP in other_DPs:
                 # check if DPs are already connected
@@ -189,68 +194,7 @@ class ElasticRouter(app_manager.RyuApp):
                 linked_port2 = linked_DP.get_port(ifname2)
                 new_DP.get_port(ifname1).linked_port = linked_port2
                 self.logger.info('linked {0} to {1}'.format(ifname1, ifname2))
-            '''
-            # add default flow entries for new DP
-            external_ports = [port for port in new_DP.ports if port.port_type == DPPort.External]
-            internal_ports = [port for port in new_DP.ports if port.port_type == DPPort.Internal]
-            # assume only 1 external port possible
-            if len(external_ports) == 1:
-                for int_port in internal_ports:
-                    priority = 20
-                    #match_dict = create_dictionary(in_port=int_port.number)
-                    #parser = ofproto_v1_3_parser
-                    out_port = external_ports[0]
-                    #out_port_number = external_ports[0].number
-                    #actions = [parser.OFPActionOutput(out_port_number)]
-                    #new_DP.oftable.append((match_dict, actions, priority))
 
-                    match_dict = create_dictionary(in_port=int_port)
-                    action_dict = create_dictionary(out_port=out_port)
-                    new_DP.oftable_scale_out.append((match_dict, action_dict, priority))
-
-            # for multiple external ports, use VLAN IDs
-            '''
-
-        '''
-        # add new flow_entries
-        for old_port in scale_out_port_dict:
-            old_DP = old_port.DP
-            ofproto = old_DP.datapath.ofproto
-            new_port = scale_out_port_dict[old_port]
-            new_DP = new_port.DP
-            for match_dict, actions, priority  in old_DP.oftable:
-                if match_dict['in_port'] == old_port.number:
-                    new_match_dict = copy.deepcopy(match_dict)
-                    #new_match_dict['in_port'] = new_port.number
-                    new_match_dict['in_port'] = new_port
-                    new_actions = list(actions)
-                    for i in range(0,len(actions)) :
-                        if actions[i].port == ofproto.OFPP_FLOOD:
-                            new_actions[i].port = ofproto.OFPP_FLOOD
-                        else:
-                            old_outportno = actions[i].port
-                            old_outport = old_DP.get_port_by_number(old_outportno)
-                            new_outport = scale_out_port_dict[old_outport]
-                            dest_DP = new_outport.DP
-                            if dest_DP.name == new_DP.name:
-                                # in and out port are on the same DP
-                                new_outportno = new_outport.number
-                                new_actions[i].port = new_outportno
-                                break
-                            for port in dest_DP.ports:
-                                if port.port_type == DPPort.External: continue
-                                # out port is located on another DP as in port, check the internal ports
-                                if port.linked_port.DP.name == new_DP.name:
-                                    new_outportno = port.number
-                                    new_actions[i].port = new_outportno
-                                    break
-                    new_DP.oftable.append((new_match_dict, new_actions, priority))
-        '''
-
-                    # TODO set flow entries when DP is detected
-                    #parser = new_DP.datapath.ofproto_parser
-                    #match = parser.OFPMatch(**new_match_dict)
-                    #self.add_flow(new_DP.datapath, priority, match, new_actions)
 
         # add new_DPs to nffg
         #nffg_intermediate = copy.deepcopy(self.nffg_xml)
@@ -285,7 +229,7 @@ class ElasticRouter(app_manager.RyuApp):
                 nffg_intermediate = add_flowentry_SAP(nffg_intermediate, port_SAP, port_in, priority=9)
 
         #self.logger.info('intermediate nffg: {0}'.format(nffg_intermediate))
-        file = open('ER_intermediate.nffg', 'w')
+        file = open('ER_scale_intermediate.json', 'w')
         file.write(nffg_intermediate)
         file.close()
 
@@ -355,6 +299,9 @@ class ElasticRouter(app_manager.RyuApp):
 
         # move last flow entries?
 
+
+        # reset scale_out_port_dict for every DP?
+
         # delete the old intermediate VNFs
         for del_VNF in self.VNFs_to_be_deleted:
             VNF_id = self.DP_instances[del_VNF].id
@@ -387,7 +334,8 @@ class ElasticRouter(app_manager.RyuApp):
         match = parser.OFPMatch()
         actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
                                           ofproto.OFPCML_NO_BUFFER)]
-        self.add_flow(datapath, 0, match, actions)
+        # this flow entry is part of the default flow entry settings
+        #self.add_flow(datapath, 0, match, actions)
 
     # new switch detected
     @set_ev_cls(EventSwitchEnter)
@@ -543,7 +491,7 @@ class ElasticRouter(app_manager.RyuApp):
         mac_dst = eth.dst
         mac_src = eth.src
         dpid = datapath.id
-        #self.logger.info("packet in %s %s %s %s %s %s", dpid, mac_src, mac_dst, in_port, eth.ethertype)
+        #self.logger.info("packet in {0} {1} {2} {3} {4}".format(dpid, mac_src, mac_dst, in_port, eth.ethertype))
 
         dpid = datapath.id
         if dpid not in self.DPIDtoDP:
@@ -559,12 +507,20 @@ class ElasticRouter(app_manager.RyuApp):
 
         #learn a mac address to avoid FLOOD next time.
         source_DP.mac_to_port[mac_src] = in_port
+        #learn in all connected DPs:
+        internal_ports = [port for port in source_DP.ports if port.port_type == DPPort.Internal]
+        for int_port in internal_ports:
+            int_port.linked_port.DP.mac_to_port[mac_src] = int_port.linked_port.number
+
+        #self.logger.info('{0} {1}'.format(source_DP.name, source_DP.mac_to_port))
+
         #no FLOOD -> loops in topology!
 
         if mac_dst in source_DP.mac_to_port:
             out_port = source_DP.mac_to_port[mac_dst]
         else:
             out_port = ofproto.OFPP_FLOOD
+            #self.logger.info('flood packet')
 
         actions = [parser.OFPActionOutput(out_port)]
         # install a flow to avoid packet_in next time
@@ -572,7 +528,8 @@ class ElasticRouter(app_manager.RyuApp):
 
             match_dict = create_dictionary(in_port=in_port, eth_dst=mac_dst)
             source_DP.oftable.append((match_dict, actions, priority))
-            self.logger.debug('added flow: in_port:{0} mac_dst:{1} out_port:{2}'.format(in_port, mac_dst, out_port))
+            self.logger.debug('added flow: DP: {3} in_port:{0} mac_dst:{1} out_port:{2}'.format(
+                in_port, mac_dst, out_port, source_DP.name))
             match = parser.OFPMatch(**match_dict)
             #match = parser.OFPMatch(in_port=in_port, eth_dst=mac_dst)
 
@@ -798,6 +755,7 @@ class ElasticRouter(app_manager.RyuApp):
         url = self.REST_Cf_Or + '/NF-FG/NF-FG'
         req = urllib2.Request(url, nffg_json)
         req.get_method = lambda: 'PUT'
+        req.add_header("Content-Type", "application/json")
         response = urllib2.urlopen(req)
         result = response.read()
         self.logger.info(result)
@@ -815,10 +773,13 @@ class ElasticRouter(app_manager.RyuApp):
         else:
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
                                     match=match, instructions=inst)
+            print 'add flow2\n'
+
         datapath.send_msg(mod)
 
     def send_oftable(self, DP):
         # assume scale_out
+
         DP.set_default_oftable_scale_out()
         DP.translate_oftable_scale_out()
 
@@ -827,3 +788,5 @@ class ElasticRouter(app_manager.RyuApp):
         for match_dict, actions, priority  in DP.oftable:
             match = parser.OFPMatch(**match_dict)
             self.add_flow(DP.datapath, priority, match, actions)
+
+        DP.translate_mactable_scale_out()

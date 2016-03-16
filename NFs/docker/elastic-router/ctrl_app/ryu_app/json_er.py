@@ -202,6 +202,7 @@ def delete_VNF(nffg_json, vnf_id, RESTaddress):
 
     for flow in flow_list:
         delete_flowrule(flow.id, RESTaddress)
+        logging.info("deleted flow id: {0}".format(flow.id))
 
 
 def delete_flowrule(rule_id, RESTaddress):
@@ -210,7 +211,7 @@ def delete_flowrule(rule_id, RESTaddress):
     req.get_method = lambda: 'DELETE'
     response = urllib2.urlopen(req)
     result = response.read()
-    logging.info(result)
+    #logging.info(result)
 
 if __name__ == "__main__":
     json_file = open('er_nffg.json').read()
