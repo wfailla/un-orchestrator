@@ -416,7 +416,7 @@ bool createDB(SQLiteManager *dbm, char *pass)
 {
 	/*
 	*
-	* Initializing USERS table
+	* Initializing user database
 	*
 	*/
 
@@ -435,9 +435,7 @@ bool createDB(SQLiteManager *dbm, char *pass)
 			strcat(hash_pwd, tmp);
 	    	}
 
-		// Initialize USERS and PERMISSIONS tables
 		dbm->insertUsrPwd("admin", (char *)hash_pwd);
-		dbm->insertUsrPermission("admin","PUT", "/NF-FG/myGraph");
 
 		return true;
 	}
