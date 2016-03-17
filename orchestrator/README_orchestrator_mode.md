@@ -18,8 +18,15 @@ In this case the orchestration port is attached to the LSI-0 *and* the IP addres
 Hence, all the IP traffic to/from the orchestrator has to be forwarded to the internal LSI-0 port by setting up the proper forwarding rules.
 This allows the tenant traffic to cross the LSA-0 toward the right tenant LSA (e.g., LSI-N), while at the same time it supports the management of the UN through the same port.
 
-In this case, the following additional rules are installed in the LSI-0: 
+In this case, the following additional rules are installed in the LSI-0:
 
+* match: arp, arp_tpa=10.0.0.1, in_port=1 --- action: local 
+* match: ip, in_port=1, nw_dst=10.0.0.1 --- action: local
+* match: in_port=0 --- action: out_port=1
+
+where users are attached to port 0 (eth0, in the figure above)  and Internet is reachable through port 1 (eth1).
+
+First rule allow local orchestrator to receive ARP query packets addressed to him, and then, after the reply, become reachable from the extern. By means of the second, incoming traffic directed to local orchestrator is captured, hence he is able to receive control, while last rule make local orchestrator possible to response. 
 
 ##### Note
 
