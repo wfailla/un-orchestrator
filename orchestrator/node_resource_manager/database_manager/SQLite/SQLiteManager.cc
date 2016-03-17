@@ -281,8 +281,6 @@ bool SQLiteManager::hasPermission(const char *user, const char *http_method, con
 	sprintf(sql, "SELECT COUNT(*) from PERMISSIONS where USER = '%s' and HTTP_METHOD = '%s' and URL = '%s';", user,
 			http_method, url);
 
-	printf("Eseguo query: %s", sql);
-
 	/*Execute SQL statement*/
 	rc = sqlite3_exec(this->db, sql, selectCountCallback, &count, &zErrMsg);
 	if (rc != SQLITE_OK) {
@@ -291,7 +289,6 @@ bool SQLiteManager::hasPermission(const char *user, const char *http_method, con
 		return false;
 	}
 
-	printf("COUNT: %d\n", count);
 	return (count > 0);
 }
 

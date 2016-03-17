@@ -29,6 +29,7 @@ bool initDB(SQLiteManager *dbm, char *pass)
 	    }
 
 		dbm->insertUsrPwd(ADMIN, hash_pwd);
+		dbm->insertUsrPermission(ADMIN, PUT, "/NF-FG/myGraph");
 
 		return true;
 	}

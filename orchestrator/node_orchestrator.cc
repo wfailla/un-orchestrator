@@ -179,12 +179,6 @@ int main(int argc, char *argv[])
 		s_ipsec_certificate.erase(s_ipsec_certificate.size()-1,1);
 	}
 
-	//test if client authentication is required and if true initialize database
-	if(!cli_auth) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Connect to database only if authentication is required");
-		exit(EXIT_FAILURE);
-	}
-
 	std::ifstream ifile(DB_NAME);
 
 	if(ifile)
