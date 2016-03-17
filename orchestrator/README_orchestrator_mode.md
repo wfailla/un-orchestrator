@@ -26,7 +26,7 @@ In this case, the following additional rules are installed in the LSI-0:
 
 where users are attached to port 0 (eth0, in the figure above)  and Internet is reachable through port 1 (eth1).
 
-First rule allow local orchestrator to receive ARP query packets addressed to him, and then, after the reply, become reachable from the extern. By means of the second, incoming traffic directed to local orchestrator is captured, hence he is able to receive control, while last rule make local orchestrator possible to response. 
+First rule allow local orchestrator to receive ARP query packets addressed to him, and then, after the reply, become reachable from the extern. By means of the second, incoming traffic directed to local orchestrator is captured, hence he is able to receive control commands, while last rule make local orchestrator possible to response. 
 
 ##### Note
 
