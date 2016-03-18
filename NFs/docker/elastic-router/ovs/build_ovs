@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# build image locally
+sudo docker build -t "ovs" .
+
+# push to remote repository
+sudo docker login -u unify -p unify-demo-stress-out -e steven.vanrossem@intec.ugent.be gitlab.testbed.se:5000
+sudo docker tag ovs gitlab.testbed.se:5000/ovs
+sudo docker push gitlab.testbed.se:5000/ovs

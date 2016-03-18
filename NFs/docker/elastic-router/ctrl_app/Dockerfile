@@ -9,6 +9,7 @@ MAINTAINER iMinds & Acreo
 
 RUN apt-get update
 RUN apt-get install -yq iproute net-tools iputils-ping curl python-zmq openssh-server
+RUN pip install ipaddress
 
 # setup ssh login
 RUN echo 'root:root' | chpasswd

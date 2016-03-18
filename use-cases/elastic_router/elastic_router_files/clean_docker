@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#stop all containers
+docker stop $(docker ps -a -q)
+
+#remove all stopped containers
+sudo docker rm $(docker ps -a -q)
+
+#cleanup dangling images (after new build)
+sudo docker rmi $(docker images -f "dangling=true" -q)
+
+
+
