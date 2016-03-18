@@ -43,8 +43,8 @@ class DDProxy(ClientSafe):
                          'timestamp': int(time.time()),
                          'value': j,
                          'tags': dict(list(data['parameters'].items()) +
-                                      list({'label': data['label']}.items()) +
-                                      list({'tool': src.decode()}.items()))
+                                      list({'tool': data['label']}.items()) +
+                                      list({'source': src.decode()}.items()))
                          }
             logging.debug("push_to_opentsdb \n%s", json.dumps(tsdb_json, indent=2))
             try:
