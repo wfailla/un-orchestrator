@@ -229,10 +229,12 @@ class ElasticRouter(app_manager.RyuApp):
         #nffg_intermediate = copy.deepcopy(self.nffg_json)
 
         #get base nffg, add internal/external flowrules here
+        '''
         if direction == 'out':
             nffg_intermediate = open('er_nffg_scale_out_intermediate.json').read()
         elif direction == 'in':
             nffg_intermediate = open('er_nffg_scale_in_intermediate.json').read()
+        '''
 
         intermediate_file = 'er_nffg_scale_{0}_intermediate.json'.format(direction)
         nffg_intermediate = open(intermediate_file).read()
@@ -431,6 +433,9 @@ class ElasticRouter(app_manager.RyuApp):
         for del_VNF in self.VNFs_to_be_deleted:
             VNF_id = self.DP_instances[del_VNF].id
             delete_VNF(self.nffg_json, VNF_id, self.REST_Cf_Or)
+
+        # fix priorities of new flow entries to SAPs
+        
 
         self.VNFs_to_be_deleted = []
         self.scaled_nffg = None
