@@ -1,0 +1,26 @@
+{
+  "routing_table": [
+    {
+      "id":1,
+      "SAP":"sap1",
+      "net":["10.0.1.0/24"]
+    },
+    {
+      "id":2,
+      "SAP":"sap2",
+      "net":["10.0.2.0/24"]
+    },
+    {
+      "id":3,
+      "SAP":"sap3",
+      "net":["10.0.3.0/24"]
+    },
+    {
+      "id":4,
+      "SAP":"sap4",
+      "net":["10.0.4.0/24"]
+    }
+  ],
+  "ingress_rate_upper_threshold":70,
+  "ingress_rate_lower_threshold":30
+}

@@ -80,9 +80,9 @@
 			<docker uri="ovs"/>
 	</network-function>
 	
-	<network-function name="ctrl1" num-ports="1" summary="control app for elastic router ip 10.0.10.100/24">
+	<network-function name="ctrl" num-ports="1" summary="control app for elastic router ip 10.0.10.100/24">
 			<!-- Only a docker implementation is available for this network function -->
-			<docker uri="ctrl1"/>
+			<docker uri="ctrl"/>
 	</network-function>
 
 

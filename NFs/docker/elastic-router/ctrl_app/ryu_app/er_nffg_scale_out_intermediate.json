@@ -5,7 +5,7 @@
     "VNFs": [
       {
         "id": "00000001",
-        "name": "ctrl1",
+        "name": "ctrl",
 		"unify-env-variables": [
 		{
 			"variable": "CFOR=172.17.0.1:8080"

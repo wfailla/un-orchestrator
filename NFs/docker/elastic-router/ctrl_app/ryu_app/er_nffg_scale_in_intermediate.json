@@ -287,166 +287,46 @@
     ],
     "big-switch": {
       "flow-rules": [
-		{
-          "id": "000000012",
+	  {
+          "id": "000000009",
           "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x800",
-            "dest_ip": "10.0.10.2"
+            "dest_ip": "10.0.10.1"
           },
           "actions": [
             {
-              "output_to_port": "vnf:00000003:inout:0"
+              "output_to_port": "vnf:00000002:inout:0"
             }
           ]
         },
-		{
-          "id": "000000013",
+	{
+          "id": "000000010",
           "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
 			"ether_type": "0x806",
-			"dest_mac": "00:00:00:00:00:02"
+			"dest_mac": "00:00:00:00:00:01"
           },
           "actions": [
             {
-              "output_to_port": "vnf:00000003:inout:0"
+              "output_to_port": "vnf:00000002:inout:0"
             }
           ]
         },
         {
-          "id": "000000014",
+          "id": "000000011",
           "priority": 10,
           "match": {
-            "port_in": "vnf:00000003:inout:0"
+            "port_in": "vnf:00000002:inout:0"
           },
           "actions": [
             {
               "output_to_port": "vnf:00000001:inout:0"
             }
           ]
-        },
-		{
-          "id": "000000015",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000001:inout:0",
-			"ether_type": "0x800",
-            "dest_ip": "10.0.10.3"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000004:inout:0"
-            }
-          ]
-        },
-		{
-          "id": "000000016",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000001:inout:0",
-			"ether_type": "0x806",
-			"dest_mac": "00:00:00:00:00:03"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000004:inout:0"
-            }
-          ]
-        },
-        {
-          "id": "000000017",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000004:inout:0"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000001:inout:0"
-            }
-          ]
-        },
-		{
-          "id": "000000018",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000001:inout:0",
-			"ether_type": "0x800",
-            "dest_ip": "10.0.10.4"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000005:inout:0"
-            }
-          ]
-        },
-		{
-          "id": "000000019",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000001:inout:0",
-			"ether_type": "0x806",
-			"dest_mac": "00:00:00:00:00:04"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000005:inout:0"
-            }
-          ]
-        },
-        {
-          "id": "000000020",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000005:inout:0"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000001:inout:0"
-            }
-          ]
-        },
-		{
-          "id": "000000021",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000001:inout:0",
-			"ether_type": "0x800",
-            "dest_ip": "10.0.10.5"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000006:inout:0"
-            }
-          ]
-        },
-		{
-          "id": "000000022",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000001:inout:0",
-			"ether_type": "0x806",
-			"dest_mac": "00:00:00:00:00:05"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000006:inout:0"
-            }
-          ]
-        },
-        {
-          "id": "000000023",
-          "priority": 10,
-          "match": {
-            "port_in": "vnf:00000006:inout:0"
-          },
-          "actions": [
-            {
-              "output_to_port": "vnf:00000001:inout:0"
-            }
-          ]
-        }
+        }	
       ]
     }
   }
