@@ -128,8 +128,8 @@ Object VNFs::toJSON()
 	{
 		Object cc;
 
-		cc[HOST_PORT] = (*c).first.c_str();
-		cc[VNF_PORT] = (*c).second.c_str();
+		cc[HOST_PORT] = atoi((*c).first.c_str());
+		cc[VNF_PORT] = atoi((*c).second.c_str());
 
 		ctrl_ports.push_back(cc);
 	}
