@@ -17,6 +17,8 @@ echo "[$0] Creating the veth pair $1 - $2"
 
 ip link add $1 type veth peer name $2
 
+echo "[$0] Veth pair $1 - $2 created"
+
 ip link set $1 up
 ip link set $2 up
 
