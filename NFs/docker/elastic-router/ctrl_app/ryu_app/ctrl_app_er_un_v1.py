@@ -10,7 +10,7 @@ from ryu.lib.packet import ethernet, ipv4, tcp, arp, udp, icmp, vlan, ipv6, lldp
 from ryu.ofproto import ether, inet
 from ryu.lib import hub
 from ryu.topology import switches
-from ryu.topology.event import EventSwitchEnter
+from ryu.topology.event import EventSwitchEnter, EventSwitchLeave, EventSwitchReconnected
 
 from operator import attrgetter
 import logging
@@ -113,6 +113,11 @@ class ElasticRouter(app_manager.RyuApp):
             # check if all switches are detected
             registered_DPs = filter(lambda x: self.DP_instances[x].registered is True, self.DP_instances)
             self.logger.info('{0} switches detected'.format(len(registered_DPs)))
+
+            unregistered_DPs = filter(lambda x: self.DP_instances[x].registered is False, self.DP_instances)
+            for DP_name in unregistered_DPs:
+                self.logger.info('{0} not detected'.format(DP_name))
+
 
             # ask port statistics
             self.monitorApp.init_measurement()
@@ -277,11 +282,15 @@ class ElasticRouter(app_manager.RyuApp):
         #self.send_nffg(nffg_intermediate)
         self.send_nffg_json(nffg_intermediate)
 
+        # get new updated NFFG
+        #self.nffg_json = self.get_nffg_json()
+
         VNFs_to_be_deleted = []
         for old_port in scale_port_dict:
             if old_port.DP.name not in VNFs_to_be_deleted:
                 VNFs_to_be_deleted.append(old_port.DP.name)
 
+        logging.info("VNFs to delete: {0}".format(VNFs_to_be_deleted))
         return VNFs_to_be_deleted
 
     def scale_out(self, scaling_out_ports):
@@ -432,6 +441,7 @@ class ElasticRouter(app_manager.RyuApp):
         # delete the old intermediate VNFs
         for del_VNF in self.VNFs_to_be_deleted:
             VNF_id = self.DP_instances[del_VNF].id
+            self.nffg_json = self.get_nffg_json()
             delete_VNF(self.nffg_json, VNF_id, self.REST_Cf_Or)
 
         self.VNFs_to_be_deleted = []
@@ -476,8 +486,15 @@ class ElasticRouter(app_manager.RyuApp):
         # this flow entry is part of the default flow entry settings
         #self.add_flow(datapath, 0, match, actions)
 
+    @set_ev_cls(EventSwitchLeave)
+    def _ev_switch_leave_handler(self, ev):
+        datapath = ev.switch.dp
+        #this_DP = self.DPIDtoDP[datapath.id]
+        #self.DP_instances.pop(this_DP.name)
+        #self.logger.info('Removed DP: {0}'.format(this_DP.name))
+
     # new switch detected
-    @set_ev_cls(EventSwitchEnter)
+    @set_ev_cls([EventSwitchEnter, EventSwitchReconnected])
     def _ev_switch_enter_handler(self, ev):
         datapath = ev.switch.dp
         self.logger.info('registered OF switch id: %s' % datapath.id)
@@ -934,4 +951,4 @@ class ElasticRouter(app_manager.RyuApp):
             match = parser.OFPMatch(**match_dict)
             self.add_flow(DP.datapath, priority, match, actions)
 
-        DP.translate_mactable_scale_out()
+        DP.translate_mactable_scale()

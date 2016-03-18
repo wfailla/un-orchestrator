@@ -239,7 +239,12 @@ def delete_VNF(nffg_json, vnf_id, RESTaddress):
 
     flow_list = flows_out + flows_in
 
+    flow_list_id = []
     for flow in flow_list:
+        flow_list_id.append(flow.id)
+    logging.info("flows to delete: {0}".format(flow_list_id))
+
+    for flow in list(set(flow_list)):
         delete_flowrule(flow.id, RESTaddress)
         logging.info("deleted flow id: {0}".format(flow.id))
 
@@ -291,7 +296,7 @@ def delete_flows_by_priority(nffg_json, priority, RESTaddress):
 
     for flowrule in flowrules_to_be_deleted:
         delete_flowrule(flowrule.id, RESTaddress)
-        logging.info("priority {1} deleted flow id: {0}".format(flowrule.id, priority))
+        logging.info("deleted flow id: {0} with priority {1} ".format(flowrule.id, priority))
 
 def remove_quotations_from_ports(nffg_json):
     json_dict = json.loads(nffg_json)
