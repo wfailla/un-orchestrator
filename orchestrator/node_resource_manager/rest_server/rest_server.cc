@@ -746,7 +746,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 								bool foundName = false;
 
-								string id, name, vnf_template, groups, port_id, port_name;
+								string id, name, vnf_template, port_id, port_name;
+								list<string> groups;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								int vnf_tcp_port, host_tcp_port;
 								//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
@@ -1012,8 +1013,22 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(nf_name == VNF_GROUPS)
 									{
-										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_GROUPS,nf_value.getString().c_str());
-										groups = nf_value.getString();
+
+										try
+										{
+											nf_value.getArray();
+										} catch(exception& e)
+										{
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNFS);
+											return false;
+										}
+										const Array& myGroups_Array = nf_value.getArray();
+										for(unsigned int i; i<myGroups_Array.size();i++)
+										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_GROUPS,myGroups_Array[i].getString().c_str());
+											string group = myGroups_Array[i].getString();
+											groups.push_back(group);
+										}
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found. It is ignored in the current implementation of the %s",VNF_GROUPS,MODULE_NAME);
 									}
 									else

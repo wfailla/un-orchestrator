@@ -176,9 +176,22 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string un_address,
 		}
 
 		map<string,unsigned int>::iterator translation = lsi_ports.find((char *)un_interface.c_str());
+
+		/* It is necessary to incerpet incoming arp requests with IP source equal to un_interface?
+
 		lsi0Match.setArpSpa((char *)un_address.c_str());
 		lsi0Match.setEthType(2054 & 0xFFFF);
 		lsi0Match.setInputPort(translation->second);
+
+
+		//Create the rule and add it to the graph
+		//The rule ID is created as follows DEFAULT-GRAPH_ID
+		newRuleID << DEFAULT_GRAPH << "_" << i;
+		lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+		graphLSI0lowLevel.addRule(lsi0Rule);
+
+		i++;
+		*/
 
 		lsi0Match0.setArpTpa((char *)un_address.c_str());
 		lsi0Match0.setEthType(2054 & 0xFFFF);
@@ -193,15 +206,6 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string un_address,
 		//Create the rule and add it to the graph
 		//The rule ID is created as follows DEFAULT-GRAPH_ID
 		stringstream newRuleID;
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule);
-
-		i++;
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		newRuleID.str("");
 		newRuleID << DEFAULT_GRAPH << "_" << i;
 		lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
 		graphLSI0lowLevel.addRule(lsi0Rule0);
