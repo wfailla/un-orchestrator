@@ -444,7 +444,9 @@ class ElasticRouter(app_manager.RyuApp):
         file = open('ER_scale_priorities.json', 'w')
         file.write(new_nffg)
         file.close()
-        self.send_nffg_json(new_nffg)
+        self.send_nffg_json(remove_quotations_from_ports(new_nffg))
+        self.logger.info('restore priorities of flow entries to 10')
+        new_nffg = self.get_nffg_json()
         delete_flows_by_priority(new_nffg, 9, self.REST_Cf_Or)
         self.nffg_json = self.get_nffg_json()
 

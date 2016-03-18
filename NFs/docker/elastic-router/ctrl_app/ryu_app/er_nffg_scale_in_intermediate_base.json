@@ -288,7 +288,7 @@
     "big-switch": {
       "flow-rules": [
 	  {
-          "id": "000000044",
+          "id": "000000052",
           "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
@@ -302,7 +302,7 @@
           ]
         },
 	{
-          "id": "000000045",
+          "id": "000000053",
           "priority": 10,
           "match": {
             "port_in": "vnf:00000001:inout:0",
@@ -316,7 +316,7 @@
           ]
         },
         {
-          "id": "000000046",
+          "id": "000000053",
           "priority": 10,
           "match": {
             "port_in": "vnf:00000002:inout:0"

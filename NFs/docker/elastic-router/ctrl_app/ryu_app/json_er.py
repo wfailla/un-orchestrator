@@ -291,11 +291,31 @@ def delete_flows_by_priority(nffg_json, priority, RESTaddress):
 
     for flowrule in flowrules_to_be_deleted:
         delete_flowrule(flowrule.id, RESTaddress)
+        logging.info("priority {1} deleted flow id: {0}".format(flowrule.id, priority))
 
+def remove_quotations_from_ports(nffg_json):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    for vnf in nffg.vnfs:
+        for control in vnf.unify_control:
+            host_port = control.host_tcp_port
+            control.host_tcp_port = int(host_port)
+            vnf_port = control.vnf_tcp_port
+            control.vnf_tcp_port = int(vnf_port)
+            #print host_port
+
+    return nffg.getJSON()
 
 if __name__ == "__main__":
     #json_file = open('er_nffg.json').read()
     json_file = open('ER_scale_finish.json').read()
+    json_file = open('ER_scale_priorities.json').read()
+
+    new_json = remove_quotations_from_ports(json_file)
+    delete_flows_by_priority(json_file,9,'')
+
     DP_switches = process_nffg(json_file)
 
     vnf_id = get_next_vnf_id(json_file)
