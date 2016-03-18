@@ -1,0 +1,20 @@
+# start UN
+
+#cleanup
+sudo ovs-vsctl del-br Bridge1
+sudo ovs-vsctl del-br Bridge2
+
+
+#start name-resolver
+sudo ./start_name_resolver &
+
+#start orchestrator
+cp orchestrator_config_er_demo.ini ../../../orchestrator/config/
+cp universal-node-er-demo.xml ../../../orchestrator/config/
+cp nffg_files/er_nffg.json ../../../orchestrator/config/
+
+cd ../../../orchestrator/
+sudo ./node-orchestrator --d ./config/orchestrator_config_er_demo.ini
+
+
+ 

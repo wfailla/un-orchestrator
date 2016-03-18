@@ -1,0 +1,4 @@
+#/bin/bash
+
+ip netns exec sap2 iperf -s
+ip netns exec sap1 iperf -c 10.0.2.1 -i1 -b1M

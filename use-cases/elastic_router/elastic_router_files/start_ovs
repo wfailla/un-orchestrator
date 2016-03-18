@@ -1,0 +1,5 @@
+#start OVS
+sudo /usr/share/openvswitch/scripts/ovs-ctl start
+#start OVSDB server
+sudo ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6632
+

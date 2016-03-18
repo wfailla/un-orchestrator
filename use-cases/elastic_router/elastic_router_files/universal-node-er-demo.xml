@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<universal-node xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                 xsi:noNamespaceSchemaLocation="universal-node-schema.xsd">
+
+	<resources>
+		<cpu amount="1"/>
+		<memory amount="1" unit="GB"/>
+		<storage amount="1" unit="GB"/>
+		
+		<!--
+			Values for "unit":
+			* MB
+			* GB
+			* TB
+		-->
+		
+	</resources>	
+
+	<ports>
+		<port name="veth0un" type="ethernet" side="edge">
+			<virtualized as="intern_link1" port-type="port-sap" sap="sap1"/>
+		</port>
+		<port name="veth1un" type="ethernet" side="edge">
+			<virtualized as="intern_link2" port-type="port-sap" sap="sap2"/>
+		</port>
+		<port name="veth2un" type="ethernet" side="edge">
+			<virtualized as="intern_link3" port-type="port-sap" sap="sap3"/>
+		</port>
+		<port name="veth3un" type="ethernet" side="edge">
+			<virtualized as="intern_link4" port-type="port-sap" sap="sap4"/>
+		</port>
+		
+		<!-- 
+			Values for "type":
+			* ethernet
+			* wifi
+			
+			Note that not all the vSwitches supports DPDK ports.
+		
+			Values for "side":
+			* edge
+			* core
+			* none
+			
+			Values for "port-type":
+			* port-abstract
+			* port-type
+		-->	
+		
+	</ports>	
+
+</universal-node>

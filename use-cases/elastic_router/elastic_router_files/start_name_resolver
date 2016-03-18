@@ -1,0 +1,7 @@
+#start name -resolver
+
+cp name_resolver_config_er_demo.xml ../../../name-resolver/config
+
+cd ../../../name-resolver/
+sudo ./name-resolver --f ./config/name_resolver_config_er_demo.xml
+
