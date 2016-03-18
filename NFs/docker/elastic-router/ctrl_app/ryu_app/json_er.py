@@ -113,7 +113,7 @@ def add_vnf(nffg_json, id, name, vnftype, numports):
 
     return nffg.getJSON()
 
-def get_next_flowrule_id(nffg_json):
+def get_next_flowrule_id(nffg_json, add=0):
     json_dict = json.loads(nffg_json)
     nffg = NF_FG()
     nffg.parseDict(json_dict)
@@ -125,7 +125,7 @@ def get_next_flowrule_id(nffg_json):
     max_id = max(flow_id_list)
     if max_id == 999999999:
         max_id = 0
-    next_id_str = str(max_id+1).zfill(9)
+    next_id_str = str(max_id+1+add).zfill(9)
 
     return next_id_str
 
@@ -258,6 +258,39 @@ def import_json_file(file_name):
 
     return json_dict
 
+
+def add_duplicate_flows_with_priority(nffg_json, old_priority, new_priority):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    # get the flowrules to be replaced, with old_priority
+    flowrules_to_be_replaced = [flowrule for flowrule in nffg.flow_rules if flowrule.priority == old_priority]
+
+    # clean all existing flowrules from the NFFG
+    nffg.flow_rules = []
+
+    # create the new flowrules, with new_priority
+    add = 0
+    for flowrule in flowrules_to_be_replaced:
+        new_flowrule = copy.deepcopy(flowrule)
+        new_flowrule.priority = new_priority
+        new_flowrule.id = get_next_flowrule_id(nffg_json, add=add)
+        nffg.addFlowRule(new_flowrule)
+        add = add + 1
+
+    return nffg.getJSON()
+
+def delete_flows_by_priority(nffg_json, priority, RESTaddress):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    # get the flowrules to be replaced, with old_priority
+    flowrules_to_be_deleted = [flowrule for flowrule in nffg.flow_rules if flowrule.priority == priority]
+
+    for flowrule in flowrules_to_be_deleted:
+        delete_flowrule(flowrule.id, RESTaddress)
 
 
 if __name__ == "__main__":

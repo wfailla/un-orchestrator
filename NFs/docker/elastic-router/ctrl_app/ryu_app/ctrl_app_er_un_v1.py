@@ -236,7 +236,7 @@ class ElasticRouter(app_manager.RyuApp):
             nffg_intermediate = open('er_nffg_scale_in_intermediate.json').read()
         '''
 
-        intermediate_file = 'er_nffg_scale_{0}_intermediate.json'.format(direction)
+        intermediate_file = 'er_nffg_scale_{0}_intermediate_base.json'.format(direction)
         nffg_intermediate = open(intermediate_file).read()
 
         '''
@@ -434,13 +434,20 @@ class ElasticRouter(app_manager.RyuApp):
             VNF_id = self.DP_instances[del_VNF].id
             delete_VNF(self.nffg_json, VNF_id, self.REST_Cf_Or)
 
-        # fix priorities of new flow entries to SAPs
-        
-
         self.VNFs_to_be_deleted = []
         self.scaled_nffg = None
         self.nffg_json = self.get_nffg_json()
         self.parse_nffg(self.nffg_json)
+
+        # fix priorities of new flow entries to SAPs
+        new_nffg = add_duplicate_flows_with_priority(self.nffg_json, old_priority=9, new_priority=10)
+        file = open('ER_scale_priorities.json', 'w')
+        file.write(new_nffg)
+        file.close()
+        self.send_nffg_json(new_nffg)
+        delete_flows_by_priority(new_nffg, 9, self.REST_Cf_Or)
+        self.nffg_json = self.get_nffg_json()
+
 
         file = open('ER_scale_finish.json', 'w')
         file.write(self.nffg_json)
