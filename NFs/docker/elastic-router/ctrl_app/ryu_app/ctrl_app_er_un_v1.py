@@ -662,11 +662,34 @@ class ElasticRouter(app_manager.RyuApp):
         #source_ER.mac_to_port.setdefault(dpid, {})
 
         #learn a mac address to avoid FLOOD next time.
-        source_DP.mac_to_port[mac_src] = in_port
-        #learn in all connected DPs:
-        internal_ports = [port for port in source_DP.ports if port.port_type == DPPort.Internal]
-        for int_port in internal_ports:
-            int_port.linked_port.DP.mac_to_port[mac_src] = int_port.linked_port.number
+
+        if mac_src not in source_DP.mac_to_port:
+            #learn mac address and set tables
+
+            source_DP.mac_to_port[mac_src] = in_port
+
+            actions = [parser.OFPActionOutput(int(in_port))]
+            match_dict = create_dictionary(eth_dst=mac_src)
+            source_DP.oftable.append((match_dict, actions, priority))
+            match = parser.OFPMatch(**match_dict)
+            self.add_flow(datapath, priority, match, actions)
+            self.logger.debug('added flow: DP: {2} mac_dst:{0} out_port:{1}'.format(
+                    mac_src, in_port, source_DP.name))
+
+            #learn in all connected DPs:
+            internal_ports = [port for port in source_DP.ports if port.port_type == DPPort.Internal]
+            for int_port in internal_ports:
+                in_port2 = int_port.linked_port.number
+                linked_DP = int_port.linked_port.DP
+                linked_DP.mac_to_port[mac_src] = in_port2
+
+                actions = [parser.OFPActionOutput(int(in_port2))]
+                match_dict = create_dictionary(eth_dst=mac_src)
+                linked_DP.oftable.append((match_dict, actions, priority))
+                match = parser.OFPMatch(**match_dict)
+                self.add_flow(linked_DP.datapath, priority, match, actions)
+                self.logger.debug('added flow: DP: {2} mac_dst:{0} out_port:{1}'.format(
+                    mac_src, in_port2, linked_DP.name))
 
         # TODO add_flow for each mac src found in every DP
 
@@ -937,6 +960,7 @@ class ElasticRouter(app_manager.RyuApp):
             print 'add flow2\n'
 
         datapath.send_msg(mod)
+
 
     def send_oftable(self, DP):
         # assume scale_out
