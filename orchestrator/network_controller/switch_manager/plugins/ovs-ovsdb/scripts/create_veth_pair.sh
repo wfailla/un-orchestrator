@@ -13,6 +13,11 @@ then
     exit 0
 fi
 
+echo "[$0] Making sure this interface is deleted first: $2"
+
+ip link delete $2
+
+
 echo "[$0] Creating the veth pair $1 - $2"
 
 ip link add $1 type veth peer name $2

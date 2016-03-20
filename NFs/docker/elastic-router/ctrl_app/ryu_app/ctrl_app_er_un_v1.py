@@ -673,7 +673,7 @@ class ElasticRouter(app_manager.RyuApp):
             source_DP.oftable.append((match_dict, actions, priority))
             match = parser.OFPMatch(**match_dict)
             self.add_flow(datapath, priority, match, actions)
-            self.logger.debug('added flow: DP: {2} mac_dst:{0} out_port:{1}'.format(
+            self.logger.debug('added flow: DP: {2} mac_src:{0} out_port:{1}'.format(
                     mac_src, in_port, source_DP.name))
 
             #learn in all connected DPs:
