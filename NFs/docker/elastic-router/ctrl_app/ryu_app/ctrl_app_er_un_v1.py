@@ -10,7 +10,7 @@ from ryu.lib.packet import ethernet, ipv4, tcp, arp, udp, icmp, vlan, ipv6, lldp
 from ryu.ofproto import ether, inet
 from ryu.lib import hub
 from ryu.topology import switches
-from ryu.topology.event import EventSwitchEnter
+from ryu.topology.event import EventSwitchEnter, EventSwitchLeave, EventSwitchReconnected
 
 from operator import attrgetter
 import logging
@@ -113,6 +113,11 @@ class ElasticRouter(app_manager.RyuApp):
             # check if all switches are detected
             registered_DPs = filter(lambda x: self.DP_instances[x].registered is True, self.DP_instances)
             self.logger.info('{0} switches detected'.format(len(registered_DPs)))
+
+            unregistered_DPs = filter(lambda x: self.DP_instances[x].registered is False, self.DP_instances)
+            for DP_name in unregistered_DPs:
+                self.logger.info('{0} not detected'.format(DP_name))
+
 
             # ask port statistics
             self.monitorApp.init_measurement()
@@ -236,7 +241,7 @@ class ElasticRouter(app_manager.RyuApp):
             nffg_intermediate = open('er_nffg_scale_in_intermediate.json').read()
         '''
 
-        intermediate_file = 'er_nffg_scale_{0}_intermediate.json'.format(direction)
+        intermediate_file = 'er_nffg_scale_{0}_intermediate_base.json'.format(direction)
         nffg_intermediate = open(intermediate_file).read()
 
         '''
@@ -277,11 +282,15 @@ class ElasticRouter(app_manager.RyuApp):
         #self.send_nffg(nffg_intermediate)
         self.send_nffg_json(nffg_intermediate)
 
+        # get new updated NFFG
+        #self.nffg_json = self.get_nffg_json()
+
         VNFs_to_be_deleted = []
         for old_port in scale_port_dict:
             if old_port.DP.name not in VNFs_to_be_deleted:
                 VNFs_to_be_deleted.append(old_port.DP.name)
 
+        logging.info("VNFs to delete: {0}".format(VNFs_to_be_deleted))
         return VNFs_to_be_deleted
 
     def scale_out(self, scaling_out_ports):
@@ -432,15 +441,25 @@ class ElasticRouter(app_manager.RyuApp):
         # delete the old intermediate VNFs
         for del_VNF in self.VNFs_to_be_deleted:
             VNF_id = self.DP_instances[del_VNF].id
+            self.nffg_json = self.get_nffg_json()
             delete_VNF(self.nffg_json, VNF_id, self.REST_Cf_Or)
-
-        # fix priorities of new flow entries to SAPs
-        
 
         self.VNFs_to_be_deleted = []
         self.scaled_nffg = None
         self.nffg_json = self.get_nffg_json()
         self.parse_nffg(self.nffg_json)
+
+        # fix priorities of new flow entries to SAPs
+        new_nffg = add_duplicate_flows_with_priority(self.nffg_json, old_priority=9, new_priority=10)
+        file = open('ER_scale_priorities.json', 'w')
+        file.write(new_nffg)
+        file.close()
+        self.send_nffg_json(remove_quotations_from_ports(new_nffg))
+        self.logger.info('restore priorities of flow entries to 10')
+        new_nffg = self.get_nffg_json()
+        delete_flows_by_priority(new_nffg, 9, self.REST_Cf_Or)
+        self.nffg_json = self.get_nffg_json()
+
 
         file = open('ER_scale_finish.json', 'w')
         file.write(self.nffg_json)
@@ -467,8 +486,15 @@ class ElasticRouter(app_manager.RyuApp):
         # this flow entry is part of the default flow entry settings
         #self.add_flow(datapath, 0, match, actions)
 
+    @set_ev_cls(EventSwitchLeave)
+    def _ev_switch_leave_handler(self, ev):
+        datapath = ev.switch.dp
+        #this_DP = self.DPIDtoDP[datapath.id]
+        #self.DP_instances.pop(this_DP.name)
+        #self.logger.info('Removed DP: {0}'.format(this_DP.name))
+
     # new switch detected
-    @set_ev_cls(EventSwitchEnter)
+    @set_ev_cls([EventSwitchEnter, EventSwitchReconnected])
     def _ev_switch_enter_handler(self, ev):
         datapath = ev.switch.dp
         self.logger.info('registered OF switch id: %s' % datapath.id)
@@ -636,11 +662,34 @@ class ElasticRouter(app_manager.RyuApp):
         #source_ER.mac_to_port.setdefault(dpid, {})
 
         #learn a mac address to avoid FLOOD next time.
-        source_DP.mac_to_port[mac_src] = in_port
-        #learn in all connected DPs:
-        internal_ports = [port for port in source_DP.ports if port.port_type == DPPort.Internal]
-        for int_port in internal_ports:
-            int_port.linked_port.DP.mac_to_port[mac_src] = int_port.linked_port.number
+
+        if mac_src not in source_DP.mac_to_port:
+            #learn mac address and set tables
+
+            source_DP.mac_to_port[mac_src] = in_port
+
+            actions = [parser.OFPActionOutput(int(in_port))]
+            match_dict = create_dictionary(eth_dst=mac_src)
+            source_DP.oftable.append((match_dict, actions, priority))
+            match = parser.OFPMatch(**match_dict)
+            self.add_flow(datapath, priority, match, actions)
+            self.logger.debug('added flow: DP: {2} mac_src:{0} out_port:{1}'.format(
+                    mac_src, in_port, source_DP.name))
+
+            #learn in all connected DPs:
+            internal_ports = [port for port in source_DP.ports if port.port_type == DPPort.Internal]
+            for int_port in internal_ports:
+                in_port2 = int_port.linked_port.number
+                linked_DP = int_port.linked_port.DP
+                linked_DP.mac_to_port[mac_src] = in_port2
+
+                actions = [parser.OFPActionOutput(int(in_port2))]
+                match_dict = create_dictionary(eth_dst=mac_src)
+                linked_DP.oftable.append((match_dict, actions, priority))
+                match = parser.OFPMatch(**match_dict)
+                self.add_flow(linked_DP.datapath, priority, match, actions)
+                self.logger.debug('added flow: DP: {2} mac_dst:{0} out_port:{1}'.format(
+                    mac_src, in_port2, linked_DP.name))
 
         # TODO add_flow for each mac src found in every DP
 
@@ -912,6 +961,7 @@ class ElasticRouter(app_manager.RyuApp):
 
         datapath.send_msg(mod)
 
+
     def send_oftable(self, DP):
         # assume scale_out
 
@@ -925,4 +975,4 @@ class ElasticRouter(app_manager.RyuApp):
             match = parser.OFPMatch(**match_dict)
             self.add_flow(DP.datapath, priority, match, actions)
 
-        DP.translate_mactable_scale_out()
+        DP.translate_mactable_scale()

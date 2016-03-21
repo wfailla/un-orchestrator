@@ -113,7 +113,7 @@ def add_vnf(nffg_json, id, name, vnftype, numports):
 
     return nffg.getJSON()
 
-def get_next_flowrule_id(nffg_json):
+def get_next_flowrule_id(nffg_json, add=0):
     json_dict = json.loads(nffg_json)
     nffg = NF_FG()
     nffg.parseDict(json_dict)
@@ -125,7 +125,7 @@ def get_next_flowrule_id(nffg_json):
     max_id = max(flow_id_list)
     if max_id == 999999999:
         max_id = 0
-    next_id_str = str(max_id+1).zfill(9)
+    next_id_str = str(max_id+1+add).zfill(9)
 
     return next_id_str
 
@@ -239,7 +239,12 @@ def delete_VNF(nffg_json, vnf_id, RESTaddress):
 
     flow_list = flows_out + flows_in
 
+    flow_list_id = []
     for flow in flow_list:
+        flow_list_id.append(flow.id)
+    logging.info("flows to delete: {0}".format(flow_list_id))
+
+    for flow in list(set(flow_list)):
         delete_flowrule(flow.id, RESTaddress)
         logging.info("deleted flow id: {0}".format(flow.id))
 
@@ -259,10 +264,63 @@ def import_json_file(file_name):
     return json_dict
 
 
+def add_duplicate_flows_with_priority(nffg_json, old_priority, new_priority):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    # get the flowrules to be replaced, with old_priority
+    flowrules_to_be_replaced = [flowrule for flowrule in nffg.flow_rules if flowrule.priority == old_priority]
+
+    # clean all existing flowrules from the NFFG
+    nffg.flow_rules = []
+
+    # create the new flowrules, with new_priority
+    add = 0
+    for flowrule in flowrules_to_be_replaced:
+        new_flowrule = copy.deepcopy(flowrule)
+        new_flowrule.priority = new_priority
+        new_flowrule.id = get_next_flowrule_id(nffg_json, add=add)
+        nffg.addFlowRule(new_flowrule)
+        add = add + 1
+
+    return nffg.getJSON()
+
+def delete_flows_by_priority(nffg_json, priority, RESTaddress):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    # get the flowrules to be replaced, with old_priority
+    flowrules_to_be_deleted = [flowrule for flowrule in nffg.flow_rules if flowrule.priority == priority]
+
+    for flowrule in flowrules_to_be_deleted:
+        delete_flowrule(flowrule.id, RESTaddress)
+        logging.info("deleted flow id: {0} with priority {1} ".format(flowrule.id, priority))
+
+def remove_quotations_from_ports(nffg_json):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    for vnf in nffg.vnfs:
+        for control in vnf.unify_control:
+            host_port = control.host_tcp_port
+            control.host_tcp_port = int(host_port)
+            vnf_port = control.vnf_tcp_port
+            control.vnf_tcp_port = int(vnf_port)
+            #print host_port
+
+    return nffg.getJSON()
 
 if __name__ == "__main__":
     #json_file = open('er_nffg.json').read()
     json_file = open('ER_scale_finish.json').read()
+    json_file = open('ER_scale_priorities.json').read()
+
+    new_json = remove_quotations_from_ports(json_file)
+    delete_flows_by_priority(json_file,9,'')
+
     DP_switches = process_nffg(json_file)
 
     vnf_id = get_next_vnf_id(json_file)

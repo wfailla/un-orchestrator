@@ -10,4 +10,36 @@ sudo docker rm $(docker ps -a -q)
 sudo docker rmi $(docker images -f "dangling=true" -q)
 
 
+#cleanup interfaces
+ip link delete 2_ctrl_1.lxc
+
+ip link delete 2_ovs1_1.lxc
+ip link delete 2_ovs1_2.lxc
+ip link delete 2_ovs1_3.lxc
+ip link delete 2_ovs1_4.lxc
+ip link delete 2_ovs1_5.lxc
+
+ip link delete 2_ovs2_1.lxc
+ip link delete 2_ovs2_2.lxc
+ip link delete 2_ovs2_3.lxc
+ip link delete 2_ovs2_4.lxc
+ip link delete 2_ovs2_5.lxc
+
+ip link delete 2_ovs3_1.lxc
+ip link delete 2_ovs3_2.lxc
+ip link delete 2_ovs3_3.lxc
+ip link delete 2_ovs3_4.lxc
+ip link delete 2_ovs3_5.lxc
+
+ip link delete 2_ovs4_1.lxc
+ip link delete 2_ovs4_2.lxc
+ip link delete 2_ovs4_3.lxc
+ip link delete 2_ovs4_4.lxc
+ip link delete 2_ovs4_5.lxc
+
+ip link delete 2_ovs5_1.lxc
+ip link delete 2_ovs5_2.lxc
+ip link delete 2_ovs5_3.lxc
+ip link delete 2_ovs5_4.lxc
+ip link delete 2_ovs5_5.lxc
 
