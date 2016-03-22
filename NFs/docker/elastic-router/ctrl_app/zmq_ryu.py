@@ -15,11 +15,27 @@ def alarm_receiver():
         msg = bob.recv_multipart()
         print("received :", msg)
 
+def alarm_sender():
+    for i in range(0,10):
+        msg = b'alarm{0}'.format(i)
+        alice = zmq.Socket(CTX, zmq.PUSH)
+        alice.connect("ipc:///tmp/alarm_trigger")
+        alice.send_multipart([b'sub', b'alarms', msg])
+
+        eventlet.sleep(1)
+
+
 if __name__ == "__main__":
-    alice = zmq.Socket(CTX, zmq.REQ)
-    alice.connect("ipc:///tmp/alarm_subscribe")
-    alice.send_multipart([b'sub', b'alarms', b'all'])
 
     sub_server = eventlet.spawn(alarm_receiver)
 
-    sub_server.wait()
+    #alice = zmq.Socket(CTX, zmq.REQ)
+    #alice.connect("ipc:///tmp/alarm_subscribe")
+    #alice.send_multipart([b'sub', b'alarms', b'all'])
+    alarm_sender()
+
+
+
+    #sub_server.wait()
+    while True:
+        eventlet.sleep(1)

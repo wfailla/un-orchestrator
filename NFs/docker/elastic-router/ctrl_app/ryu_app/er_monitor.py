@@ -96,6 +96,26 @@ class ElasticRouterMonitor:
 
         return scaling_out_ports
 
+    def start_scale_out_default(self):
+
+        scaling_out_ports = []
+
+        #  only scale out in case of single DP
+        if len(self.ERctrlapp.DP_instances) != 1:
+            return scaling_out_ports
+
+        # get first DP (only triggered if 1 DP in topology)
+        this_DP = self.ERctrlapp.DP_instances.itervalues().next()
+        for port in this_DP.ports:
+            scaling_out_ports.append([port])
+            logging.info('scaling out: {0} ports: {1}'.format(this_DP.name, port.ifname))
+
+        if len(scaling_out_ports) > 0:
+            self.scaling_lock.acquire()
+            logging.info('scaling out: {0} ports: {1}'.format(this_DP.name,scaling_out_ports ))
+
+        return scaling_out_ports
+
     def scaling_finish(self):
         # scaled out DPs are detected (intermediate configuration)
         logging.info('scaling_intermediate_finish')
@@ -129,3 +149,21 @@ class ElasticRouterMonitor:
 
 
         return scaling_in_ports
+
+    def start_scale_in_default(self):
+        scaling_in_ports = []
+
+        scaling_in_ports_DP = []
+        for DP in self.ERctrlapp.DP_instances:
+            this_DP = self.ERctrlapp.DP_instances[DP]
+            external_ports = [port for port in this_DP.ports if port.port_type == DPPort.External]
+            scaling_in_ports_DP = scaling_in_ports_DP + external_ports
+
+        scaling_in_ports.append(scaling_in_ports_DP)
+
+        if len(scaling_in_ports) > 0:
+            self.scaling_lock.acquire()
+            logging.info('scaling in ports: {0}'.format(scaling_in_ports ))
+
+        return scaling_in_ports
+
