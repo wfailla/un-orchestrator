@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# make sure name-resolver is killed
+sudo pkill name-resolver
+
 # start UN
 
 #cleanup
