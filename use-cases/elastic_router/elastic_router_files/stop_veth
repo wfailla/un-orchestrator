@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sudo ip netns delete sap1
+sudo ip netns delete sap2
+sudo ip netns delete sap3
+sudo ip netns delete sap4
+
