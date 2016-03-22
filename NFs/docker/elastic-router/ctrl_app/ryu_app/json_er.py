@@ -234,10 +234,11 @@ def delete_VNF(nffg_json, vnf_id, RESTaddress):
     nffg.parseDict(json_dict)
 
     del_vnf = nffg.getVNF(vnf_id)
-    flows_out = nffg.getFlowRulesSendingTrafficFromVNF(del_vnf)
-    flows_in = nffg.getFlowRulesSendingTrafficToVNF(del_vnf)
 
-    flow_list = flows_out + flows_in
+    flows_in = nffg.getFlowRulesSendingTrafficToVNF(del_vnf)
+    flows_out = nffg.getFlowRulesSendingTrafficFromVNF(del_vnf)
+
+    flow_list = flows_in + flows_out
 
     flow_list_id = []
     for flow in flow_list:

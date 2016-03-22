@@ -205,7 +205,10 @@ class DP:
                 # set new out_port
                 new_actions = copy.deepcopy(list(actions))
                 for i in range(0, len(actions)):
-                    if actions[i].port == ofproto.OFPP_FLOOD:
+                    # skip LOCAL port
+                    if actions[i].port > 100:
+                        continue
+                    elif actions[i].port == ofproto.OFPP_FLOOD:
                         new_actions[i].port = ofproto.OFPP_FLOOD
                     else:
                         old_outportno = actions[i].port
