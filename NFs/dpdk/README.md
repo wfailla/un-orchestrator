@@ -7,12 +7,12 @@ processes.
 
 In order to use a DPDK-based VNFs it is necessary to install a proper DPDK enabled virtual Switch.
 Currenty the un-node supports xDPd and Open vSwitch, please refer to the section
-"Install the proper virtual switch" in [README_COMPILE](../orchestrator/README_COMPILE.md) to get instructions about the installation.
+"Install the proper virtual switch" in [README_COMPILE](../../orchestrator/README_COMPILE.md) to get instructions about the installation.
 
 ## How to start the vswitch
 
 Before running the un-node it is necessary to start the virtual switch, please read the
-instructions in the section "How to start the proper virtual switch" of [README_RUN](../orchestrator/README_RUN.md)
+instructions in the section "How to start the proper virtual switch" of [README_RUN](../../orchestrator/README_RUN.md)
 
 ## How to create your VNFs
 
