@@ -11,20 +11,21 @@ logging.basicConfig(level=logging.DEBUG)
 CTX = zmq.Context(1)
 
 class er_zmq:
-    def __init__(self):
+    def __init__(self, monitor_instance, ER_instance):
         #Set the logger
         #logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
         self.log = logging.getLogger('zmq_logger')
         self.log.setLevel(logging.DEBUG)
 
-        #self.CTX = zmq.Context(1)
-        logging.debug("STARTING ZMQ")
-        #self.zmq_pull_thread = hub.spawn(self.bob_client(CTX))
+        # monitoring class
+        self.er_monitor = monitor_instance
+        # Elastic Router class
+        self.ER_app = ER_instance
 
         self.alarm_subscribe()
 
         sub_server = hub.spawn(self.alarm_receiver)
-        #sub_server.wait()
+
 
     def bob_client(self):
         logging.info("STARTING BOB")
@@ -42,23 +43,31 @@ class er_zmq:
             print("received :", msg)
             hub.sleep(1)
 
-    def test(self):
-        while True:
-            hub.sleep(2)
 
     def alarm_subscribe(self):
         self.log.debug("ALARM SUBSCRIBE")
-        alice = zmq.Socket(CTX, zmq.REQ)
-        alice.connect("ipc:///tmp/alarm_subscribe")
-        alice.send_multipart([b'sub', b'alarms', b'all'])
+        DD_proxy = zmq.Socket(CTX, zmq.REQ)
+        DD_proxy.connect("ipc:///tmp/alarm_subscribe")
+        DD_proxy.send_multipart([b'sub', b'alarms', b'all'])
 
     def alarm_receiver(self):
-        self.log.debug("STARTING BOB, waiting for ALARM")
-        bob = zmq.Socket(CTX, zmq.PULL)
-        bob.bind("ipc:///tmp/alarm_trigger")
+        self.log.debug("Waiting for ALARM")
+        DD_proxy = zmq.Socket(CTX, zmq.PULL)
+        DD_proxy.bind("ipc:///tmp/alarm_trigger")
 
         while True:
-            msg = bob.recv_multipart()
+            msg = DD_proxy.recv_multipart()
+            self.log.debug("Received ALARM: {0}".format(msg))
 
-            print("received :", msg)
-            self.log.debug("STARTING BOB, waiting for ALARM3")
+            scaling_ports = []
+            if 'scale_in' in msg[2]:
+                scaling_ports = self.er_monitor.start_scale_in_default()
+                self.log.debug('start scale in')
+                if len(scaling_ports) > 0:
+                    self.ER_app.VNFs_to_be_deleted = self.ER_app.scale(scaling_ports,'in')
+
+            elif 'scale_out' in msg[2]:
+                scaling_ports = self.er_monitor.start_scale_out_default()
+                self.log.debug('start scale out')
+                if len(scaling_ports) > 0:
+                    self.ER_app.VNFs_to_be_deleted = self.ER_app.scale(scaling_ports,'out')
