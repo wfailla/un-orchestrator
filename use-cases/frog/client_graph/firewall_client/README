@@ -1,6 +1,6 @@
-This is an ntop monitor running in a Docker container.
+This is a firewall based on iptables.
 
-To change the configuration of the switch, edit the file configure_ovs.sh.
+To change the configuration of the firewall, edit the file start.sh
 
 ###############################################################################
 
@@ -22,31 +22,30 @@ Reqiured libraries:
 
 Create the Docker image which contains this NF, and push it to the repository
 
-* docker build --tag="localhost:5000/monitor" .
-* docker push localhost:5000/monitor
+* sudo docker build --tag="localhost:5000/firewall-client" .
+* sudo docker push localhost:5000/firewall-client
 
 ###############################################################################
+
+Run the container:
 
 * in interactive mode
 
 	docker run -i -t --lxc-conf="lxc.network.type=phys" --lxc-conf="lxc.network.link=vEth0" \
 		--lxc-conf="lxc.network.name=eth0" --lxc-conf="lxc.network.flags=up" \
 		--lxc-conf="lxc.network.type=phys" --lxc-conf="lxc.network.link=vEth1" \
-		--lxc-conf="lxc.network.name=eth1" --lxc-conf="lxc.network.flags=up" 
-		--lxc-conf="lxc.network.type=phys" --lxc-conf="lxc.network.link=vEth2" \
-		--lxc-conf="lxc.network.name=eth2" --lxc-conf="lxc.network.flags=up" \
-		--networking="false" --privileged="true" localhost:5000/ovs_switch /bin/bash
+		--lxc-conf="lxc.network.name=eth1" --lxc-conf="lxc.network.flags=up" --networking="false" \  
+		--privileged="true" localhost:5000/iptables /bin/bash
 
 	./start.sh
 
 * in background mode
 
-	docker run -i -t --lxc-conf="lxc.network.type=phys" --lxc-conf="lxc.network.link=vEth0" \
+	docker run -d --lxc-conf="lxc.network.type=phys" --lxc-conf="lxc.network.link=vEth0" \
 		--lxc-conf="lxc.network.name=eth0" --lxc-conf="lxc.network.flags=up" \
 		--lxc-conf="lxc.network.type=phys" --lxc-conf="lxc.network.link=vEth1" \
-		--lxc-conf="lxc.network.name=eth1" --lxc-conf="lxc.network.flags=up" 
-		--lxc-conf="lxc.network.type=phys" --lxc-conf="lxc.network.link=vEth2" \
-		--lxc-conf="lxc.network.name=eth2" --lxc-conf="lxc.network.flags=up" \
-		--networking="false" --privileged="true" localhost:5000/ovs_switch 
-				
-In both the cases, vEth0, vEth1 and vEth2 are vEth interfaces available in the host.
+		--lxc-conf="lxc.network.name=eth1" --lxc-conf="lxc.network.flags=up" --networking="false" \  
+		--privileged="true" localhost:5000/iptables
+		
+In both the cases, vEth0 and vEth1 are vEth interfaces available in the host.
+

@@ -33,28 +33,48 @@
 		system, the file also specifies to interpret the URI through the attribute
 		location.
 	-->
+	
+	<network-function name="fw-c"  num-ports="2" summary="iptables based firewall">
+		<!-- Only a docker implementation is available for this network function -->
+		<docker uri="firewall-client"/>
+	</network-function>
    
-	<network-function name="switch"  num-ports="3" summary="ovs switch">
+	<network-function name="sw-c"  num-ports="3" summary="ovs switch">
 	<!-- Only a docker implementation is available for this network function -->
-	<docker uri="switch"/>
+	<docker uri="switch--client"/>
 	</network-function>
 
-	<network-function name="control_switch"  num-ports="3" summary="ovs switch">
+	<network-function name="dhcp-c"  num-ports="1" summary="dhcp server">
 	<!-- Only a docker implementation is available for this network function -->
-	<docker uri="switch"/>
+	<docker uri="dhcp-client"/>
 	</network-function>
 
-	<network-function name="dhcp"  num-ports="1" summary="dhcp server">
+	<network-function name="mnt-c"  num-ports="2" summary="ntop based monitor">
+	<!-- Only a docker implementation is available for this network function -->
+	<docker uri="monitor-client"/>
+	</network-function>
+
+	<network-function name="nat-c"  num-ports="2" summary="iptables based nat">
+	<!-- Only a docker implementation is available for this network function -->
+	<docker uri="nat-client"/>
+	</network-function>
+
+	<network-function name="sw-i"  num-ports="3" summary="ovs switch">
+	<!-- Only a docker implementation is available for this network function -->
+	<docker uri="switch-isp"/>
+	</network-function>
+
+	<network-function name="dhcp-i"  num-ports="1" summary="dhcp server">
 	<!-- Only a docker implementation is available for this network function -->
 	<docker uri="dhcp-isp"/>
 	</network-function>
 
-	<network-function name="monitor"  num-ports="2" summary="ntop based monitor">
+	<network-function name="mnt-i"  num-ports="2" summary="ntop based monitor">
 	<!-- Only a docker implementation is available for this network function -->
 	<docker uri="monitor-isp"/>
 	</network-function>
 
-	<network-function name="nat"  num-ports="2" summary="iptables based nat">
+	<network-function name="nat-i"  num-ports="2" summary="iptables based nat">
 	<!-- Only a docker implementation is available for this network function -->
 	<docker uri="nat-isp"/>
 	</network-function>

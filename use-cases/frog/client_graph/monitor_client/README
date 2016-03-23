@@ -1,7 +1,6 @@
-This is an Open vSwitch openflow switch running in a Docker container.
+This is an ntop monitor running in a Docker container.
 
 To change the configuration of the switch, edit the file configure_ovs.sh.
-To change the network configuration to the container edit the file start.sh
 
 ###############################################################################
 
@@ -23,8 +22,8 @@ Reqiured libraries:
 
 Create the Docker image which contains this NF, and push it to the repository
 
-* docker build --tag="localhost:5000/switch" .
-* docker push localhost:5000/switch
+* docker build --tag="localhost:5000/monitor-client" .
+* docker push localhost:5000/monitor-client
 
 ###############################################################################
 

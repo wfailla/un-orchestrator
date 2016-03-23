@@ -23,8 +23,8 @@ Reqiured libraries:
 
 Create the Docker image which contains this NF, and push it to the repository
 
-* docker build --tag="localhost:5000/dhcp_isp" .
-* docker push localhost:5000/dhcp_isp
+* sudo docker build --tag="localhost:5000/dhcp-client" .
+* docker push localhost:5000/dhcp-client
 
 ###############################################################################
 

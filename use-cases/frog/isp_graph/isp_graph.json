@@ -6,7 +6,7 @@
       {
         "vnf_template": "switch.json",
         "id": "00000001",
-        "name": "switch",
+        "name": "sw-i",
         "ports": [
           {
             "id": "L2Port:0",
@@ -30,7 +30,7 @@
             "name": "data-port"
           }
         ],
-        "name": "dhcp",
+        "name": "dhcp-i",
         "id": "00000002"
       },
       {
@@ -43,7 +43,7 @@
             "id": "inout:1"
           }
         ],
-        "name": "monitor",
+        "name": "mnt-i",
         "id": "00000003"
       },
       {
@@ -58,7 +58,7 @@
             "name": "data-port"
           }
         ],
-        "name": "nat",
+        "name": "nat-i",
         "id": "00000004"
       }
     ],

@@ -20,8 +20,8 @@ Reqiured libraries:
 
 Create the Docker image which contains this NF, and push it to the repository
 
-* docker build --tag="localhost:5000/nat_isp" .
-* docker push localhost:5000/nat_isp
+* docker build --tag="localhost:5000/nat-isp" .
+* docker push localhost:5000/nat-isp
 
 ###############################################################################
 

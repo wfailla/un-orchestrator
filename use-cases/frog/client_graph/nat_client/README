@@ -20,8 +20,8 @@ Reqiured libraries:
 
 Create the Docker image which contains this NF, and push it to the repository
 
-* docker build --tag="localhost:5000/nat" .
-* docker push localhost:5000/nat
+* docker build --tag="localhost:5000/nat-client" .
+* docker push localhost:5000/nat-client
 
 ###############################################################################
 
