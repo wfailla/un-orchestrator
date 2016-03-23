@@ -1,8 +1,23 @@
 #! /bin/bash
 
 #This gives time to the UN to configure the network namespace of the container
-sleep 3
+#sleep 10
 
+up=false
+
+while [ "$up" == false ]
+do
+t1=$(ifconfig | grep -o eth5)
+t2='eth5'
+
+if [ "$t1" = "$t2" ]; then
+  echo "eth5 up"
+  up=true
+else
+  echo "eth5 down, waiting for all eth ports to be up..."
+  sleep 1
+fi
+done
 
 echo "Ubuntu started"
 echo "start ovs"
