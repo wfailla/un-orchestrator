@@ -9,6 +9,10 @@ This is acontainer based on a ubuntu container with openvswitch installed
 You can create the Docker image with the network function by launching the following command:
 
     sudo docker build --tag="ovs" .
+    
+Alternatively, this script can be used to build and push the image to `gitlab.testbed.se:5000/ovs`
+    
+    ./build_ovs
 
 In the name-resolver, different VNFs of this image are defines: `ovs1`, `ovs2`, `ovs3`, `ovs4`and `ovs5`.
 These names are referenced in the nffg file.
