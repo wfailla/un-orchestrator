@@ -11,8 +11,6 @@ RUN apt-get update
 RUN apt-get install -yq iproute net-tools iputils-ping curl python-zmq openssh-server
 RUN pip install ipaddress
 
-# debug REST api
-RUN pip install Flask
 
 # setup ssh login
 RUN echo 'root:root' | chpasswd
@@ -21,7 +19,7 @@ RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/ss
 ADD authorized_keys /root/.ssh/authorized_keys
 
 # test alarm sender
-ADD zmq_ryu_test_alarm_send.py zmq_ryu_test_alarm_send.py
+#ADD zmq_ryu_test_alarm_send.py zmq_ryu_test_alarm_send.py
 
 
 ADD ryu_ddclient.py ryu_ddclient.py
@@ -40,7 +38,7 @@ WORKDIR /root/
 # setup ryu files
 COPY ./ryu_app ./ryu_app
 
-ADD start_zmq.sh start.sh
+ADD start_DD.sh start.sh
 RUN chmod +x start.sh
 
 CMD ./start.sh
