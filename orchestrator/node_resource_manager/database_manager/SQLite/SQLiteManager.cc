@@ -370,13 +370,6 @@ int SQLiteManager::insertUser(char *user, char *pwd, char *group) {
 		sqlite3_bind_text(stmt, idx, group, strlen(group), 0);
 
 		res = sqlite3_step(stmt);
-
-		cache.addUser(user, pwd, group);
-
-		User *usr = cache.getUser(user);
-		usr->setDirty(false);
-
-		usr = NULL;
 	}
 
 	sqlite3_finalize(stmt);

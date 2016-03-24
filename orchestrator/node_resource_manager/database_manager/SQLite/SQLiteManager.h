@@ -13,7 +13,8 @@
 
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
-#include "../cache_manager/cache_manager.h"
+
+#include <assert.h>
 
 using namespace std;
 
@@ -35,11 +36,6 @@ typedef enum {
 class SQLiteManager {
 
 private:
-	/**
-	 * @brief: Cache
-	 */
-	CacheManager cache;
-
 	/**
 	*	@brief: Database pointer
 	*/

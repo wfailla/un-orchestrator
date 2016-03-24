@@ -141,12 +141,12 @@ Then execute the following commands:
 Before installing OvS with DPDK, you must download and compile the DPDK library. At first, download
 the source code from:
 
-	http://dpdk.org/browse/dpdk/snapshot/dpdk-2.2.0.tar.gz
+	http://dpdk.org/browse/dpdk/snapshot/dpdk-2.0.0.tar.gz
 
 Then execute the following commands:
 
-    $ tar -xf dpdk-2.2.0.tar.gz
-    $ cd dpdk-2.2.0
+    $ tar -xf dpdk-2.0.0.tar.gz
+    $ cd dpdk-2.0.0
     $ export DPDK_DIR=`pwd`
     ; modify the file `$DPDK_DIR/config/common_linuxapp` so that
     ; `CONFIG_RTE_BUILD_COMBINE_LIBS=y`
@@ -162,9 +162,9 @@ on the [DPDK website](http://dpdk.org/)
 
 Now, download and install Open vSwitch:
 
-	$ wget http://openvswitch.org/releases/openvswitch-2.5.0.tar.gz
-	$ tar -xf openvswitch-2.5.0.tar.gz
-	$ cd openvswitch-2.5.0
+	$ wget http://openvswitch.org/releases/openvswitch-2.4.0.tar.gz
+	$ tar -xf openvswitch-2.4.0.tar.gz
+	$ cd openvswitch-2.4.0
 	$ ./configure --with-dpdk=$DPDK_BUILD
 	$ make
 	$ sudo make install
