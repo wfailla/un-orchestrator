@@ -57,8 +57,10 @@ void singint_handler(int sig)
 	MHD_stop_daemon(http_daemon);
 	terminateRestServer();
 
-	if(dbm != NULL)
-		dbm->eraseAllToken();
+	if(dbm != NULL) {
+		//dbm->updateDatabase();
+		dbm->cleanTables();
+	}
 
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	DoubleDeckerClient::terminate();
@@ -179,14 +181,16 @@ int main(int argc, char *argv[])
 		s_ipsec_certificate.erase(s_ipsec_certificate.size()-1,1);
 	}
 
-	std::ifstream ifile(DB_NAME);
+	if(cli_auth) {
+		std::ifstream ifile(DB_NAME);
 
-	if(ifile)
-		dbm = new SQLiteManager(DB_NAME);
-	else {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Database does not exist!");
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Run 'db_initializer' at first.");
-		exit(EXIT_FAILURE);
+		if(ifile)
+			dbm = new SQLiteManager(DB_NAME);
+		else {
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Database does not exist!");
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Run 'db_initializer' at first.");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	//XXX: this code avoids that the program terminates when system() is executed
@@ -441,7 +445,7 @@ logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "****************************
 #ifdef VSWITCH_IMPLEMENTATION_ERFS
 	string vswitch = "ERFS";
 #endif
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "* Virtual switch used: '%s'",vswitch.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "* Virtual switch used: '%s'", vswitch.c_str());
 
 	list<string> executionenvironment;
 #ifdef ENABLE_KVM

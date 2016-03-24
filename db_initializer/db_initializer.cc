@@ -4,12 +4,13 @@
 
 #include <openssl/sha.h>
 
+#include <string.h>
+
 #include "../orchestrator/node_resource_manager/database_manager/SQLite/SQLiteManager.h"
 #include "../orchestrator/node_resource_manager/database_manager/SQLite/INIReader.h"
 
 #include "../orchestrator/utils/constants.h"
 #include "../orchestrator/utils/logger.h"
-
 
 bool initDB(SQLiteManager *dbm, char *pass)
 {
@@ -28,8 +29,21 @@ bool initDB(SQLiteManager *dbm, char *pass)
 			strcat(hash_pwd, tmp);
 	    }
 
-		dbm->insertUsrPwd(ADMIN, hash_pwd);
-		dbm->insertUsrPermission(ADMIN, PUT, "/NF-FG/myGraph");
+		// default users
+		dbm->insertUser(ADMIN, hash_pwd, ADMIN);
+
+		// insert generic resources
+		dbm->insertResource(BASE_URL_GRAPH);
+
+		// default permissions for NF-FGs
+		dbm->insertDefaultUsagePermissions(BASE_URL_GRAPH,
+				DEFAULT_NFFG_OWNER_PERMISSION,
+				DEFAULT_NFFG_GROUP_PERMISSION,
+				DEFAULT_NFFG_ALL_PERMISSION,
+				DEFAULT_NFFG_ADMIN_PERMISSION);
+
+		// default creation permissions for admin user
+		dbm->insertUserCreationPermission(ADMIN, BASE_URL_GRAPH, ALLOW);
 
 		return true;
 	}
@@ -65,4 +79,6 @@ int main(int argc, char *argv[]) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Database already initialized.");
 		exit(EXIT_FAILURE);
 	}
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Database initialized successfully.");
 }
