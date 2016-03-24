@@ -24,11 +24,6 @@ class GraphParser
 friend class RestServer;
 
 protected:
-
-
-private:
-
-public:
 	static bool parseGraph(Value value, highlevel::Graph &graph, bool newGraph, GraphManager *gm);
 };
 
