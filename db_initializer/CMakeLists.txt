@@ -51,6 +51,10 @@ SET(SOURCES
 	
 	../orchestrator/node_resource_manager/database_manager/SQLite/SQLiteManager.cc
 	../orchestrator/node_resource_manager/database_manager/SQLite/SQLiteManager.h
+	
+	../orchestrator/node_resource_manager/database_manager/cache_manager/cache_manager.cc
+	../orchestrator/node_resource_manager/database_manager/cache_manager/cache_manager.h
+	
 	../orchestrator/utils/logger.c
 	../orchestrator/utils/logger.h
 	../orchestrator/utils/constants.h

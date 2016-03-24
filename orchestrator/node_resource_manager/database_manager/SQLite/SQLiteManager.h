@@ -13,12 +13,32 @@
 
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
+#include "../cache_manager/cache_manager.h"
 
 using namespace std;
 
-class SQLiteManager
-{
+typedef enum {
+	_READ,
+	_UPDATE,
+	_DELETE,
+	_CREATE
+} opcode_t;
+
+typedef struct {
+	char *user, *pwd, *group, *token;
+} user_info_t;
+
+typedef enum {
+	OWNER, GROUP, OTHERS, ADMINISTRATOR
+} permission_class;
+
+class SQLiteManager {
+
 private:
+	/**
+	 * @brief: Cache
+	 */
+	CacheManager cache;
 
 	/**
 	*	@brief: Database pointer
@@ -40,47 +60,42 @@ private:
 	*/
 	void disconnect();
 
-	/**
-	*	@brief: SELECT callback
-	*/
-	static int callback(void *NotUsed, int argc, char **argv, char **azColName);
-
-	/**
-	 * @brief: Callback for SELECT COUNT statement
-	 */
-	static int selectCountCallback(void *count, int argc, char **argv, char **azColName);
-
 public:
 
 	SQLiteManager(char *db_name);
 
 	~SQLiteManager();
 
+	sqlite3* getDb();
+
 	bool createTables();
 
-	bool insertUsrPwd(char *user, char *pwd);
+	bool cleanTables();
 
-	bool insertUsrPermission(char *user, char *http_method, char *url);
+	bool userExists(char *username, char *hash_pwd);
+	int insertUser(char *user, char *pwd, char *group);
+	int deleteUser(char *user);
+	user_info_t *getUserByToken(const char *token);
 
-	bool selectUsrPwd(char *user, char *pwd);
+	char *getGroup(const char *user);
 
-	bool selectToken(char *token);
+	bool isLogged(char *username);
 
-	bool selectAllTable();
+	int insertLogin(char *user, char *token, char *timestamp);
 
-	bool updateTokenAndTimestamp(char *user, char *token, char *timestamp);
+	bool resourceExists(const char *generic_resource);
+	bool resourceExists(const char *generic_resource, const char *resource);
 
-	bool updatePwd(char *user, char *pwd);
+	int insertResource(char *generic_resource);
+	int insertResource(char *generic_resource, char *resource, char *owner);
+	int updateResource(char *generic_resource, char *resource);
+	int deleteResource(char *generic_resource, char *resource);
 
-	bool eraseAllToken();
+	bool isGenericResource(const char *generic_resource);
 
-	char *getUser();
+	int insertDefaultUsagePermissions(char *generic_resource, char *owner_p, char *group_p, char *all_p, char *admin_p);
 
-	char *getPwd();
-
-	char *getToken();
-
-	bool hasPermission(const char *user, const char *http_method, const char *url);
+	int insertUserCreationPermission(char *user, char *generic_resource, char *permission);
 };
 
 class SQLiteManagerException : public exception

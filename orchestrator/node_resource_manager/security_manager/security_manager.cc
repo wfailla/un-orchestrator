@@ -1,91 +1,182 @@
 #include "security_manager.h"
 
-SecurityManager::SecurityManager() : token(NULL), method(NULL), url(NULL), connection(NULL), dbmanager(NULL) { }
+SecurityManager::SecurityManager(SQLiteManager *dbm) : dbmanager(dbm) { }
 
 SecurityManager::~SecurityManager() {
 	// I do not pretend to be owner of these data, so I will leave deletion to others...
-	token = NULL;
-	method = NULL;
-	url = NULL;
-	connection = NULL;
 	dbmanager = NULL;
 }
 
-bool SecurityManager::isLoginRequest() {
-	/*
-	 * Checking method name and url is enough because the REST server
-	 * already verifies that the request is well-formed.
-	 */
-	return (strcmp(method, POST) == 0
-			&& url[0] == '/'
-			&& strncmp(url + sizeof(char), BASE_URL_LOGIN, sizeof(char) * strlen(BASE_URL_LOGIN)) == 0);
+bool SecurityManager::isAuthenticated(struct MHD_Connection *connection, char *token) {
+	int rc = 0, res = 0, idx = 0, count = 0;
+	char *sql = "select count(*) from LOGIN where TOKEN = @token;";
+
+	sqlite3_stmt *stmt;
+
+	rc = sqlite3_prepare_v2(dbmanager->getDb(), sql, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@token");
+		sqlite3_bind_text(stmt, idx, token, strlen(token), 0);
+
+		res = sqlite3_step(stmt);
+
+		if (res == SQLITE_ROW)
+			count = sqlite3_column_int(stmt, 0);
+	}
+
+	return (count > 0);
 }
 
-bool SecurityManager::checkAuthentication() {
-	if(token == NULL) {
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+/**
+ *	Given a generic resource, permissions are checked for each single resource mapped to the generic one.
+ *	Since aggregated operations are not currently supported, authorization is given only if the user
+ *	is authorized for all the single resources.
+ */
+bool SecurityManager::isAuthorized(user_info_t *usr, opcode_t operation, const char *generic_resource) {
+	int rc = 0, res = 0, idx = 0;
+	const char *sql = "select * from CURRENT_RESOURCES_PERMISSIONS "	\
+							"where GENERIC_RESOURCE = @generic_resource;";
+	char *owner = NULL, *owner_perm = NULL, *group_perm = NULL, *all_perm = NULL, *admin_perm = NULL, *permissions = NULL;
+
+	sqlite3_stmt *stmt;
+	bool result = true;
+
+	rc = sqlite3_prepare_v2(dbmanager->getDb(), sql, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@generic_resource");
+		sqlite3_bind_text(stmt, idx, generic_resource, strlen(generic_resource), 0);
+
+		do {
+			res = sqlite3_step(stmt);
+
+			if (res == SQLITE_ROW) {
+				owner = (char *) sqlite3_column_text(stmt, 2);
+				owner_perm = (char *) sqlite3_column_text(stmt, 3);
+				group_perm = (char *) sqlite3_column_text(stmt, 4);
+				all_perm = (char *) sqlite3_column_text(stmt, 5);
+				admin_perm = (char *) sqlite3_column_text(stmt, 6);
+
+				if(strcmp(usr->user, ADMIN) == 0)
+					permissions = admin_perm;
+				else if(strcmp(usr->user, owner) == 0)
+					permissions = owner_perm;
+				else {
+					char *owner_group = dbmanager->getGroup(owner);
+
+					if(strcmp(usr->group, owner_group) == 0)
+						permissions = group_perm;
+					else
+						permissions = all_perm;
+				}
+
+				if(strncmp(permissions + operation, DENY, 1) == 0) {
+					sqlite3_finalize(stmt);
+					return false;
+				}
+			}
+		} while(res != SQLITE_DONE && res != SQLITE_ERROR);
+	}
+
+	sqlite3_finalize(stmt);
+
+	return result;
+}
+
+bool SecurityManager::isAuthorizedForCreation(char *user, const char *generic_resource, const char *resource) {
+	assert(user != NULL && generic_resource != NULL && resource != NULL);
+
+	int rc = 0, res = 0, idx = 0;
+	char *sql = NULL, *permissions = NULL;
+
+	sqlite3_stmt *stmt;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User: %s\nGen: %s\nRes: %s\n", user, generic_resource, resource);
+
+	// The resource I want to create must not exist in the database at the moment
+	if(dbmanager->resourceExists(generic_resource, resource)) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot create new resource /%s/%s: it does already exist!", generic_resource, resource);
 		return false;
 	}
 
-	dbmanager->selectToken((char *)token);
-	if(strcmp(dbmanager->getToken(), token) == 0) {
-		//User authenticated!
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authenticated");
-		return true;
-	} else {
-		//User unauthenticated!
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthenticated");
-		return false;
+	sql = "select PERMISSION from USER_CREATION_PERMISSIONS "	\
+			"where USER = @user and GENERIC_RESOURCE = @generic_resource;";
+
+	rc = sqlite3_prepare_v2(dbmanager->getDb(), sql, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@user");
+		sqlite3_bind_text(stmt, idx, user, strlen(user), 0);
+
+		idx = sqlite3_bind_parameter_index(stmt, "@generic_resource");
+		sqlite3_bind_text(stmt, idx, generic_resource, strlen(generic_resource), 0);
+
+		res = sqlite3_step(stmt);
+
+		if (res == SQLITE_ROW)
+			permissions = (char *) sqlite3_column_text(stmt, 0);
 	}
 
-	return false;
+	sqlite3_finalize(stmt);
+
+	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Permission for create: %s", permissions);
+	return (permissions != NULL && strncmp(permissions, ALLOW, 1) == 0);
 }
 
-bool SecurityManager::checkAuthorization() {
-	bool authorized = false;
-	char *user = NULL;
+bool SecurityManager::isAuthorized(user_info_t *usr, opcode_t operation, const char *generic_resource, const char *resource) {
+	assert(usr != NULL && usr->user != NULL && usr->pwd != NULL && usr->group != NULL && usr->token != NULL);
 
-	assert(token != NULL && method != NULL && url != NULL);
-	if (token == NULL || method == NULL || url == NULL)
-		return false;
+	int rc = 0, res = 0, idx = 0;
+	char *sql = NULL, *owner = NULL, *owner_perm = NULL, *group_perm = NULL, *all_perm = NULL, *admin_perm = NULL, *permissions = NULL;
 
-	if(dbmanager->selectToken((char *) token)) {
-		user = dbmanager->getUser();
-		assert(user != NULL);
+	sqlite3_stmt *stmt;
+	bool result = true;
 
-		authorized = dbmanager->hasPermission(user, method, url);
+	if(operation == _CREATE) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Received creation request for resource /%s/%s", generic_resource, resource);
+		return isAuthorizedForCreation(usr->user, generic_resource, resource);
+	}
 
-		if(authorized) {
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "User authorized");
-			return true;
-		} else {
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User unauthorized");
-			return false;
+	sql = "select * from CURRENT_RESOURCE_PERMISSIONS "	\
+								"where GENERIC_RESOURCE = @generic_resource and RESOURCE = @resource;";
+
+	rc = sqlite3_prepare_v2(dbmanager->getDb(), sql, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@generic_resource");
+		sqlite3_bind_text(stmt, idx, generic_resource, strlen(generic_resource), 0);
+
+		idx = sqlite3_bind_parameter_index(stmt, "@resource");
+		sqlite3_bind_text(stmt, idx, resource, strlen(resource), 0);
+
+		res = sqlite3_step(stmt);
+
+		if (res == SQLITE_ROW) {
+			owner = (char *) sqlite3_column_text(stmt, 2);
+			owner_perm = (char *) sqlite3_column_text(stmt, 3);
+			group_perm = (char *) sqlite3_column_text(stmt, 4);
+			all_perm = (char *) sqlite3_column_text(stmt, 5);
+			admin_perm = (char *) sqlite3_column_text(stmt, 6);
+
+			if(strcmp(usr->user, ADMIN) == 0)
+				permissions = admin_perm;
+			else if(strcmp(usr->user, owner) == 0)
+				permissions = owner_perm;
+			else {
+				char *owner_group = dbmanager->getGroup(owner);
+
+				if(strcmp(usr->group, owner_group) == 0)
+					permissions = group_perm;
+				else
+					permissions = all_perm;
+			}
+
+			result = (strncmp(permissions + operation, ALLOW, 1) == 0);
 		}
 	}
 
-	return false;
-}
+	sqlite3_finalize(stmt);
 
-bool SecurityManager::filterRequest(struct MHD_Connection *current_connection,
-		SQLiteManager *current_dbmanager, const char *current_method,
-		const char *current_url) {
-
-	connection = current_connection;
-	dbmanager = current_dbmanager;
-	method = current_method;
-	url = current_url;
-
-	assert(connection != NULL && dbmanager != NULL && method != NULL && url != NULL);
-
-	// Login requests do not need to be authenticated and authorized
-	if(isLoginRequest())
-		return true;
-
-	token = MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "X-Auth-Token");
-
-	if (!checkAuthentication())
-		return false;
-
-	return checkAuthorization();
+	return result;
 }

@@ -229,6 +229,18 @@ extern ofp_version_t OFP_VERSION;
 #define HIGH_PRIORITY 		65535
 
 /*
+ *	Database
+ */
+#define PERMISSION_LEN	3	// CRUD
+#define ALLOW			"A"
+#define DENY			"D"
+
+#define DEFAULT_NFFG_OWNER_PERMISSION "AAA"
+#define DEFAULT_NFFG_GROUP_PERMISSION "ADD"
+#define DEFAULT_NFFG_ALL_PERMISSION "DDD"
+#define DEFAULT_NFFG_ADMIN_PERMISSION "AAA"
+
+/*
 *	Misc
 */
 #define DEFAULT_GRAPH 		"DEFAULT-GRAPH"

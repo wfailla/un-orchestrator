@@ -21,6 +21,8 @@
 #include <inttypes.h>
 #include <sstream>
 
+#include <sqlite3.h>
+
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 
@@ -39,19 +41,20 @@
 class SecurityManager
 {
 private:
-	const char *token = NULL, *method = NULL, *url = NULL;
-	struct MHD_Connection *connection = NULL;
-	SQLiteManager *dbmanager = NULL;
+	SQLiteManager *dbmanager;
 
-	bool isLoginRequest();
-	bool checkAuthentication();
-	bool checkAuthorization();
+	bool isAuthorizedForCreation(char *user, const char *generic_resource, const char *resource);
 
 public:
-	SecurityManager();
+	SecurityManager(SQLiteManager *);
 	~SecurityManager();
 
-	bool filterRequest(struct MHD_Connection *, SQLiteManager *, const char *, const char *);
+	int login(struct MHD_Connection *connection, void **con_cls);
+
+	bool isAuthenticated(struct MHD_Connection *connection, char *token);
+
+	bool isAuthorized(user_info_t *usr, opcode_t operation, const char *generic_resource);
+	bool isAuthorized(user_info_t *usr, opcode_t operation, const char *generic_resource, const char *resource);
 };
 
 #endif
