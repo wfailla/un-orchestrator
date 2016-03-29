@@ -105,7 +105,7 @@ private:
 #endif
 
 public:
-	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface, char *ipsec_certificate);
+	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string un_address, bool orchestrator_in_band, char *un_interface, char *ipsec_certificate);
 
 	static void terminate();
 

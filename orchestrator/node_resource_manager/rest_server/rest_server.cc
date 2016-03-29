@@ -10,7 +10,7 @@ GraphManager *RestServer::gm = NULL;
 SQLiteManager *dbmanager = NULL;
 bool client_auth = false;
 
-bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string local_ip, bool control, char *control_interface, char *ipsec_certificate)
+bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, char *ports_file_name, string un_address, bool orchestrator_in_band, char *un_interface, char *ipsec_certificate)
 {
 	char *nffg_file_name = new char[BUFFER_SIZE];
 	if(nffg_filename != NULL && strcmp(nffg_filename, "") != 0)
@@ -20,7 +20,7 @@ bool RestServer::init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int
 
 	try
 	{
-		gm = new GraphManager(core_mask,string(ports_file_name),local_ip,control,string(control_interface),string(ipsec_certificate));
+		gm = new GraphManager(core_mask,string(ports_file_name),un_address,orchestrator_in_band,string(un_interface),string(ipsec_certificate));
 
 	}catch (...)
 	{
@@ -496,7 +496,7 @@ put_malformed_url:
 		return ret;
 	}
 
-	/*	const char *c_type = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Content-Type");
+	const char *c_type = MHD_lookup_connection_value (connection,MHD_HEADER_KIND, "Content-Type");
 	if(strcmp(c_type,JSON_C_TYPE) != 0)
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content-Type must be: "JSON_C_TYPE);
@@ -504,7 +504,7 @@ put_malformed_url:
 		int ret = MHD_queue_response (connection, MHD_HTTP_UNSUPPORTED_MEDIA_TYPE, response);
 		MHD_destroy_response (response);
 		return ret;
-	}*/
+	}
 
 #ifdef ENABLE_DIRECT_VM2VM
 	if(!putGraph)
@@ -671,8 +671,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 		Object big_switch, ep_gre;
 	  	bool foundFlowGraph = false;
 
-	  	int ii = 0;
-
 		//Iterates on the json received
 		for(Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
 		{
@@ -684,7 +682,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 			{
 	    		foundFlowGraph = true;
 
-	    		bool foundEP = false, foundGRE = false;
+			bool foundEP = false;
 	    		vector<string> id_gre (256);
 
 				Object forwarding_graph;
@@ -775,7 +773,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 								bool foundName = false;
 
-								string id, name, vnf_template, groups, port_id, port_name;
+								string id, name, vnf_template, port_id, port_name;
+								list<string> groups;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								int vnf_tcp_port, host_tcp_port;
 								//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
@@ -1040,8 +1039,22 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									}
 									else if(nf_name == VNF_GROUPS)
 									{
-										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_GROUPS,nf_value.getString().c_str());
-										groups = nf_value.getString();
+
+										try
+										{
+											nf_value.getArray();
+										} catch(exception& e)
+										{
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" element should be an Object", VNFS);
+											return false;
+										}
+										const Array& myGroups_Array = nf_value.getArray();
+										for(unsigned int i; i<myGroups_Array.size();i++)
+										{
+											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_GROUPS,myGroups_Array[i].getString().c_str());
+											string group = myGroups_Array[i].getString();
+											groups.push_back(group);
+										}
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" found. It is ignored in the current implementation of the %s",VNF_GROUPS,MODULE_NAME);
 									}
 									else
@@ -1108,8 +1121,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 
 							logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",END_POINTS);
 
-							int i = 0;
-
 				    		//Iterate on the end-points
 				    		for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
 							{
@@ -1132,11 +1143,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									if(ep_name == _ID)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,_ID,ep_value.getString().c_str());
+										id = ep_value.getString();
 
-										if(!foundGRE)
-											id = ep_value.getString();
-										else
-											id_gre[i] = ep_value.getString();
 									}
 									else if(ep_name == _NAME)
 									{
@@ -1311,10 +1319,105 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											return false;
 										}
 
-										ep_gre = ep_value.getObject();
-										gre_array[i] = ep_gre;
-										foundGRE = true;
-										i++;
+										//In order to get e-d-point ID (it wil be parsed later)
+										Object::const_iterator aep2 = aep;
+										aep2++;
+										for(; aep2 != end_points.end(); aep2++)
+										{
+											const string& ep2_name  = aep2->first;
+											const Value&  ep2_value = aep2->second;
+											if(ep2_name == _ID)
+											{
+												id = ep2_value.getString();
+												break;
+											}
+										}
+
+
+										try
+										{
+											vector<string> gre_param (5);
+
+											string local_ip, remote_ip, interface, ttl, gre_key;
+											bool safe = false;
+
+											ep_gre=ep_value.getObject();
+
+											for(Object::const_iterator epi = ep_gre.begin(); epi != ep_gre.end(); epi++)
+											{
+												const string& epi_name  = epi->first;
+												const Value&  epi_value = epi->second;
+
+												if(epi_name == LOCAL_IP)
+												{
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,LOCAL_IP,epi_value.getString().c_str());
+
+													local_ip = epi_value.getString();
+
+													gre_param[1] = epi_value.getString();
+
+												}
+												else if(epi_name == REMOTE_IP)
+												{
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,REMOTE_IP,epi_value.getString().c_str());
+
+													remote_ip = epi_value.getString();
+
+													gre_param[2] = epi_value.getString();
+
+												}
+												else if(epi_name == IFACE)
+												{
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,IFACE,epi_value.getString().c_str());
+
+													interface = epi_value.getString();
+
+													gre_param[3] = interface;
+
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), interface.c_str());
+												}
+												else if(epi_name == TTL)
+												{
+													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,TTL,epi_value.getString().c_str());
+
+													ttl = epi_value.getString();
+												}
+												else if(epi_name == GRE_KEY)
+												{
+													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,GRE_KEY,epi_value.getString().c_str());
+
+													gre_key = epi_value.getString();
+
+													gre_param[0] = epi_value.getString();
+
+												}
+												else if(epi_name == SAFE)
+												{
+													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",EP_GRE,SAFE,epi_value.getBool());
+
+													safe = epi_value.getBool();
+												}
+											}
+
+											if(safe)
+												gre_param[4] = string("true");
+											else
+												gre_param[4] = string("false");
+
+											gre_id[id] = interface;
+
+											//Add gre-tunnel end-points
+											highlevel::EndPointGre ep_gre(id, e_name, local_ip, remote_ip, interface, gre_key, ttl, safe);
+
+											graph.addEndPointGre(ep_gre);
+
+											graph.addEndPoint(id,gre_param);
+										}
+										catch(exception& e)
+										{
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", EP_GRE, e.what());
+											return false;
+										}
 									}
 									else
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());
@@ -1349,7 +1452,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									e_vlan = false;
 								}
 							}//End iteration on the endpoints
-							ii = i;
 						}
 						catch(exception& e)
 						{
@@ -1381,103 +1483,6 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 					//Since we found the element "end-points", we can now parse the content of "big-switch"
 					if(foundEP)
 					{
-						//Iterate on the gre-tunnel
-						if(foundGRE)
-						{
-							try{
-								int j = 1;
-
-								//Iterate on the gre object
-								for( int gre_obj = 0; gre_obj < ii; ++gre_obj )
-								{
-									vector<string> gre_param (5);
-
-									string local_ip, remote_ip, interface, ttl, gre_key;
-									bool safe = false;
-
-									int i = 0;
-
-									for(Object::const_iterator epi = gre_array[gre_obj].begin(); epi != gre_array[gre_obj].end(); epi++)
-									{
-										const string& epi_name  = epi->first;
-										const Value&  epi_value = epi->second;
-
-										if(epi_name == LOCAL_IP)
-										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,LOCAL_IP,epi_value.getString().c_str());
-
-											local_ip = epi_value.getString();
-
-											gre_param[i] = epi_value.getString();
-
-											i++;
-										}
-										else if(epi_name == REMOTE_IP)
-										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,REMOTE_IP,epi_value.getString().c_str());
-
-											remote_ip = epi_value.getString();
-											gre_param[i] = epi_value.getString();
-
-											i++;
-										}
-										else if(epi_name == IFACE)
-										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,IFACE,epi_value.getString().c_str());
-
-											interface = epi_value.getString();
-
-											gre_param[3] = interface;
-
-											gre_id[id_gre[j]] = epi_value.getString();
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id_gre[i].c_str(), gre_id[id_gre[i]].c_str());
-										}
-										else if(epi_name == TTL)
-										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,TTL,epi_value.getString().c_str());
-
-											ttl = epi_value.getString();
-										}
-										else if(epi_name == GRE_KEY)
-										{
-											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,GRE_KEY,epi_value.getString().c_str());
-
-											gre_key = epi_value.getString();
-
-											gre_param[i] = epi_value.getString();
-
-											i++;
-										}
-										else if(epi_name == SAFE)
-										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%d\"",EP_GRE,SAFE,epi_value.getBool());
-
-											safe = epi_value.getBool();
-										}
-									}
-
-									if(safe)
-										gre_param[4] = string("true");
-									else
-										gre_param[4] = string("false");
-
-									//Add gre-tunnel end-points
-									highlevel::EndPointGre ep_gre(id_gre[j], e_name, local_ip, remote_ip, interface, gre_key, ttl, safe);
-
-									graph.addEndPointGre(ep_gre);
-
-									graph.addEndPoint(id_gre[j],gre_param);
-
-									j++;
-								}
-							}
-							catch(exception& e)
-							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", EP_GRE, e.what());
-								return false;
-							}
-						}//End if(foundGRE)
-
 						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",BIG_SWITCH);
 						foundEP = false;
 
@@ -1557,7 +1562,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 									{
 										try{
 											foundMatch = true;
-											if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action),nfs_ports_found,nfs_id,iface_id,iface_out_id,vlan_id,graph))
+											if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action),nfs_ports_found,nfs_id,iface_id,iface_out_id,vlan_id,gre_id,graph))
 											{
 												return false;
 											}
@@ -1581,6 +1586,8 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 											}
 
 											const Array& actions_array = fr_value.getArray();
+
+											enum port_type { VNF_PORT_TYPE, EP_PORT_TYPE };
 
 											//One and only one output_to_port is allowed
 											bool foundOneOutputToPort = false;
@@ -1624,7 +1631,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 														char delimiter[] = ":";
 													 	char * pnt;
 
-														int p_type = 0;
+														port_type p_type = VNF_PORT_TYPE;
 
 														char tmp[BUFFER_SIZE];
 														strcpy(tmp,(char *)port_in_name_tmp);
@@ -1642,23 +1649,23 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																	//VNFs port type
 																	if(strcmp(pnt,VNF) == 0)
 																	{
-																		p_type = 0;
+																		p_type = VNF_PORT_TYPE;
 																	}
 																	//end-points port type
 																	else if (strcmp(pnt,ENDPOINT) == 0)
 																	{
-																		p_type = 1;
+																		p_type = EP_PORT_TYPE;
 																	}
 																	break;
 																case 1:
-																	if(p_type == 0)
+																	if(p_type == VNF_PORT_TYPE)
 																	{
 																		strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 																		strcat(vnf_name_tmp, ":");
 																	}
 																	break;
 																case 3:
-																	if(p_type == 0)
+																	if(p_type == VNF_PORT_TYPE)
 																	{
 																		strcat(vnf_name_tmp,pnt);
 																	}
@@ -1675,7 +1682,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 														}
 														foundOneOutputToPort = true;
 
-														if(p_type == 0)
+														if(p_type == VNF_PORT_TYPE)
 														{
 															//This is an output action referred to a VNF port
 
@@ -1708,11 +1715,11 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 															nfs_ports_found[name] = ports_found;
 														}
 														//end-points port type
-														else if(p_type == 1)
+														else if(p_type == EP_PORT_TYPE)
 														{
 															//This is an output action referred to an endpoint
 
-															bool iface_found = false, vlan_found = false;
+															bool iface_found = false, vlan_found = false, gre_found=false;
 
 															char *s_a_value = new char[BUFFER_SIZE];
 															strcpy(s_a_value, (char *)a_value.getString().c_str());
@@ -1722,6 +1729,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																map<string,string>::iterator it = iface_id.find(eP);
 																map<string,string>::iterator it1 = iface_out_id.find(eP);
 																map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
+																map<string,string>::iterator it3 = gre_id.find(eP);
 																if(it != iface_id.end())
 																{
 																	//physical port
@@ -1738,6 +1746,11 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																{
 																	//vlan
 																	vlan_found = true;
+																}
+																else if(it3 != gre_id.end())
+																{
+																	//gre
+																	gre_found = true;
 																}
 															}
 															//physical endpoint
@@ -1765,7 +1778,7 @@ bool RestServer::parseGraph(Value value, highlevel::Graph &graph, bool newGraph)
 																action->addGenericAction(ga);
 															}
 															//gre-tunnel endpoint
-															else
+															else if(gre_found)
 															{
 																unsigned int endPoint = MatchParser::epPort(string(s_a_value));
 																if(endPoint == 0)

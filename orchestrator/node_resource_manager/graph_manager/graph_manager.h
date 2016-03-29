@@ -98,17 +98,17 @@ private:
 	/**
 	*	Local IP of the LSI0
 	*/
-	string local_ip;
+	string un_address;
 
 	/**
-	*	Control can be in band (true) or out of band (false)
+	*	Orchestrator can be in band (true) or out of band (false)
 	*/
-	bool is_control_in_band;
+	bool orchestrator_in_band;
 
 	/**
 	*	Control interface of the node
 	*/
-	string control_interface;
+	string un_interface;
 
 	/**
 	*	IPsec certificate
@@ -203,7 +203,7 @@ public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
 
-	GraphManager(int core_mask,string portsFileName,string local_ip,bool control,string control_interface,string ipsec_certificate);
+	GraphManager(int core_mask,string portsFileName,string un_address,bool control,string un_interface,string ipsec_certificate);
 	~GraphManager();
 
 	/**
