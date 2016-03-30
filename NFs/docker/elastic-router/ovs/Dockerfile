@@ -9,6 +9,10 @@ RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/ss
 
 ADD authorized_keys /root/.ssh/authorized_keys
 
+# set permissions correctly, otherwise ssh will not be able to login via ssh keys 
+RUN chmod 700 /root/.ssh
+RUN chmod 600 /root/.ssh/authorized_keys
+
 ADD start.sh start.sh
 RUN chmod +x start.sh
 
