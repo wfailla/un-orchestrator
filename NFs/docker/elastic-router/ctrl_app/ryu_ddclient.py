@@ -26,10 +26,13 @@ __license__ = """
   see <http://www.gnu.org/licenses/>.
 """
 
-import argparse
-import logging
+import argparse, logging, zmq, json
 from doubledecker.clientSafe import ClientSafe
-import zmq
+from jsonrpcserver import dispatch, Methods
+from jsonrpcserver.request import Request
+
+Request.notification_errors = True
+
 
 # Inherit ClientSafe and implement the abstract classes
 # ClientSafe does encryption and authentication using ECC (libsodium/nacl)
@@ -39,6 +42,8 @@ class SecureCli(ClientSafe):
     def __init__(self, name, dealerurl, customer, keyfile):
         super().__init__(name, dealerurl, customer, keyfile)
 
+        self.subscriptions = []
+        self.registered = False
         context = zmq.Context.instance()
         self.sender = context.socket(zmq.PUSH)
         self.receiver = context.socket(zmq.REP)
@@ -50,35 +55,73 @@ class SecureCli(ClientSafe):
 
         self.sender.connect('ipc:///tmp/alarm_trigger')
 
-    # callback called automatically everytime a point to point is sent at
-    # destination to the current client
-    def on_data(self, src, msg):
-        print("DATA from %s: %s" % (str(src), str(msg)))
+        self.methods = Methods()
+        self.methods.add_method(self.alarms)
 
     # callback called upon registration of the client with its broker
     def on_reg(self):
-        print("The client is now connected")
+        logging.info("The client is now connected")
+        self.registered = True
+        for topic_, scope_ in self.subscriptions:
+            self.subscribe(topic_, scope_)
 
     # callback called when the client detects that the heartbeating with
     # its broker has failed, it can happen if the broker is terminated/crash
     # or if the link is broken
     def on_discon(self):
-        print("The client got disconnected")
+        logging.warning("The client got disconnected")
+        self.registered = False
 
-        # this function shuts down the client in a clean way
-        # in this example it exists as soon as the client is disconnected
-        # fron its broker
-        self.shutdown()
 
     # callback called when the client receives an error message
     def on_error(self, code, msg):
-        print("ERROR n#%d : %s" % (code, msg))
+        logging.error("ERROR n#%d : %s" % (code, msg))
 
-    # callback called when the client receives a message on a topic he
-    # subscribed to previously
-    def on_pub(self, src, topic, msg):
-        print("PUB %s from %s: %s" % (str(topic), str(src), str(msg)))
-        self.sender.send_multipart([src, topic, msg])
+
+    def handle_jsonrpc(self, src, msg, topic=None):
+        request = json.loads(msg.decode('UTF-8'))
+
+        if 'error' in request:
+            logging.error(str(request['error']))
+            return
+
+        if 'result' in request:
+            logging.info(str(request['result']))
+            return
+
+        # include the 'ddsrc' parameter so the
+        # dispatched method knows where the message came from
+        if 'params' not in request:
+            request['params'] = {}
+
+        request['params']['ddsrc'] = src.decode()
+        response = dispatch(self.methods, request)
+
+        # if the http_status is 200, its request/response, otherwise notification
+        if response.http_status == 200:
+            logging.info("Replying to %s with %s" % (str(src), str(response)))
+            self.sendmsg(src, str(response))
+        # notification, correctly formatted
+        elif response.http_status == 204:
+            pass
+        # if 400, some kind of error
+        # return a message to the sender, even if it was a notification
+        elif response.http_status == 400:
+            self.sendmsg(src, str(response))
+            logging.error("Recived bad JSON-RPC from %s, error %s" % (str(src), str(response)))
+        else:
+            logging.error(
+                "Recived bad JSON-RPC from %s \nRequest: %s\nResponose: %s" % (str(src), msg.decode(), str(response)))
+
+    def alarms(self, ddsrc, message):
+        #self.sender.send_multipart([ddsrc, "alarms", message])
+        self.sender.send_multipart([ddsrc.encode(), "alarms".encode(), message.encode()])
+        
+    def on_pub(self, src, topic:str, msg:str):
+        self.handle_jsonrpc(src=src, msg=msg, topic=topic)
+
+    def on_data(self, src:str, msg:str):
+        self.handle_jsonrpc(src, msg, topic=None)
 
     def alarm_sub(self, msg):
         if len(msg) < 3:
@@ -89,9 +132,16 @@ class SecureCli(ClientSafe):
         scope_ = msg.pop(0).decode()
 
         if b'sub' == action_:
-            self.subscribe(topic_, scope_)
+            self.subscriptions.append((topic_,scope_))
+            if self.registered:
+                self.subscribe(topic_, scope_)
         elif b'unsub' == action_:
-            self.unsubscribe(topic_)
+            try:
+                self.subscriptions.remove((topic_,scope_))
+            except ValueError as e:
+                logging.error("Ryu tried to unsubscribe from a non-existing subscription")
+            if self.registered:
+                self.unsubscribe(topic_,scope_)
         else:
             logging.error("Ryu sent a weird command :", action_)
 

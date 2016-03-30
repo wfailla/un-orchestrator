@@ -10,7 +10,7 @@ from ryu.lib.packet import ethernet, ipv4, tcp, arp, udp, icmp, vlan, ipv6, lldp
 from ryu.ofproto import ether, inet
 from ryu.lib import hub
 from ryu.topology import switches
-from ryu.topology.event import EventSwitchEnter
+from ryu.topology.event import EventSwitchEnter, EventSwitchLeave, EventSwitchReconnected
 
 from operator import attrgetter
 import logging
@@ -43,6 +43,9 @@ class ElasticRouter(app_manager.RyuApp):
     cfor_env = os.environ['CFOR']
     REST_Cf_Or =  'http://' + cfor_env
 
+    # file name + location (execution dir) of the config file to load
+    config_file = 'elastic_router_config.json'
+
     def __init__(self, *args, **kwargs):
         super(ElasticRouter, self).__init__(*args, **kwargs)
 
@@ -58,6 +61,10 @@ class ElasticRouter(app_manager.RyuApp):
         # ovs dpid to DP object
         self.DPIDtoDP = {}
 
+
+        # get config file with routing table
+        self.config = import_json_file(self.config_file)
+
         # get deployed nffg and check which ovs switches are in it
         #xml = open('get-config.nffg')
         #self.nffg_xml = self.get_nffg()
@@ -71,13 +78,11 @@ class ElasticRouter(app_manager.RyuApp):
 
         self.logger.debug('DP instances: {0}'.format(self.DP_instances))
 
-        self.monitorApp = ElasticRouterMonitor(self)
+        upper = self.config["ingress_rate_upper_threshold"]
+        lower = self.config["ingress_rate_lower_threshold"]
+        self.monitorApp = ElasticRouterMonitor(self, upper_threshold=upper, lower_threshold=lower)
         # monitor function to trigger nffg change
         self.monitor_thread = hub.spawn(self._monitor)
-
-    def test(self):
-        while True:
-            hub.sleep(2)
 
 
     def parse_nffg(self, nffg):
@@ -88,9 +93,10 @@ class ElasticRouter(app_manager.RyuApp):
             if DP_name in self.DP_instances:
                 continue
             else:
-                id = nffg_DPs[DP_name]['id']
-                ports = nffg_DPs[DP_name]['ports']
-                new_DP = DP(DP_name, id, ports)
+                #id = nffg_DPs[DP_name]['id']
+                #ports = nffg_DPs[DP_name]['ports']
+                #new_DP = DP(DP_name, id, ports)
+                new_DP = nffg_DPs[DP_name]
                 self.DP_instances[DP_name] = new_DP
 
         # remove deleted switches in the nffg from the elastic router ctrl app
@@ -99,6 +105,7 @@ class ElasticRouter(app_manager.RyuApp):
             if DP_name not in nffg_DPs:
                 self.DPIDtoDP.pop(self.DP_instances[DP_name].datapath_id)
                 self.DP_instances.pop(DP_name)
+                self.logger.info('Removed DP: {0}'.format(DP_name))
 
     # monitor stats and trigger scaling
     def _monitor(self):
@@ -106,6 +113,11 @@ class ElasticRouter(app_manager.RyuApp):
             # check if all switches are detected
             registered_DPs = filter(lambda x: self.DP_instances[x].registered is True, self.DP_instances)
             self.logger.info('{0} switches detected'.format(len(registered_DPs)))
+
+            unregistered_DPs = filter(lambda x: self.DP_instances[x].registered is False, self.DP_instances)
+            for DP_name in unregistered_DPs:
+                self.logger.info('{0} not detected'.format(DP_name))
+
 
             # ask port statistics
             self.monitorApp.init_measurement()
@@ -120,36 +132,43 @@ class ElasticRouter(app_manager.RyuApp):
             for DP_name in self.DP_instances:
                 DP = self.DP_instances.get(DP_name)
                 self.logger.info("{0} total ingress rate: {1} pps".format(DP_name, self.monitorApp.DP_ingress_rate[DP_name]))
-                self.logger.info("total ingress rate: {0} pps".format(self.monitorApp.complete_ingress_rate))
+            self.logger.info("total ingress rate: {0} pps".format(self.monitorApp.complete_ingress_rate))
 
             # check if scaling is needed
             if len(self.DP_instances) > 1:
                 # only scale in multiple DPs to 1 datapath
                 scaling_ports = self.monitorApp.check_scaling_in()
                 if len(scaling_ports) > 0:
-                    self.scaled_nffg = self.scale_in(scaling_ports)
+                    #self.scaled_nffg = self.scale_in(scaling_ports)
+                    self.VNFs_to_be_deleted = self.scale(scaling_ports,'in')
             else:
                 # only scale out if 1 DP is in the nffg
                 scaling_ports =  self.monitorApp.check_scaling_out()
                 if len(scaling_ports) > 0:
                     #self.scaled_nffg = self.scale_out(scaling_ports)
-                    self.VNFs_to_be_deleted = self.scale_out(scaling_ports)
+                    self.VNFs_to_be_deleted = self.scale(scaling_ports,'out')
             hub.sleep(1)
 
-    def scale_out(self, scaling_out_ports):
+    def scale(self, scaling_ports, direction):
+
+        self.logger.info("scale {0} started!".format(direction))
+
         # need to scale both nffg and internal objects
         # because we need the translation between old and new DPs
         # list of DPs to add
         new_DP_list = []
 
         # translate old port to new port in scaled topology
-        scale_out_port_dict = {}
+        scale_port_dict = {}
 
-        next_vnf_id = get_next_vnf_id(self.nffg_json)
         # new DP for each scaled port
-        for port_list in scaling_out_ports:
-            id = len(self.DP_instances) + 1
-            id_add = len(self.DP_instances) - 1
+        id_add = 0 # constant to make the correct vnf id
+        for port_list in scaling_ports:
+            # we need to artificially pick the id, because UN does not allow
+            # multiple instances of the same vnf
+
+            #id = len(self.DP_instances) + 1
+            id = int(get_next_vnf_id(self.nffg_json, add=id_add)) - 1 # control vnf id=1
             id_nffg = get_next_vnf_id(self.nffg_json, add=id_add)
             DPname = 'ovs{0}'.format(id)
             #control_ip = '10.0.10.{0}/24'.format(id)
@@ -164,15 +183,20 @@ class ElasticRouter(app_manager.RyuApp):
                 old_port = port_list[i]
                 new_port = new_DP.add_port(new_ifname, port_type=DPPort.External, linked_port=old_port.linked_port)
 
-                scale_out_port_dict[old_port] = new_port
-                new_DP.scale_out_port_dict[old_port] = new_port
+                scale_port_dict[old_port] = new_port
 
             new_DP_list.append(new_DP)
+
+            id_add = id_add + 1
 
 
 
         # add internal ports/links to new DP
         for new_DP in new_DP_list:
+
+            # need all scaled out ports for translation of oftable
+            new_DP.scale_port_dict = scale_port_dict
+
             other_DPs = [new_DP2 for new_DP2 in new_DP_list if new_DP.name != new_DP2.name]
             for linked_DP in other_DPs:
                 # check if DPs are already connected
@@ -189,68 +213,163 @@ class ElasticRouter(app_manager.RyuApp):
                 linked_port2 = linked_DP.get_port(ifname2)
                 new_DP.get_port(ifname1).linked_port = linked_port2
                 self.logger.info('linked {0} to {1}'.format(ifname1, ifname2))
-            '''
-            # add default flow entries for new DP
-            external_ports = [port for port in new_DP.ports if port.port_type == DPPort.External]
+
+        # When all internal/external ports are created
+        # set the forwarding links to the external ports for each internal port on the same DP
+        for new_DP in new_DP_list:
+            port_list = new_DP.ports
+            external_ports = [port for port in port_list if port.port_type == DPPort.External]
+            internal_ports = [port for port in port_list if port.port_type == DPPort.Internal]
+            other_DPs = [new_DP2 for new_DP2 in new_DP_list if new_DP.name != new_DP2.name]
+            for ext_port in external_ports:
+                for linked_DP in other_DPs:
+                    for int_port in internal_ports:
+                        # find first available free internal port to link to ext port
+                        if int_port.linked_port.DP.name == linked_DP.name and int_port.forward_extport is None:
+                            int_port.forward_extport = ext_port
+                            break
+
+        # add new_DPs to nffg
+        #nffg_intermediate = copy.deepcopy(self.nffg_xml)
+        #nffg_intermediate = copy.deepcopy(self.nffg_json)
+
+        #get base nffg, add internal/external flowrules here
+        '''
+        if direction == 'out':
+            nffg_intermediate = open('er_nffg_scale_out_intermediate.json').read()
+        elif direction == 'in':
+            nffg_intermediate = open('er_nffg_scale_in_intermediate.json').read()
+        '''
+
+        intermediate_file = 'er_nffg_scale_{0}_intermediate_base.json'.format(direction)
+        nffg_intermediate = open(intermediate_file).read()
+
+        '''
+        for new_DP in new_DP_list:
+            self.logger.debug('add vnf to nffg: {0}'.format(new_DP.name))
+            nffg_intermediate = add_vnf(nffg_intermediate, new_DP.id, new_DP.name, new_DP.name, len(new_DP.ports))
+        '''
+        # only add internal links to nffg_intermediate base
+        # add internal links
+        for new_DP in new_DP_list:
+            # add internal links
             internal_ports = [port for port in new_DP.ports if port.port_type == DPPort.Internal]
-            # assume only 1 external port possible
-            if len(external_ports) == 1:
-                for int_port in internal_ports:
-                    priority = 20
-                    #match_dict = create_dictionary(in_port=int_port.number)
-                    #parser = ofproto_v1_3_parser
-                    out_port = external_ports[0]
-                    #out_port_number = external_ports[0].number
-                    #actions = [parser.OFPActionOutput(out_port_number)]
-                    #new_DP.oftable.append((match_dict, actions, priority))
+            for port in internal_ports:
+                port_in = port
+                port_out = port.linked_port
+                nffg_intermediate = add_flowentry(nffg_intermediate, port_in, port_out)
+                #nffg_intermediate = add_flowentry(nffg_intermediate, port_out, port_in)
+                self.logger.debug('add flow to nffg: {0} <-> {1}'.format(port_in.ifname, port_out.ifname))
 
-                    match_dict = create_dictionary(in_port=int_port)
-                    action_dict = create_dictionary(out_port=out_port)
-                    new_DP.oftable_scale_out.append((match_dict, action_dict, priority))
+        # add flow entries for external ports, but first with lower priority
+        # at scale out finish, delete and add with correct priority
+            external_ports = [port for port in new_DP.ports if port.port_type == DPPort.External]
+            for port in external_ports:
+                port_in = port
+                port_SAP = port.linked_port
+                nffg_intermediate = add_flowentry_SAP(nffg_intermediate, port_in, port_SAP, priority=9)
+                nffg_intermediate = add_flowentry_SAP(nffg_intermediate, port_SAP, port_in, priority=9)
 
-            # for multiple external ports, use VLAN IDs
-            '''
+        #self.logger.info('intermediate nffg: {0}'.format(nffg_intermediate))
 
-        '''
-        # add new flow_entries
-        for old_port in scale_out_port_dict:
-            old_DP = old_port.DP
-            ofproto = old_DP.datapath.ofproto
-            new_port = scale_out_port_dict[old_port]
-            new_DP = new_port.DP
-            for match_dict, actions, priority  in old_DP.oftable:
-                if match_dict['in_port'] == old_port.number:
-                    new_match_dict = copy.deepcopy(match_dict)
-                    #new_match_dict['in_port'] = new_port.number
-                    new_match_dict['in_port'] = new_port
-                    new_actions = list(actions)
-                    for i in range(0,len(actions)) :
-                        if actions[i].port == ofproto.OFPP_FLOOD:
-                            new_actions[i].port = ofproto.OFPP_FLOOD
-                        else:
-                            old_outportno = actions[i].port
-                            old_outport = old_DP.get_port_by_number(old_outportno)
-                            new_outport = scale_out_port_dict[old_outport]
-                            dest_DP = new_outport.DP
-                            if dest_DP.name == new_DP.name:
-                                # in and out port are on the same DP
-                                new_outportno = new_outport.number
-                                new_actions[i].port = new_outportno
-                                break
-                            for port in dest_DP.ports:
-                                if port.port_type == DPPort.External: continue
-                                # out port is located on another DP as in port, check the internal ports
-                                if port.linked_port.DP.name == new_DP.name:
-                                    new_outportno = port.number
-                                    new_actions[i].port = new_outportno
-                                    break
-                    new_DP.oftable.append((new_match_dict, new_actions, priority))
-        '''
+        intermediate_file = 'ER_scale_{0}_intermediate.json'.format(direction)
+        file = open(intermediate_file, 'w')
+        file.write(nffg_intermediate)
+        file.close()
 
-                    # TODO set flow entries when DP is detected
-                    #parser = new_DP.datapath.ofproto_parser
-                    #match = parser.OFPMatch(**new_match_dict)
-                    #self.add_flow(new_DP.datapath, priority, match, new_actions)
+
+        # send via cf-or
+        #self.send_nffg(nffg_intermediate)
+        self.send_nffg_json(nffg_intermediate)
+
+        # get new updated NFFG
+        #self.nffg_json = self.get_nffg_json()
+
+        VNFs_to_be_deleted = []
+        for old_port in scale_port_dict:
+            if old_port.DP.name not in VNFs_to_be_deleted:
+                VNFs_to_be_deleted.append(old_port.DP.name)
+
+        logging.info("VNFs to delete: {0}".format(VNFs_to_be_deleted))
+        return VNFs_to_be_deleted
+
+    def scale_out(self, scaling_out_ports):
+        self.logger.info("scale out started!")
+        # need to scale both nffg and internal objects
+        # because we need the translation between old and new DPs
+        # list of DPs to add
+        new_DP_list = []
+
+        # translate old port to new port in scaled topology
+        scale_out_port_dict = {}
+
+        # new DP for each scaled port
+        id_add = 0 # constant to make the correct vnf id
+        for port_list in scaling_out_ports:
+            # we need to artificially pick the id, because UN does not allow
+            # multiple instances of the same vnf
+
+            #id = len(self.DP_instances) + 1
+            id = int(get_next_vnf_id(self.nffg_json, add=id_add)) - 1 # control vnf id=1
+            id_nffg = get_next_vnf_id(self.nffg_json, add=id_add)
+            DPname = 'ovs{0}'.format(id)
+            #control_ip = '10.0.10.{0}/24'.format(id)
+
+            # create new DP, ports will be added later
+            new_DP = DP(DPname, id_nffg, [])
+            self.DP_instances[new_DP.name] = new_DP
+
+            # add external ports/links to new DP
+            for i in range(0, len(port_list)):
+                new_ifname = '{0}_eth{1}'.format(DPname,i)
+                old_port = port_list[i]
+                new_port = new_DP.add_port(new_ifname, port_type=DPPort.External, linked_port=old_port.linked_port)
+
+                scale_out_port_dict[old_port] = new_port
+
+            new_DP_list.append(new_DP)
+
+            id_add = id_add + 1
+
+
+
+        # add internal ports/links to new DP
+        for new_DP in new_DP_list:
+
+            # need all scaled out ports for translation of oftable
+            new_DP.scale_out_port_dict = scale_out_port_dict
+
+            other_DPs = [new_DP2 for new_DP2 in new_DP_list if new_DP.name != new_DP2.name]
+            for linked_DP in other_DPs:
+                # check if DPs are already connected
+                if new_DP.check_connected(linked_DP):
+                    continue
+                # link 2 DPs with new ports
+                index1 = len(new_DP.ports)
+                ifname1 = '{0}_eth{1}'.format(new_DP.name,index1)
+                index2 = len(linked_DP.ports)
+                ifname2 = '{0}_eth{1}'.format(linked_DP.name,index2)
+                new_DP.add_port(ifname1, port_type=DPPort.Internal)
+                linked_port1 = new_DP.get_port(ifname1)
+                linked_DP.add_port(ifname2, port_type=DPPort.Internal, linked_port=linked_port1)
+                linked_port2 = linked_DP.get_port(ifname2)
+                new_DP.get_port(ifname1).linked_port = linked_port2
+                self.logger.info('linked {0} to {1}'.format(ifname1, ifname2))
+
+        # When all internal/external ports are created
+        # set the forwarding links to the external ports for each internal port on the same DP
+        for new_DP in new_DP_list:
+            port_list = new_DP.ports
+            external_ports = [port for port in port_list if port.port_type == DPPort.External]
+            internal_ports = [port for port in port_list if port.port_type == DPPort.Internal]
+            other_DPs = [new_DP2 for new_DP2 in new_DP_list if new_DP.name != new_DP2.name]
+            for ext_port in external_ports:
+                for linked_DP in other_DPs:
+                    for int_port in internal_ports:
+                        # find first available free internal port to link to ext port
+                        if int_port.linked_port.DP.name == linked_DP.name and int_port.forward_extport is None:
+                            int_port.forward_extport = ext_port
+                            break
 
         # add new_DPs to nffg
         #nffg_intermediate = copy.deepcopy(self.nffg_xml)
@@ -285,7 +404,7 @@ class ElasticRouter(app_manager.RyuApp):
                 nffg_intermediate = add_flowentry_SAP(nffg_intermediate, port_SAP, port_in, priority=9)
 
         #self.logger.info('intermediate nffg: {0}'.format(nffg_intermediate))
-        file = open('ER_intermediate.nffg', 'w')
+        file = open('ER_scale_intermediate.json', 'w')
         file.write(nffg_intermediate)
         file.close()
 
@@ -300,45 +419,6 @@ class ElasticRouter(app_manager.RyuApp):
                 VNFs_to_be_deleted.append(old_port.DP.name)
 
         return VNFs_to_be_deleted
-
-        '''
-        # create final scaled out nffg
-        nffg_scaled_out = copy.deepcopy(nffg_intermediate)
-
-        # create final scaled nffg (to be sent when new ovs's are detected)
-        # take first port as scaling out is only done on 1 single DP for now
-        scaling_out_DP_id = scaling_out_ports[0][0].DP.id
-        nffg_scaled_out = delete_vnf(nffg_scaled_out, scaling_out_DP_id)
-        # attach SAPs to new ports
-        # first delete old links
-        file = open('ER_scaled_out_final1.nffg', 'w')
-        file.write(nffg_scaled_out)
-        file.close()
-        '''
-
-
-        '''
-        #self.logger.info('add SAPs to scaled nffg: {0} ports'.format(len(scale_out_port_dict)))
-
-        # then add new links (this causes error in UN...)
-
-        #In the same nffg update is not possible to delete a flowentry and add a new one with the same port.
-        #So to change it, you must first delete the flow, send the nffg to edit-config
-        #and then send a new nffg with that port in a new flowentry.
-        #Can you change this so this can be done in 1 nffg action?
-
-        nffg_scaled_out2 = copy.deepcopy(nffg_scaled_out)
-        for old_port in scale_out_port_dict:
-            new_port = scale_out_port_dict[old_port]
-            self.logger.debug('add SAP port flowentry: {0}'.format(new_port.ifname))
-            nffg_scaled_out2 = add_flowentry(nffg_scaled_out2, port_in=new_port, port_out=old_port.linked_port, priority='99')
-            nffg_scaled_out2 = add_flowentry(nffg_scaled_out2, port_in=old_port.linked_port, port_out=new_port, priority='99')
-        file = open('ER_scaled_out_final2.nffg', 'w')
-        file.write(nffg_scaled_out2)
-        file.close()
-
-        return nffg_scaled_out2
-        '''
 
     def scale_finish(self):
         '''
@@ -355,15 +435,40 @@ class ElasticRouter(app_manager.RyuApp):
 
         # move last flow entries?
 
+
+        # reset scale_out_port_dict for every DP?
+
         # delete the old intermediate VNFs
+        # first delete external incoming flows for all DPs (scaled out topo)
+        self.nffg_json = self.get_nffg_json()
         for del_VNF in self.VNFs_to_be_deleted:
             VNF_id = self.DP_instances[del_VNF].id
+            delete_VNF_incoming_ext_flows(self.nffg_json, VNF_id, self.REST_Cf_Or)
+
+        # delete other flows and complete VNF
+        for del_VNF in self.VNFs_to_be_deleted:
+            VNF_id = self.DP_instances[del_VNF].id
+            self.nffg_json = self.get_nffg_json()
             delete_VNF(self.nffg_json, VNF_id, self.REST_Cf_Or)
 
         self.VNFs_to_be_deleted = []
         self.scaled_nffg = None
         self.nffg_json = self.get_nffg_json()
         self.parse_nffg(self.nffg_json)
+
+        # fix priorities of new flow entries to SAPs
+        new_nffg = add_duplicate_flows_with_priority(self.nffg_json, old_priority=9, new_priority=10)
+        file = open('ER_scale_priorities.json', 'w')
+        file.write(new_nffg)
+        file.close()
+        self.send_nffg_json(remove_quotations_from_ports(new_nffg))
+        self.logger.info('restore priorities of flow entries to 10')
+        new_nffg = self.get_nffg_json()
+        #need some time here to install flows, otherwise packet loss
+        hub.sleep(5)
+        delete_flows_by_priority(new_nffg, 9, self.REST_Cf_Or)
+        self.nffg_json = self.get_nffg_json()
+
 
         file = open('ER_scale_finish.json', 'w')
         file.write(self.nffg_json)
@@ -387,10 +492,18 @@ class ElasticRouter(app_manager.RyuApp):
         match = parser.OFPMatch()
         actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
                                           ofproto.OFPCML_NO_BUFFER)]
-        self.add_flow(datapath, 0, match, actions)
+        # this flow entry is part of the default flow entry settings
+        #self.add_flow(datapath, 0, match, actions)
+
+    @set_ev_cls(EventSwitchLeave)
+    def _ev_switch_leave_handler(self, ev):
+        datapath = ev.switch.dp
+        #this_DP = self.DPIDtoDP[datapath.id]
+        #self.DP_instances.pop(this_DP.name)
+        #self.logger.info('Removed DP: {0}'.format(this_DP.name))
 
     # new switch detected
-    @set_ev_cls(EventSwitchEnter)
+    @set_ev_cls([EventSwitchEnter, EventSwitchReconnected])
     def _ev_switch_enter_handler(self, ev):
         datapath = ev.switch.dp
         self.logger.info('registered OF switch id: %s' % datapath.id)
@@ -543,7 +656,7 @@ class ElasticRouter(app_manager.RyuApp):
         mac_dst = eth.dst
         mac_src = eth.src
         dpid = datapath.id
-        #self.logger.info("packet in %s %s %s %s %s %s", dpid, mac_src, mac_dst, in_port, eth.ethertype)
+        #self.logger.info("packet in {0} {1} {2} {3} {4}".format(dpid, mac_src, mac_dst, in_port, eth.ethertype))
 
         dpid = datapath.id
         if dpid not in self.DPIDtoDP:
@@ -558,21 +671,58 @@ class ElasticRouter(app_manager.RyuApp):
         #source_ER.mac_to_port.setdefault(dpid, {})
 
         #learn a mac address to avoid FLOOD next time.
-        source_DP.mac_to_port[mac_src] = in_port
+
+        if mac_src not in source_DP.mac_to_port:
+            #learn mac address and set tables
+
+            source_DP.mac_to_port[mac_src] = in_port
+
+            actions = [parser.OFPActionOutput(int(in_port))]
+            match_dict = create_dictionary(eth_dst=mac_src)
+            source_DP.oftable.append((match_dict, actions, priority))
+            match = parser.OFPMatch(**match_dict)
+            self.add_flow(datapath, priority, match, actions)
+            self.logger.debug('added flow: DP: {2} mac_src:{0} out_port:{1}'.format(
+                    mac_src, in_port, source_DP.name))
+
+            #learn in all connected DPs:
+            internal_ports = [port for port in source_DP.ports if port.port_type == DPPort.Internal]
+            for int_port in internal_ports:
+                in_port2 = int_port.linked_port.number
+                linked_DP = int_port.linked_port.DP
+                linked_DP.mac_to_port[mac_src] = in_port2
+
+                actions = [parser.OFPActionOutput(int(in_port2))]
+                match_dict = create_dictionary(eth_dst=mac_src)
+                linked_DP.oftable.append((match_dict, actions, priority))
+                match = parser.OFPMatch(**match_dict)
+                self.add_flow(linked_DP.datapath, priority, match, actions)
+                self.logger.debug('added flow: DP: {2} mac_dst:{0} out_port:{1}'.format(
+                    mac_src, in_port2, linked_DP.name))
+
+        # TODO add_flow for each mac src found in every DP
+
+        #self.logger.info('{0} {1}'.format(source_DP.name, source_DP.mac_to_port))
+
         #no FLOOD -> loops in topology!
 
         if mac_dst in source_DP.mac_to_port:
             out_port = source_DP.mac_to_port[mac_dst]
         else:
             out_port = ofproto.OFPP_FLOOD
+            #self.logger.info('flood packet')
 
         actions = [parser.OFPActionOutput(out_port)]
         # install a flow to avoid packet_in next time
         if out_port != ofproto.OFPP_FLOOD:
 
-            match_dict = create_dictionary(in_port=in_port, eth_dst=mac_dst)
+            #match_dict = create_dictionary(in_port=in_port, eth_dst=mac_dst)
+            match_dict = create_dictionary(eth_dst=mac_dst)
             source_DP.oftable.append((match_dict, actions, priority))
-            self.logger.debug('added flow: in_port:{0} mac_dst:{1} out_port:{2}'.format(in_port, mac_dst, out_port))
+            # self.logger.debug('added flow: DP: {3} in_port:{0} mac_dst:{1} out_port:{2}'.format(
+            #    in_port, mac_dst, out_port, source_DP.name))
+            self.logger.debug('added flow: DP: {2} mac_dst:{0} out_port:{1}'.format(
+                mac_dst, out_port, source_DP.name))
             match = parser.OFPMatch(**match_dict)
             #match = parser.OFPMatch(in_port=in_port, eth_dst=mac_dst)
 
@@ -798,6 +948,7 @@ class ElasticRouter(app_manager.RyuApp):
         url = self.REST_Cf_Or + '/NF-FG/NF-FG'
         req = urllib2.Request(url, nffg_json)
         req.get_method = lambda: 'PUT'
+        req.add_header("Content-Type", "application/json")
         response = urllib2.urlopen(req)
         result = response.read()
         self.logger.info(result)
@@ -815,15 +966,22 @@ class ElasticRouter(app_manager.RyuApp):
         else:
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
                                     match=match, instructions=inst)
+            print 'add flow2\n'
+
         datapath.send_msg(mod)
+
 
     def send_oftable(self, DP):
         # assume scale_out
+
         DP.set_default_oftable_scale_out()
         DP.translate_oftable_scale_out()
+        DP.set_routing_table(self.config['routing_table'])
 
         parser = DP.datapath.ofproto_parser
         self.logger.info('{0} adding {1} flows'.format(DP.name,len(DP.oftable)))
         for match_dict, actions, priority  in DP.oftable:
             match = parser.OFPMatch(**match_dict)
             self.add_flow(DP.datapath, priority, match, actions)
+
+        DP.translate_mactable_scale()

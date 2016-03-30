@@ -62,14 +62,14 @@ class SecureCli(ClientSafe):
                 "overload.risk.tx": random.uniform(0, 1)
             }
         }
-        self.publish('measurements', json.dumps(res))
+        self.publish('measurement', json.dumps(res))
 
     # callback called when the client detects that the heartbeating with
     # its broker has failed, it can happen if the broker is terminated/crash
     # or if the link is broken
     # The client will silently try to reconnect to the broker
     def on_discon(self):
-        logging.info("The client got disconnected")
+        self.send_loop.stop()
 
     def on_error(self, code, msg):
         logging.info("ERROR n#%d : %s", code, msg)

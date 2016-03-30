@@ -20,7 +20,7 @@ typedef enum {
 
 struct publish_t{
 	topic_t topic;
-	char *message;
+	const char *message;
 };
 
 class DoubleDeckerClient
@@ -48,7 +48,7 @@ private:
 	*		client
 	*/
 	static pthread_mutex_t connected_mutex;
-	
+
 	/**
 	*	@brief: this function just print an error message
 	*/
@@ -58,7 +58,7 @@ private:
 	*	@brief: wait for messages coming from the DoubleDecker network
 	*/
 	static void *loop(void *param);
-	
+
 	/**
 	*	@brief: given a topic, returns a string to be used on the
 	*		DoubleDecker network
@@ -66,7 +66,7 @@ private:
 	static char *topicToString(topic_t topic);
 
 	DoubleDeckerClient() {}
-	
+
 public:
 	/**
 	*	@brief: Inizialize the client and connect it to the Double
@@ -78,13 +78,13 @@ public:
 	*		connected to
 	*/
 	static bool init(char *clientName, char *brokerAddress, char *keyPath);
-	
+
 	/**
 	*	@brief: Disconnect the orchestrator from the Double Decker network
 	*/
 	static void terminate();
-	
-	static void publish(topic_t topic, char *message);
+
+	static void publish(topic_t topic, const char *message);
 };
 
 #endif //PUB_SUB_H_ 1

@@ -8,13 +8,12 @@ sleep 3
 
 echo "Control app container started"
 
-echo "start ssh"
-service ssh start
-
+#echo "start ssh"
+#service ssh start
 
 echo "start ryu"
 cd ryu_app/
-ryu-manager ctrl_app_er_un_v1.py
+ryu-manager ctrl_app_er_un_zmq_v1.py
 
 # keep container running
 #while true

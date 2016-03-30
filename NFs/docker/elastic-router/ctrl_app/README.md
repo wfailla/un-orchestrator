@@ -8,7 +8,11 @@ This is a container based on osrg/ryu docker container with additional python fi
 
 You can create the Docker image with the network function by launching the following command:
 
-    sudo docker build --tag="ctrl1" .
+    sudo docker build --tag="ctrl" .
+
+Alternatively, this script can be used to build and push the image to `gitlab.testbed.se:5000/ctrl`
+    
+    ./build_ctrl_app
 
 The name 'ctrl1' must be used for alignment with the name-resolver and nffg file.
 This will create the Docker image starting from the base image specified in `Dockerfile`; the new image is stored in the Docker default folder on your filesystem (localhost).

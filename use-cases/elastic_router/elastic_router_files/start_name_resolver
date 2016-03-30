@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#start name -resolver
+
+# need to login before docker images can be downloaded
+sudo docker login -u unify -p unify-demo-stress-out -e steven.vanrossem@intec.ugent.be gitlab.testbed.se:5000
+
+cp name_resolver_config_er_demo.xml ../../../name-resolver/config
+
+cd ../../../name-resolver/
+sudo ./name-resolver --f ./config/name_resolver_config_er_demo.xml
+
