@@ -13,8 +13,8 @@
 		],
 		"unify-control": [
 		{
-		  "host-tcp-port": 9000,
-		  "vnf-tcp-port": 22
+		  "host-tcp-port": 5000,
+		  "vnf-tcp-port": 5000
 		}
 		],
         "ports": [

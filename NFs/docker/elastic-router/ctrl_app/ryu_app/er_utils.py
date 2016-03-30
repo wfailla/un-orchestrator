@@ -108,6 +108,7 @@ class DP:
                 ip_match = (network.network_address.__str__(), network.netmask.__str__())
                 match_dict = create_dictionary(eth_type=ether_types.ETH_TYPE_IP, ipv4_dst=ip_match)
                 match_list.append(match_dict)
+                #logging.info("{0} set routing entry {1}".format(self.name, ip_match))
 
             for match_dict in match_list:
                 self.oftable.append((match_dict, actions, priority))
@@ -115,7 +116,7 @@ class DP:
 
 
     # call this function when new DP is registered and port numbers are known
-    def set_default_oftable_scale_out(self):
+    def set_default_oftable_scale(self):
         # add default flow entries for new DP
         external_ports = [port for port in self.ports if port.port_type == DPPort.External]
         internal_ports = [port for port in self.ports if port.port_type == DPPort.Internal]
@@ -132,7 +133,11 @@ class DP:
 
 
     # call this function when new DP is registered and port numbers are known
-    def translate_oftable_scale_out(self):
+    def translate_oftable_scale(self):
+
+        logging.info("of table translation disabled to limit flow entries")
+        return
+
         scale_port_dict = self.scale_port_dict
 
         # add new flow_entries
@@ -299,42 +304,6 @@ class DP:
                     self.mac_to_port[mac_src] =  new_outportno
                 else:
                     logging.info('no new output port found for mac : {0}'.format(mac_src))
-
-    # call this function when new DP is registered and port numbers are known
-    def translate_mactable_scale_out(self):
-
-        # first make port number translation for this DP
-        ER_old_in_portno_to_new = {}
-
-        # old DP, should be only 1 single instance for scale out.
-        old_DP = None
-
-        for old_in_port in self.scale_port_dict:
-            old_DP = old_in_port.DP
-            old_in_portno = old_in_port.number
-            new_in_port = self.scale_port_dict[old_in_port]
-            new_DP = new_in_port.DP
-            if new_DP.name == self.name:
-                ER_old_in_portno_to_new[old_in_portno] = new_in_port.number
-            else:
-                for port in new_DP.ports:
-                    if port.port_type == DPPort.External: continue
-                    if port.linked_port.DP.name == self.name and \
-                                    port.forward_extport == new_in_port:
-                        local_outport = port.linked_port
-                        new_outportno = local_outport.number
-                        ER_old_in_portno_to_new[old_in_portno] = new_outportno
-                        break
-
-        # if no scaling out occured
-        if old_DP is None:
-            return
-
-        # then translate mac table
-        for mac_src in old_DP.mac_to_port:
-            old_mac_portno = old_DP.mac_to_port[mac_src]
-            new_mac_portno = ER_old_in_portno_to_new[old_mac_portno]
-            self.mac_to_port[mac_src] =  new_mac_portno
 
 
     def get_port(self, port_name=None):

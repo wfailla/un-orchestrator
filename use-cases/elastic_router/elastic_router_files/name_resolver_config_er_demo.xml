@@ -56,32 +56,32 @@
 	
 	<!-- un orchestrtator adds veth interfaces for docker, be aware that max length for vnf name is 7 chars in this case  -->
 	<!-- add prefix: "gitlab.testbed.se:5000/" to download image from remote docker repository -->
-	<network-function name="ovs1" num-ports="5" summary="openvswitch in userspace ip 10.0.10.1/24">
+	<network-function name="ovs1" num-ports="5" summary="openvswitch in userspace with 1 control port, 4 switch ports, and external ssh login enabled">
 			<!-- Only a docker implementation is available for this network function -->
 			<docker uri="gitlab.testbed.se:5000/ovs"/>
 	</network-function>
 	
-	<network-function name="ovs2" num-ports="5" summary="openvswitch in userspace ip 10.0.10.2/24">
+	<network-function name="ovs2" num-ports="5" summary="openvswitch in userspace with 1 control port, 4 switch ports, and external ssh login enabled">
 			<!-- Only a docker implementation is available for this network function -->
 			<docker uri="gitlab.testbed.se:5000/ovs"/>
 	</network-function>
 	
-	<network-function name="ovs3" num-ports="5" summary="openvswitch in userspace ip 10.0.10.3/24">
+	<network-function name="ovs3" num-ports="5" summary="openvswitch in userspace with 1 control port, 4 switch ports, and external ssh login enabled">
 			<!-- Only a docker implementation is available for this network function -->
 			<docker uri="gitlab.testbed.se:5000/ovs"/>
 	</network-function>
 	
-	<network-function name="ovs4" num-ports="5" summary="openvswitch in userspace ip 10.0.10.4/24">
+	<network-function name="ovs4" num-ports="5" summary="openvswitch in userspace with 1 control port, 4 switch ports, and external ssh login enabled">
 			<!-- Only a docker implementation is available for this network function -->
 			<docker uri="gitlab.testbed.se:5000/ovs"/>
 	</network-function>
 
-	<network-function name="ovs5" num-ports="5" summary="openvswitch in userspace ip 10.0.10.5/24">
+	<network-function name="ovs5" num-ports="5" summary="openvswitch in userspace with 1 control port, 4 switch ports, and external ssh login enabled">
 			<!-- Only a docker implementation is available for this network function -->
 			<docker uri="gitlab.testbed.se:5000/ovs"/>
 	</network-function>
 	
-	<network-function name="ctrl" num-ports="1" summary="control app for elastic router ip 10.0.10.100/24">
+	<network-function name="ctrl" num-ports="1" summary="control app for elastic router, connects to DD">
 			<!-- Only a docker implementation is available for this network function -->
 			<docker uri="gitlab.testbed.se:5000/ctrl"/>
 	</network-function>
