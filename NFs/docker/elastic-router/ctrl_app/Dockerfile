@@ -18,14 +18,12 @@ RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/ss
 
 ADD authorized_keys /root/.ssh/authorized_keys
 
-# test alarm sender
-#ADD zmq_ryu_test_alarm_send.py zmq_ryu_test_alarm_send.py
-
 
 ADD ryu_ddclient.py ryu_ddclient.py
 
 # setup DoubleDecker
-RUN apt-get install -yq python3 python3-zmq python3-pip libffi-dev libsodium-dev
+RUN apt-get install -yq python3 python3-zmq python3-pip libffi-dev libsodium-dev 
+#RUN apt-get install -yq python3-urwid
 RUN pip3 install PyNaCl
 RUN wget https://github.com/acreo/DoubleDecker/archive/master.tar.gz -O dd.tar.gz
 RUN tar xzf dd.tar.gz && rm dd.tar.gz

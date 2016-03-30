@@ -83,7 +83,7 @@
 	
 	<network-function name="ctrl" num-ports="1" summary="control app for elastic router, connects to DD">
 			<!-- Only a docker implementation is available for this network function -->
-			<docker uri="gitlab.testbed.se:5000/ctrl:test"/>
+			<docker uri="gitlab.testbed.se:5000/ctrl"/>
 	</network-function>
 
 

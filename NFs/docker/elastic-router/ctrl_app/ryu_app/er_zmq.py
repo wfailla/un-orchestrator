@@ -48,7 +48,8 @@ class er_zmq:
         self.log.debug("ALARM SUBSCRIBE")
         DD_proxy = zmq.Socket(CTX, zmq.REQ)
         DD_proxy.connect("ipc:///tmp/alarm_subscribe")
-        DD_proxy.send_multipart([b'sub', b'alarms', b'all'])
+        #DD_proxy.send_multipart([b'sub', b'alarms', b'all'])
+        DD_proxy.send_multipart([b'sub', b'alarms', b'node'])
 
     def alarm_receiver(self):
         self.log.debug("Waiting for ALARM")

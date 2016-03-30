@@ -108,7 +108,7 @@ class DP:
                 ip_match = (network.network_address.__str__(), network.netmask.__str__())
                 match_dict = create_dictionary(eth_type=ether_types.ETH_TYPE_IP, ipv4_dst=ip_match)
                 match_list.append(match_dict)
-                logging.info("{0} set routing entry {1}".format(self.name, ip_match))
+                #logging.info("{0} set routing entry {1}".format(self.name, ip_match))
 
             for match_dict in match_list:
                 self.oftable.append((match_dict, actions, priority))

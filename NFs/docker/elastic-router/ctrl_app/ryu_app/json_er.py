@@ -4,6 +4,7 @@ from er_utils import *
 import json
 from operator import itemgetter
 from itertools import *
+from ryu.lib import hub
 
 import logging
 import xml.etree.ElementTree as ET
@@ -228,6 +229,21 @@ def add_flowentry(nffg_json, port_in, port_out, priority=10):
 
     return nffg.getJSON()
 
+
+def delete_VNF_incoming_ext_flows(nffg_json, vnf_id, RESTaddress):
+    json_dict = json.loads(nffg_json)
+    nffg = NF_FG()
+    nffg.parseDict(json_dict)
+
+    del_vnf = nffg.getVNF(vnf_id)
+
+    flows_in = nffg.getFlowRulesSendingTrafficToVNF(del_vnf)
+    for flow in flows_in:
+        if 'endpoint' in flow.match.port_in:
+            delete_flowrule(flow.id, RESTaddress)
+            logging.info("deleted external flow with port_in: {0}".format(flow.match.port_in))
+
+
 def delete_VNF(nffg_json, vnf_id, RESTaddress):
     json_dict = json.loads(nffg_json)
     nffg = NF_FG()
@@ -247,6 +263,7 @@ def delete_VNF(nffg_json, vnf_id, RESTaddress):
 
     for flow in list(set(flow_list)):
         delete_flowrule(flow.id, RESTaddress)
+        #hub.sleep(0.4)
         logging.info("deleted flow id: {0}".format(flow.id))
 
 
@@ -317,7 +334,9 @@ def remove_quotations_from_ports(nffg_json):
 if __name__ == "__main__":
     #json_file = open('er_nffg.json').read()
     json_file = open('ER_scale_finish.json').read()
-    json_file = open('ER_scale_priorities.json').read()
+    #json_file = open('ER_scale_priorities.json').read()
+
+    delete_VNF_incoming_ext_flows(json_file, '00000003', '')
 
     new_json = remove_quotations_from_ports(json_file)
     delete_flows_by_priority(json_file,9,'')

@@ -439,6 +439,13 @@ class ElasticRouter(app_manager.RyuApp):
         # reset scale_out_port_dict for every DP?
 
         # delete the old intermediate VNFs
+        # first delete external incoming flows for all DPs (scaled out topo)
+        self.nffg_json = self.get_nffg_json()
+        for del_VNF in self.VNFs_to_be_deleted:
+            VNF_id = self.DP_instances[del_VNF].id
+            delete_VNF_incoming_ext_flows(self.nffg_json, VNF_id, self.REST_Cf_Or)
+
+        # delete other flows and complete VNF
         for del_VNF in self.VNFs_to_be_deleted:
             VNF_id = self.DP_instances[del_VNF].id
             self.nffg_json = self.get_nffg_json()
@@ -457,6 +464,8 @@ class ElasticRouter(app_manager.RyuApp):
         self.send_nffg_json(remove_quotations_from_ports(new_nffg))
         self.logger.info('restore priorities of flow entries to 10')
         new_nffg = self.get_nffg_json()
+        #need some time here to install flows, otherwise packet loss
+        hub.sleep(5)
         delete_flows_by_priority(new_nffg, 9, self.REST_Cf_Or)
         self.nffg_json = self.get_nffg_json()
 
