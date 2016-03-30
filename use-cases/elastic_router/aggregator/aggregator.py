@@ -7,6 +7,7 @@ import json
 import sys
 import os
 from collections import OrderedDict
+from functools import reduce
 
 # For PipelineDB integration
 import psycopg2
@@ -21,7 +22,12 @@ import pdb
 # {'jsonrpc': "2.0", 'method': 'rate_data', 'params': {'name': <monitor name>, 'lm: <location value> ,'lsd': <scale value>):
 # {'jsonrpc': "2.0", 'method': 'add_monitor', 'params': {'name': <monitor name> }}
 # {'jsonrpc': "2.0", 'method': 'remove_monitor', 'params': {'name': <monitor name> }}
+# {'jsonrpc': "2.0", 'method': 'set_alarm_level', 'params': {'alarm_level': <level> }}
 #
+# In case of an overload risk the aggregator will publish the
+# following Json-Rpc notification on the topic 'monitor_alarm' on the
+# DoubleDecker bus:
+# {"jsonrpc": "2.0", "method": "overload_alarm", "params": {"overload_risk": <risk_value>}}
 #
 # Startup.
 #
@@ -34,7 +40,7 @@ import pdb
 
 
 # Keeps track of the data sent by the monitors
-class Rates():
+class RateMonitors():
 
     # This init method will probably never be used.
     # add_monitor() is more flexible.
@@ -42,37 +48,37 @@ class Rates():
         self.monitors = {}
         for m in monitors:
             self.monitors[m] = False
-        logging.debug('Rates is initialized')
+        logging.debug('RateMonitors is initialized')
 
     # Returns True if all monitors have sent their rate data
     def is_complete(self):
-        result = False
-        for m in self.monitors:
-            result = self.monitors[m] or result
-        logging.debug('Rates.is_complete() returning ' + str(result))
-        logging.debug('Rates.monitors==%s'%self.monitors)
+        result = reduce(lambda x,y: x and y, list(self.monitors.values()))
+        logging.debug('RateMonitors.is_complete() returning ' + str(result))
+        logging.debug('RateMonitors.monitors==%s'%self.monitors)
         return result
 
     # Mark a monitor as having sent its rate data
     def set_monitor_complete(self,name):
         self.monitors[name] = True
-        logging.debug('Rates.set_monitor_complete(%s)'%name)
-        logging.debug('Rates.monitors[%s]==%s'%(name,self.monitors[name]))
+        logging.debug('RateMonitors.set_monitor_complete(%s)'%name)
+        logging.debug('RateMonitors.monitors[%s]==%s'%(name,self.monitors[name]))
 
     # Set all monitors to incomplete
     def reset(self):
         for m in self.monitors:
             self.monitors[m] = False
-        logging.debug('Rates.reset()')
+        logging.debug('RateMonitors.reset()')
 
     def add_monitor(self,name):
         self.monitors[name] = False
-        logging.debug('Rates.add_monitor(%s)'%name)
+        logging.debug('RateMonitors.add_monitor(%s)'%name)
 
     def remove_monitor(self,name):
         self.monitors.pop(name, None)
-        logging.debug('Rates.remove_monitor(%s)'%name)
+        logging.debug('RateMonitors.remove_monitor(%s)'%name)
 
+    def get_monitor_names(self):
+        return tuple(self.monitors.keys())
 
 class Aggregator(ClientSafe):
     def __init__(self, name, dealerurl, customer, keyfile,
@@ -81,7 +87,8 @@ class Aggregator(ClientSafe):
                  dbuser = "pipeline",
                  dbpass = "pipeline",
                  dbhost = "127.0.0.1",
-                 dbport = "5432"):
+                 dbport = "5432",
+                 alarm_level = 0.9):
         super().__init__(name, dealerurl, customer, keyfile)
         self.mytopics = list()
 
@@ -101,7 +108,8 @@ class Aggregator(ClientSafe):
         self.pipeline = self.conn.cursor()
 #        self.drop_all_functions()
         self.create_all_functions()
-        self.rates = Rates({})
+        self.rates = RateMonitors({})
+        self.alarm_level = alarm_level
     
     def on_data(self, src, rpc):
         msg = dict()
@@ -129,9 +137,30 @@ class Aggregator(ClientSafe):
     def remove_monitor(self,params):
         self.remove_continuous_view(params["name"])
 
-    # FIXME: implement this method!
+    def set_alarm_level(self,params):
+        self.alarm_level = float(params["alarm_level"])
+        
+
     def evaluate_overload_risk(self):
         print('evaluate_overload_risk called!')
+        alarm_sql = "select lognormagg(ARRAY[lm,lsd]) from stream_%s,stream_%s,stream_%s,stream_%s"%Rates.get_monitor_names()
+        perform_sql_with_commit(alarm_sql)
+        try:
+            rows = curs.fetchall()
+            for row in rows:
+                logging.info('perform_sql, result: ' + str(row))
+        except psycopg2.Error as e:
+            logging.warning('perform_sql, result error: ' + str(e))
+            zmu = rows[0][0]
+            zsd = rows[0][1]
+            ## Using the survival function (1 - cdf). See http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html for a motivation).
+        aggrisk = lognorm.sf(linerate * cutoff, zsd, 0, exp(zmu)) * 100
+        if aggrisk > self.alarm_level:
+            rpc_obj = {"jsonrpc": "2.0", "method": "overload_alarm", "params": {"overload_risk": aggrisk}}
+            rpc_obj_json = json.dumps(rpc_obj)
+            self.publish('monitor_alarm',rpc_obj_json)
+            
+
 
     def perform_sql_DUMMY(self,sql):
         print('perform_sql: ' + str(sql))
@@ -142,15 +171,6 @@ class Aggregator(ClientSafe):
             logging.info('perform_sql: self.conn==' + repr(self.conn))
             curs = self.conn.cursor()
             curs.execute(sql)
-            # While testing ...
-            try:
-                rows = curs.fetchall()
-                for row in rows:
-                    logging.info('perform_sql, result: ' + str(row))
-            except psycopg2.Error as e:
-                logging.warning('perform_sql, result error: ' + str(e))
-            # end while testing
-
         except psycopg2.Error as e:
             logging.info('perform_sql, execute error: ' + str(e))
             self.conn.rollback()
@@ -177,9 +197,12 @@ class Aggregator(ClientSafe):
         drop['ffunc'] =  "DROP FUNCTION ffunc(float[]) CASCADE;"
         drop['dfunc'] = "DROP FUNCTION dfunc(float[]) CASCADE;"
         drop['pylogrisk'] = "DROP FUNCTION pylogrisk (float, float, integer, float) CASCADE;"
-        drop['ffuncrisk'] = "DROP FUNCTION ffuncrisk(float[]) CASCADE;"
-        drop['lognoragg'] = "DROP AGGREGATE lognoragg(float[]) CASCADE;"
-        drop['lognormris'] = "DROP AGGREGATE lognormrisk (float[]) CASCADE; "
+# ### [PD] Calculate the overload risk based on the aggregated lognormal
+# ###      distribution in the calling python code instead. See the method
+# ###      evaluate_overload_risk().
+#        drop['ffuncrisk'] = "DROP FUNCTION ffuncrisk(float[]) CASCADE;"
+        drop['lognormagg'] = "DROP AGGREGATE lognormagg(float[]) CASCADE;"
+        drop['lognormrisk'] = "DROP AGGREGATE lognormrisk (float[]) CASCADE; "
         for key, sql_cmd in drop.items():
             try:
                 self.perform_sql(sql_cmd)
@@ -191,15 +214,18 @@ class Aggregator(ClientSafe):
     def create_all_functions(self):
         create = OrderedDict()
 
-        create['1plpythonu'] = "CREATE extension plpythonu WITH SCHEMA pg_catalog;"
-
-        create['2pylogrisk'] = """CREATE OR REPLACE FUNCTION pylogrisk (zmu float, zsd float, linerate integer, cutoff float)
-  RETURNS float
-AS $$
-from math import exp,pow,log,sqrt
-from scipy.stats import lognorm
-return lognorm.sf(linerate * cutoff, zsd, 0, exp(zmu)) * 100
-$$ LANGUAGE plpythonu;"""
+# ### [PD] Since we calculate the overload risk based on the aggregated
+# ###      lognormal distribution in the calling python code instead, we don't
+# ###       need this extension. See the method evaluate_overload_risk().
+#         create['1plpythonu'] = "CREATE extension plpythonu WITH SCHEMA pg_catalog;"
+# 
+#         create['2pylogrisk'] = """CREATE OR REPLACE FUNCTION pylogrisk (zmu float, zsd float, linerate integer, cutoff float)
+#   RETURNS float
+# AS $$
+# from math import exp,pow,log,sqrt
+# from scipy.stats import lognorm
+# return lognorm.sf(linerate * cutoff, zsd, 0, exp(zmu)) * 100
+# $$ LANGUAGE plpythonu;"""
 
         create['3sumfunc'] = """CREATE OR REPLACE FUNCTION sumfunc(acc float[], next float[]) RETURNS float[] AS
 'select ARRAY[acc[1] + exp(2*next[1]+next[2]^2)*(exp(next[2]^2-1)),
@@ -215,11 +241,14 @@ CREATE OR REPLACE FUNCTION ffunc(float[]) RETURNS float[]
     IMMUTABLE
     RETURNS NULL ON NULL INPUT;"""
 
-        create['5ffuncrisk'] = """CREATE OR REPLACE FUNCTION ffuncrisk(float[]) RETURNS float
- AS 'select pylogrisk(ln($1[2]) - ln($1[1] / ($1[2]^2)  +1)/2, sqrt(ln($1[1] / $1[2]^2)   +1),100,0.95);'
-    LANGUAGE SQL
-    IMMUTABLE
-    RETURNS NULL ON NULL INPUT;"""
+# ### [PD] Calculate the overload risk based on the aggregated lognormal 
+# ###      distribution in the calling python code instead. See the method
+# ###      evaluate_overload_risk().
+#         create['5ffuncrisk'] = """CREATE OR REPLACE FUNCTION ffuncrisk(float[]) RETURNS float
+#  AS 'select pylogrisk(ln($1[2]) - ln($1[1] / ($1[2]^2)  +1)/2, sqrt(ln($1[1] / $1[2]^2)   +1),100,0.95);'
+#     LANGUAGE SQL
+#     IMMUTABLE
+#     RETURNS NULL ON NULL INPUT;"""
 
 # There is no "CREATE OR REPLACE" for AGGREGATE
 #        create['6lognormagg'] = """CREATE OR REPLACE AGGREGATE lognormagg (float[]) (
@@ -230,14 +259,19 @@ finalfunc = ffunc,
 initcond = '{0.0,0.0}'
 );"""
 
-# There is no "CREATE OR REPLACE" for AGGREGATE
-#        create['7lognormrisk'] = """CREATE OR REPLACE AGGREGATE lognormrisk (float[]) (
-        create['7lognormrisk'] = """CREATE AGGREGATE lognormrisk (float[]) (
-sfunc = sumfunc,
-stype = float[],
-finalfunc = ffuncrisk,
-initcond = '{0.0,0.0}'
-);"""
+# ### [PD] Calculate the overload risk based on the aggregated lognormal
+# ###      distribution in the calling python code instead. See the method
+# ###      evaluate_overload_risk().
+# ###      This code is wrong, anyway. The risk should be based on the CDF of
+# ###      the aggregated distribution.
+# # There is no "CREATE OR REPLACE" for AGGREGATE
+# #        create['7lognormrisk'] = """CREATE OR REPLACE AGGREGATE lognormrisk (float[]) (
+#         create['7lognormrisk'] = """CREATE AGGREGATE lognormrisk (float[]) (
+# sfunc = sumfunc,
+# stype = float[],
+# finalfunc = ffuncrisk,
+# initcond = '{0.0,0.0}'
+# );"""
 
 #        create['8activate'] = "ACTIVATE;"
         activate = "ACTIVATE;"
@@ -310,12 +344,9 @@ initcond = '{0.0,0.0}'
         msg["topic"] = topic.decode()
         msg["data"] = data.decode()
         logging.info(json.dumps(msg))
-
         rpc_dict = json.loads(data.decode())
+        aggregate(rpc_dict)
 
-
-    def config():
-        pass
 
     def aggregate(rpc_dict):
 
@@ -353,6 +384,8 @@ initcond = '{0.0,0.0}'
             self.add_monitor(params)
         elif (rpc_dict['method'] == 'remove_monitor'):
             self.remove_monitor(params)
+        elif (rpc_dict['method'] == 'set_alarm_level'):
+            self.set_alarm_level(params)
         else:
             logging.error('unknown method: ' + rpc_dict['method'])
         
