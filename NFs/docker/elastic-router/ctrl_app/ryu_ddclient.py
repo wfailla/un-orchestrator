@@ -114,7 +114,8 @@ class SecureCli(ClientSafe):
                 "Recived bad JSON-RPC from %s \nRequest: %s\nResponose: %s" % (str(src), msg.decode(), str(response)))
 
     def alarms(self, ddsrc, message):
-        self.sender.send_multipart([ddsrc, "alarms", message])
+        #self.sender.send_multipart([ddsrc, "alarms", message])
+        self.sender.send_multipart([ddsrc.encode(), "alarms".encode(), message.encode()])
         
     def on_pub(self, src, topic:str, msg:str):
         self.handle_jsonrpc(src=src, msg=msg, topic=topic)
