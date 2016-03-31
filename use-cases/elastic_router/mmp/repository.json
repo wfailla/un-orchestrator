@@ -13,6 +13,17 @@
            "overload.risk.tx":"float"
          }
       },
+      "cadvisor":{
+         "version":1,
+         "label":"unify/cadvisor",
+         "parameters":{
+            "containerID":"string"
+         },
+         "results": {
+           "ram":"float",
+           "cpu":"float"
+         }
+      },
       "ping-aggregate":{
          "version":0,
          "label":"ping-aggregate",
