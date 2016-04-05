@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+from sys import maxint
+from exception import ClientError, ServerError
+from collections import OrderedDict
 __author__ = 'Ivano Cerrato, Stefano Petrangeli'
 
 import falcon
@@ -6,17 +9,11 @@ import json
 import logging
 import copy
 import requests
-from enum import Enum
 import ConfigParser
 
 import constants
-from virtualizer_library.virtualizer3 import ET, Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
-from un_native_nffg_library.nffg import NF_FG, VNF, Match, Action, EndPoint, FlowRule, Port
-
-class Error(Enum):
-	noerror = 0
-	client = 4
-	server = 5
+from virtualizer_library.virtualizer import ET, Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
+from un_native_nffg_library.nffg import NF_FG, VNF, Match, Action, EndPoint, FlowRule, Port, UnifyControl
 
 class DoPing:
 	'''
@@ -94,114 +91,78 @@ class DoEditConfig:
 		'''
 		Edit the configuration of the node
 		'''
-		LOG.info("Executing the 'edit-config' command")
-		content = req.stream.read()
-		##content = req
-		
-		LOG.debug("Body of the request:")
-		LOG.debug("%s",content)
-		
-		#TODO: check that flows refer to existing (i.e., deployed) network function.
-		#TODO: check that flows refer to existing ports 
-		
-		#FIXME: not clear what this function actually does
-		if not isCorrect(content):
-			resp.status = falcon.HTTP_400
-			return	
-		
-		global error
-		error = Error.noerror
-		
-		#
-		#	Extract the needed information from the message received from the network
-		#
-		
-		vnfsToBeAdded = extractVNFsInstantiated(content)	#VNF deployed/to be deployed on the universal node
-		if error == Error.client:
-			resp.status = falcon.HTTP_400
-			return
-		if error == Error.server:
-			resp.status = falcon.HTTP_500
-			return
+		try:
+			LOG.info("Executing the 'edit-config' command")
+			content = req.stream.read()
+			#content = req
 			
-		rules, endpoints = extractRules(content)			#Flowrules and endpoints installed/to be installed on the universal node
-		if error == Error.client:
-			resp.status = falcon.HTTP_400
-			return
-		if error == Error.server:
-			resp.status = falcon.HTTP_500
-			return
+			LOG.debug("Body of the request:")
+			LOG.debug("%s",content)
 			
-		vnfsToBeRemoved = extractToBeRemovedVNFs(content)	#VNFs to be removed from the universal node
-		if error == Error.client:
-			resp.status = falcon.HTTP_400
-			return
-		if error == Error.server:
-			resp.status = falcon.HTTP_500
-			return
+			#TODO: check that flows refer to existing (i.e., deployed) network function.
+			#TODO: check that flows refer to existing ports 
 			
-		rulesToBeRemoved = extractToBeRemovedRules(content) #Rules to be removed from the universal node
-		if error == Error.client:
-			resp.status = falcon.HTTP_400
-			return
-		if error == Error.server:
-			resp.status = falcon.HTTP_500
-			return
+			checkCorrectness(content)
 			
-		#Selects, among the rules listed in the received configuration, those that are not 
-		#installed yet in the universal node
-		rulesToBeAdded = diffRulesToBeAdded(rules)
-		if error == Error.client:
-			resp.status = falcon.HTTP_400
-			return
-		if error == Error.server:
-			resp.status = falcon.HTTP_500
-			return		
-		#XXX The previous operation is not done for VNFs, since the universal node orchestrator supports such a case	
+			#
+			#	Extract the needed information from the message received from the network
+			#
+			
+			vnfsToBeAdded = extractVNFsInstantiated(content)	#VNF deployed/to be deployed on the universal node
+				
+			rules, endpoints = extractRules(content)			#Flowrules and endpoints installed/to be installed on the universal node
+				
+			vnfsToBeRemoved = extractToBeRemovedVNFs(content)	#VNFs to be removed from the universal node
+				
+			rulesToBeRemoved = extractToBeRemovedRules(content) #Rules to be removed from the universal node
+				
+			#Selects, among the rules listed in the received configuration, those that are not 
+			#installed yet in the universal node
+			rulesToBeAdded = diffRulesToBeAdded(rules)
+			#XXX The previous operation is not done for VNFs, since the universal node orchestrator supports such a case	
+		
+			#
+			# Interact with the universal node orchestrator in order to implement the required commands
+			#
+			
+			if len(rulesToBeAdded) != 0:
+				#XXX: this is a limitation of the universal node orchestrator, which does not allow to deploy a
+				#	  VNF without flows involving such a VNF
+				instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints)	#Sends the new VNFs and flow rules to the universal node orchestrator
+		
+			removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved) #Save on a file the IDs of the rules and the NFs to be removed from the universal node
 	
-		#
-		# Interact with the universal node orchestrator in order to implement the required commands
-		#
-		
-		if len(rulesToBeAdded) != 0:
-			#XXX: this is a limitation of the universal node orchestrator, which does not allow to deploy a
-			#	  VNF without flows involving such a VNF
-			if not instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):	#Sends the new VNFs and flow rules to the universal node orchestrator
-				resp.status = falcon.HTTP_500
-				return
-				#pass
-					
-		if not removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved): #Save on a file the IDs of the rules and the NFs to be removed from the universal node
-			resp.status = falcon.HTTP_500
-			return
-			#pass
-
-		# 
-		# The required modifications have been implemented in the universal node, then we can update the
-		# configuration saved in the proper files
-		#
-		
-		if not addToGraphFile(rulesToBeAdded,vnfsToBeAdded, endpoints): #Update the json representation of the deployed graph, by inserting the new VNFs/rules
-			resp.status = falcon.HTTP_500
-			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
-			LOG.error("Please, also restart the universal node orchestrator.")
-			return
+			# 
+			# The required modifications have been implemented in the universal node, then we can update the
+			# configuration saved in the proper files
+			#
 			
-		if not removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved): #Update the json representation of the deployed graph, by inserting the new VNFs/rules
-			resp.status = falcon.HTTP_500
-			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
-			LOG.error("Please, also restart the universal node orchestrator.")
-			return
+			addToGraphFile(rulesToBeAdded,vnfsToBeAdded, endpoints) #Update the json representation of the deployed graph, by inserting the new VNFs/rules
+				
+			removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved) #Update the json representation of the deployed graph, by inserting the new VNFs/rules
 			
-		if not updateUniversalNodeConfig(content): #Updates the file containing the current configuration of the universal node, by editing the #<flowtable> and the <NF_instances>
+			un_config = updateUniversalNodeConfig(content) #Updates the file containing the current configuration of the universal node, by editing the #<flowtable> and the <NF_instances> and returning the xml
+			
+			resp.body = un_config
+			resp.status = falcon.HTTP_200	
+			"""
 			resp.status = falcon.HTTP_500
 			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
 			LOG.error("Please, also restart the universal node orchestrator.")
 			return
-		
-		LOG.info("'edit-config' command properly handled")
+			"""
+			
+			LOG.info("'edit-config' command properly handled")
+			
+		except ClientError:
+			resp.status = falcon.HTTP_400
+		except ServerError:
+			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
+			LOG.error("Please, also restart the universal node orchestrator.")
+			resp.status = falcon.HTTP_500			
+			
 
-def isCorrect(newContent):
+def checkCorrectness(newContent):
 	'''
 	Check if the new configuration of the node (in particular, the flowtable) is correct:
 	*	the ports are part of the universal node
@@ -215,7 +176,7 @@ def isCorrect(newContent):
 		oldTree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		return False
+		raise ServerError('ParseError: %s' % e.message)
 	LOG.debug("File correctly read")
 		
 	infrastructure = Virtualizer.parse(root=oldTree.getroot())
@@ -230,8 +191,8 @@ def isCorrect(newContent):
 		newTree = ET.ElementTree(ET.fromstring(newContent))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		return False
-						
+		raise ClientError('ParseError: %s' % e.message)
+							
 	newInfrastructure = Virtualizer.parse(root=newTree.getroot())
 	newFlowtable = newInfrastructure.nodes.node[constants.NODE_ID].flowtable
 	newNfInstances = newInfrastructure.nodes.node[constants.NODE_ID].NF_instances
@@ -244,8 +205,7 @@ def isCorrect(newContent):
 			else:
 				nfInstances.add(instance)
 	except KeyError:
-		LOG.error("Trying to delete a VNF that does not exist! ID:%s", instance.id.get_value())
-		return False
+		raise ClientError("Trying to delete a VNF that does not exist! ID:%s", instance.id.get_value())
 			
 	#Update the flowtable with the new flowentries
 	try:
@@ -256,18 +216,15 @@ def isCorrect(newContent):
 				flowtable.add(flowentry) 
 	except KeyError:
 		LOG.error("Trying to delete a flowrule that does not exist! ID:%s", flowentry.id.get_value())
-		return False
+		raise ClientError("Trying to delete a VNF that does not exist! ID:%s", instance.id.get_value())
 		
 
 	#Here, infrastructure contains the new configuration of the node
 	#Then, we execute the checks on it!
 	
-	#TODO
 
 	LOG.debug("The new configuration of the universal node is correct!")
-		
-	return True
-	
+			
 def extractVNFsInstantiated(content):
 	'''
 	Parses the message and extracts the type of the deployed network functions.
@@ -277,29 +234,29 @@ def extractVNFsInstantiated(content):
 	of the NF to be instantiated is among those to be supported by the universal node
 	'''
 	
-	global error
-
+	global tcp_port, unify_port_mapping
+	
 	try:
 		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		error = Error.server
-		return
+		raise ServerError('ParseError: %s' % e.message)
 	
 	tmpInfrastructure = Virtualizer.parse(root=tree.getroot())
 	supportedNFs = tmpInfrastructure.nodes.node[constants.NODE_ID].capabilities.supported_NFs
 	supportedTypes = []
+	lowerPortId = {}
 	for nf in supportedNFs:
 		nfType = nf.type.get_value()
 		supportedTypes.append(nfType)
-	
+		lowerPortId[nfType] = getLowerPortId(nf)
+		
 	LOG.debug("Extracting the network functions (to be) deployed on the universal node")
 	try:
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		error = Error.client
-		return
+		raise ClientError('ParseError: %s' % e.message)
 	
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
@@ -318,23 +275,55 @@ def extractVNFsInstantiated(content):
 			
 		vnfType = instance.type.get_value()
 		if vnfType not in supportedTypes:
-			LOG.warning("VNF of type '%s' is not supported by the UN!",vnfType)
-			error = Error.client
-			return
+			LOG.error("VNF of type '%s' is not supported by the UN!",vnfType)
+			raise ClientError("VNF of type '%s' is not supported by the UN!",vnfType)
 		
 		if vnfType in foundTypes:
-			LOG.warning("Found multiple NF instances with the same type '%s'!",vnfType)
-			LOG.warning("This is not supported by the universal node!")
-			error = Error.client
-			return
+			LOG.error("Found multiple NF instances with the same type '%s'!",vnfType)
+			LOG.error("This is not supported by the universal node!")
+			raise ClientError("Found multiple NF instances with the same type '%s'!",vnfType)
 			
 		foundTypes.append(vnfType)
 		port_list = []
-		for port in instance.ports.port:
-			port_id = int(port)-1
-			port_list.append(Port(_id="port:"+str(port_id)))
+		unify_control = []
+		for port_id in instance.ports.port:
+			port = instance.ports[port_id]
+			l4_addresses = port.addresses.l4.get_value()
+			if l4_addresses is not None:
+				if int(port.id.get_value()) != lowerPortId[vnfType]:
+					LOG.warning("L4 configuration is supported only to the port with lower id on VNF of type '%s'", vnfType)
+					raise ClientError("L4 configuration is supported only to the port with lower id on VNF of type '%s'", vnfType)
+				# Removing not needed chars
+				for ch in ['{','}',' ',"'"]:
+					if ch in l4_addresses:
+						l4_addresses=l4_addresses.replace(ch,"")
+				for l4_address in l4_addresses.split(","):
+					# l4_address format is "protocol/port"
+					tmp = l4_address.split("/")
+					if tmp[0] != "tcp":
+						LOG.warning("Only tcp ports are supported on L4 configuration of VNF of type '%s'", vnfType)
+						raise ClientError("Only tcp ports are supported on L4 configuration of VNF of type '%s'", vnfType)
+					l4_port = tmp[1]
+					uc = UnifyControl(vnf_tcp_port=int(l4_port), host_tcp_port=tcp_port)
+					unify_port_mapping[instance.id.get_value() + ":" + port_id + "/" + l4_address] = (unOrchestratorIP, tcp_port)
+					unify_control.append(uc)
+					tcp_port = tcp_port + 1
+			else:
+				unify_ip = None
+				if port.addresses.l3.length() != 0:
+					if port.addresses.l3.length() > 1:
+						LOG.warning("Only one l3 address is supported on a port on VNF of type '%s'", vnfType)
+						raise ClientError("Only one l3 address is supported on a port on VNF of type '%s'", vnfType)
+					for l3_address_id in port.addresses.l3:
+						l3_address = port.addresses.l3[l3_address_id]
+						if l3_address.configure.get_value() == "False" or l3_address.configure.get_value() == "false":
+							LOG.warning("Configure must be set to True on l3 address of VNF of type '%s'", vnfType)
+							raise ClientError("Configure must be set to True on l3 address of VNF of type '%s'", vnfType)
+						unify_ip = l3_address.requested.get_as_text()
+				port_id_nffg = int(port_id)-1
+				port_list.append(Port(_id="port:"+str(port_id_nffg), unify_ip=unify_ip))
 			
-		vnf = VNF(_id = instance.id.get_value(), name = vnfType, ports=port_list)
+		vnf = VNF(_id = instance.id.get_value(), name = vnfType, ports=port_list, unify_control=unify_control)
 		nfinstances.append(vnf)
 		LOG.debug("Required VNF: '%s'",vnfType)
 		
@@ -345,17 +334,14 @@ def extractRules(content):
 	Parses the message and translates the flowrules in the internal JSON representation
 	Returns a json representing the rules in the internal format of the universal node
 	'''
-	
-	global error
-	
+		
 	LOG.debug("Extracting the flowrules to be installed in the universal node")
 	
 	try:
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		error = Error.client
-		return
+		raise ClientError('ParseError: %s' % e.message)
 	
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
@@ -387,12 +373,11 @@ def extractRules(content):
 					tokens = m.split("=")
 					elements = len(tokens)
 					if elements != 2:
-						error = Error.client
-						return 
+						raise ClientError("Incorrect match")
 					#The match is in the form "name=value"
 					if not supportedMatch(tokens[0]):
-						error = Error.client
-						return
+						raise ClientError("Not supported match")
+
 					#We have to convert the virtualizer match into the UN equivalent match
 					
 					setattr(match, equivalentMatch(tokens[0]), tokens[1])
@@ -408,8 +393,7 @@ def extractRules(content):
 						
 		if len(tokens) is not 6 and len(tokens) is not 8:
 			LOG.error("Invalid port '%s' defined in a flowentry (len(tokens) returned %d)",portPath,len(tokens))
-			error = Error.client
-			return
+			raise ClientError("Invalid port '%s' defined in a flowentry (len(tokens) returned %d)",portPath,len(tokens))
 						
 		if tokens[4] == 'ports':
 			#This is a port of the universal node. We have to extract the virtualized port name
@@ -425,10 +409,13 @@ def extractRules(content):
 			vnf_id = vnf.id.get_value()
 			port_id = int(port.id.get_value()) - 1
 			match.port_in = "vnf:"+ vnf_id + ":port:" + str(port_id)
+			# Check if this VNF port has L4 configuration. In this case rules cannot involve such port 
+			if universal_node.NF_instances[vnf_id].ports[port.id.get_value()].addresses.l4.get_value() is not None:
+				LOG.error("It is not possibile to install flows related to a VNF port that has L4 configuration")
+				raise ClientError("It is not possibile to install flows related to a VNF port that has L4 configuration")
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
-			error = Error.client
-			return
+			raise ClientError("Invalid port '%s' defined in a flowentry",port)
 	
 		if flowentry.action is not None:
 			if type(flowentry.action.data) is str:
@@ -439,9 +426,7 @@ def extractRules(content):
 					tokens = a.split(":")
 					elements = len(tokens)
 					if not supportedAction(tokens[0],elements-1):
-						error = Error.client
-						print "Returning because action is not supported"
-						return
+						raise ClientError("action not supported")
 					if elements == 1:
 						setattr(action, equivalentAction(tokens[0]), True)
 					else:
@@ -458,9 +443,8 @@ def extractRules(content):
 		tokens = portPath.split('/');
 		if len(tokens) is not 6 and len(tokens) is not 8:
 			LOG.error("Invalid port '%s' defined in a flowentry",portPath)
-			error = Error.client
-			return
-					
+			raise ClientError("Invalid port '%s' defined in a flowentry",portPath)
+		
 		if tokens[4] == 'ports':
 			#This is a port of the universal node. We have to extract the ID
 			#Then, I have to retrieve the virtualized port name, and from there
@@ -477,17 +461,20 @@ def extractRules(content):
 			vnf_id = vnf.id.get_value()
 			port_id = int(port.id.get_value()) - 1
 			flowrule.actions.append(Action(output = "vnf:" + vnf_id + ":port:" + str(port_id)))
+			
+			# Check if this VNF port has L4 configuration. In this case rules cannot involve such port 
+			if universal_node.NF_instances[vnf_id].ports[port.id.get_value()].addresses.l4.get_value() is not None:
+				LOG.error("It is not possibile to install flows related to a VNF port that has L4 configuration")
+				raise ClientError("It is not possibile to install flows related to a VNF port that has L4 configuration")
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
-			error = Error.client
-			return
+			raise ClientError("Invalid port '%s' defined in a flowentry",port)
 
 		#Prepare the rule
 		flowrule.id = f_id
 		if priority is None:
 			LOG.error("Flowrule '%s' must have a priority set", f_id)
-			error = Error.client
-			return
+			raise ClientError("Flowrule '%s' must have a priority set", f_id)
 		flowrule.priority = int(priority)
 		flowrule.match = match
 				
@@ -506,15 +493,12 @@ def	extractToBeRemovedVNFs(content):
 	The network functions to be removed must already be instantiated on the universal node. The
 	type is used as a unique identifier for the network function.
 	'''
-	
-	global error
-	
+		
 	try:
 		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		error = Error.server
-		return
+		raise ServerError('ParseError: %s' % e.message)
 	
 	tmpInfrastructure = Virtualizer.parse(root=tree.getroot())
 	nf_instances = tmpInfrastructure.nodes.node[constants.NODE_ID].NF_instances
@@ -530,9 +514,8 @@ def	extractToBeRemovedVNFs(content):
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		error = Error.client
-		return
-	
+		raise ClientError('ParseError: %s' % e.message)
+
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
 	instances = universal_node.NF_instances	
@@ -544,8 +527,7 @@ def	extractToBeRemovedVNFs(content):
 			if vnfType not in vnfsDeployed:
 				LOG.warning("Network function with type '%s' is not deployed in the UN!",vnfType)
 				LOG.warning("The network function cannot be removed!")
-				error = Error.client
-				return
+				raise ClientError("Network function with type '%s' is not deployed in the UN!",vnfType)
 			
 			LOG.debug("Network function with type '%s' has to be removed",vnfType)
 			nfinstances.append(vnfType)
@@ -560,14 +542,11 @@ def extractToBeRemovedRules(content):
 	is used as a unique identifier for the rules.
 	'''
 
-	global error
-
 	try:
 		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		error = Error.server
-		return
+		raise ServerError('ParseError: %s' % e.message)
 	
 	tmpInfrastructure = Virtualizer.parse(root=tree.getroot())
 	flowtable = tmpInfrastructure.nodes.node[constants.NODE_ID].flowtable
@@ -582,8 +561,8 @@ def extractToBeRemovedRules(content):
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		error = Error.client
-		return
+		raise ClientError('ParseError: %s' % e.message)
+
 			
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
@@ -596,8 +575,7 @@ def extractToBeRemovedRules(content):
 			if f_id not in rulesDeployed:
 				LOG.warning("Rule with ID '%d' is not deployed in the UN!",int(f_id))
 				LOG.warning("The rule cannot be removed!")
-				error = Error.client
-				return
+				raise ClientError('ParseError: %s' % e.message)
 						
 			LOG.debug("Rule with id %d has to be removed",int(f_id))
 			ids.append(f_id)
@@ -615,11 +593,7 @@ def diffRulesToBeAdded(newRules):
 	However, I let it here just in case sometimes the configuration received is not
 	a diff.
 	'''
-	
-	#FIXME: why don't just compare the IDs?
-	
-	global error	
-		
+				
 	LOG.debug("Compare the new rules received with those already deployed")
 	
 	try:
@@ -629,8 +603,8 @@ def diffRulesToBeAdded(newRules):
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
-		error = Error.server
-		return
+		raise ServerError("I/O error({0}): {1}".format(e.errno, e.strerror))
+
 	
 	nffg_dict = json.loads(json_file)
 	nffg = NF_FG()
@@ -654,12 +628,22 @@ def diffRulesToBeAdded(newRules):
 			rulesToBeAdded.append(newRule)
 			
 	return rulesToBeAdded
+
+def getLowerPortId(nf):
+	'''
+	Scans the ports of a NF retrieving the lower id for each port
+	'''
+	lower_id = maxint
+	for port in nf.ports.port:
+		port_id = int(port)
+		if port_id < lower_id:
+			lower_id = port_id
+	return lower_id
 		
 def supportedMatch(tag):
 	'''
 	Given an element within match, this function checks whether such an element is supported or node
 	'''
-	
 	if tag in constants.supported_matches:
 		LOG.debug("'%s' is supported!",tag)
 		return True
@@ -677,7 +661,6 @@ def supportedAction(tag,elements):
 	'''
 	Given an element within an action, this function checks whether such an element is supported or not
 	'''
-	
 	if tag in constants.supported_actions:
 		LOG.debug("'%s' is supported with %d elements!",tag,constants.supported_actions[tag])
 		if constants.supported_actions[tag] == elements:
@@ -710,7 +693,7 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
-		return False
+		raise ServerError("I/O error({0}): {1}".format(e.errno, e.strerror))
 	
 	nffg_dict = json.loads(json_file)
 	nffg = NF_FG()
@@ -746,11 +729,8 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
-		error = True
-		return False
-		
-	return True
-	
+		raise ServerError("I/O error({0}): {1}".format(e.errno, e.strerror))
+			
 def removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved):
 	'''
 	Read the graph currently deployed. It is stored in a tmp file, in a json format.
@@ -766,7 +746,7 @@ def removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved):
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
-		return False
+		raise ServerError("I/O error({0}): {1}".format(e.errno, e.strerror))
 	
 	nffg_dict = json.loads(json_file)
 	nffg = NF_FG()
@@ -793,10 +773,8 @@ def removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved):
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
-		return False
+		raise ServerError("I/O error({0}): {1}".format(e.errno, e.strerror))
 		
-	return True
-
 def updateUniversalNodeConfig(newContent):
 	'''
 	Read the configuration of the universal node, and applies the required modifications to
@@ -810,7 +788,7 @@ def updateUniversalNodeConfig(newContent):
 		oldTree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		return False
+		raise ServerError('ParseError: %s' % e.message)
 	LOG.debug("File correctly read")
 		
 	infrastructure = Virtualizer.parse(root=oldTree.getroot())
@@ -818,14 +796,13 @@ def updateUniversalNodeConfig(newContent):
 	flowtable = universal_node.flowtable
 	nfInstances = universal_node.NF_instances
 	
-	tmpInfra = copy.deepcopy(infrastructure)
 	
 	LOG.debug("Getting the new flowrules to be installed on the universal node")
 	try:
 		newTree = ET.ElementTree(ET.fromstring(newContent))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		return False
+		raise ServerError('ParseError: %s' % e.message)
 			
 	newInfrastructure = Virtualizer.parse(root=newTree.getroot())
 	newFlowtable = newInfrastructure.nodes.node[constants.NODE_ID].flowtable
@@ -836,6 +813,25 @@ def updateUniversalNodeConfig(newContent):
 		if instance.get_operation() == 'delete':
 			nfInstances[instance.id.get_value()].delete()
 		else:
+			for port_id in instance.ports.port:
+				port = instance.ports[port_id]	
+				# Check if there is a request of a l3 address. If this is the case, then provide the response		
+				if port.addresses.l3.length() != 0:
+					for l3_address_id in port.addresses.l3:
+						l3_address = port.addresses.l3[l3_address_id]
+						l3_address.provided.set_value(l3_address.requested.get_as_text())
+						
+				# Check if there is a request of l4 configuration. If this is the case, then provide the response		
+				l4_addresses = port.addresses.l4.get_value()
+				if l4_addresses is not None:
+					l4_response = {}
+					# unify_port_mapping is in the form NF_id:port_id/protocol/port
+					for k,v in unify_port_mapping.iteritems():
+						tmp1 = k.split("/", 1)
+						tmp2 = tmp1[0].split(":")
+						if instance.id.get_value() == tmp2[0] and port_id == tmp2[1]:
+							l4_response[tmp1[1]] = v
+					port.addresses.l4.set_value(l4_response)
 			nfInstances.add(instance)
 	
 	#Update the flowtable with the new flowentries
@@ -853,9 +849,9 @@ def updateUniversalNodeConfig(newContent):
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
-		return False
+		raise ServerError("I/O error({0}): {1}".format(e.errno, e.strerror))
 		
-	return True
+	return infrastructure.xml()
 
 
 '''
@@ -884,25 +880,23 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):
 	LOG.debug("%s",nffg.getJSON())
 	
 	put_url = unOrchestratorURL + "/NF-FG/%s"
+	if debug_mode is False:
+		try:
+			responseFromUN = requests.put(put_url % (nffg.id), nffg.getJSON())
+		except (requests.ConnectionError):
+			LOG.error("Cannot contact the universal node orchestrator at '%s'",put_url % (nffg.id))
+			raise ServerError("Cannot contact the universal node orchestrator at '%s'",put_url % (nffg.id))
+	
+		LOG.debug("Status code received from the universal node orchestrator: %s",responseFromUN.status_code)
+	
+		if responseFromUN.status_code == 201:
+			LOG.info("New VNFs and flows properly deployed on the universal node")	
+		else:
+			LOG.error("Something went wrong while deploying the new VNFs and flows on the universal node")	
+			raise ServerError("Something went wrong while deploying the new VNFs and flows on the universal node")
 
-	try:
-		responseFromUN = requests.put(put_url % (nffg.id), nffg.getJSON())
-	except (requests.ConnectionError) as e:
-		LOG.error("Cannot contact the universal node orchestrator at '%s'",put_url % (nffg.id))
-		return False
-
-	LOG.debug("Status code received from the universal node orchestrator: %s",responseFromUN.status_code)
-
-	if responseFromUN.status_code == 201:
-		LOG.info("New VNFs and flows properly deployed on the universal node")	
-	else:
-		LOG.error("Something went wrong while deploying the new VNFs and flows on the universal node")	
-		return False
-
-	return True
 
 def removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved):
-	# TODO:
 	'''
 	Removes rules from the universal node
 	'''
@@ -913,7 +907,7 @@ def removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved):
 	
 	if len(rulesToBeRemoved) == 0:
 		# No message is sent to the orchestrator
-		return True
+		return
 	
 	LOG.info("Removing %d rules from the universal node",len(rulesToBeRemoved))
 	LOG.warning("Due to implementation choices of the universal node orchestrator, the VNFs whose all ports will no longer used in any deployed flow will be removed (undeployed)")
@@ -921,22 +915,21 @@ def removeFromUniversalNode(rulesToBeRemoved,vnfsToBeRemoved):
 	delete_url = unOrchestratorURL + "/NF-FG/%s/%s"
 	for rule in rulesToBeRemoved:
 		LOG.debug("Going to remove rule with ID: %s",rule)	
-		try:
-			responseFromUN = requests.delete(delete_url % (graph_id,rule))
-		except (requests.ConnectionError) as e:
-			LOG.error("Cannot contact the universal node orchestrator at '%s'",unOrchestratorURL)	
-			return False
-
-		LOG.debug("Status code: %s",responseFromUN.status_code)
-		
-		if responseFromUN.status_code == 204:
-			LOG.info("Rule '%s' has been properly deleted",rule)
-		else:
-			LOG.error("Something went wrong while deploying the new VNFs and flows on the universal node")	
-			return False
+		if debug_mode is False:
+			try:
+				responseFromUN = requests.delete(delete_url % (graph_id,rule))
+			except (requests.ConnectionError):
+				LOG.error("Cannot contact the universal node orchestrator at '%s'",unOrchestratorURL)	
+				raise ServerError("Cannot contact the universal node orchestrator at '%s'",unOrchestratorURL)
+					
+			LOG.debug("Status code: %s",responseFromUN.status_code)
 			
-	return True
-
+			if responseFromUN.status_code == 204:
+				LOG.info("Rule '%s' has been properly deleted",rule)
+			else:
+				LOG.error("Something went wrong while deploying the new VNFs and flows on the universal node")	
+				raise ServerError("Something went wrong while deploying the new VNFs and flows on the universal node")
+			
 '''
 	Methods used in the initialization phase of the virtualizer
 '''
@@ -1246,6 +1239,11 @@ infrastructureFile = ""
 physicalPortsVirtualization = {}
 graph_id = "1"
 graph_name = "NF-FG"
+tcp_port = 10000
+unify_port_mapping = OrderedDict()
+
+# if debug_mode is True no interactions will be made with the UN
+debug_mode = False
 
 if not virtualizerInit():
 	LOG.error("Failed to start up the virtualizer.")
@@ -1256,6 +1254,6 @@ api.add_route('/ping',DoPing())
 api.add_route('/get-config',DoGetConfig())
 api.add_route('/edit-config',DoEditConfig())
 
-#in_file = open ("config/nffg_examples/passthrough_with_vnf_nffg_and_match_and_action.xml")
+#in_file = open ("config/nffg_examples/passthrough_with_vnf_nffg_v5.xml")
 #in_file = open ("config/nffg_examples/nffg_delete_flow_vnf.xml")
 #DoEditConfig().on_post(in_file.read(), None)
