@@ -631,7 +631,7 @@ def diffRulesToBeAdded(newRules):
 
 def getLowerPortId(nf):
 	'''
-	Scans the ports of a NF retrieving the lower id for each port
+	Scans the ports of a NF retrieving the port with lower id
 	'''
 	lower_id = maxint
 	for port in nf.ports.port:
