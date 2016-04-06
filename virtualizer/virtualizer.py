@@ -730,7 +730,7 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 				break
 		if already_present is False:		
 			nffg.addEndPoint(endp)
-	if unify_monitoring is not None:
+	if unify_monitoring != "":
 		nffg.unify_monitoring = unify_monitoring
 		# Needed?
 		unify_monitoring = ""
