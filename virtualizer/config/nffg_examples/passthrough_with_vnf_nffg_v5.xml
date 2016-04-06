@@ -74,6 +74,10 @@
 								<!-- note: the format below is a Python set: -->
 								<l4>{'tcp/22', 'tcp/80'}</l4>
 							</addresses>
+							<metadata>
+								<key>measure</key>
+								<value>test measure</value>
+							  </metadata>
 							  <metadata>
 								<key>variable:vxlan_key</key>
 								<value>11</value>

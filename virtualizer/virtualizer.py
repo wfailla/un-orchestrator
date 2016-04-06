@@ -228,7 +228,7 @@ def extractVNFsInstantiated(content):
 	of the NF to be instantiated is among those to be supported by the universal node
 	'''
 	
-	global tcp_port, unify_port_mapping
+	global tcp_port, unify_port_mapping, unify_monitoring
 	
 	try:
 		tree = ET.parse(constants.GRAPH_XML_FILE)
@@ -326,7 +326,7 @@ def extractVNFsInstantiated(content):
 						tmp = key.split(":",1)
 						unify_env_variables.append(tmp[1]+"="+value)
 					elif key.startswith("measure"):
-						# TODO: monitoring
+						unify_monitoring = unify_monitoring + value
 						pass
 					else:
 						LOG.warning("Unsupported metadata " + key)
@@ -695,6 +695,8 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 	
 	LOG.debug("Updating the json representation of the whole graph deployed")
 
+	global unify_monitoring
+
 	try:
 		LOG.debug("Reading file: %s",constants.GRAPH_FILE)
 		tmpFile = open(constants.GRAPH_FILE,"r")
@@ -728,6 +730,10 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 				break
 		if already_present is False:		
 			nffg.addEndPoint(endp)
+	if unify_monitoring is not None:
+		nffg.unify_monitoring = unify_monitoring
+		# Needed?
+		unify_monitoring = ""
 	
 	LOG.debug("Updated graph:");	
 	LOG.debug("%s",nffg.getJSON());
@@ -875,6 +881,7 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):
 	nffg = NF_FG()
 	nffg.id = graph_id
 	nffg.name = graph_name
+	nffg.unify_monitoring = unify_monitoring
 	nffg.flow_rules = rulesToBeAdded
 	nffg.vnfs = vnfsToBeAdded
 	nffg.end_points = endpoints
@@ -1250,6 +1257,7 @@ graph_id = "1"
 graph_name = "NF-FG"
 tcp_port = 10000
 unify_port_mapping = OrderedDict()
+unify_monitoring = ""
 
 # if debug_mode is True no interactions will be made with the UN
 debug_mode = False
