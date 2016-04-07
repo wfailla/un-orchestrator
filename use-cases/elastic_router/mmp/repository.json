@@ -17,7 +17,9 @@
          "version":1,
          "label":"unify/cadvisor",
          "parameters":{
-            "containerID":"string"
+            "containerID": {"type":"string"},
+            "interval": {"type":"float", "default":1.0},
+            "tail": {"type":"float", "default":30.0},
          },
          "results": {
            "ram":"float",
