@@ -14,8 +14,8 @@
                 ],
                 "unify-control" : [
                     {
-                        "host-tcp-port" : "9000",
-                        "vnf-tcp-port" : "22"
+                        "host-tcp-port" : 9000,
+                        "vnf-tcp-port" : 22
                     }
                 ],
                 "unify-env-variables" : [
@@ -62,8 +62,8 @@
                 ],
                 "unify-control" : [
                     {
-                        "host-tcp-port" : "9002",
-                        "vnf-tcp-port" : "22"
+                        "host-tcp-port" : 9002,
+                        "vnf-tcp-port" : 22
                     }
                 ],
                 "unify-env-variables" : [
@@ -116,8 +116,8 @@
                 ],
                 "unify-control" : [
                     {
-                        "host-tcp-port" : "9003",
-                        "vnf-tcp-port" : "22"
+                        "host-tcp-port" : 9003,
+                        "vnf-tcp-port" : 22
                     }
                 ],
                 "unify-env-variables" : [
@@ -170,8 +170,8 @@
                 ],
                 "unify-control" : [
                     {
-                        "host-tcp-port" : "9004",
-                        "vnf-tcp-port" : "22"
+                        "host-tcp-port" : 9004,
+                        "vnf-tcp-port" : 22
                     }
                 ],
                 "unify-env-variables" : [
@@ -224,8 +224,8 @@
                 ],
                 "unify-control" : [
                     {
-                        "host-tcp-port" : "9005",
-                        "vnf-tcp-port" : "22"
+                        "host-tcp-port" : 9005,
+                        "vnf-tcp-port" : 22
                     }
                 ],
                 "unify-env-variables" : [
@@ -253,7 +253,7 @@
                     "id" : "000000012",
                     "match" : {
                         "dest_ip" : "10.0.10.2",
-                        "ether_type" : "800",
+                        "ether_type" : "0x800",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -267,7 +267,7 @@
                     "id" : "000000013",
                     "match" : {
                         "dest_mac" : "00:00:00:00:00:02",
-                        "ether_type" : "806",
+                        "ether_type" : "0x806",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -293,7 +293,7 @@
                     "id" : "000000015",
                     "match" : {
                         "dest_ip" : "10.0.10.3",
-                        "ether_type" : "800",
+                        "ether_type" : "0x800",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -307,7 +307,7 @@
                     "id" : "000000016",
                     "match" : {
                         "dest_mac" : "00:00:00:00:00:03",
-                        "ether_type" : "806",
+                        "ether_type" : "0x806",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -333,7 +333,7 @@
                     "id" : "000000018",
                     "match" : {
                         "dest_ip" : "10.0.10.4",
-                        "ether_type" : "800",
+                        "ether_type" : "0x800",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -347,7 +347,7 @@
                     "id" : "000000019",
                     "match" : {
                         "dest_mac" : "00:00:00:00:00:04",
-                        "ether_type" : "806",
+                        "ether_type" : "0x806",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -373,7 +373,7 @@
                     "id" : "000000021",
                     "match" : {
                         "dest_ip" : "10.0.10.5",
-                        "ether_type" : "800",
+                        "ether_type" : "0x800",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -387,7 +387,7 @@
                     "id" : "000000022",
                     "match" : {
                         "dest_mac" : "00:00:00:00:00:05",
-                        "ether_type" : "806",
+                        "ether_type" : "0x806",
                         "port_in" : "vnf:00000001:inout:0"
                     },
                     "priority" : 10
@@ -450,7 +450,7 @@
                     "match" : {
                         "port_in" : "vnf:00000003:inout:1"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 },
                 {
                     "actions" : [
@@ -462,7 +462,7 @@
                     "match" : {
                         "port_in" : "endpoint:00000001"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 },
                 {
                     "actions" : [
@@ -510,7 +510,7 @@
                     "match" : {
                         "port_in" : "vnf:00000004:inout:1"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 },
                 {
                     "actions" : [
@@ -522,7 +522,7 @@
                     "match" : {
                         "port_in" : "endpoint:00000002"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 },
                 {
                     "actions" : [
@@ -570,7 +570,7 @@
                     "match" : {
                         "port_in" : "vnf:00000005:inout:1"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 },
                 {
                     "actions" : [
@@ -582,7 +582,7 @@
                     "match" : {
                         "port_in" : "endpoint:00000003"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 },
                 {
                     "actions" : [
@@ -630,7 +630,7 @@
                     "match" : {
                         "port_in" : "vnf:00000006:inout:1"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 },
                 {
                     "actions" : [
@@ -642,7 +642,7 @@
                     "match" : {
                         "port_in" : "endpoint:00000004"
                     },
-                    "priority" : 9
+                    "priority" : 10
                 }
             ]
         },
