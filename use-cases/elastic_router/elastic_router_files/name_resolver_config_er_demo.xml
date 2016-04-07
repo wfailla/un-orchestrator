@@ -81,7 +81,7 @@
 			<docker uri="gitlab.testbed.se:5000/ovs"/>
 	</network-function>
 	
-	<network-function name="ctrl" num-ports="1" summary="control app for elastic router, connects to DD">
+	<network-function name="ctrl" num-ports="1" summary="control app for elastic router, connects to DoubleDecker">
 			<!-- Only a docker implementation is available for this network function -->
 			<docker uri="gitlab.testbed.se:5000/ctrl"/>
 	</network-function>
