@@ -866,3 +866,27 @@ following example:
 	}
 
 **WARNING**: the monitoring is supported only in case of Docker containers.
+
+When monitoring is required, the un-orchestrator automatically sends a message like the following on the DoubleDecker network, using the topic "unify:mmp".
+
+{
+    "jsonrpc" : "2.0",
+    "method" : "startNFFG",
+    "params" : {
+        "nffg" : {
+            "VNFs" : [
+                {
+                    "id" : "00000001",
+                    "name" : "2_sink",
+                    "ports" : [
+                        {
+                            "id" : 1,
+                            "name" : "2_sink_1.lxc"
+                        }
+                    ]
+                }
+            ],
+            "measure" : "string written according to the MEASURE syntax"
+        }
+    }
+}    
