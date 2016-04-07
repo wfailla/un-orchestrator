@@ -31,11 +31,12 @@ class CAdvisorMonitorThread(threading.Thread):
     Periodically calls REST API method of locally running cadvisor
     """
 
-    def __init__(self, container_id, interval, ddClient, tail):
+    def __init__(self, container_id, interval, ddClient, tail, spec_json):
         threading.Thread.__init__(self)
         self.container_id = container_id
         self.interval = interval
         self.ddClient = ddClient
+        self.spec_json = spec_json
         # Monitoring data from cadvisor comes in steps of ~1.4 sec
         count = tail/1.4 + 1
         if count < 2: # Minimum 2 steps are needed to get an average value over 1.4 sec
@@ -99,18 +100,12 @@ class CAdvisorMonitorThread(threading.Thread):
                 if cpu_load < 0:
                     cpu_load = 0.0
 
-                result = {
-                    "version": 1,
-                    "label": "unify/cadvisor",
-                    "parameters": {"containerID": self.container_id},
-                    "results": {
-                        "ram": mem_usage,
-                        "cpu": cpu_load,
-                        }
-                }
+                self.spec_json["results"]["ram"] = mem_usage
+                self.spec_json["results"]["cpu"] = cpu_load
+
                 # Handling thread synchronization
                 with self.lock:
-                    self.ddClient.publish_measurement(result)
+                    self.ddClient.publish_measurement(self.spec_json)
 
         except requests.exceptions.RequestException:
             self.logger.error("RequestException when connecting to cAdvisor")

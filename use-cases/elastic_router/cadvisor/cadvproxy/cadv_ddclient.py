@@ -36,19 +36,38 @@ class DDClient(ClientSafe):
         self.methods.add_method(self.stop_monitoring)
         self.methods.add_method(self.reset_monitoring)
 
-    def start_monitoring(self, container_id, interval=1, tail=30):
+    def start_monitoring(self, spec_json):
         """
         Starts monitoring a container with given ID and publishes monitoring data on DD bus under topic "measurement"
-        :param container_id: Complete ID of container to be monitored. Please note that short ID is not acceptable.
-        :param interval: Interval in seconds which sets how frequently monitoring data should be published.
-        Default value is every 1.0 second.
-        :param tail: Time span over which mean value of a metric is computed. For example, if set to 30 then a mean
-        value of past 30 seconds of the metric is reported. Acceptable value range for this argument is from
-        1.4 to 90.0 second. Default value is 30 second.
+        :param spec_json: Json specification for measurement as dict. Under the key "parameters" following arguments
+        are possible
+            container_id: Complete ID of container to be monitored. Please note that short ID is not acceptable.
+            interval: Interval in seconds which sets how frequently monitoring data should be published. Default value
+            is every 1.0 second.
+            tail: Time span over which mean value of a metric is computed. For example, if set to 30 then a mean
+            value of past 30 seconds of the metric is reported. Acceptable value range for this argument is from
+            1.4 to 90.0 second. Default value is 30 second.
         :return: 201 if provided container id exists and monitoring has been started, otherwise 404.
         """
-        self.logger.debug("CALLED start monitoring "+str(container_id))
-        new_thread = CAdvisorMonitorThread(container_id=container_id, interval=interval, ddClient=self, tail=tail)
+
+        self.logger.debug("CALLED start monitoring "+str(spec_json))
+
+        if "parameters" not in spec_json.keys() or "containerID" not in spec_json["parameters"].keys():
+            self.logger.debug("No params passed to start_monitoring()")
+            return REQUEST_NOT_ACCEPTED
+
+        params = spec_json["parameters"]
+        container_id = params["containerID"]
+        interval = params["interval"] if "interval" in params.keys() else 1
+        tail = params["tail"] if "tail" in params.keys() else 30
+
+        new_thread = CAdvisorMonitorThread(container_id=container_id, interval=interval, ddClient=self, tail=tail,
+                                           spec_json=spec_json)
+
+        if container_id in self.to_monitor.keys():
+            self.logger.debug("ERROR start_monitoring: Already monitoring: "+str(container_id))
+            return REQUEST_NOT_ACCEPTED
+
         if new_thread.container_exists():
             new_thread.daemon = True
             new_thread.start()
@@ -59,15 +78,25 @@ class DDClient(ClientSafe):
             self.logger.debug("FAIL start monitoring "+str(container_id))
             return REQUEST_NOT_ACCEPTED
 
-    def stop_monitoring(self, container_id):
+    def stop_monitoring(self, spec_json):
         """
         Stops monitoring for provided container id
-        :param container_id: Complete ID of container for which monitoring should be stopped.
-        Please note that short ID is not acceptable.
+        :param spec_json: Json specification for measurement as dict. Under the key "parameters" following argument
+        is considered and the rest is ignored.
+            container_id: Complete ID of container for which monitoring should be stopped. Please note that short ID
+            is not acceptable.
         :return: 201 if monitoring has been stopped for container with provided ID. 404 if container with provided ID
         was not being monitored.
         """
-        self.logger.debug("CALLED stop monitoring "+str(container_id))
+        self.logger.debug("CALLED stop monitoring "+str(spec_json))
+
+        if "parameters" not in spec_json.keys() or "containerID" not in spec_json["parameters"].keys():
+            self.logger.debug("No params passed to start_monitoring()")
+            return REQUEST_NOT_ACCEPTED
+
+        params = spec_json["parameters"]
+        container_id = params["containerID"]
+
         if container_id in self.to_monitor.keys():
             self.to_monitor.pop(container_id).event.set()
             self.logger.debug("SUCCESS stop monitoring "+str(container_id))
