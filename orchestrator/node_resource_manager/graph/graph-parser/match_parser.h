@@ -3,12 +3,25 @@
 
 #pragma once
 
-#include "rest_server.h"
+//#include "rest_server.h"
+
+#include <string>
+#include <json_spirit/json_spirit.h>
+#include <json_spirit/value.h>
+#include <json_spirit/writer.h>
+
+#include "../../../utils/logger.h"
+#include "../../../utils/constants.h"
+
+#include "../../graph_manager/graph_manager.h"
+
+using namespace json_spirit;
+using namespace std;
 
 class MatchParser
 {
 
-friend class RestServer;
+friend class GraphParser;
 
 protected:
 
