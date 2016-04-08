@@ -7,9 +7,9 @@ __author__ = 'Ivano Cerrato, Stefano Petrangeli'
 import falcon
 import json
 import logging
-import copy
 import requests
 import ConfigParser
+import re
 
 import constants
 from virtualizer_library.virtualizer import ET, Virtualizer,  Software_resource, Infra_node, Port as Virt_Port
@@ -320,9 +320,12 @@ def extractVNFsInstantiated(content):
 							raise ClientError("Configure must be set to True on l3 address of VNF of type " + vnfType)
 						"""
 						unify_ip = l3_address.requested.get_as_text()
+
 				mac = port.addresses.l2.get_value()
 				port_id_nffg = int(port_id)-1
 				port_list.append(Port(_id="port:"+str(port_id_nffg), unify_ip=unify_ip, mac=mac))
+			if port.control.orchestrator.get_as_text() is not None:
+				unify_env_variables.append("CFOR="+port.control.orchestrator.get_as_text())
 			if port.metadata.length() > 0:
 				LOG.error("Metadata are not supported inside a port element. Those should specified per node")
 		if instance.metadata.length() > 0:
@@ -384,8 +387,9 @@ def extractRules(content):
 		match = Match() 
 		if flowentry.match is not None:
 			if type(flowentry.match.get_value()) is str:
-				#The tag <match> contains a sequence of matches separated by " "
-				matches = flowentry.match.data.split(" ")
+				#The tag <match> contains a sequence of matches separated by " " or ","
+				#matches = flowentry.match.data.split(" ")
+				matches = re.split(',| ', flowentry.match.data)
 				for m in matches:
 					tokens = m.split("=")
 					elements = len(tokens)
@@ -440,8 +444,10 @@ def extractRules(content):
 	
 		if flowentry.action is not None:
 			if type(flowentry.action.data) is str:
-				#The tag <action> contains a sequence of actions separated by " "
-				actions = flowentry.action.data.split(" ")
+				#The tag <action> contains a sequence of actions separated by " " or ","
+				#actions = flowentry.action.data.split(" ")
+				actions = re.split(',| ', flowentry.action.data)
+
 				for a in actions:
 					action = Action()
 					tokens = a.split(":")
