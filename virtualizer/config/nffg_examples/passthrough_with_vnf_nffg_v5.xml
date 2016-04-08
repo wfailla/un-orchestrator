@@ -67,7 +67,7 @@
 					<type>example</type>
 					<ports>
 						<port>
-							<id>1</id>
+							<id>0</id>
 							<name>internal port</name>
 							<port-type>port-abstract</port-type>
 							<addresses>
@@ -93,7 +93,7 @@
 							<capability/>
 						</port>
 						<port>
-							<id>2</id>
+							<id>1</id>
 							<name>external port</name>
 							<port-type>port-abstract</port-type>
 							<addresses>
@@ -106,7 +106,7 @@
 							<capability/>
 						</port>
 						<port>
-							<id>3</id>
+							<id>2</id>
 							<name>external asd</name>
 							<port-type>port-abstract</port-type>
 							<capability/>
@@ -121,12 +121,12 @@
 					<port>../../../ports/port[id=1]</port>
 					<match/>
 					<action/>
-					<out>../../../NF_instances/node[id=NFa]/ports/port[id=3]</out>
+					<out>../../../NF_instances/node[id=NFa]/ports/port[id=2]</out>
 				</flowentry>
 				<flowentry>
 					<id>2</id>
 					<priority>100</priority>
-					<port>../../../NF_instances/node[id=NFa]/ports/port[id=2]</port>
+					<port>../../../NF_instances/node[id=NFa]/ports/port[id=1]</port>
 					<match/>
 					<action/>
 					<out>../../../ports/port[id=2]</out>
@@ -137,12 +137,12 @@
 					<port>../../../ports/port[id=2]</port>
 					<match/>
 					<action/>
-					<out>../../../NF_instances/node[id=NFa]/ports/port[id=2]</out>
+					<out>../../../NF_instances/node[id=NFa]/ports/port[id=1]</out>
 				</flowentry>
 				<flowentry>
 					<id>4</id>
 					<priority>100</priority>
-					<port>../../../NF_instances/node[id=NFa]/ports/port[id=3]</port>
+					<port>../../../NF_instances/node[id=NFa]/ports/port[id=2]</port>
 					<match/>
 					<action/>
 					<out>../../../ports/port[id=1]</out>

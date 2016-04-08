@@ -109,7 +109,7 @@ class DoEditConfig:
 			#
 			
 			vnfsToBeAdded = extractVNFsInstantiated(content)	#VNF deployed/to be deployed on the universal node
-				
+
 			rules, endpoints = extractRules(content)			#Flowrules and endpoints installed/to be installed on the universal node
 				
 			vnfsToBeRemoved = extractToBeRemovedVNFs(content)	#VNFs to be removed from the universal node
@@ -239,11 +239,11 @@ def extractVNFsInstantiated(content):
 	tmpInfrastructure = Virtualizer.parse(root=tree.getroot())
 	supportedNFs = tmpInfrastructure.nodes.node[constants.NODE_ID].capabilities.supported_NFs
 	supportedTypes = []
-	lowerPortId = {}
+	#lowerPortId = {}
 	for nf in supportedNFs:
 		nfType = nf.type.get_value()
 		supportedTypes.append(nfType)
-		lowerPortId[nfType] = getLowerPortId(nf)
+		#lowerPortId[nfType] = getLowerPortId(nf)
 		
 	LOG.debug("Extracting the network functions (to be) deployed on the universal node")
 	try:
@@ -285,9 +285,9 @@ def extractVNFsInstantiated(content):
 			port = instance.ports[port_id]
 			l4_addresses = port.addresses.l4.get_value()
 			if l4_addresses is not None:
-				if int(port.id.get_value()) != lowerPortId[vnfType]:
-					LOG.warning("L4 configuration is supported only to the port with lower id on VNF of type '%s'", vnfType)
-					raise ClientError("L4 configuration is supported only to the port with lower id on VNF of type " + vnfType)
+				if int(port.id.get_value()) != 0:
+					LOG.error("L4 configuration is supported only to the port with id = 0 on VNF of type '%s'", vnfType)
+					raise ClientError("L4 configuration is supported only to the port with id = 0 on VNF of type " + vnfType)
 				# Removing not needed chars
 				for ch in ['{','}',' ',"'"]:
 					if ch in l4_addresses:
@@ -296,7 +296,7 @@ def extractVNFsInstantiated(content):
 					# l4_address format is "protocol/port"
 					tmp = l4_address.split("/")
 					if tmp[0] != "tcp":
-						LOG.warning("Only tcp ports are supported on L4 configuration of VNF of type '%s'", vnfType)
+						LOG.error("Only tcp ports are supported on L4 configuration of VNF of type '%s'", vnfType)
 						raise ClientError("Only tcp ports are supported on L4 configuration of VNF of type "+ vnfType)
 					l4_port = tmp[1]
 					uc = UnifyControl(vnf_tcp_port=int(l4_port), host_tcp_port=tcp_port)
@@ -304,33 +304,41 @@ def extractVNFsInstantiated(content):
 					unify_control.append(uc)
 					tcp_port = tcp_port + 1
 			else:
+				if int(port.id.get_value()) == 0:
+					LOG.error("Port with id = 0 should be present only if it has a L4 configuration on VNF of type '%s'", vnfType)
+					raise ClientError("Port with id = 0 should be present only if it has a L4 configuration on VNF of type '%s'", vnfType)
 				unify_ip = None
 				if port.addresses.l3.length() != 0:
 					if port.addresses.l3.length() > 1:
-						LOG.warning("Only one l3 address is supported on a port on VNF of type '%s'", vnfType)
+						LOG.error("Only one l3 address is supported on a port on VNF of type '%s'", vnfType)
 						raise ClientError("Only one l3 address is supported on a port on VNF of type " + vnfType)
 					for l3_address_id in port.addresses.l3:
 						l3_address = port.addresses.l3[l3_address_id]
+						"""
 						if l3_address.configure.get_value() == "False" or l3_address.configure.get_value() == "false":
-							LOG.warning("Configure must be set to True on l3 address of VNF of type '%s'", vnfType)
+							LOG.error("Configure must be set to True on l3 address of VNF of type '%s'", vnfType)
 							raise ClientError("Configure must be set to True on l3 address of VNF of type " + vnfType)
+						"""
 						unify_ip = l3_address.requested.get_as_text()
+				mac = port.addresses.l2.get_value()
 				port_id_nffg = int(port_id)-1
-				port_list.append(Port(_id="port:"+str(port_id_nffg), unify_ip=unify_ip))
+				port_list.append(Port(_id="port:"+str(port_id_nffg), unify_ip=unify_ip, mac=mac))
 			if port.metadata.length() > 0:
-				for metadata_id in port.metadata:
-					metadata = port.metadata[metadata_id]
-					key = metadata.key.get_as_text()
-					value = metadata.value.get_as_text()
-					if key.startswith("variable:"):
-						tmp = key.split(":",1)
-						unify_env_variables.append(tmp[1]+"="+value)
-					elif key.startswith("measure"):
-						unify_monitoring = unify_monitoring + value
-						pass
-					else:
-						LOG.warning("Unsupported metadata " + key)
-						raise ClientError("Unsupported metadata " + key)
+				LOG.error("Metadata are not supported inside a port element. Those should specified per node")
+		if instance.metadata.length() > 0:
+			for metadata_id in instance.metadata:
+				metadata = instance.metadata[metadata_id]
+				key = metadata.key.get_as_text()
+				value = metadata.value.get_as_text()
+				if key.startswith("variable:"):
+					tmp = key.split(":",1)
+					unify_env_variables.append(tmp[1]+"="+value)
+				elif key.startswith("measure"):
+					unify_monitoring = unify_monitoring + value
+					pass
+				else:
+					LOG.error("Unsupported metadata " + key)
+					raise ClientError("Unsupported metadata " + key)	
 			
 		vnf = VNF(_id = instance.id.get_value(), name = vnfType, ports=port_list, unify_control=unify_control, unify_env_variables=unify_env_variables)
 		nfinstances.append(vnf)
@@ -382,6 +390,7 @@ def extractRules(content):
 					tokens = m.split("=")
 					elements = len(tokens)
 					if elements != 2:
+						LOG.error("Incorrect match "+flowentry.match.data)
 						raise ClientError("Incorrect match")
 					#The match is in the form "name=value"
 					if not supportedMatch(tokens[0]):
@@ -406,6 +415,9 @@ def extractRules(content):
 						
 		if tokens[4] == 'ports':
 			#This is a port of the universal node. We have to extract the virtualized port name
+			if port.name.get_value() not in physicalPortsVirtualization:
+				LOG.error("Physical port "+ port.name.get_value()+" is not present in the UN")
+				raise ClientError("Physical port "+ port.name.get_value()+" is not present in the UN")
 			port_name = physicalPortsVirtualization[port.name.get_value()]		
 			if port_name not in endpoints_dict:
 				endpoints_dict[port_name] = EndPoint(_id = str(endpoint_id) ,_type = "interface", interface = port_name)
@@ -420,7 +432,7 @@ def extractRules(content):
 			match.port_in = "vnf:"+ vnf_id + ":port:" + str(port_id)
 			# Check if this VNF port has L4 configuration. In this case rules cannot involve such port 
 			if universal_node.NF_instances[vnf_id].ports[port.id.get_value()].addresses.l4.get_value() is not None:
-				LOG.error("It is not possibile to install flows related to a VNF port that has L4 configuration")
+				LOG.error("It is not possibile to install flows related to a VNF port that has L4 configuration. Flowrule id: "+f_id)
 				raise ClientError("It is not possibile to install flows related to a VNF port that has L4 configuration")
 		else:
 			LOG.error("Invalid port '%s' defined in a flowentry",port)
@@ -637,7 +649,7 @@ def diffRulesToBeAdded(newRules):
 			rulesToBeAdded.append(newRule)
 			
 	return rulesToBeAdded
-
+"""
 def getLowerPortId(nf):
 	'''
 	Scans the ports of a NF retrieving the port with lower id
@@ -648,6 +660,7 @@ def getLowerPortId(nf):
 		if port_id < lower_id:
 			lower_id = port_id
 	return lower_id
+"""	
 		
 def supportedMatch(tag):
 	'''
@@ -1273,4 +1286,5 @@ api.add_route('/edit-config',DoEditConfig())
 
 #in_file = open ("config/nffg_examples/passthrough_with_vnf_nffg_v5.xml")
 #in_file = open ("config/nffg_examples/nffg_delete_flow_vnf.xml")
+#in_file = open ("config/nffg_examples/er_nffg_virtualizer5.xml")
 #DoEditConfig().on_post(in_file.read(), None)
