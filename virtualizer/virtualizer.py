@@ -338,7 +338,6 @@ def extractVNFsInstantiated(content):
 					unify_env_variables.append(tmp[1]+"="+value)
 				elif key.startswith("measure"):
 					unify_monitoring = unify_monitoring + value
-					pass
 				else:
 					LOG.error("Unsupported metadata " + key)
 					raise ClientError("Unsupported metadata " + key)	
