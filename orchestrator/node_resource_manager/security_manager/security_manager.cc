@@ -92,8 +92,6 @@ bool SecurityManager::isAuthorizedForCreation(char *user, const char *generic_re
 
 	sqlite3_stmt *stmt;
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User: %s\nGen: %s\nRes: %s\n", user, generic_resource, resource);
-
 	// The resource I want to create must not exist in the database at the moment
 	if(dbmanager->resourceExists(generic_resource, resource)) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot create new resource /%s/%s: it does already exist!", generic_resource, resource);
@@ -120,7 +118,6 @@ bool SecurityManager::isAuthorizedForCreation(char *user, const char *generic_re
 
 	sqlite3_finalize(stmt);
 
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Permission for create: %s", permissions);
 	return (permissions != NULL && strncmp(permissions, ALLOW, 1) == 0);
 }
 

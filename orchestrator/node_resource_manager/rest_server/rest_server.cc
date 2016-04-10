@@ -136,6 +136,7 @@ int RestServer::answer_to_connection(void *cls,
 	}
 
 	// Process request
+
 	if (0 == strcmp(method, GET))
 		return doOperation(connection, con_cls, GET, url);
 
@@ -286,11 +287,93 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 	}
 }
 
+int RestServer::createUser(char *username, struct MHD_Connection *connection, connection_info_struct *con_info) {
+	char *group, *password;
+	unsigned char hash_token[HASH_SIZE], temp[BUFFER_SIZE];
+	char hash_pwd[BUFFER_SIZE], nonce[BUFFER_SIZE], tmp[BUFFER_SIZE], user_tmp[BUFFER_SIZE];
+
+	assert(con_info != NULL);
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User login");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s", con_info->message);
+
+	if (MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "Host") == NULL) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Host\" header not present in the request");
+		return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
+	}
+
+	if (!parsePostBody(*con_info, &username, &password, &group)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Create user error: Malformed content");
+		return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
+	}
+
+	try {
+		if (username == NULL || group == NULL || password == NULL) {
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Client unathorized!");
+			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
+		}
+
+		SHA256((const unsigned char*) password, sizeof(password) - 1, hash_token);
+
+		strcpy(tmp, "");
+		strcpy(hash_pwd, "");
+
+		for (int i = 0; i < HASH_SIZE; i++) {
+			sprintf(tmp, "%x", hash_token[i]);
+			strcat(hash_pwd, tmp);
+		}
+
+		strcpy(user_tmp, username);
+
+		if(dbmanager->userExists(user_tmp, hash_pwd)) {
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Create user failed: wrong username or password!");
+			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
+		}
+
+		strcpy(tmp, "");
+		strcpy(hash_pwd, "");
+
+		for (int i = 0; i < HASH_SIZE; i++) {
+			sprintf(tmp, "%x", temp[i]);
+			strcat(nonce, tmp);
+		}
+
+		char *token = (char *) MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "X-Auth-Token");
+
+		if(token == NULL) {
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\"Token\" header not present in the request");
+			return false;
+		}
+
+		dbmanager->insertUser(user_tmp, nonce, group);
+
+		user_info_t *u = dbmanager->getUserByToken(token);
+
+		std::cout<<"user by token: "<<u->user<<std::endl;
+		dbmanager->insertResource(BASE_URL_USER, user_tmp, u->user);
+
+		return httpResponse(connection, MHD_HTTP_ACCEPTED);
+
+	} catch (...) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during user login!");
+		return httpResponse(connection, MHD_HTTP_INTERNAL_SERVER_ERROR);
+	}
+}
+
+
 bool RestServer::parsePostBody(struct connection_info_struct &con_info,
 		char **user, char **pwd) {
 	Value value;
 	read(con_info.message, value);
 	return parseLoginForm(value, user, pwd);
+}
+
+bool RestServer::parsePostBody(struct connection_info_struct &con_info,
+		char **user, char **pwd, char **group) {
+	Value value;
+	read(con_info.message, value);
+	return parseUserCreationForm(value, pwd, group);
 }
 
 bool RestServer::parseLoginForm(Value value, char **user, char **pwd) {
@@ -334,24 +417,47 @@ bool RestServer::parseLoginForm(Value value, char **user, char **pwd) {
 	return true;
 }
 
-/*
-int RestServer::doPutOnSingleResource(struct MHD_Connection *connection, void **con_cls, char *generic_resource, char *resource, char *user) {
-	struct connection_info_struct *con_info = (struct connection_info_struct *) (*con_cls);
-	assert(con_info != NULL);
+bool RestServer::parseUserCreationForm(Value value, char **pwd, char **group) {
+	try {
+		Object obj = value.getObject();
 
-	const char *c_type = MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "Content-Type");
-	if (strcmp(c_type, JSON_C_TYPE) != 0) {
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content-Type must be: "JSON_C_TYPE);
-		return httpResponse(connection, MHD_HTTP_UNSUPPORTED_MEDIA_TYPE);
+		bool foundPwd = false, foundGroup = false;
+
+		//Identify the flow rules
+		for (Object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+			const string& name = i->first;
+			const Value& value = i->second;
+
+			if (name == PASS) {
+				foundPwd = true;
+				(*pwd) = (char *) value.getString().c_str();
+			} else if (name == GROUP) {
+				foundGroup = true;
+				(*group) = (char *) value.getString().c_str();
+			} else {
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+						"Invalid key: %s", name.c_str());
+				return false;
+			}
+		}
+		if (!foundPwd) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+					"Key \"%s\" not found", PASS);
+			return false;
+		} else if (!foundGroup) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+					"Key \"%s\" not found", GROUP);
+		}
+	} catch (exception& e) {
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+				"The content does not respect the JSON syntax: ", e.what());
+		return false;
 	}
 
-	if(strcmp(generic_resource, BASE_URL_GRAPH) == 0)
-		return deployNewGraph(connection, con_info, generic_resource, resource, user);
-
-	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error trying to PUT a resource not belonging to NF-FG: not implemented!");
-	return httpResponse(connection, MHD_HTTP_NOT_IMPLEMENTED);
+	return true;
 }
-*/
+
+
 int RestServer::createGraphFromFile(string toBeCreated) {
 	char graphID[BUFFER_SIZE];
 	strcpy(graphID, GRAPH_ID);
@@ -416,10 +522,9 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
 
-		if (strcmp(generic_resource, BASE_URL_GRAPH) == 0) {
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s /%s will be implemented soon!", method, generic_resource);
-			return httpResponse(connection, MHD_HTTP_NOT_IMPLEMENTED);
-		}
+		// Case currently implemented: read a graph
+		if (strcmp(generic_resource, BASE_URL_GRAPH) == 0)
+			return readMultipleGraphs(connection, usr);
 
 		return httpResponse(connection, MHD_HTTP_NOT_IMPLEMENTED);
 	} else if(strcmp(method, PUT) == 0) {
@@ -478,6 +583,19 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 
 		if(strcmp(generic_resource, BASE_URL_GRAPH) == 0)
 			return deleteGraph(connection, (char *) resource);
+	} else if(strcmp(method, POST) == 0) {
+
+		if(strcmp(generic_resource, BASE_URL_USER) == 0) {
+			// Check authorization
+			if (dbmanager != NULL && !secmanager->isAuthorized(usr, _CREATE, generic_resource, resource)) {
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User not authorized to execute %s on %s", method, resource);
+				return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
+			}
+
+			return createUser((char *) resource, connection, con_info);
+		}
+
+		return httpResponse(connection, MHD_HTTP_NOT_IMPLEMENTED);
 	}
 
 	logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: %s on /%s/%s not implemented!", method, generic_resource, resource);
@@ -577,9 +695,11 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 	// ...end of routine HTTP requests checks **************************************************************************************
 
 	// If security is required, check whether the current message is a login request
-	if(dbmanager != NULL && isLoginRequest(method, url))
+	if(dbmanager != NULL && isLoginRequest(method, url)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Received a login request!");
 		// execute login routine
 		return login(connection, con_cls);
+	}
 
 	// If security is required, try to authenticate the client
 	char *token = NULL;
@@ -666,14 +786,48 @@ int RestServer::readGraph(struct MHD_Connection *connection, char *graphID) {
 	}
 }
 
-int RestServer::doGetInterfaces(struct MHD_Connection *connection) {
+
+int RestServer::readMultipleGraphs(struct MHD_Connection *connection, user_info_t *usr) {
+	assert(usr != NULL);
+
 	struct MHD_Response *response;
 	int ret;
 
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Required resource: %s", BASE_URL_GRAPH);
+
+	// Check whether NF-FG exists as a generic resourse in the local database
+	if (!dbmanager->resourceExists(BASE_URL_GRAPH)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The generic resource %s does not exist in the local database", BASE_URL_GRAPH);
+		response = MHD_create_response_from_buffer(0, (void*) "",
+				MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header(response, "Allow", PUT);
+		ret = MHD_queue_response(connection, MHD_HTTP_METHOD_NOT_ALLOWED,
+				response);
+		MHD_destroy_response(response);
+		return ret;
+	}
+
 	try {
-		Object json = gm->toJSONPhysicalInterfaces();
+		Object nffg;
+		Array nffg_array;
+		std::list<std::string> names;
+
+		// If security is required, search the names in the database
+		if(dbmanager != NULL)
+			dbmanager->getAllowedResourcesNames(usr, _READ, BASE_URL_GRAPH, &names);
+		else
+			// Otherwise, retrieve all the NF-FGs
+			gm->getGraphsNames(&names);
+
+		std::list<std::string>::iterator i;
+
+		for(i = names.begin(); i != names.end(); ++i)
+			nffg_array.push_back(gm->toJSON(*i));
+
+		nffg[BASE_URL_GRAPH] = nffg_array;
+
 		stringstream ssj;
-		write_formatted(json, ssj);
+		write_formatted(nffg, ssj);
 		string sssj = ssj.str();
 		char *aux = (char*) malloc(sizeof(char) * (sssj.length() + 1));
 		strcpy(aux, sssj.c_str());
@@ -685,14 +839,8 @@ int RestServer::doGetInterfaces(struct MHD_Connection *connection) {
 		MHD_destroy_response(response);
 		return ret;
 	} catch (...) {
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__,
-				"An error occurred while retrieving the description of the physical interfaces!");
-		response = MHD_create_response_from_buffer(0, (void*) "",
-				MHD_RESPMEM_PERSISTENT);
-		ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR,
-				response);
-		MHD_destroy_response(response);
-		return ret;
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while retrieving the graph description!");
+		return httpResponse(connection, MHD_HTTP_INTERNAL_SERVER_ERROR);
 	}
 }
 

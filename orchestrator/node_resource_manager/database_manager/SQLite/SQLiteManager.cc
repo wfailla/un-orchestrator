@@ -359,6 +359,8 @@ int SQLiteManager::insertUser(char *user, char *pwd, char *group) {
 
 	rc = sqlite3_prepare_v2(this->db, sql, -1, &stmt, 0);
 
+
+	std::cout<<"Insert user: "<<user<<" "<<pwd<<" "<<group<<std::endl;
 	if (rc == SQLITE_OK) {
 		idx = sqlite3_bind_parameter_index(stmt, "@user");
 		sqlite3_bind_text(stmt, idx, user, strlen(user), 0);
@@ -534,4 +536,57 @@ int SQLiteManager::insertDefaultUsagePermissions(char *generic_resource, char *o
 	return res;
 }
 
+/*
+ * Fills a list with the names of resource for which a user is authorized
+ * to perform a specific operation.
+ */
+void SQLiteManager::getAllowedResourcesNames(user_info_t *usr, opcode_t op, char *generic_resource, std::list<std::string> *resources) {
+	sqlite3_stmt *stmt;
+	int res = 0, idx = 0, rc = 0;
+
+	if(op == _CREATE)
+		return;
+
+	char *query = "select * " \
+			"from CURRENT_RESOURCES_PERMISSIONS " \
+	    	"where GENERIC_RESOURCE = @generic_resource;",
+			*resource = NULL, *owner = NULL, *owner_permission = NULL,
+			*group_permission = NULL, *all_permission = NULL, *admin_permission = NULL,
+			*permission = NULL;
+
+	rc = sqlite3_prepare_v2(this->db, query, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@generic_resource");
+		sqlite3_bind_text(stmt, idx, generic_resource, strlen(generic_resource), 0);
+
+		while (1) {
+			res = sqlite3_step(stmt);
+
+	        if (res == SQLITE_ROW) {
+	        	resource = (char*) sqlite3_column_text(stmt, 1);
+	        	owner = (char*) sqlite3_column_text(stmt, 2);
+	        	owner_permission = (char*) sqlite3_column_text(stmt, 3);
+	        	group_permission = (char*) sqlite3_column_text(stmt, 4);
+	        	all_permission = (char*) sqlite3_column_text(stmt, 5);
+	        	admin_permission = (char*) sqlite3_column_text(stmt, 6);
+
+	        	if(strcmp(usr->user, ADMIN) == 0)
+	        		permission = admin_permission;
+	        	else if(strcmp(usr->user, owner) == 0)
+	        		permission = owner_permission;
+	        	else if(strcmp(usr->group, getGroup(owner)) == 0)
+	        		permission = group_permission;
+	        	else
+	        		permission = all_permission;
+
+	        	if (strncmp(permission + op, ALLOW, 1) == 0) {
+	        		std::string str(resource);
+	        		resources->push_back(str);
+	        	}
+	        } else if(res == SQLITE_DONE || res==SQLITE_ERROR)
+	        	break;
+		}
+	}
+}
 

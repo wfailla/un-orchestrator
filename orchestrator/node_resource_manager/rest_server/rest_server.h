@@ -87,14 +87,20 @@ private:
 	static int doOperation(struct MHD_Connection *connection, void **con_cls, const char *method, const char *url);
 
 	static int readGraph(struct MHD_Connection *connection, char *graphID);
-	static int doGetInterfaces(struct MHD_Connection *connection);
+	static int readMultipleGraphs(struct MHD_Connection *connection, user_info_t *usr);
 
 	static int doPost(struct MHD_Connection *connection, const char *url, void **con_cls, bool client_auth);
+
 	static bool parsePostBody(struct connection_info_struct &con_info,char **user, char **pwd);
+	static bool parsePostBody(struct connection_info_struct &con_info,char **user, char **pwd, char **group);
+
 	static bool parseLoginForm(Value value, char **user, char **pwd);
+	static bool parseUserCreationForm(Value value, char **pwd, char **group);
 
 	static int doPut(struct MHD_Connection *connection, const char *url, void **con_cls);
 	static bool parsePutBody(struct connection_info_struct &con_info,highlevel::Graph &graph, bool newGraph);
+
+	static int createUser(char *user, struct MHD_Connection *connection, connection_info_struct *con_info);
 
 	static int doDelete(struct MHD_Connection *connection,const char *url, void **con_cls);
 

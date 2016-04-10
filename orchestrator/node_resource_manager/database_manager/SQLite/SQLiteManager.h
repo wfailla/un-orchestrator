@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <exception>
@@ -28,10 +30,6 @@ typedef enum {
 typedef struct {
 	char *user, *pwd, *group, *token;
 } user_info_t;
-
-typedef enum {
-	OWNER, GROUP, OTHERS, ADMINISTRATOR
-} permission_class;
 
 class SQLiteManager {
 
@@ -92,6 +90,8 @@ public:
 	int insertDefaultUsagePermissions(char *generic_resource, char *owner_p, char *group_p, char *all_p, char *admin_p);
 
 	int insertUserCreationPermission(char *user, char *generic_resource, char *permission);
+
+	void getAllowedResourcesNames(user_info_t *usr, opcode_t op, char *generic_resource, std::list<std::string> *resources);
 };
 
 class SQLiteManagerException : public exception

@@ -297,6 +297,8 @@ public:
 	void printInfo(lowlevel::Graph graphLSI0, LSI *lsi0);
 
 	static void mutexInit();
+
+	void getGraphsNames(std::list<std::string> *l);
 };
 
 
