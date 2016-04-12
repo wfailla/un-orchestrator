@@ -722,6 +722,7 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 	resource = strtok(NULL, delimiter);
 	extra = strtok(NULL, delimiter);
 
+#ifdef ENABLE_DIRECT_VM2VM
 	if(strcmp(generic_resource, BASE_URL_DIRECT_VM2VM) == 0) {
 		if(resource == NULL)
 			return doPutCommandReletedToPort(connection, con_cls);
@@ -731,6 +732,7 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 			return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
 		}
 	}
+#endif
 
 	// Fetch user information
 	if(dbmanager != NULL)
