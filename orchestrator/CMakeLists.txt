@@ -244,6 +244,11 @@ SET(SOURCES1
 	node_resource_manager/graph/vlan_action.h
 	node_resource_manager/graph/vlan_action.cc
 
+	node_resource_manager/graph/graph-parser/graph_parser.h
+	node_resource_manager/graph/graph-parser/graph_parser.cc
+	node_resource_manager/graph/graph-parser/match_parser.h
+	node_resource_manager/graph/graph-parser/match_parser.cc
+
 	node_resource_manager/graph/low_level_graph/output_action.h
 	node_resource_manager/graph/low_level_graph/output_action.cc
 	node_resource_manager/graph/low_level_graph/graph.h
@@ -305,8 +310,6 @@ SET(SOURCES1
 
 	node_resource_manager/rest_server/rest_server.h
 	node_resource_manager/rest_server/rest_server.cc
-	node_resource_manager/rest_server/match_parser.h
-	node_resource_manager/rest_server/match_parser.cc
 
 	node_resource_manager/database_manager/SQLite/SQLiteManager.h
 	node_resource_manager/database_manager/SQLite/SQLiteManager.cc

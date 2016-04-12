@@ -8,7 +8,7 @@
 	</network-function>
    
 	<network-function name="sw-c"  num-ports="3" summary="ovs switch">
-		<docker uri="switch--client"/>
+		<docker uri="switch-client"/>
 	</network-function>
 
 	<network-function name="dhcp-c"  num-ports="1" summary="dhcp server">
@@ -37,6 +37,26 @@
 
 	<network-function name="nat-i"  num-ports="2" summary="iptables based nat">
 		<docker uri="nat-isp"/>
+	</network-function>
+
+	<network-function name="sw-a"  num-ports="5" summary="ovs switch">
+		<docker uri="switch-auth"/>
+	</network-function>
+
+	<network-function name="dhcp-a"  num-ports="1" summary="dhcp server">
+		<docker uri="dhcp-auth"/>
+	</network-function>
+
+	<network-function name="c_prt-a"  num-ports="1" summary="dhcp server">
+		<docker uri="captive-portal-auth"/>
+	</network-function>
+
+	<network-function name="ip_f-a"  num-ports="1" summary="dhcp server">
+		<docker uri="ip-forger-auth"/>
+	</network-function>
+
+	<network-function name="nat-a"  num-ports="2" summary="dhcp server">
+		<docker uri="nat-auth"/>
 	</network-function>
 
 </network-functions>
