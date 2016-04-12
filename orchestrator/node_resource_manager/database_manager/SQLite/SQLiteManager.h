@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <exception>
@@ -14,12 +16,24 @@
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
 
+#include <assert.h>
+
 using namespace std;
 
-class SQLiteManager
-{
-private:
+typedef enum {
+	_READ,
+	_UPDATE,
+	_DELETE,
+	_CREATE
+} opcode_t;
 
+typedef struct {
+	char *user, *pwd, *group, *token;
+} user_info_t;
+
+class SQLiteManager {
+
+private:
 	/**
 	*	@brief: Database pointer
 	*/
@@ -40,38 +54,44 @@ private:
 	*/
 	void disconnect();
 
-	/**
-	*	@brief: SELECT callback
-	*/
-	static int callback(void *NotUsed, int argc, char **argv, char **azColName);
-
 public:
 
 	SQLiteManager(char *db_name);
 
 	~SQLiteManager();
 
-	bool createTable();
+	sqlite3* getDb();
 
-	bool insertUsrPwd(char *user, char *pwd);
+	bool createTables();
 
-	bool selectUsrPwd(char *user, char *pwd);
+	bool cleanTables();
 
-	bool selectToken(char *token);
+	bool userExists(char *username, char *hash_pwd);
+	int insertUser(char *user, char *pwd, char *group);
+	int deleteUser(char *user);
+	user_info_t *getUserByToken(const char *token);
 
-	bool selectAllTable();
+	char *getGroup(const char *user);
 
-	bool updateTokenAndTimestamp(char *user, char *token, char *timestamp);
+	bool isLogged(char *username);
 
-	bool updatePwd(char *user, char *pwd);
+	int insertLogin(char *user, char *token, char *timestamp);
 
-	bool eraseAllToken();
+	bool resourceExists(const char *generic_resource);
+	bool resourceExists(const char *generic_resource, const char *resource);
 
-	char *getUser();
+	int insertResource(char *generic_resource);
+	int insertResource(char *generic_resource, char *resource, char *owner);
+	int updateResource(char *generic_resource, char *resource);
+	int deleteResource(char *generic_resource, char *resource);
 
-	char *getPwd();
+	bool isGenericResource(const char *generic_resource);
 
-	char *getToken();
+	int insertDefaultUsagePermissions(char *generic_resource, char *owner_p, char *group_p, char *all_p, char *admin_p);
+
+	int insertUserCreationPermission(char *user, char *generic_resource, char *permission);
+
+	void getAllowedResourcesNames(user_info_t *usr, opcode_t op, char *generic_resource, std::list<std::string> *resources);
 };
 
 class SQLiteManagerException : public exception

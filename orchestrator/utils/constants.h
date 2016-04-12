@@ -13,6 +13,7 @@
 #define BASE_URL_GRAPH			"NF-FG"
 #define BASE_URL_IFACES			"interfaces"
 #define BASE_URL_LOGIN			"login"
+#define BASE_URL_USER			"users"
 #define REST_URL 				"http://localhost"
 #define REQ_SIZE 				2*1024*1024
 
@@ -230,6 +231,7 @@ extern ofp_version_t OFP_VERSION;
 #define ADMIN				"admin"
 #define USER				"username"
 #define PASS				"password"
+#define GROUP				"group"
 #define HASH_SIZE			20
 #define TOKEN_TYPE			"application/token"
 #define DB_NAME				"users.db"
@@ -239,6 +241,18 @@ extern ofp_version_t OFP_VERSION;
 *	OpenFlow
 */
 #define HIGH_PRIORITY 		65535
+
+/*
+ *	Database
+ */
+#define PERMISSION_LEN	3	// CRUD
+#define ALLOW			"A"
+#define DENY			"D"
+
+#define DEFAULT_NFFG_OWNER_PERMISSION "AAA"
+#define DEFAULT_NFFG_GROUP_PERMISSION "ADD"
+#define DEFAULT_NFFG_ALL_PERMISSION "DDD"
+#define DEFAULT_NFFG_ADMIN_PERMISSION "AAA"
 
 /*
 *	Misc

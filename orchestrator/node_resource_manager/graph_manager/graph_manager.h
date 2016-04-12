@@ -314,6 +314,9 @@ public:
 	bool executeCommandReleatedToPort(string port, string command, string & response);
 #endif
 
+
+	void getGraphsNames(std::list<std::string> *l);
+
 };
 
 
