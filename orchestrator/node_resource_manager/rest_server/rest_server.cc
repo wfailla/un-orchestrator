@@ -722,7 +722,7 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 	resource = strtok(NULL, delimiter);
 	extra = strtok(NULL, delimiter);
 
-	if(strcmp(url, BASE_URL_DIRECT_VM2VM) == 0) {
+	if(strcmp(generic_resource, BASE_URL_DIRECT_VM2VM) == 0) {
 		if(resource == NULL)
 			return doPutCommandReletedToPort(connection, con_cls);
 		else {
