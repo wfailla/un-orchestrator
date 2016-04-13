@@ -139,7 +139,9 @@ private:
 	static int httpResponse(struct MHD_Connection *connection, int code);
 
 #ifdef ENABLE_DIRECT_VM2VM
-	static int doPutCommandReletedToPort(struct MHD_Connection *connection, void **con_cls);
+	//static int doPutCommandReletedToPort(struct MHD_Connection *connection, void **con_cls);
+	static int attachDevice(struct MHD_Connection *connection, void **con_cls);
+	static int detachDevice(struct MHD_Connection *connection, void **con_cls);
 #endif
 
 public:

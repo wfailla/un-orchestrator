@@ -18,7 +18,8 @@
 #define REQ_SIZE 				2*1024*1024
 
 #ifdef ENABLE_DIRECT_VM2VM
-	#define BASE_URL_DIRECT_VM2VM	"direct_vm2vm"
+	#define BASE_URL_ATTACH	"attach"
+	#define BASE_URL_DETACH	"detach"
 #endif
 
 /*
@@ -152,7 +153,9 @@
 	*	Costants in the JSON describing the command for the direct vm2vm
 	*/
 	#define DIRECT_VM2VM_PORT	"port"
-	#define DIRECT_VM2VM_COMMAND	"command"
+	#define DIRECT_VM2VM_ID		"id"
+	#define DIRECT_VM2VM_TYPE	"type"
+	#define DIRECT_VM2VM_DEVICE	"device"
 #endif
 
 /*

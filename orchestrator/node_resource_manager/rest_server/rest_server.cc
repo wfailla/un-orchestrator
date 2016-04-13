@@ -1,5 +1,7 @@
 #include "rest_server.h"
 
+#define PCI_SHORT_PRI_FMT "%.2" PRIx8 ":%.2" PRIx8 ".%" PRIx8
+
 GraphManager *RestServer::gm = NULL;
 SQLiteManager *dbmanager = NULL;
 
@@ -723,9 +725,17 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 	extra = strtok(NULL, delimiter);
 
 #ifdef ENABLE_DIRECT_VM2VM
-	if(strcmp(generic_resource, BASE_URL_DIRECT_VM2VM) == 0) {
+	if(strcmp(generic_resource, BASE_URL_ATTACH) == 0) {
 		if(resource == NULL)
-			return doPutCommandReletedToPort(connection, con_cls);
+			return attachDevice(connection, con_cls);
+		else {
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+				"Bad URL request");
+			return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
+		}
+	} else if(strcmp(generic_resource, BASE_URL_DETACH) == 0) {
+		if(resource == NULL)
+			return detachDevice(connection, con_cls);
 		else {
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
 				"Bad URL request");
@@ -1105,7 +1115,120 @@ int RestServer::deleteFlow(struct MHD_Connection *connection, char *resource, ch
 }
 
 #ifdef ENABLE_DIRECT_VM2VM
-int RestServer::doPutCommandReletedToPort(struct MHD_Connection *connection, void **con_cls)
+int RestServer::attachDevice(struct MHD_Connection *connection, void **con_cls)
+{
+	struct MHD_Response *response;
+	int ret;
+	string response_string;
+
+	char pci_address[20];
+	struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
+	assert(con_info != NULL);
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content of the request:");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
+
+	Value value;
+	read(con_info->message, value);
+
+	string port;	/* port of the vm the command is directed to */
+	string id; 		/* id of the device to plug */
+	string type;	/* ivshmem or pci device? */
+	string device;	/* device to plug */
+
+	string command;	/* command to execute */
+
+	stringstream stream;
+
+	size_t p, p1;
+	unsigned int bus, device_addr, function;
+	string bus_s, device_addr_s, function_s;
+	char c;
+
+	int count = 0;
+	string string_response;	/* response from qemu */
+
+	try {
+		Object obj = value.getObject();
+
+		for (Object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+			const string& name  = i->first;
+			const Value& value = i->second;
+
+			if (name == DIRECT_VM2VM_PORT) {
+				port = value.getString();
+				count++;
+			} else if (name == DIRECT_VM2VM_ID) {
+				id = value.getString();
+				count++;
+			} else if (name == DIRECT_VM2VM_TYPE) {
+				type = value.getString();
+				count++;
+			} else if (name == DIRECT_VM2VM_DEVICE) {
+				device = value.getString();
+				count++;
+			}
+		}
+
+		if(count < 4) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+					"Info missing in JSON!");
+			goto error;
+		}
+
+	} catch(exception& e) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: ",e.what());
+		goto error;
+	}
+
+	/* fill command to execute */
+	command = "device_add " + type + "," + device + ",id=" + id;
+
+	if(!gm->executeCommandReleatedToPort(port, command, string_response)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The command '%s' is not valid!",command.c_str());
+		goto error;
+	}
+
+	if(!string_response.empty()) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+			"Error plugging device: %s", string_response.c_str());
+		goto error;
+	}
+
+	if(!gm->executeCommandReleatedToPort(port, "info pci", string_response)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The command '%s' is not valid!",command.c_str());
+		goto error;
+	}
+
+	/* find relative position within all devices */
+	p = string_response.find("id \"" + id + "\"");
+	p1 = string_response.rfind("Bus", p);
+
+	/* set position to read the address of this device */
+	stream.str(string_response);
+	stream.seekg(p1);
+
+	/* read pci address of this device */
+	stream >> bus_s >> hex >> bus >> c;
+	stream >> device_addr_s >> hex >> device_addr >> c;
+	stream >> function_s >> hex >> function >> c;
+
+	snprintf(pci_address, sizeof(pci_address), PCI_SHORT_PRI_FMT, bus, device_addr, function);
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The command '%s' related to the port '%s' has been executed!",command.c_str(),command.c_str());
+	response = MHD_create_response_from_buffer (strlen(pci_address), pci_address, MHD_RESPMEM_MUST_COPY);
+	ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+	MHD_destroy_response (response);
+	return ret;
+
+error:
+	response = MHD_create_response_from_buffer (0, NULL, MHD_RESPMEM_PERSISTENT);
+	ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+	MHD_destroy_response (response);
+	return ret;
+}
+
+int RestServer::detachDevice(struct MHD_Connection *connection, void **con_cls)
 {
 	struct MHD_Response *response;
 	int ret;
@@ -1119,70 +1242,66 @@ int RestServer::doPutCommandReletedToPort(struct MHD_Connection *connection, voi
 
 	Value value;
 	read(con_info->message, value);
-	//value contains the json in the body
 
-	string port;
-	string command;
-	string string_response;
+	string port;	/* port of the vm the command is directed to */
+	string id; 		/* id of the device to plug */
+	string command;	/* command to execute */
 
-	try
-	{
+	int count = 0;
+	string string_response;	/* response from qemu */
+
+	try {
 		Object obj = value.getObject();
 
-	  	bool foundPort = false;
-	  	bool foundCommand = false;
+		for (Object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+			const string& name  = i->first;
+			const Value& value = i->second;
 
-		//Identify the flow rules
-		for( Object::const_iterator i = obj.begin(); i != obj.end(); ++i )
-		{
-	 	    const string& name  = i->first;
-		    const Value&  value = i->second;
-
-			if(name == DIRECT_VM2VM_PORT)
-			{
-				foundPort = true;
+			if (name == DIRECT_VM2VM_PORT) {
 				port = value.getString();
-			}
-			else if (name == DIRECT_VM2VM_COMMAND)
-			{
-				foundCommand = true;
-				command = value.getString();
+				count++;
+			} else if (name == DIRECT_VM2VM_ID) {
+				id = value.getString();
+				count++;
 			}
 		}
-		if(!foundPort || !foundCommand)
-		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or all of them not found",DIRECT_VM2VM_PORT,DIRECT_VM2VM_COMMAND);
-			goto malformed_content;
+
+		if(count < 2) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+					"Info missing in JSON!");
+			goto error;
 		}
-	}catch(exception& e)
-	{
+
+	} catch(exception& e) {
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: ",e.what());
-		goto malformed_content;
+		goto error;
 	}
 
-    //The content of the received message is syntactically correct is correct
+	/* fill command to execute */
+	command = "device_del " + id;
 
-    if(!gm->executeCommandReleatedToPort(port,command, string_response))
-	{
+	if(!gm->executeCommandReleatedToPort(port, command, string_response)) {
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The command '%s' is not valid!",command.c_str());
-		goto malformed_content;
+		goto error;
 	}
 
-	/* XXX: send string_response back to the client */
+	if(!string_response.empty()) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+			"Error un-plugging device: %s", string_response.c_str());
+		goto error;
+	}
 
-    logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The command '%s' related to the port '%s' has been executed!",command.c_str(),command.c_str());
-	response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-//	MHD_add_response_header (response, "Location", absolute_url.str().c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The command '%s' related to the port '%s' has been executed!",command.c_str(),command.c_str());
+	response = MHD_create_response_from_buffer (0, NULL, MHD_RESPMEM_MUST_COPY);
 	ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
 	MHD_destroy_response (response);
 	return ret;
 
-malformed_content:
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Malformed content");
-	response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+error:
+	response = MHD_create_response_from_buffer (0, NULL, MHD_RESPMEM_PERSISTENT);
 	ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
 	MHD_destroy_response (response);
 	return ret;
-
 }
+
 #endif
