@@ -777,16 +777,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	In principle a virtual link could also be shared between a NF port and an endpoint but, for simplicity, we
 	*	use separated virtual links in case of endpoint.
 	*/
-	unsigned int numberOfVLrequiredBeforeEndPoints = 0;
-#if 0
-	//IVANO: I have commented this check, which prevents the creation of a simple graph like:
-	//	phy_port -> VNF_port
-	//According to Patrick, it has been introduced to avoid creation of useless vlinks in case
-	//of usage of GRE tunnels. When we will really use GRE tunnels, we will find a clean solution
-	//to this problem.
-	if(vlPhyPorts.size() != 0)
-#endif
-		numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();*/(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
+	unsigned int numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();*/(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
 
 	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()/* + vlEndPointsGre.size()*/;
 
@@ -1539,16 +1530,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	set<string> GREsFromEndPoint = vlVector[5];
 
 	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)
-	int numberOfVLrequiredBeforeEndPoints = 0;
-#if 0
-	//IVANO: I have commented this check, which prevents the creation of a simple graph like:
-	//	phy_port -> VNF_port
-	//According to Patrick, it has been introduced to avoid creation of useless vlinks in case
-	//of usage of GRE tunnels. When we will really use GRE tunnels, we will find a clean solution
-	//to this problem.
-	if(vlPhyPorts.size() != 0)
-#endif
-		numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();*/(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
+	unsigned int numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();*/(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
 	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()/* + vlEndPointsGre.size()*/;
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);
@@ -2097,8 +2079,6 @@ void GraphManager::removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo
 	*	Check if ports, NFs, end point and virtual links used by the rule removed are still useful.
 	*	Note that the rule has already been removed from the high level graph
 	*/
-
-
 	map<string, uint64_t> nfs_vlinks = lsi->getNFsVlinks();
 	map<string, uint64_t> ports_vlinks = lsi->getPortsVlinks();
 #ifndef UNIFY_NFFG
@@ -2122,7 +2102,8 @@ void GraphManager::removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo
 
 		bool equal = false;
 		for(list<highlevel::Rule>::iterator again = rules.begin(); again != rules.end(); again++)
-		{			highlevel::Action *a = again->getAction();
+		{
+			highlevel::Action *a = again->getAction();
 			if(a->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION)
 			{
 
@@ -2178,14 +2159,14 @@ void GraphManager::removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo
 	}
 
 	if(rri.isEndpointGre)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the gre endpoint '%s' must be removed (if this vlink exists)",rri.endpointInternal.c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the gre endpoint '%s' must be removed (if this vlink exists)",rri.endpointGre.c_str());
 
 	if(rri.isEndpointGre && endpoints_gre_vlinks.count(rri.endpointGre) != 0)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The gre endpoint '%s' is associated with a vlink",rri.endpointGre.c_str());
 
 		/**
-		*	In case the endpoint does not appear in other actions, the vlink must be removed
+		*	In case the gre endpoint does not appear in other actions, the vlink must be removed
 		*/
 		bool equal = false;
 		for(list<highlevel::Rule>::iterator again = rules.begin(); again != rules.end(); again++)
@@ -2196,7 +2177,7 @@ void GraphManager::removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo
 			{
 				if(((highlevel::ActionEndPointGre*)a)->toString() == rri.endpointGre)
 				{
-					//The action is on the same endpoint of the removed one, hence
+					//The action is on the same gre endpoint of the removed one, hence
 					//the vlink must not be removed
 					equal = true;
 					break;
@@ -2209,7 +2190,17 @@ void GraphManager::removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link no longer required for the gre endpoint: %s",rri.endpointGre.c_str());
 
 			uint64_t tobeRemovedID = endpoints_gre_vlinks.find(rri.endpointGre)->second;
-			lsi->removeEndPointvlink(rri.endpointGre);
+			lsi->removeEndPointGrevlink(rri.endpointGre);
+
+			for(map<string, uint64_t>::iterator pvl = ports_vlinks.begin(); pvl != ports_vlinks.end(); pvl++)
+			{
+				if(pvl->second == tobeRemovedID)
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the port: %s",pvl->first.c_str());
+					goto next;
+				}
+			}
+
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link must be removed");
 
 			try
@@ -2296,7 +2287,7 @@ next2:
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint '%s' is associated with a vlink",rri.endpointInternal.c_str());
 
 		/**
-		*	In case the endpoint does not appear in other actions, the vlink must be removed
+		*	In case the internal endpoint does not appear in other actions, the vlink must be removed
 		*/
 		bool equal = false;
 		for(list<highlevel::Rule>::iterator again = rules.begin(); again != rules.end(); again++)
