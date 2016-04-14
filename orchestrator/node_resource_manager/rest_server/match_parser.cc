@@ -253,13 +253,10 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						if(p_type == EP_INTERNAL_TYPE)
 						{
 							strcat(endpoint_internal, pnt);
-							char ep_tmp[BUFFER_SIZE];
 #if 0
 							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint internal is \"%s\" \"%d\"",endpoint_internal, strlen(endpoint_internal));
 #endif
-							sprintf(ep_tmp,"%d",epPort(string(port_in_name_tmp)));
-
-							match.setInputEndpoint(string(ep_tmp));
+							match.setInputEndpoint(string(endpoint_internal));
 						}
 						break;
 					case 3:
