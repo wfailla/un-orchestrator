@@ -381,6 +381,24 @@ bool Libvirt::startNF(StartNFIn sni)
 		}
 	}
 
+/*
+ * create virtio-serial device in order to communicate with DPDK running
+ * inside the guest
+ */
+#ifdef ENABLE_DIRECT_VM2VM
+	xmlNodePtr chn = xmlNewChild(devices, NULL, BAD_CAST "channel", NULL);
+	xmlNewProp(chn, BAD_CAST "type", BAD_CAST "pty");
+
+	xmlNodePtr srcn = xmlNewChild(chn, NULL, BAD_CAST "source", NULL);
+	ostringstream sock_path_os;
+	string socket_path = "/tmp/" + domain_name;
+	xmlNewProp(srcn, BAD_CAST "path", BAD_CAST socket_path.c_str());
+
+	xmlNodePtr target = xmlNewChild(chn, NULL, BAD_CAST "target", NULL);
+	xmlNewProp(target, BAD_CAST "type", BAD_CAST "virtio");
+	xmlNewProp(target, BAD_CAST "name", BAD_CAST "dpdk");
+#endif
+
 	/* Cleanup of XPath data */
 	xmlXPathFreeContext(xpathCtx);
 
