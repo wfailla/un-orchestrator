@@ -11,7 +11,7 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 }
 
 LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,
-	map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
+	list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
@@ -27,9 +27,9 @@ LSI::LSI(string controllerAddress, string controllerPort, map<string,string> phy
 		addNF(nf->first, nf->second, a_nfs_ports_type[nf->first]);
 	}
 
-	//fill the map of endpoints
-	for(map<string,vector<string> >::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
-		this->endpoints_ports[ep->first] = ep->second;
+	//fill the list of gre endpoints
+	for(list<highlevel::EndPointGre>::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
+		this->endpoints_ports.push_back(*ep);
 }
 
 string LSI::getControllerAddress()
@@ -63,7 +63,7 @@ set<string> LSI::getNetworkFunctionsName()
 	return names;
 }
 
-map<string, vector<string> > LSI::getEndpointsPorts()
+list<highlevel::EndPointGre> LSI::getEndpointsPorts()
 {
 	return endpoints_ports;
 }
@@ -184,7 +184,13 @@ bool LSI::setNfSwitchPortsID(string nf, map<string, unsigned int> translation)
 
 bool LSI::setEndpointPortID(string ep, uint64_t id)
 {
-	if(endpoints_ports.count(ep) == 0)
+	bool found = false;
+
+	for(list<highlevel::EndPointGre>::iterator endp = endpoints_ports.begin(); endp != endpoints_ports.end(); endp++)
+		if(endp->getId().compare(ep) == 0)
+			found = true;
+
+	if(!found)
 	{
 		assert(0);
 		return false;
@@ -277,6 +283,10 @@ map<string, uint64_t> LSI::getEndPointsVlinks()
 	return endpoints_vlinks;
 }
 
+map<string, uint64_t> LSI::getEndPointsGreVlinks()
+{
+	return endpoints_gre_vlinks;
+}
 
 void LSI::setNFsVLinks(map<string, uint64_t> nfs_vlinks)
 {
@@ -296,6 +306,12 @@ void LSI::setEndPointsVLinks(map<string, uint64_t> endpoints_vlinks)
 		this->endpoints_vlinks.insert(*it);
 }
 
+void LSI::setEndPointsGreVLinks(map<string, uint64_t> endpoints_vlinks)
+{
+	for(map<string, uint64_t>::iterator it = endpoints_vlinks.begin(); it != endpoints_vlinks.end(); it++)
+		this->endpoints_gre_vlinks.insert(*it);
+}
+
 void LSI::addNFvlink(string NF, uint64_t vlinkID)
 {
 	nfs_vlinks[NF] = vlinkID;
@@ -309,6 +325,11 @@ void LSI::addPortvlink(string port, uint64_t vlinkID)
 void LSI::addEndpointvlink(string endpoint, uint64_t vlinkID)
 {
 	endpoints_vlinks[endpoint] = vlinkID;
+}
+
+void LSI::addEndpointGrevlink(string endpoint, uint64_t vlinkID)
+{
+	endpoints_gre_vlinks[endpoint] = vlinkID;
 }
 
 void LSI::removeNFvlink(string nf_port)
@@ -347,6 +368,18 @@ void LSI::removeEndPointvlink(string endpoint)
 	endpoints_vlinks.erase(it);
 }
 
+void LSI::removeEndPointGrevlink(string endpoint)
+{
+	if(endpoints_gre_vlinks.count(endpoint) == 0)
+	{
+		assert(0);
+		return;
+	}
+
+	map<string,uint64_t>::iterator it = endpoints_vlinks.find(endpoint);
+	endpoints_gre_vlinks.erase(it);
+}
+
 bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned int, PortType>& a_nf_ports_type)
 {
 	nfData nf_data;
@@ -370,9 +403,9 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 	return true;
 }
 
-void LSI::addEndpoint(string name, vector<string> param)
+void LSI::addEndpoint(highlevel::EndPointGre ep)
 {
-	endpoints_ports[name] = param;
+	endpoints_ports.push_back(ep);
 }
 
 int LSI::addVlink(VLink vlink)
@@ -409,10 +442,9 @@ void LSI::removeNF(string nf)
 
 void LSI::removeEndpoint(string ep)
 {
-	assert(endpoints_ports.count(ep) == 0);
-
-	map<string,vector<string> >::iterator it =  endpoints_ports.find(ep);
-	endpoints_ports.erase(it);
+	for(list<highlevel::EndPointGre>::iterator endp = endpoints_ports.begin(); endp != endpoints_ports.end(); endp++)
+		if(endp->getId().compare(ep) == 0)
+			endpoints_ports.erase(endp);
 
 	return;
 }

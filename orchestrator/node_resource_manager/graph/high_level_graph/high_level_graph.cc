@@ -59,6 +59,24 @@ list<EndPointInterfaceOut> Graph::getEndPointsInterfaceOut()
 	return endPointsInterfaceOut;
 }
 
+bool Graph::addEndPointInternal(EndPointInternal endpoint)
+{
+	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end(); e++)
+	{
+		if(*e == endpoint)
+			return false;
+	}
+
+	endPointsInternal.push_back(endpoint);
+
+	return true;
+}
+
+list<EndPointInternal> Graph::getEndPointsInternal()
+{
+	return endPointsInternal;
+}
+
 bool Graph::addEndPointGre(EndPointGre endpoint)
 {
 	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
@@ -258,6 +276,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 			action_t actionType = action->getType();
 			bool matchOnPort = match.matchOnPort();
 			bool matchOnNF = match.matchOnNF();
+			bool matchOnEPInternal = match.matchOnEndPointInternal();
 
 			if(actionType == ACTION_ON_PORT)
 			{
@@ -265,7 +284,8 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				rri.port = ((ActionPort*)action)->getInfo();
 				rri.isNFport = false;
 				rri.isPort = true;
-				rri.isEndpoint = false;
+				rri.isEndpointInternal = false;
+				rri.isEndpointGre = false;
 
 				rri.ports.push_back(rri.port);
 			}
@@ -280,17 +300,30 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				rri.nfs.push_back(((ActionNetworkFunction*)action)->getInfo());
 				rri.isNFport = true;
 				rri.isPort = false;
-				rri.isEndpoint = false;
+				rri.isEndpointInternal = false;
+				rri.isEndpointGre = false;
 			}
-			else
+			else if(actionType == ACTION_ON_ENDPOINT_GRE)
 			{
-				//Removed an action on an endpoint
-				assert(actionType == ACTION_ON_ENDPOINT);
-				rri.endpoint = action->toString();
+				//Removed an action on an endpoint gre
+				assert(actionType == ACTION_ON_ENDPOINT_GRE);
+				rri.endpointGre = action->toString();
 
 				rri.isNFport = false;
 				rri.isPort = false;
-				rri.isEndpoint = true;
+				rri.isEndpointInternal = false;
+				rri.isEndpointGre = true;
+			}
+			else if(actionType == ACTION_ON_ENDPOINT_INTERNAL)
+			{
+				//Removed an action on an endpoint internal
+				assert(actionType == ACTION_ON_ENDPOINT_INTERNAL);
+				rri.endpointGre = action->toString();
+
+				rri.isNFport = false;
+				rri.isPort = false;
+				rri.isEndpointInternal = true;
+				rri.isEndpointGre = false;
 			}
 
 			if(matchOnNF)
@@ -303,7 +336,10 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 			{
 				stringstream ss;
 				ss << match.getEndPoint();
-				rri.endpoint = ss.str();
+				if(matchOnEPInternal)
+					rri.endpointInternal = ss.str();
+				else
+					rri.endpointGre = ss.str();
 			}
 
 			//finally, remove the rule!
@@ -355,6 +391,11 @@ Object Graph::toJSON()
 	}
 
 	for(list<EndPointInterfaceOut>::iterator e = endPointsInterfaceOut.begin(); e != endPointsInterfaceOut.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+
+	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end();e++)
 	{
 		end_points.push_back(e->toJSON());
 	}
@@ -442,6 +483,17 @@ bool Graph::stillExistEndpoint(string endpoint)
 	return false;
 }
 
+bool Graph::stillExistEndpointGre(string endpoint)
+{
+	for(list<highlevel::EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
+	{
+		if(e->getId().compare(endpoint) == 0)
+			return true;
+	}
+
+	return false;
+}
+
 bool Graph::stillExistPort(string port)
 {
 	if(ports.count(port) == 0)
@@ -475,19 +527,35 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::addEndPoint(string ep, vector<string> p)
+bool Graph::addEndPoint(string graphID, string endpoint)
 {
-	if(endpoints.count(ep) != 0)
-		return false;
+#if 0
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint is \"%s\"",endpoint.c_str());
+#endif
+	if(graphID == ID)
+		endpoints[endpoint] = true;
+	else
+		endpoints[endpoint] = false;
 
-	endpoints[ep] = p;
-
-	return true;
+	return endpoints[endpoint];
 }
 
-map<string, vector<string> > Graph::getEndPoints()
+set<string> Graph::getEndPoints()
 {
-	return endpoints;
+	set<string> endPoints;
+
+	for(map<string,bool>::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
+		endPoints.insert(ep->first);
+
+	return endPoints;
+}
+
+bool Graph::isDefinedHere(string endpoint)
+{
+#if 0
+	assert(endpoints.count(endpoint) != 0);
+#endif
+	return endpoints[endpoint];
 }
 
 string Graph::getEndpointInvolved(string flowID)
@@ -496,17 +564,51 @@ string Graph::getEndpointInvolved(string flowID)
 	highlevel::Match m = r.getMatch();
 	highlevel::Action *a = r.getAction();
 
-	if(a->getType() == highlevel::ACTION_ON_ENDPOINT)
+	if(a->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL)
 		return a->toString();
 
-	if(m.matchOnEndPoint())
+	if(m.matchOnEndPointInternal())
 	{
 		stringstream ss;
-		ss << m.getEndPoint();
+		ss << m.getInputEndpoint();
 		return ss.str();
 	}
 
 	return "";
+}
+
+bool Graph::endpointIsUsedInMatch(string endpoint)
+{
+	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
+	{
+		Match match = r->getMatch();
+		if(match.matchOnEndPointInternal())
+		{
+			stringstream ss;
+			ss << match.getGraphID() << ":" << match.getEndPoint();
+			if(ss.str() == endpoint)
+				//The endpoint is used in a match
+				return true;
+		}
+	}
+	return false;
+}
+
+bool Graph::endpointIsUsedInAction(string endpoint)
+{
+	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
+	{
+		Action *action = r->getAction();
+		action_t actionType = action->getType();
+
+		if(actionType == ACTION_ON_ENDPOINT_INTERNAL)
+		{
+			if(action->toString() == endpoint)
+				//The port is used in an action
+				return true;
+		}
+	}
+	return false;
 }
 
 }

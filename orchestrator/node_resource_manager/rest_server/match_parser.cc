@@ -175,7 +175,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
 	bool is_tcp = false;
-	enum port_type { VNF_PORT_TYPE, EP_PORT_TYPE };
+	enum port_type { VNF_PORT_TYPE, EP_PORT_TYPE, EP_INTERNAL_TYPE };
 
 	for(Object::const_iterator i = object.begin(); i != object.end(); i++)
 	{
@@ -196,7 +196,9 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 			string port_in_name = value.getString();
 			string realName;
 			string v_id;
+			string graph_id;
 			const char *port_in_name_tmp = port_in_name.c_str();
+			char endpoint_internal[BUFFER_SIZE];
 			char vnf_name_tmp[BUFFER_SIZE];
 
 			//Check the name of port
@@ -221,10 +223,18 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 							p_type = VNF_PORT_TYPE;
 							match.setNFEndpointPort(port_in_name_tmp);
 						}
-						//end-points port type
+						//end-point port type
 						else if(strcmp(pnt,ENDPOINT) == 0){
 							p_type = EP_PORT_TYPE;
-							match.setInputEndpoint(port_in_name_tmp);
+							/*char ep_tmp[BUFFER_SIZE];
+							sprintf(ep_tmp,"%d",epPort(string(port_in_name_tmp)));*/
+							match.setInputEndpoint(/*string(ep_tmp)*/port_in_name_tmp);
+						}
+						//end-point internal type
+						else
+						{
+							graph_id = string(pnt);
+							p_type = EP_INTERNAL_TYPE;
 						}
 						break;
 					case 1:
@@ -232,6 +242,24 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						{
 							strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 							strcat(vnf_name_tmp,":");
+						}
+						else if(p_type == EP_INTERNAL_TYPE)
+						{
+							strcpy(endpoint_internal, pnt);
+							strcat(endpoint_internal, ":");
+						}
+						break;
+					case 2:
+						if(p_type == EP_INTERNAL_TYPE)
+						{
+							strcat(endpoint_internal, pnt);
+							char ep_tmp[BUFFER_SIZE];
+#if 0
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint internal is \"%s\" \"%d\"",endpoint_internal, strlen(endpoint_internal));
+#endif
+							sprintf(ep_tmp,"%d",epPort(string(port_in_name_tmp)));
+
+							match.setInputEndpoint(string(ep_tmp));
 						}
 						break;
 					case 3:
@@ -343,14 +371,24 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					unsigned int endPoint = epPort(string(s_value));
 					if(endPoint == 0)
 					{
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
 						return false;
 					}
-					match.setEndPoint(endPoint);
-
-					stringstream ss;
-					ss << match.getEndPoint();
+					match.setEndPointGre(endPoint);
 				}
+			}
+			else if(p_type == EP_INTERNAL_TYPE)
+			{
+				unsigned int endPoint = epPort(string(endpoint_internal));
+				if(endPoint == 0)
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
+					return false;
+				}
+#if 0
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint is \"%s\" and endPoint is \"%d\"",endpoint_internal, endPoint);
+#endif
+				match.setEndPointInternal(graph_id,endPoint);
 			}
 		}
 		else if(name == HARD_TIMEOUT)

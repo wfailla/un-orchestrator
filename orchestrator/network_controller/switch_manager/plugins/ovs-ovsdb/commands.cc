@@ -211,7 +211,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 	/*insert Controller*/
 	first_obj["op"] = "insert";
-    	first_obj["table"] = "Controller";
+	first_obj["table"] = "Controller";
 
 	row["target"] = tcp_s;
 
@@ -219,7 +219,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	row["connection_mode"] = "out-of-band";
 	row["is_connected"] = true;
 
-    	first_obj["row"] = row;
+   	first_obj["row"] = row;
 
 	//create the current name of controller --> ctrl+dnumber
 	sprintf(ctr, "ctrl%" PRIu64, dnumber);
@@ -229,7 +229,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	params.push_back(first_obj);
 
 	row.clear();
-    	first_obj.clear();
+   	first_obj.clear();
 
 	datapath_id << std::setfill('0') << std::setw(16) << std::hex << dnumber << std::dec;
 
@@ -237,9 +237,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	first_obj["op"] = "insert";
 	first_obj["table"] = "Bridge";
 
-    	row["name"] = sw;
+    row["name"] = sw;
 
-    	Array port;
+    Array port;
 	Array port1;
 	Array port2;
 
@@ -278,49 +278,49 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 	row["other_config"] = peer;
 
-    	row["protocols"] = of_version;
+    row["protocols"] = of_version;
 
-    	first_obj["row"] = row;
+    first_obj["row"] = row;
 
-    	first_obj["uuid-name"] = sw;
+    first_obj["uuid-name"] = sw;
 
-    	params.push_back(first_obj);
+   	params.push_back(first_obj);
 
-    	row.clear();
-    	first_obj.clear();
+   	row.clear();
+   	first_obj.clear();
 	peer.clear();
-    	peer1.clear();
-    	peer2.clear();
+   	peer1.clear();
+   	peer2.clear();
 
-    	dnumber_new = dnumber;
+   	dnumber_new = dnumber;
 
-    	/*Object with four items [op, table, where, mutations]*/
-    	Object second_obj;
-    	second_obj["op"] = "mutate";
-    	second_obj["table"] = "Open_vSwitch";
+  	/*Object with four items [op, table, where, mutations]*/
+   	Object second_obj;
+    second_obj["op"] = "mutate";
+    second_obj["table"] = "Open_vSwitch";
 
-    	/*Empty array [where]*/
+    /*Empty array [where]*/
    	Array where;
-    	second_obj["where"] = where;
+    second_obj["where"] = where;
 
-    	/*Array with one element*/
-    	Array w_array;
+	/*Array with one element*/
+	Array w_array;
 
-    	/*Array with three elements*/
-    	Array m_array;
-    	m_array.push_back("bridges");
-    	m_array.push_back("insert");
+	/*Array with three elements*/
+	Array m_array;
+	m_array.push_back("bridges");
+	m_array.push_back("insert");
 
-    	/*Array with two elements*/
-    	i_array.push_back("set");
+	/*Array with two elements*/
+	i_array.push_back("set");
 
-    	/*Array with one element*/
-    	Array s_array;
+	/*Array with one element*/
+	Array s_array;
 
-    	/*Array with two element*/
-    	Array a_array;
-    	a_array.push_back("named-uuid");
-    	a_array.push_back(sw);
+	/*Array with two element*/
+	Array a_array;
+	a_array.push_back("named-uuid");
+	a_array.push_back(sw);
 
 	s_array.push_back(a_array);
 
@@ -334,7 +334,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
    	params.push_back(second_obj);
 
-    	root["params"] = params;
+    root["params"] = params;
 	root["id"] = tid;
 
 	w_array.clear();
@@ -351,14 +351,14 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
    	stringstream ss;
  	write_formatted(root, ss);
 
-    	nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
+    nwritten = sock_send(s, ss.str().c_str(), strlen(ss.str().c_str()), ErrBuf, sizeof(ErrBuf));
 	if (nwritten == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error sending data: %s", ErrBuf);
 		throw commandsException();
 	}
 
-    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+    r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -366,42 +366,42 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	}
 
  	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-    	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-    	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-    	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	//parse json response
 	Value value;
-    	read( read_buf, value );
-    	Object rootNode = value.getObject();
+	read( read_buf, value );
+	Object rootNode = value.getObject();
 
-    	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
-    	{
-    		const string name = (*it).first;
-        	const Value &node = (*it).second;
+	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
+	{
+		const string name = (*it).first;
+		const Value &node = (*it).second;
 
-        	if (name == "result")
-        	{
-     			const Array &result = node.getArray();
+		if (name == "result")
+		{
+			const Array &result = node.getArray();
 
-     			for(i=0;i<result.size();i++){
-		 		Object uuidNode = result[i].getObject();
+			for(i=0;i<result.size();i++){
+				Object uuidNode = result[i].getObject();
 
-		 		for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
+				for (Object::const_iterator it1 = uuidNode.begin(); it1 != uuidNode.end(); ++it1)
 				{
 					const string name1 = (*it1).first;
-		    			const Value &node1 = (*it1).second;
+					const Value &node1 = (*it1).second;
 
 					if(name1 == "uuid"){
 						const Array &stuff1 = node1.getArray();
-		 				strr[i] = stuff1[1].getString();
+						strr[i] = stuff1[1].getString();
 					} else if(name1 == "details"){
 						logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "%s", node1.getString().c_str());
 						throw commandsException();
 					}
 				}
-     			}
-        	}
+			}
+		}
 	}
 
 	//store the switch-uuid
@@ -472,9 +472,9 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 			/*save the params of gre tunnel*/
 			strcpy(key, gre_param[0].c_str());
-		    	strcpy(local_ip, gre_param[1].c_str());
-		    	strcpy(remote_ip, gre_param[2].c_str());
-		    	strcpy(is_safe, gre_param[4].c_str());
+			strcpy(local_ip, gre_param[1].c_str());
+			strcpy(remote_ip, gre_param[2].c_str());
+			strcpy(is_safe, gre_param[4].c_str());
 
 			sprintf(port_name, "gre%d", gnumber);
 
@@ -1027,7 +1027,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 
 void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, char is_safe[BUF_SIZE])
 {
-    	ssize_t nwritten;
+    ssize_t nwritten;
 
 	char read_buf[BUFFER_SIZE] = "";
 
@@ -1045,7 +1045,7 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 	Array fourth_object;
 
 	//connect socket
-    	s = cmd_connect();
+	s = cmd_connect();
 
 	root["method"] = "transact";
 

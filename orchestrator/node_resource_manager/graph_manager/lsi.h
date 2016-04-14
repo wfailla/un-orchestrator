@@ -5,6 +5,7 @@
 
 #include "virtual_link.h"
 #include "../../compute_controller/description.h"
+#include "../graph/high_level_graph/high_level_graph_endpoint_gre.h"
 
 #include <map>
 #include <set>
@@ -22,9 +23,9 @@ class LSI
 //XXX: this class is a mess!
 
 /**
-*	@brief: This class is indended to represent the current situation on the LSI.
-*		The it MUST only contain inforation related to the LSI used to implement
-*		a single graph (and not information related to the configururation of the
+*	@brief: This class is intended to represent the current situation on the LSI.
+*		The it MUST only contain infor,ation related to the LSI used to implement
+*		a single graph (and not information related to the configuration of the
 *		VNFs).
 */
 
@@ -88,12 +89,9 @@ private:
 	};
 
 	/**
-	*	@brief: endpoints connected to the LSI
-	*		The map is
-	*  			<endpoint name, list params>
-	*				list params: gre key, local ip, remote ip
+	*	@brief: list of gre endpoints connected to the LSI
 	*/
-	map<string,vector<string> > endpoints_ports;
+	list<highlevel::EndPointGre> endpoints_ports;
 
 	/**
 	*	@brief: the pair is <endpoint name, endpoint id>
@@ -131,15 +129,21 @@ private:
 	*/
 	map<string, uint64_t> endpoints_vlinks;
 
+	/**
+	*	@brief: the map is <endpoint name, vlink id>
+	*		An endpoint generates a vlink if it is defined in the action part of a rule
+	*/
+	map<string, uint64_t> endpoints_gre_vlinks;
+
 public:
 
 	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions,
-		map<string,vector<string> > endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
+		list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();
 
-	map<string,vector<string> > getEndpointsPorts();
+	list<highlevel::EndPointGre> getEndpointsPorts();
 
 	map<string,unsigned int > getEndpointsPortsId();
 
@@ -162,6 +166,7 @@ public:
 	map<string, uint64_t> getNFsVlinks();
 	map<string, uint64_t> getPortsVlinks();
 	map<string, uint64_t> getEndPointsVlinks();
+	map<string, uint64_t> getEndPointsGreVlinks();
 
 	//FIXME: public is not a good choice
 	void setNFsVLinks(map<string, uint64_t> nfs_vlinks);
@@ -175,6 +180,9 @@ public:
 	void setEndPointsVLinks(map<string, uint64_t> endpoints_vlinks);
 	void addEndpointvlink(string endpoint, uint64_t vlinkID);
 	void removeEndPointvlink(string endpoint);
+	void setEndPointsGreVLinks(map<string, uint64_t> endpoints_vlinks);
+	void addEndpointGrevlink(string endpoint, uint64_t vlinkID);
+	void removeEndPointGrevlink(string endpoint);
 
 protected:
 	void setDpid(uint64_t dpid);
@@ -191,7 +199,7 @@ protected:
 	bool addNF(string name, list< unsigned int> ports, const map<unsigned int, PortType>& nf_ports_type);
 	void removeNF(string nf);
 
-	void addEndpoint(string name, vector<string> param);
+	void addEndpoint(highlevel::EndPointGre);
 	void removeEndpoint(string ep);
 };
 

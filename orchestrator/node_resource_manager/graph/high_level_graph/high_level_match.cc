@@ -34,13 +34,26 @@ bool Match::setNFport(string network_function, int port)
 	return true;
 }
 
-bool Match::setEndPoint(unsigned int endpoint)
+bool Match::setEndPointInternal(string graphID, unsigned int endpoint)
+{
+	if(type != MATCH_GENERIC)
+		return false;
+
+	input = (char*)malloc(sizeof(char)*(graphID.length()+1));
+	strcpy(input,graphID.c_str());
+	this->endpoint = endpoint;
+	type = MATCH_ENDPOINT_INTERNAL;
+
+	return true;
+}
+
+bool Match::setEndPointGre(unsigned int endpoint)
 {
 	if(type != MATCH_GENERIC)
 		return false;
 
 	this->endpoint = endpoint;
-	type = MATCH_ENDPOINT;
+	type = MATCH_ENDPOINT_GRE;
 
 	return true;
 }
@@ -78,9 +91,16 @@ bool Match::matchOnNF()
 	return false;
 }
 
-bool Match::matchOnEndPoint()
+bool Match::matchOnEndPointInternal()
 {
-	if(type == MATCH_ENDPOINT)
+	if(type == MATCH_ENDPOINT_INTERNAL)
+		return true;
+	return false;
+}
+
+bool Match::matchOnEndPointGre()
+{
+	if(type == MATCH_ENDPOINT_GRE)
 		return true;
 	return false;
 }
@@ -105,20 +125,20 @@ int Match::getPortOfNF()
 
 string Match::getGraphID()
 {
-	assert(type == MATCH_ENDPOINT);
+	assert(type == MATCH_ENDPOINT_INTERNAL);
 	return input;
 }
 
 unsigned int Match::getEndPoint()
 {
-	assert(type == MATCH_ENDPOINT);
+	assert(type == MATCH_ENDPOINT_INTERNAL || type == MATCH_ENDPOINT_GRE);
 
 	return endpoint;
 }
 
 char *Match::getInputEndpoint()
 {
-	assert(type == MATCH_ENDPOINT);
+	assert(type == MATCH_ENDPOINT_GRE);
 
 	//Check the name of port
 	char delimiter[] = ":";
@@ -152,10 +172,15 @@ void Match::print()
 	{
 		cout << "\t\tmatch:" << endl << "\t\t{" << endl;
 
-		if(type == MATCH_PORT || type == MATCH_ENDPOINT)
+		if(type == MATCH_PORT || type == MATCH_ENDPOINT_GRE)
 			cout << "\t\t\tport_in: " << input << endl;
-		else
+		else if(type == MATCH_NF)
 			cout << "\t\t\tport_in: " << input << ":" << nf_port << endl;
+		else
+		{
+			assert(type == MATCH_ENDPOINT_INTERNAL);
+			cout << "\t\t\tport_in: " << input << ":" << endpoint << endl;
+		}
 
 		graph::Match::print();
 
@@ -167,8 +192,14 @@ Object Match::toJSON()
 {
 	Object match;
 
-	if(type == MATCH_PORT || type == MATCH_ENDPOINT)
+	if(type == MATCH_PORT || type == MATCH_ENDPOINT_GRE)
 		match[PORT_IN]  = input_endpoint;
+	else if(type == MATCH_ENDPOINT_INTERNAL)
+	{
+		stringstream ss;
+		ss << input << ":" << input_endpoint;
+		match[PORT_IN]  = ss.str().c_str();
+	}
 	else if(type == MATCH_NF)
 	{
 		stringstream nf;

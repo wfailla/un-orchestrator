@@ -455,6 +455,7 @@ The NF-FG specification supports several types of endpoints:
 	`interface`
 	`vlan`
 	`gre-tunnel`
+	`internal`
 
 ### Endpoint type: `interface`
 
@@ -697,6 +698,130 @@ the `gre-tunnel` endpoint.
 	  	}
 	}
 	
+### Endpoint type: `internal`
+ 
+It is possible to connect multiple graphs together by using this endpoint.
+An `internal` endpoint is always in the form "graph_id:endpoint:endpoint_id_in_the_graph", where "graph_id"
+is the graph that defines the `internal` endpoint.
+A graph that want to use an `internal` endpoint defined by another graph, can do it only if that
+`internal` endpoint has been specified by that graph.
+
+Is `internal` endpoint is defined as follows:
+	
+	{
+		"id": "00000002",
+		"name": "egress",
+		"type": "internal",
+		"internal": {}
+	}
+
+As an example, the following command defines an endpoint "myGraph:endpoint:00000001", while the second
+command uses that endpoint.
+
+	{
+	  "forwarding-graph": {
+	    "id": "00000001",
+	    "name": "Forwarding graph",
+	    "end-points": [
+	      {
+		"id": "00000004",
+		"name": "ingress",
+		"type": "internal",
+		"internal": {}
+	      }
+	    ],
+	    "VNFs": [
+	      {
+		"vnf_template": "client.json",
+		"id": "00000001",
+		"name": "example",
+		"ports": [
+		  {
+		    "id": "inout:0",
+		    "name": "data-port"
+		  }        
+		]
+	      }
+	    ],
+	    "big-switch": {
+	      "flow-rules": [
+		{
+		  "id": "000000001",
+		  "priority": 1,
+		  "match": {
+		    "port_in": "myGraph:endpoint:00000004"
+		  },
+		  "actions": [
+		    {
+		      "output_to_port": "vnf:00000001:inout:0"
+		    }
+		  ]
+		},
+		{
+		  "id": "000000002",
+		  "priority": 1,
+		  "match": {
+		    "port_in": "vnf:00000001:inout:0"
+		  },
+		  "actions": [
+		    {
+		      "output_to_port": "myGraph:endpoint:00000004"
+		    }
+		  ]
+		}
+	      ]
+	    }
+	  }
+	}
+
+	{
+	  "forwarding-graph": {
+	    "id": "00000002",
+	    "name": "Forwarding graph",
+	    "end-points": [
+	      {
+		"id": "00000005",
+		"name": "egress",
+		"type": "gre-tunnel",
+		"gre-tunnel": {
+		  "local-ip": "10.0.0.1",
+		  "remote-ip": "10.0.0.2",
+		  "interface" : "eth0",
+		  "gre-key" : "1"
+		}
+	      }
+	    ],
+	    "big-switch": {
+	      "flow-rules": [
+		{
+		  "id": "000000001",
+		  "priority": 1,
+		  "match": {
+		    "port_in": "myGraph:endpoint:00000004"
+		  },
+		  "actions": [
+		    {
+		      "output_to_port": "endpoint:00000005"
+		    }
+		  ]
+		},
+		{
+		  "id": "000000002",
+		  "priority": 1,
+		  "match": {
+		    "port_in": "endpoint:00000005"
+		  },
+		  "actions": [
+		    {
+		      "output_to_port": "myGraph:endpoint:00000004"
+		    }
+		  ]
+		}
+	      ]
+	    }
+	  }
+	}
+
 ## Configuration
 
 A simple configuration mechanism is supported by the NF-FG formalism. In particular, it is possibile to:

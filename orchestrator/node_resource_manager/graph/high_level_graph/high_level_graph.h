@@ -10,6 +10,7 @@
 
 #include "high_level_graph_endpoint_interface.h"
 #include "high_level_graph_endpoint_interface_out.h"
+#include "high_level_graph_endpoint_internal.h"
 #include "high_level_graph_endpoint_gre.h"
 #include "high_level_graph_endpoint_vlan.h"
 #include "high_level_graph_vnf.h"
@@ -79,10 +80,10 @@ private:
 #endif
 
 	/**
-	*	@brief: for each endpoint attached to the graph specifies a list of params
-	* 		(gre key, local ip, remote ip)
+	*	@brief: for each end point of the graph, the following structure specifies if that end
+	*		point is defined in this graph or not
 	*/
-	map<string, vector<string> > endpoints;
+	map<string, bool > endpoints;
 
 	/**
 	*	@brief: physical ports to be attached to the graph
@@ -103,6 +104,11 @@ private:
 	*	@brief: List of endPointsInterfaceOut describing the graph
 	*/
 	list<EndPointInterfaceOut> endPointsInterfaceOut;
+
+	/**
+	*	@brief: List of endPointsInternal describing the graph
+	*/
+	list<EndPointInternal> endPointsInternal;
 
 	/**
 	*	@brief: List of endPointsGRE describing the graph
@@ -219,18 +225,24 @@ public:
 	*	@brief: Add an end point to the graph, to be used to connect the graph itself with
 	*		other graphs.
 	*
-	*	@param: ep			Name of the endpoint to de added
-	*	@param: p			List of five elements (key, local ip, remote ip, interface and safe)
+	*	@param: graphID		Indefier of the graph defining the end point
+	*	@param: endpoint	Identifier of the end point
 	*
-	*	@return: true
+	*	@return: true if the endpoint is defined in the current graph; false otherwise
 	*/
-	bool addEndPoint(string ep, vector<string> p);
+	bool addEndPoint(string graphID, string endpoint);
 
 	/**
 	*	@brief: Return the end points of the graph, i.e. the ports to be used to connect
 	*		multiple graphs together.
 	*/
-	map<string, vector<string> > getEndPoints();
+	set<string> getEndPoints();
+
+	/**
+	*	@brief: given a graph endpoint (in the form graphID:epID), return true if it is defined
+	*		in this graph
+	*/
+	bool isDefinedHere(string endpoint);
 
 	/**
 	*	@brief: Return the ID of the graph
@@ -266,6 +278,16 @@ public:
 	*	@brief: Return the endpointsInterfaceOut of the graph
 	*/
 	list<EndPointInterfaceOut> getEndPointsInterfaceOut();
+
+	/**
+	*	@brief: Add a new endpointInternal to the graph
+	*/
+	bool addEndPointInternal(EndPointInternal endpoint);
+
+	/**
+	*	@brief: Return the endpointsInternal of the graph
+	*/
+	list<EndPointInternal> getEndPointsInternal();
 
 	/**
 	*	@brief: Add a new endpointGre to the graph
@@ -360,12 +382,35 @@ public:
 	bool stillExistEndpoint(string endpoint);
 
 	/**
+	*	@brief: Checks if an endpoint port still exist in the graph. If it is no
+	*		longer used in any rule, but it is part of the "endpoints" set, it
+	*		is removed from this set as well.
+	*
+	*	@param: endpoint	Name of an endpoint
+	*/
+	bool stillExistEndpointGre(string endpoint);
+
+	/**
 	*	@brief: check if a specific flow uses an endpoint (it does not matter if the endpoint is defined in the
 	*		current graph or not); in this case, return that endpoint, otherwise return "".
 	*
 	*	@param: flowID	Identifier of the flow that could contain an endpoint
 	*/
 	string getEndpointInvolved(string flowID);
+
+	/**
+	*	@brief: check if an endpoint is used in some action of the graph
+	*
+	*	@param: endpoint	Idenfier of the endpoint to be checked
+	*/
+	bool endpointIsUsedInAction(string endpoint);
+
+	/**
+	*	@brief: check if an endpoint is used in some match of the graph
+	*
+	*	@param: endpoint	Idenfier of the endpoint to be checked
+	*/
+	bool endpointIsUsedInMatch(string endpoint);
 
 	/**
 	*	@brief: Return the number of flows in the graph

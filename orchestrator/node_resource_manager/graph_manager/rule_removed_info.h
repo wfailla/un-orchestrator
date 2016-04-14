@@ -33,10 +33,16 @@ public:
 	bool isPort;
 
 	/**
-	*	If the action to be removed contained an endpoint, it is inserted here
+	*	If the action to be removed contained an endpoint internal, it is inserted here
 	*/
-	string endpoint;
-	bool isEndpoint;
+	string endpointInternal;
+	bool isEndpointInternal;
+
+	/**
+	*	If the action to be removed contained an endpoint gre, it is inserted here
+	*/
+	string endpointGre;
+	bool isEndpointGre;
 };
 
 #endif //RULE_REMOVED_INFO
