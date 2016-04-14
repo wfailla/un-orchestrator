@@ -165,6 +165,14 @@ public:
 	*/
 	//FIXME: is the return value useful?
 	bool addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > description);
+	
+	/**
+	*	@brief: Given a graph, returns the rules present in such a graph with respect to the rules
+	*			of the graph on which the method is called
+	*
+	*	@param: other	Graph from which the new rules must be extracted
+	*/
+	list<Rule> calculateNewRules(Graph *other);
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**

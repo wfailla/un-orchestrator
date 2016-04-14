@@ -509,4 +509,24 @@ string Graph::getEndpointInvolved(string flowID)
 	return "";
 }
 
+list<highlevel::Rule> Graph::calculateNewRules(Graph *other)
+{
+	list<highlevel::Rule> new_rules;
+
+	list<highlevel::Rule> other_rules = other->getRules();
+	//Iterater over the other rules, and save those that are not part of the current graph
+	for(list<highlevel::Rule>::iterator ors = other_rules.begin(); ors != other_rules.end(); ors++)
+	{
+		for(list<highlevel::Rule>::iterator r = rules.begin(); r != rules.end(); r++)
+		{
+			if((*ors) == (*r))
+				//the rule is part of the current graph
+				continue;
+		}
+		//If we are here, it means that we found a rule that is not part in the current graph
+		new_rules.push_back(*ors);
+	}
+	return new_rules;
+}
+
 }
