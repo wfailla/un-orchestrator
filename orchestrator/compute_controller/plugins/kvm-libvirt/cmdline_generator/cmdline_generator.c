@@ -140,10 +140,13 @@ int expose_port_cmdline(const char * port_name, const char * port_alias, const c
 	struct rte_ring * rx;
 	struct rte_ring * tx;
 
+	int err;
+
 	if (port_alias && (*port_alias == '\0'))
 		port_alias = NULL; // Treat empty port_alias string as no alias
 
-	printf("Adding port '%s' (alias '%s') to metadata '%s'\n", port_name, port_alias ? port_alias : "N/A", metadata);
+	printf("Adding port '%s' (alias '%s') to metadata '%s'\n",
+			port_name, port_alias ? port_alias : "N/A", metadata);
 
 	/* look for the transmission ring (OVS variant, then xDPd variant) */
 	snprintf(ring_name, RTE_RING_NAMESIZE, DPDKR_TX_FORMAT, port_name);
@@ -159,12 +162,6 @@ int expose_port_cmdline(const char * port_name, const char * port_alias, const c
 			return -1;
 		}
 	}
-	if(rte_ivshmem_metadata_add_ring(tx, metadata) < 0)
-	{
-		printf("Failed adding ring '%s' to metadata '%s'!\n", ring_name, metadata);
-		return -1;
-	}
-
 
 	/* look for the reception ring (OVS variant, then xDPd variant) */
 	snprintf(ring_name, RTE_RING_NAMESIZE, DPDKR_RX_FORMAT, port_name);
@@ -180,30 +177,18 @@ int expose_port_cmdline(const char * port_name, const char * port_alias, const c
 			return -1;
 		}
 	}
-	if(rte_ivshmem_metadata_add_ring(rx, metadata) < 0)
-	{
-		printf("Failed adding ring '%s' to metadata '%s'!\n", ring_name, metadata);
-		return -1;
+	/* tx ring os from the ovs point of view, it means that ovs writes to it and
+	 * the guest app reads from the it, the same but in inverse order applies to
+	 * the rx one
+	 */
+	err = rte_ivshmem_metadata_add_pmd_ring(port_name, &tx, 1, &rx, 1, metadata);
+	if(err) {
+		printf("Error adding pmd_ring to medatada: '%s'!\n", metadata);
 	}
-
 	if (port_alias)
 	{
 #ifdef IVSHMEM_RING_ALIAS
-		char ring_alias[RTE_RING_NAMESIZE];
-
-		snprintf(ring_alias, RTE_RING_NAMESIZE, ALIAS_TX_FORMAT, port_alias);
-		if(rte_ivshmem_add_ring_alias(tx, ring_alias, metadata) < 0)
-		{
-			printf("Failed adding ring alias '%s' to metadata '%s'!\n", ring_alias, metadata);
-			return -1;
-		}
-
-		snprintf(ring_alias, RTE_RING_NAMESIZE, ALIAS_RX_FORMAT, port_alias);
-		if(rte_ivshmem_add_ring_alias(rx, ring_alias, metadata) < 0)
-		{
-			printf("Failed adding ring alias '%s' to metadata '%s'!\n", ring_alias, metadata);
-			return -1;
-		}
+	#error "IVSHMEM_RING_ALIAS is not supported when using pmd_rings"
 #else
 		printf("WARNING: Ring aliases not supported by this build (check IVSHMEM_RING_ALIAS)\n");
 #endif
