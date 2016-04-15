@@ -64,7 +64,10 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 
 The same message used to create a new graph can be used to add "parts" (i.e.,
 network functions and flows) to an existing graph. For instance, it is possible
-to add a new flow to the NF-FG called ``myGraph'' as follows
+to add a new flow `000000002` to the NF-FG called ``myGraph'' as follows (note
+that the update contains all the things already part of the graph plus the new
+things to be added - the diff is in fact automatically calculated by the
+un-orchestrator)
 
     PUT /NF-FG/myGraph HTTP/1.1
     Content-Type : application/json
@@ -91,11 +94,19 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 			],
 			"end-points": [
 			  {
-				"id": "00000002",
+				"id": "00000001",
 				"name": "ingress",
 				"type": "interface",
 				"interface": {
-				  "interface": "eth2"
+				  "interface": "eth1"
+				}
+			  },
+			  {
+				"id": "00000002",
+				"name": "egress",
+				"type": "interface",
+				"interface": {
+				  "interface": "eth1"
 				}
 			  }
 			],
@@ -105,11 +116,23 @@ to add a new flow to the NF-FG called ``myGraph'' as follows
 				  "id": "000000001",
 				  "priority": 1,
 				  "match": {
-					"port_in": "vnf:00000001:inout:1"
+					"port_in": "endpoint:00000001"
 				  },
 				  "actions": [
 					{
-					  "output_to_port": "endpoint:00000002"
+					  "output_to_port": "vnf:00000001:inout:0"
+					}
+				  ]
+				},
+				{
+				  "id": "000000002",
+				  "priority": 1,
+				  "match": {
+					"port_in": "vnf:00000001:inout:0"
+				  },
+				  "actions": [
+					{
+					  "output_to_port": "endpoint:00000001"
 					}
 				  ]
 				}
