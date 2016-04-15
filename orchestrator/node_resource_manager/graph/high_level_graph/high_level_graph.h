@@ -95,7 +95,8 @@ private:
 	list<Rule> rules;
 
 	/**
-	*	@brief: List of endPointsInterface describing the graph
+	*	@brief: List of endPointsInterface describing the graph. It is actually a list of physical 
+	*			interfaces that are part of the graph
 	*/
 	list<EndPointInterface> endPointsInterface;
 

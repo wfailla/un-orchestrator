@@ -517,20 +517,24 @@ list<highlevel::Rule> Graph::calculateNewRules(Graph *other)
 	//Iterater over the other rules, and save those that are not part of the current graph
 	for(list<highlevel::Rule>::iterator ors = other_rules.begin(); ors != other_rules.end(); ors++)
 	{
-		for(list<highlevel::Rule>::iterator r = rules.begin(); r != rules.end(); r++)
+		list<highlevel::Rule>::iterator r = rules.begin();
+		for(; r != rules.end(); r++)
 		{
 			if((*ors) == (*r))
 				//the rule is part of the current graph
-				continue;
+				break;
 		}
-		//If we are here, it means that we found a rule that is not part in the current graph
-		new_rules.push_back(*ors);
+		if(r == rules.end())
+			//If we are here, it means that we found a rule that is not part in the current graph
+			new_rules.push_back(*ors);
 	}
 	return new_rules;
 }
 
 Graph *Graph::calculateDiff(Graph *other, string graphID)
 {
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating graph diff...");
 
 	Graph *diff = new Graph(/*"fake"*/graphID);
 	
@@ -544,6 +548,9 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 
 	for(list<highlevel::Rule>::iterator rule = newrules.begin(); rule != newrules.end(); rule++)
 		diff->addRule(*rule);
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New rules required: ");
+	diff->print();
 
 	// b) Add the new NFs to "diff"
 
@@ -629,6 +636,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		if(ports.count(*it) == 0)
 		{
 			//The update requires a physical port that was not part of the graph
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is added to the graph",(*it).c_str());
 			diff->addPort(*it);
 		}
 		else
