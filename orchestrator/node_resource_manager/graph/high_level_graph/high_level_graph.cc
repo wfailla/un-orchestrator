@@ -529,4 +529,173 @@ list<highlevel::Rule> Graph::calculateNewRules(Graph *other)
 	return new_rules;
 }
 
+Graph *Graph::calculateDiff(Graph *other, string graphID)
+{
+
+	Graph *diff = new Graph(/*"fake"*/graphID);
+	
+	set<string> new_vnfs_name;
+
+	// a) Add the new rules to "diff"
+	
+	//Extract the new rules to be instantiated
+	list<highlevel::Rule> newrules = this->calculateNewRules(other); //FIXME: put this function directly here?
+	//XXX: a similar procedur can be defined to extract the rules to be removed
+
+	for(list<highlevel::Rule>::iterator rule = newrules.begin(); rule != newrules.end(); rule++)
+		diff->addRule(*rule);
+
+	// b) Add the new NFs to "diff"
+
+	//Retrieve the NFs already existing in the graph
+	highlevel::Graph::t_nfs_ports_list nfs = this->getNetworkFunctions();
+
+	//Retrieve the NFs required by the update (this part is related to the network functions ports)
+	highlevel::Graph::t_nfs_ports_list new_nfs = other->getNetworkFunctions();
+	for(highlevel::Graph::t_nfs_ports_list::iterator it = new_nfs.begin(); it != new_nfs.end(); it++)
+	{
+		if(nfs.count(it->first) == 0)
+		{
+			//The udpdate requires a NF that was not part of the graph
+			diff->addNetworkFunction(it->first);
+#ifndef UNIFY_NFFG
+			//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
+			list<unsigned int> ports = it->second;
+			for(list<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
+				diff->updateNetworkFunction(it->first, *p);
+#endif
+		}
+#ifndef UNIFY_NFFG
+		//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
+		else
+		{
+			//The NF is already part of the graph, but the update
+			//must not contain new ports for the NF
+			list<unsigned int> new_ports = it->second;
+			list<unsigned int> ports = nfs.find(it->first)->second;
+			for(list<unsigned int>::iterator np = new_ports.begin(); np != new_ports.end(); np++)
+			{
+				list<unsigned int>::iterator p = ports.begin();
+				for(; p != ports.end(); p++)
+				{
+					if(*np == *p)
+						break;
+				}
+				if(p == ports.end())
+				{
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "A new port '%d' is required for NF '%s'", *np, it->first.c_str());
+					return NULL;
+				}
+			}
+		}
+#endif
+	}
+
+	// c) Add the new NFs to "diff"
+	//FIXME: why do we have two different representations for the network functions in a graph?
+
+	//Retrieve the network functions already instantiated (and convert them in a set)
+	list<highlevel::VNFs> vnfs_already_there = this->getVNFs();
+	//Retrieve the network functions required by the update, and their configuration
+	list<highlevel::VNFs> new_vnfs_required = other->getVNFs();
+	for(list<highlevel::VNFs>::iterator it = new_vnfs_required.begin(); it != new_vnfs_required.end(); it++)
+	{
+		//Check if this VNF is already in the graph
+		bool alreadyThere = false;
+		for(list<highlevel::VNFs>::iterator there = vnfs_already_there.begin(); there != vnfs_already_there.end(); there++)
+		{
+			if((*there) == (*it))
+			{
+				alreadyThere = true;
+				break;
+			}
+		}
+		if(!alreadyThere)
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new VNF is required - ID: '%s' - name: '%s'", (it->getId()).c_str(),(it->getName()).c_str());
+			diff->addVNF(*it);
+			new_vnfs_name.insert(it->getName());
+		}
+	}
+	
+	// d) Add the new physical ports
+
+	//Retrieve the ports already existing in the graph
+	set<string> ports = this->getPorts();
+	//Retrieve the ports required by the update
+	set<string> new_ports = other->getPorts();
+	for(set<string>::iterator it = new_ports.begin(); it != new_ports.end(); it++)
+	{
+		if(ports.count(*it) == 0)
+		{
+			//The update requires a physical port that was not part of the graph
+			diff->addPort(*it);
+		}
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is already in the graph",(*it).c_str());
+	}
+
+	// e) Add the new endpoints
+
+	//Retrieve the endpoints already existing in the graph
+	map<string, vector<string> > endpoints = this->getEndPoints();
+	//Retrieve the endpoints required by the update
+	map<string, vector<string> > new_endpoints = other->getEndPoints();
+	for(map<string, vector<string> >::iterator mit = new_endpoints.begin(); mit != new_endpoints.end(); mit++)
+	{
+		string it = mit->first;
+
+		if(endpoints.count(it) == 0)
+		{
+			string tmp_ep = it;
+		}
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint %s is already in the graph",it.c_str());
+	}
+	
+	// f) Handle the configuration of the VNF
+	
+	//Insert only the configuration related to the network functions inserted in "diff"
+	//t_nfs_configuration is  the following
+	//	< string nf, map<unsigned int, port_network_config_t > >
+	t_nfs_configuration other_networkFunctionsConfiguration = other->getNetworkFunctionsConfiguration();
+	for(t_nfs_configuration::iterator config = other_networkFunctionsConfiguration.begin(); config != other_networkFunctionsConfiguration.end(); config++)
+	{
+		if(new_vnfs_name.count(config->first) != 0)
+		{
+			//This is a new VNF, then we have to add its configuration to "diff"
+			diff->addNetworkFunctionPortConfiguration(config->first,config->second);
+		}
+	}
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	map<string, list<port_mapping_t> > other_NetworkFunctionsControlPorts = other->getNetworkFunctionsControlPorts();
+	for(map<string, list<port_mapping_t> >::iterator control = other_NetworkFunctionsControlPorts.begin(); control != other_NetworkFunctionsControlPorts.end(); control++)
+	{
+		if(new_vnfs_name.count(control->first) != 0)
+		{
+			//This is a new VNF, then we have to its control information to "diff"
+			list<port_mapping_t> control_ports = control->second;
+			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
+				diff->addNetworkFunctionControlPort(control->first,*cp);
+		}
+	}
+	
+	map<string, list<string> > other_NetworkFunctionsEnvironmentVariables = other->getNetworkFunctionsEnvironmentVariables();
+	for(map<string, list<string> >::iterator envvar = other_NetworkFunctionsEnvironmentVariables.begin(); envvar != other_NetworkFunctionsEnvironmentVariables.end(); envvar++)
+	{
+		if(new_vnfs_name.count(envvar->first) != 0)
+		{
+			//This is a new VNF, then we have to its control information to "diff"
+			list<string> environment_variables = envvar->second;
+			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
+				diff->addNetworkFunctionEnvironmentVariable(envvar->first,*ev);
+		}
+	}
+#endif
+
+
+	return diff;
+}
+
 }

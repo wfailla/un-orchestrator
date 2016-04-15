@@ -550,12 +550,11 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		}
 	}
 
+	//FIXME: what is the purpose of this line? We do not check any endpoint here
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d graph endpoints (i.e., logical ports to be used to connect two graphs together)",endPoints.size());
 
 	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctions();
-
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires to retrieve %d new NFs",network_functions.size());
-
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		nf_manager_ret_t retVal = computeController->retrieveDescription(nf->first);
@@ -1091,7 +1090,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	return true;
 }
 
-bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
+bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s'...",graphID.c_str());
 
@@ -1110,7 +1109,15 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	/**
 	*	Outline:
 	*
-	*	0) check the validity of the new piece of the graph
+	*	0) check the validity of the new piece of the graph	//TODO: remove this old point 0
+	//
+	//
+	//
+	//
+	*	0) calculate the diff with respect to the graph already deployed
+	//
+	//
+	//
 	*	1) update the high level graph
 	*	2) select an implementation for the new NFs
 	*	3) update the lsi (in case of new ports/NFs/endpoints are required)
@@ -1122,127 +1129,27 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	*	The three following variables will be used in the following and that contain
 	*	an high level graph:
 	*		* graph -> the original graph to be updated
-	*		* newPiece -> graph containing the update
-	*		* tmp -> graph that will contain the parts in newPiece that have actually to be added in "graph",
-	*			in terms of physical ports, VNFs and endpoints
+	*		* newGraph -> graph containing the update
+	*		* diff -> graph that will contain the parts in newGraph that are not part of graph
 	*/
 
-	highlevel::Graph *tmp = new highlevel::Graph(/*"fake"*/graphID);
+
+	//tmp contains only the new VNFs, the new ports and the new endpoints that are not already into the graph
+
+	highlevel::Graph *diff = graph->calculateDiff(newGraph, graphID);
 
 	/**
 	*	0) Check the validity of the update
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Check the validity of the update");
-
-	//Retrieve the NFs already existing in the graph
-	highlevel::Graph::t_nfs_ports_list nfs = graph->getNetworkFunctions();
-
-	//Retrieve the NFs required by the update (this part is related to the network functions ports)
-	highlevel::Graph::t_nfs_ports_list new_nfs = newPiece->getNetworkFunctions();
-	for(highlevel::Graph::t_nfs_ports_list::iterator it = new_nfs.begin(); it != new_nfs.end(); it++)
-	{
-		if(nfs.count(it->first) == 0)
-		{
-			//The udpdate requires a NF that was not part of the graph
-			tmp->addNetworkFunction(it->first);
-#ifndef UNIFY_NFFG
-			//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
-			list<unsigned int> ports = it->second;
-			for(list<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
-				tmp->updateNetworkFunction(it->first, *p);
-#endif
-		}
-#ifndef UNIFY_NFFG
-		//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
-		else
-		{
-			//The NF is already part of the graph, but the update
-			//must not contain new ports for the NF
-			list<unsigned int> new_ports = it->second;
-			list<unsigned int> ports = nfs.find(it->first)->second;
-			for(list<unsigned int>::iterator np = new_ports.begin(); np != new_ports.end(); np++)
-			{
-				list<unsigned int>::iterator p = ports.begin();
-				for(; p != ports.end(); p++)
-				{
-					if(*np == *p)
-						break;
-				}
-				if(p == ports.end())
-				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "A new port '%d' is required for NF '%s'", *np, it->first.c_str());
-					return false;
-				}
-			}
-		}
-#endif
-	}
-
-	//Retrieve the network functions already instantiated (and convert them in a set)
-	list<highlevel::VNFs> vnfs_already_there = graph->getVNFs();
-	//Retrieve the network functions required by the update, and their configuration
-	list<highlevel::VNFs> new_vnfs_required = newPiece->getVNFs();
-	for(list<highlevel::VNFs>::iterator it = new_vnfs_required.begin(); it != new_vnfs_required.end(); it++)
-	{
-		//Check if this VNF is already in the graph
-		bool alreadyThere = false;
-		for(list<highlevel::VNFs>::iterator there = vnfs_already_there.begin(); there != vnfs_already_there.end(); there++)
-		{
-			if((*there) == (*it))
-			{
-				alreadyThere = true;
-				break;
-			}
-		}
-		if(!alreadyThere)
-		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new VNF is required - ID: '%s' - name: '%s'", (it->getId()).c_str(),(it->getName()).c_str());
-			tmp->addVNF(*it);
-		}
-	}
-
-	//Retrieve the ports already existing in the graph
-	set<string> ports = graph->getPorts();
-	//Retrieve the ports required by the update
-	set<string> new_ports = newPiece->getPorts();
-	for(set<string>::iterator it = new_ports.begin(); it != new_ports.end(); it++)
-	{
-		if(ports.count(*it) == 0)
-		{
-			//The update requires a physical port that was not part of the graph
-			tmp->addPort(*it);
-		}
-		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is already in the graph",(*it).c_str());
-	}
-
-	//Retrieve the endpoints already existing in the graph
-	map<string, vector<string> > endpoints = graph->getEndPoints();
-	//Retrieve the endpoints required by the update
-	map<string, vector<string> > new_endpoints = newPiece->getEndPoints();
-	for(map<string, vector<string> >::iterator mit = new_endpoints.begin(); mit != new_endpoints.end(); mit++)
-	{
-		string it = mit->first;
-
-		if(endpoints.count(it) == 0)
-		{
-			string tmp_ep = it;
-		}
-		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint %s is already in the graph",it.c_str());
-	}
-
-	//tmp contains only the new VNFs, the new ports and the new endpoints that are not already into the graph
-
-	if(!checkGraphValidity(tmp,computeController))
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Check the validity of the update");	
+	if(!checkGraphValidity(diff,computeController))
 	{
 		//This is an error in the request
-		delete(tmp);
-		tmp = NULL;
+		delete(diff);
+		diff = NULL;
 		return false;
 	}
-
-	//The update is valid
+	//The required graph update is valid
 
 	/**
 	*	1) Update the high level graph
@@ -1250,7 +1157,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 
 	//Update the rules
-	list<highlevel::Rule> newRules = newPiece->getRules();
+	list<highlevel::Rule> newRules = diff->getRules();
 	for(list<highlevel::Rule>::iterator rule = newRules.begin(); rule != newRules.end(); rule++)
 	{
 		if(!graph->addRule(*rule))
@@ -1261,12 +1168,12 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	}
 
 	//Update the physical ports
-	set<string> nps = tmp->getPorts();
+	set<string> nps = diff->getPorts();
 	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
 		graph->addPort(*port);
 
 	//Update the network functions ports
-	highlevel::Graph::t_nfs_ports_list networkFunctions = tmp->getNetworkFunctions();
+	highlevel::Graph::t_nfs_ports_list networkFunctions = diff->getNetworkFunctions();
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
 	{
 		graph->addNetworkFunction(nf->first);
@@ -1280,11 +1187,11 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	}
 
 	//Update the network functions
-	list<highlevel::VNFs> vnfs_tobe_added = tmp->getVNFs();
-	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = newPiece->getNetworkFunctionsConfiguration();
+	list<highlevel::VNFs> vnfs_tobe_added = diff->getVNFs();
+	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = diff->getNetworkFunctionsConfiguration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	map<string, list<port_mapping_t> > new_nfs_control_ports = newPiece->getNetworkFunctionsControlPorts();
-	map<string, list<string> > new_nfs_env_variables = newPiece->getNetworkFunctionsEnvironmentVariables();
+	map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
+	map<string, list<string> > new_nfs_env_variables = diff->getNetworkFunctionsEnvironmentVariables();
 #endif
 	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
 	{
@@ -1306,11 +1213,9 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	}
 
 	//Update the endpoints
-	map<string, vector<string> > nep = tmp->getEndPoints();
+	map<string, vector<string> > nep = diff->getEndPoints();
 	for(map<string, vector<string> >::iterator mep = nep.begin(); mep != nep.end(); mep++)
-	{
 		string tmp_ep = mep->first;
-	}
 
 	graph->print();
 
@@ -1331,14 +1236,14 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) update the lsi (in case of new ports/NFs/endpoints are required)");
 
-	set<string> phyPorts = tmp->getPorts();
+	set<string> phyPorts = diff->getPorts();
 
-	map<string, list<unsigned int> > network_functions = tmp->getNetworkFunctions();
-	map<string, vector<string> > tmp_endpoints = tmp->getEndPoints();//#ADDED
+	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctions();
+	map<string, vector<string> > tmp_endpoints = diff->getEndPoints();//#ADDED
 
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 
-	vector<set<string> > vlVector = identifyVirtualLinksRequired(newPiece,lsi);
+	vector<set<string> > vlVector = identifyVirtualLinksRequired(diff,lsi);
 	set<string> vlNFs = vlVector[0];
 	set<string> vlPhyPorts = vlVector[1];
 	set<string> vlEndPoints = vlVector[2];
@@ -1398,8 +1303,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 			if(avlo != NULL)
 				delete(avlo);
-			delete(tmp);
-			tmp = NULL;
+			delete(diff);
+			diff = NULL;
 			throw GraphManagerException();
 		}
 	}
@@ -1432,8 +1337,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 			if(avlo != NULL)
 				delete(avlo);
-			delete(tmp);
-			tmp = NULL;
+			delete(diff);
+			diff = NULL;
 			throw GraphManagerException();
 		}
 	}
@@ -1460,7 +1365,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 				throw GraphManagerException();
 			}
 
-			//FIXME: usefull? Probably no!
+			//FIXME: useful? Probably no!
 			lsi->setNetworkFunctionsPortsNameOnSwitch(anpo->getNFname(),anpo->getPortsNameOnSwitch());
 
 			delete(anpo);
@@ -1470,8 +1375,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			lsi->removeNF(nf->first);
 			if(anpo != NULL)
 				delete(anpo);
-			delete(tmp);
-			tmp = NULL;
+			delete(diff);
+			diff = NULL;
 			throw GraphManagerException();
 		}
 	}
@@ -1502,8 +1407,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			lsi->removeEndpoint(ep->first);
 			if(aepo != NULL)
 				delete(aepo);
-			delete(tmp);
-			tmp = NULL;
+			delete(diff);
+			diff = NULL;
 			throw GraphManagerException();
 		}
 #else
@@ -1537,8 +1442,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		{
 			//TODO: no idea on what I have to do at this point
 			assert(0);
-			delete(tmp);
-			tmp = NULL;
+			delete(diff);
+			diff = NULL;
 			throw GraphManagerException();
 		}
 	}
@@ -1555,12 +1460,12 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		//creates the new rules for LSI-0 and for the tenant-LSI
 
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(newPiece,lsi,graphInfoLSI0.getLSI(),availableEndPoints,orchestrator_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(diff,lsi,graphInfoLSI0.getLSI(),availableEndPoints,orchestrator_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
 		graphLSI0.print();
 		graphLSI0lowLevel.addRules(graphLSI0.getRules());
 
-		lowlevel::Graph graphTenant =  GraphTranslator::lowerGraphToTenantLSI(newPiece,lsi,graphInfoLSI0.getLSI());
+		lowlevel::Graph graphTenant =  GraphTranslator::lowerGraphToTenantLSI(diff,lsi,graphInfoLSI0.getLSI());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for tenant LSI:");
 		graphTenant.print();
 
@@ -1578,8 +1483,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		//TODO: no idea on what I have to do at this point
 		assert(0);
-		delete(tmp);
-		tmp = NULL;
+		delete(diff);
+		diff = NULL;
 		throw GraphManagerException();
 
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
@@ -1588,8 +1493,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 
 	//The new flows have been added to the graph!
 
-	delete(tmp);
-	tmp = NULL;
+	delete(diff);
+	diff = NULL;
 	return true;
 }
 

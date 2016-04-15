@@ -233,7 +233,7 @@ public:
 	*	XXX: note that an existing NF does not change: if a new port is required, the update
 	*	of the graph fails
 	*/
-	bool updateGraph(string graphID, highlevel::Graph *newFlow);
+	bool updateGraph(string graphID, highlevel::Graph *newGraph);
 
 	/**
 	*	@brief: remove the flow with a specified ID, from a specified graph

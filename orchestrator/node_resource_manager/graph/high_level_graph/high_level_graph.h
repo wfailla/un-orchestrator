@@ -128,6 +128,14 @@ private:
 	*	@brief: Name of the graph
 	*/
 	string name;
+	
+	/**
+	*	@brief: Given a graph, returns the rules present in such a graph with respect to the rules
+	*			of the graph on which the method is called
+	*
+	*	@param: other	Graph from which the new rules must be extracted
+	*/
+	list<Rule> calculateNewRules(Graph *other);
 
 public:
 
@@ -165,14 +173,12 @@ public:
 	*/
 	//FIXME: is the return value useful?
 	bool addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > description);
-	
+
 	/**
-	*	@brief: Given a graph, returns the rules present in such a graph with respect to the rules
-	*			of the graph on which the method is called
-	*
-	*	@param: other	Graph from which the new rules must be extracted
+	*	@brief: Given a graph, calculate the things (e.g., NFs) that are in such a graph and not in the
+	*		graph on which the method is called. In practice, it returns "other - this"
 	*/
-	list<Rule> calculateNewRules(Graph *other);
+	highlevel::Graph *calculateDiff(highlevel::Graph *other, string graphID);
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
