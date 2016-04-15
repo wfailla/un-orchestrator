@@ -142,6 +142,7 @@ private:
 	//static int doPutCommandReletedToPort(struct MHD_Connection *connection, void **con_cls);
 	static int attachDevice(struct MHD_Connection *connection, void **con_cls);
 	static int detachDevice(struct MHD_Connection *connection, void **con_cls);
+	static int sendToDPDK(struct MHD_Connection *connection, void **con_cls);
 #endif
 
 public:

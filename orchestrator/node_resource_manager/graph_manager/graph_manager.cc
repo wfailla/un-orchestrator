@@ -2197,5 +2197,71 @@ bool GraphManager::executeCommandReleatedToPort(string port, string command, str
 
 	return nfs_manager->sendCommand(nfName, command, response);
 }
+
+bool GraphManager::sendToDPDK(string port, string data, string & response)
+{
+	string graphID = SwitchPortsAssociation::getGraphID(port);
+	string nfName = SwitchPortsAssociation::getNfName(port);
+
+	if(tenantLSIs.count(graphID) == 0)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+				"The graph \"%s\" does not exist", graphID.c_str());
+		return false;
+	}
+
+	/*
+	 * probably this is not the best place to execute this actions.
+	 * It would be better to execute them inside the computer controller, even
+	 * inside the libvirt plugin. However, a fast working solution is required
+	 * at this point...
+	 */
+	struct sockaddr_un addr;
+	char buf[data.length()];
+	char *buf_ptr;
+	int fd;
+	char socket_path[32];
+
+	snprintf(socket_path, sizeof(socket_path), "/tmp/%s", nfName.c_str());
+
+	fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (fd == -1) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "socket error");
+		return false;
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
+
+	if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "connect error");
+		return false;
+	}
+
+	strcpy(buf, data.c_str());
+	buf_ptr = &buf[0];
+
+	int left = data.length();
+
+	do {
+		int n = write(fd, buf_ptr, left);
+		if (n < 0) {
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__,
+				"Error writing to dpdk socket");
+			goto error;
+		}
+
+		left -= n;
+		buf_ptr += n;
+	} while (left > 0);
+
+	return true;
+
+error:
+	close(fd);
+	return false;
+}
+
 #endif
 

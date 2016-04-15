@@ -312,11 +312,17 @@ public:
 	*	@param: command	Command to be executed
 	*/
 	bool executeCommandReleatedToPort(string port, string command, string & response);
+
+	/**
+	*	@brief: Send data to a DPDK instance running inside a VM
+	*
+	*	@param:	port	Port associated with the command to be executed
+	*	@param: data	Data to be sent
+	*/
+	bool sendToDPDK(string port, string data, string & response);
 #endif
 
-
 	void getGraphsNames(std::list<std::string> *l);
-
 };
 
 

@@ -741,6 +741,14 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 				"Bad URL request");
 			return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
 		}
+	} else if(strcmp(generic_resource, BASE_URL_SEND_DPDK) == 0) {
+		if(resource == NULL)
+			return sendToDPDK(connection, con_cls);
+		else {
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+				"Bad URL request");
+			return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
+		}
 	}
 #endif
 
@@ -1303,5 +1311,77 @@ error:
 	MHD_destroy_response (response);
 	return ret;
 }
+
+int RestServer::sendToDPDK(struct MHD_Connection *connection, void **con_cls)
+{
+	struct MHD_Response *response;
+	int ret;
+	string response_string;
+
+	struct connection_info_struct *con_info = (struct connection_info_struct *)(*con_cls);
+	assert(con_info != NULL);
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content of the request:");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s",con_info->message);
+
+	Value value;
+	read(con_info->message, value);
+
+	string port;	/* port of the vm the command is directed to */
+	string command;	/* command to execute */
+
+	int count = 0;
+	string string_response;	/* response from qemu */
+
+	try {
+		Object obj = value.getObject();
+
+		for (Object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+			const string& name  = i->first;
+			const Value& value = i->second;
+
+			if (name == DIRECT_VM2VM_PORT) {
+				port = value.getString();
+				count++;
+			} else if (name == DIRECT_VM2VM_ID) {
+				command = value.getString();
+				count++;
+			}
+		}
+
+		if(count < 2) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
+					"Info missing in JSON!");
+			goto error;
+		}
+
+	} catch(exception& e) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+			"The content does not respect the JSON syntax: ",e.what());
+		goto error;
+	}
+
+	if(!gm->sendToDPDK(port, command, string_response)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+				"The command '%s' is not valid!",command.c_str());
+		goto error;
+	}
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+			"The DPDK '%s' command related to the port '%s' has been sent!",
+			command.c_str(),command.c_str());
+
+	response = MHD_create_response_from_buffer (0, NULL, MHD_RESPMEM_MUST_COPY);
+	ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+	MHD_destroy_response (response);
+	return ret;
+
+error:
+	response = MHD_create_response_from_buffer (0, NULL, MHD_RESPMEM_PERSISTENT);
+	ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+	MHD_destroy_response (response);
+	return ret;
+}
+
 
 #endif
