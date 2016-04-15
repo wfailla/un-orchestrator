@@ -391,8 +391,9 @@ bool Libvirt::startNF(StartNFIn sni)
 
 	xmlNodePtr srcn = xmlNewChild(chn, NULL, BAD_CAST "source", NULL);
 	ostringstream sock_path_os;
-	string socket_path = "/tmp/" + domain_name;
-	xmlNewProp(srcn, BAD_CAST "path", BAD_CAST socket_path.c_str());
+	char socket_path[PATH_MAX];
+	snprintf(socket_path, sizeof(socket_path), "/tmp/%s", domain_name);
+	xmlNewProp(srcn, BAD_CAST "path", BAD_CAST socket_path);
 
 	xmlNodePtr target = xmlNewChild(chn, NULL, BAD_CAST "target", NULL);
 	xmlNewProp(target, BAD_CAST "type", BAD_CAST "virtio");
