@@ -7,6 +7,7 @@
 
 #include "graph_manager.h"
 #include "../graph/high_level_graph/high_level_graph.h"
+#include "../graph/high_level_graph/high_level_output_action_endpoint_internal.h"
 
 class GraphTranslator
 {

@@ -1,6 +1,8 @@
 #ifndef HIGH_LEVEL_ACTION_ENDPOIN_INTERNAL_H_
 #define HIGH_LEVEL_ACTION_ENDPOINT_INTERNAL_H_ 1
 
+#pragma once
+
 #include "high_level_output_action.h"
 #include "../../../utils/logger.h"
 
