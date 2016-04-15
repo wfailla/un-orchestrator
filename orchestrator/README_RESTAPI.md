@@ -63,11 +63,11 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 	}
 
 The same message used to create a new graph can be used to add "parts" (i.e.,
-network functions and flows) to an existing graph. For instance, it is possible
-to add a new flow `000000002` to the NF-FG called ``myGraph'' as follows (note
-that the update contains all the things already part of the graph plus the new
-things to be added - the diff is in fact automatically calculated by the
-un-orchestrator)
+network functions, flows and endpoints) to an existing graph. For instance, it is 
+possible to add a new flow `000000002` and a new endpoit `00000002` to the NF-FG 
+called ``myGraph'' as follows (note that the update contains all the things already 
+part of the graph plus the new things to be added - the diff is in fact automatically 
+calculated by the un-orchestrator)
 
     PUT /NF-FG/myGraph HTTP/1.1
     Content-Type : application/json
