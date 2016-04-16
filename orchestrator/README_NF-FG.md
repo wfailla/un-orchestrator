@@ -720,14 +720,13 @@ command uses that endpoint.
 
 	{
 	  "forwarding-graph": {
-	    "id": "00000001",
+	    "id": "myGraph",
 	    "name": "Forwarding graph",
 	    "end-points": [
 	      {
 		"id": "00000004",
 		"name": "ingress",
-		"type": "internal",
-		"internal": {}
+		"type": "internal"
 	      }
 	    ],
 	    "VNFs": [

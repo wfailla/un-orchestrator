@@ -306,7 +306,6 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 			else if(actionType == ACTION_ON_ENDPOINT_GRE)
 			{
 				//Removed an action on an endpoint gre
-				assert(actionType == ACTION_ON_ENDPOINT_GRE);
 				rri.endpointGre = action->toString();
 
 				rri.isNFport = false;
@@ -317,8 +316,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 			else if(actionType == ACTION_ON_ENDPOINT_INTERNAL)
 			{
 				//Removed an action on an endpoint internal
-				assert(actionType == ACTION_ON_ENDPOINT_INTERNAL);
-				rri.endpointGre = action->toString();
+				rri.endpointInternal = action->toString();
 
 				rri.isNFport = false;
 				rri.isPort = false;
