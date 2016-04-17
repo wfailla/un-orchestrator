@@ -88,6 +88,8 @@ private:
 
 	static int readGraph(struct MHD_Connection *connection, char *graphID);
 	static int readMultipleGraphs(struct MHD_Connection *connection, user_info_t *usr);
+	static int readMultipleUsers(struct MHD_Connection *connection, user_info_t *usr);
+
 
 	static int doPost(struct MHD_Connection *connection, const char *url, void **con_cls, bool client_auth);
 
@@ -112,12 +114,15 @@ private:
 	static bool isLoginRequest(const char *method, const char *url);
 
 	static int deployNewGraph(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner);
+
 	static int deleteGraph(struct MHD_Connection *connection, char *resource);
+	static int deleteUser(struct MHD_Connection *connection, char *username);
 
 	static int addNewFlow(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *extra_info);
 	static int deleteFlow(struct MHD_Connection *connection, char *resource, char *extra_info);
 
 
+	static int readUser(struct MHD_Connection *connection, char *username);
 
 
 	/**
@@ -145,7 +150,7 @@ public:
 
 	static int answer_to_connection (void *cls, struct MHD_Connection *connection,
 						const char *url, const char *method, const char *version,
-						const char *upload_data,size_t *upload_data_size, void **con_cls);
+						const char *upload_data, size_t *upload_data_size, void **con_cls);
 
 	static void request_completed (void *cls, struct MHD_Connection *connection, void **con_cls,
 						enum MHD_RequestTerminationCode toe);

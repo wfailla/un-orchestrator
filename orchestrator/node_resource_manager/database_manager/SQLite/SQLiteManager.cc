@@ -144,7 +144,7 @@ bool SQLiteManager::resourceExists(const char *generic_resource, const char *res
 bool SQLiteManager::cleanTables() {
 	int rc = 0;
 	char *zErrMsg = 0, *sql = "delete from LOGIN; "	\
-								"delete from CURRENT_RESOURCES_PERMISSIONS;";
+								"delete from CURRENT_RESOURCES_PERMISSIONS where GENERIC_RESOURCE <> 'users';";
 
 	rc = sqlite3_exec(this->db, sql, NULL, NULL, &zErrMsg);
 
@@ -157,6 +157,37 @@ bool SQLiteManager::cleanTables() {
 				"Tables (LOGIN, RESOURCES, PERMISSIONS) has been cleaned up.");
 
 	return true;
+}
+
+user_info_t *SQLiteManager::getUserByName(const char *username) {
+
+	int rc = 0, res = 0, idx = 0;
+	char *sql = "select USER, MEMBERSHIP, PWD " \
+				"from USERS " \
+				"where USER = @username;";
+
+	sqlite3_stmt *stmt;
+	user_info_t *usr = NULL;
+
+	rc = sqlite3_prepare_v2(this->db, sql, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@username");
+		sqlite3_bind_text(stmt, idx, username, strlen(username), 0);
+
+		res = sqlite3_step(stmt);
+
+		if (res == SQLITE_ROW) {
+			usr = (user_info_t *) malloc(sizeof(user_info_t));
+
+			usr->user = (char *) sqlite3_column_text(stmt, 0);
+			usr->group = (char *) sqlite3_column_text(stmt, 1);
+			usr->pwd = (char *) sqlite3_column_text(stmt, 2);
+			usr->token = NULL;
+		}
+	}
+
+	return usr;
 }
 
 user_info_t *SQLiteManager::getUserByToken(const char *token) {
@@ -359,8 +390,6 @@ int SQLiteManager::insertUser(char *user, char *pwd, char *group) {
 
 	rc = sqlite3_prepare_v2(this->db, sql, -1, &stmt, 0);
 
-
-	std::cout<<"Insert user: "<<user<<" "<<pwd<<" "<<group<<std::endl;
 	if (rc == SQLITE_OK) {
 		idx = sqlite3_bind_parameter_index(stmt, "@user");
 		sqlite3_bind_text(stmt, idx, user, strlen(user), 0);
@@ -589,4 +618,32 @@ void SQLiteManager::getAllowedResourcesNames(user_info_t *usr, opcode_t op, char
 		}
 	}
 }
+
+void SQLiteManager::getAllResourcesNames(char *generic_resource, std::list<std::string> *resources) {
+	sqlite3_stmt *stmt;
+	int res = 0, idx = 0, rc = 0;
+
+	char *query = "select RESOURCE " \
+			"from CURRENT_RESOURCES_PERMISSIONS " \
+	    	"where GENERIC_RESOURCE = @generic_resource;", *name = NULL;
+
+	rc = sqlite3_prepare_v2(this->db, query, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@generic_resource");
+		sqlite3_bind_text(stmt, idx, generic_resource, strlen(generic_resource), 0);
+
+		while (1) {
+			res = sqlite3_step(stmt);
+
+	        if (res == SQLITE_ROW) {
+	        	name = (char*) sqlite3_column_text(stmt, 0);
+	        	std::string str(name);
+	        	resources->push_back(str);
+	        } else if(res == SQLITE_DONE || res==SQLITE_ERROR)
+	        	break;
+		}
+	}
+}
+
 

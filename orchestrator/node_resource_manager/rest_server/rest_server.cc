@@ -289,13 +289,15 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 
 int RestServer::createUser(char *username, struct MHD_Connection *connection, connection_info_struct *con_info) {
 	char *group, *password;
-	unsigned char hash_token[HASH_SIZE], temp[BUFFER_SIZE];
-	char hash_pwd[BUFFER_SIZE], nonce[BUFFER_SIZE], tmp[BUFFER_SIZE], user_tmp[BUFFER_SIZE];
+
+	unsigned char *hash_token = new unsigned char[HASH_SIZE]();
+	char *hash_pwd = new char[BUFFER_SIZE]();
+	char *tmp = new char[HASH_SIZE]();
+	char *pwd = new char[HASH_SIZE]();
 
 	assert(con_info != NULL);
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User login");
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User creation:");
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s", con_info->message);
 
 	if (MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "Host") == NULL) {
@@ -303,10 +305,13 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 		return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
 	}
 
-	if (!parsePostBody(*con_info, &username, &password, &group)) {
+	if (!parsePostBody(*con_info, NULL, &password, &group)) {
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Create user error: Malformed content");
 		return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
 	}
+
+	char *t_group = new char[strlen(group)+1]();
+	strncpy(t_group, group, strlen(group));
 
 	try {
 		if (username == NULL || group == NULL || password == NULL) {
@@ -314,29 +319,18 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
 
-		SHA256((const unsigned char*) password, sizeof(password) - 1, hash_token);
+		strncpy(pwd, password, strlen(password));
 
-		strcpy(tmp, "");
-		strcpy(hash_pwd, "");
+		SHA256((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
 
 		for (int i = 0; i < HASH_SIZE; i++) {
 			sprintf(tmp, "%x", hash_token[i]);
 			strcat(hash_pwd, tmp);
 		}
 
-		strcpy(user_tmp, username);
-
-		if(dbmanager->userExists(user_tmp, hash_pwd)) {
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Create user failed: wrong username or password!");
+		if(dbmanager->userExists(username, hash_pwd)) {
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User creation failed: already existing!");
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
-		}
-
-		strcpy(tmp, "");
-		strcpy(hash_pwd, "");
-
-		for (int i = 0; i < HASH_SIZE; i++) {
-			sprintf(tmp, "%x", temp[i]);
-			strcat(nonce, tmp);
 		}
 
 		char *token = (char *) MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "X-Auth-Token");
@@ -346,12 +340,17 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 			return false;
 		}
 
-		dbmanager->insertUser(user_tmp, nonce, group);
+		user_info_t *creator = dbmanager->getUserByToken(token);
 
-		user_info_t *u = dbmanager->getUserByToken(token);
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, ">>NEW USER");
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s %s %s\n", username, hash_pwd, t_group);
+		dbmanager->insertUser(username, hash_pwd, t_group);
 
-		std::cout<<"user by token: "<<u->user<<std::endl;
-		dbmanager->insertResource(BASE_URL_USER, user_tmp, u->user);
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, ">>NEW RESOURCE");
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s %s %s\n", BASE_URL_USER, username, creator->user);
+		dbmanager->insertResource(BASE_URL_USER, username, creator->user);
+
+		delete t_group;
 
 		return httpResponse(connection, MHD_HTTP_ACCEPTED);
 
@@ -431,15 +430,19 @@ bool RestServer::parseUserCreationForm(Value value, char **pwd, char **group) {
 			if (name == PASS) {
 				foundPwd = true;
 				(*pwd) = (char *) value.getString().c_str();
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tPwd: %s", *pwd);
+
 			} else if (name == GROUP) {
 				foundGroup = true;
 				(*group) = (char *) value.getString().c_str();
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tGrp: %s", *group);
 			} else {
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
 						"Invalid key: %s", name.c_str());
 				return false;
 			}
 		}
+
 		if (!foundPwd) {
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__,
 					"Key \"%s\" not found", PASS);
@@ -525,6 +528,8 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 		// Case currently implemented: read a graph
 		if (strcmp(generic_resource, BASE_URL_GRAPH) == 0)
 			return readMultipleGraphs(connection, usr);
+		else if (strcmp(generic_resource, BASE_URL_USER) == 0)
+			return readMultipleUsers(connection, usr);
 
 		return httpResponse(connection, MHD_HTTP_NOT_IMPLEMENTED);
 	} else if(strcmp(method, PUT) == 0) {
@@ -556,9 +561,11 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
 
-		// Case currently implemented: read a graph
-		if ( strcmp(generic_resource, BASE_URL_GRAPH) == 0)
+		// Cases currently implemented
+		if(strcmp(generic_resource, BASE_URL_GRAPH) == 0)
 			return readGraph(connection, (char *) resource);
+		else if(strcmp(generic_resource, BASE_URL_USER) == 0)
+			return readUser(connection, (char *) resource);
 
 	// PUT: for single resource, it can be only creation... at the moment!
 	} else if(strcmp(method, PUT) == 0) {
@@ -583,6 +590,9 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 
 		if(strcmp(generic_resource, BASE_URL_GRAPH) == 0)
 			return deleteGraph(connection, (char *) resource);
+		else if(strcmp(generic_resource, BASE_URL_USER) == 0)
+			return deleteUser(connection, (char *) resource);
+
 	} else if(strcmp(method, POST) == 0) {
 
 		if(strcmp(generic_resource, BASE_URL_USER) == 0) {
@@ -591,7 +601,6 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User not authorized to execute %s on %s", method, resource);
 				return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 			}
-
 			return createUser((char *) resource, connection, con_info);
 		}
 
@@ -749,13 +758,15 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 }
 
 int RestServer::readGraph(struct MHD_Connection *connection, char *graphID) {
+	assert(dbmanager != NULL);
+
 	struct MHD_Response *response;
 	int ret;
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Required resource: %s", graphID);
 
 	// Check whether the graph exists in the local database and in the graph manager
-	if (!dbmanager->resourceExists(BASE_URL_GRAPH, graphID) && !gm->graphExists(graphID)) {
+	if (!dbmanager->resourceExists(BASE_URL_GRAPH, graphID) || !gm->graphExists(graphID)) {
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method GET is not supported for this resource (i.e. it does not exist)");
 		response = MHD_create_response_from_buffer(0, (void*) "",
 				MHD_RESPMEM_PERSISTENT);
@@ -786,6 +797,111 @@ int RestServer::readGraph(struct MHD_Connection *connection, char *graphID) {
 	}
 }
 
+int RestServer::readUser(struct MHD_Connection *connection, char *username) {
+	assert(dbmanager != NULL);
+
+	struct MHD_Response *response;
+	int ret;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Required resource: %s", username);
+
+	// Check whether the user exists
+	if (!dbmanager->resourceExists(BASE_URL_USER, username)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method GET is not supported for this resource (i.e. it does not exist)");
+		response = MHD_create_response_from_buffer(0, (void*) "",
+				MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header(response, "Allow", PUT);
+		ret = MHD_queue_response(connection, MHD_HTTP_METHOD_NOT_ALLOWED,
+				response);
+		MHD_destroy_response(response);
+		return ret;
+	}
+
+	try {
+		json_spirit::Object json;
+
+		user_info_t *usr = dbmanager->getUserByName(username);
+
+		json["username"] = usr->user;
+		json["group"] = usr->group;
+
+		stringstream ssj;
+		write_formatted(json, ssj);
+		string sssj = ssj.str();
+		char *aux = (char*) malloc(sizeof(char) * (sssj.length() + 1));
+		strcpy(aux, sssj.c_str());
+		response = MHD_create_response_from_buffer(strlen(aux), (void*) aux,
+				MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header(response, "Content-Type", JSON_C_TYPE);
+		MHD_add_response_header(response, "Cache-Control", NO_CACHE);
+		ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+		MHD_destroy_response(response);
+		return ret;
+	} catch (...) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while retrieving the user description!");
+		return httpResponse(connection, MHD_HTTP_INTERNAL_SERVER_ERROR);
+	}
+}
+
+
+int RestServer::readMultipleUsers(struct MHD_Connection *connection, user_info_t *usr) {
+	assert(usr != NULL && dbmanager != NULL);
+
+	struct MHD_Response *response;
+	int ret;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Required resource: %s", BASE_URL_USER);
+
+	// Check whether NF-FG exists as a generic resourse in the local database
+	if (!dbmanager->resourceExists(BASE_URL_USER)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The generic resource %s does not exist in the local database", BASE_URL_GRAPH);
+		response = MHD_create_response_from_buffer(0, (void*) "",
+				MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header(response, "Allow", PUT);
+		ret = MHD_queue_response(connection, MHD_HTTP_METHOD_NOT_ALLOWED,
+				response);
+		MHD_destroy_response(response);
+		return ret;
+	}
+
+	try {
+		Object users;
+		Array users_array;
+		std::list<std::string> names;
+		user_info_t *user = NULL;
+
+		// If security is required, search the names in the database
+		dbmanager->getAllowedResourcesNames(usr, _READ, BASE_URL_USER, &names);
+
+		std::list<std::string>::iterator i;
+
+		for(i = names.begin(); i != names.end(); ++i) {
+			user = dbmanager->getUserByName((*i).c_str());
+			Object u;
+			u["username"] = user->user;
+			u["group"] = user->group;
+			users_array.push_back(u);
+		}
+
+		users[BASE_URL_USER] = users_array;
+
+		stringstream ssj;
+		write_formatted(users, ssj);
+		string sssj = ssj.str();
+		char *aux = (char*) malloc(sizeof(char) * (sssj.length() + 1));
+		strcpy(aux, sssj.c_str());
+		response = MHD_create_response_from_buffer(strlen(aux), (void*) aux,
+				MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header(response, "Content-Type", JSON_C_TYPE);
+		MHD_add_response_header(response, "Cache-Control", NO_CACHE);
+		ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+		MHD_destroy_response(response);
+		return ret;
+	} catch (...) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while retrieving the graph description!");
+		return httpResponse(connection, MHD_HTTP_INTERNAL_SERVER_ERROR);
+	}
+}
 
 int RestServer::readMultipleGraphs(struct MHD_Connection *connection, user_info_t *usr) {
 	assert(usr != NULL);
@@ -957,6 +1073,39 @@ int RestServer::deleteGraph(struct MHD_Connection *connection, char *resource) {
 	}
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
+
+	return httpResponse(connection, MHD_HTTP_NO_CONTENT);
+}
+
+int RestServer::deleteUser(struct MHD_Connection *connection, char *username) {
+
+	int ret = 0;
+	struct MHD_Response *response;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Received request for deleting %s/%s", BASE_URL_USER, username);
+
+	// If security is required, check whether the user does exist in the database
+	if(dbmanager != NULL && !dbmanager->resourceExists(BASE_URL_USER, username)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Cannot delete a non-existing user in the database!");
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header (response, "Allow", PUT);
+		ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
+
+	try {
+		// If security is required, update database
+		if(dbmanager != NULL) {
+			dbmanager->deleteResource(BASE_URL_USER, username);
+			dbmanager->deleteUser(username);
+		}
+	} catch (...) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the deletion of the user!");
+		return httpResponse(connection, MHD_HTTP_INTERNAL_SERVER_ERROR);
+	}
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The user has been properly deleted!");
 
 	return httpResponse(connection, MHD_HTTP_NO_CONTENT);
 }
