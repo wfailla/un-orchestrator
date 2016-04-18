@@ -223,12 +223,12 @@ public:
 	*
 	*	@return: true if the endpoint is defined in the current graph; false otherwise
 	*/
-	bool addEndPoint(string graphID, string endpoint);
+	bool addEndpointInternalAsString(string graphID, string endpoint);
 
 	/**
 	*	@brief: Return the "internal" endpoints of the graph, as a set of strings
 	*/
-	set<string> getEndPoints();
+	set<string> getEndpointsInternalAsString();
 
 	/**
 	*	@brief: given a graph endpoint (in the form graphID:epID), return true if it is defined

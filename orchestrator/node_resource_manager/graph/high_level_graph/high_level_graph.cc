@@ -497,7 +497,7 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::addEndPoint(string graphID, string endpoint)
+bool Graph::addEndpointInternalAsString(string graphID, string endpoint)
 {
 #if 0
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint is \"%s\"",endpoint.c_str());
@@ -510,7 +510,7 @@ bool Graph::addEndPoint(string graphID, string endpoint)
 	return endpoints[endpoint];
 }
 
-set<string> Graph::getEndPoints()
+set<string> Graph::getEndpointsInternalAsString()
 {
 	set<string> endPoints;
 

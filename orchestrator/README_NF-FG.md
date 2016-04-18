@@ -615,12 +615,11 @@ Is `gre-tunnel` endpoint is defined as follows:
 		"gre-tunnel": {
 			"local-ip": "10.0.0.1",
 			"remote-ip": "10.0.0.2",
-			"interface" : "eth1",
 			"gre-key" : "1"
 		}
 	}
 	
-In this example, only the traffic coming from the physical interface `eth1` and belonging to the following GRE 
+In this example, only the traffic coming from the control interface and belonging to the following GRE 
 tunnel is enable to enter through such an end point: `10.0.0.1` as a source IP address, `10.0.0.2` as a 
 destination IP address, `1` as `gre-key`. Similarly, all the traffic that will exit from such an end point,
 will be sent through the physical interface `eth1` encapsulated into the GRE tunnel defined with the parameters 
@@ -662,7 +661,6 @@ the `gre-tunnel` endpoint.
 		    	"gre-tunnel": {
 		      		"local-ip": "10.0.0.1",
 		      		"remote-ip": "10.0.0.2",
-		      		"interface" : "eth1",
 		      		"gre-key" : "1"
 		    	}
 		  	}

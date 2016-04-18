@@ -102,7 +102,7 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string un_address,
 				endpoints[e->getId()][0] = e->getGreKey();
 				endpoints[e->getId()][1] = e->getLocalIp();
 				endpoints[e->getId()][2] = e->getRemoteIp();
-				endpoints[e->getId()][3] = e->getInterface();
+				endpoints[e->getId()][3] = un_interface;
 			}
 		}
 
@@ -397,7 +397,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	if(!shutdown)
 	{
-		set<string> endpoints = highLevelGraph->getEndPoints();
+		set<string> endpoints = highLevelGraph->getEndpointsInternalAsString();
 		for(set<string>::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
 		{
 			if(highLevelGraph->isDefinedHere(*ep))
@@ -416,7 +416,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Remove the rules from the LSI-0");
 
-	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),endPointsDefinedInMatches, endPointsDefinedInActions,availableEndPoints,orchestrator_in_band,false);
+	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),endPointsDefinedInMatches,endPointsDefinedInActions,availableEndPoints,un_interface,orchestrator_in_band,false);
 	graphLSI0lowLevel.removeRules(graphLSI0.getRules());
 
 	//Remove rules from the LSI-0
@@ -453,7 +453,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	if(!shutdown)
 	{
-		set<string> endpoints = highLevelGraph->getEndPoints();
+		set<string> endpoints = highLevelGraph->getEndpointsInternalAsString();
 		for(set<string>::iterator ep = endpoints.begin(); ep != endpoints.end();)
 		{
 			if(highLevelGraph->isDefinedHere(*ep))
@@ -575,7 +575,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController *computeController)
 {
 	set<string> phyPorts = graph->getPorts();
-	set<string> endPoints = graph->getEndPoints();
+	set<string> endPoints = graph->getEndpointsInternalAsString();
 	list<highlevel::EndPointGre> endPointsGre = graph->getEndPointsGre();
 
 	string graphID = graph->getID();
@@ -761,7 +761,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
 	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
 #endif
-	set<string> endpointsInternal = graph->getEndPoints();
+	set<string> endpointsInternal = graph->getEndpointsInternalAsString();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
 
 	vector<set<string> > vlVector = identifyVirtualLinksRequired(graph);
@@ -845,7 +845,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				v_ep[0].assign(e->getGreKey());
 				v_ep[1].assign(e->getLocalIp());
 				v_ep[2].assign(e->getRemoteIp());
-				v_ep[3].assign(e->getInterface());
+				v_ep[3].assign(un_interface);
 				if(e->isSafe())
 					v_ep[4].assign("true");
 				else
@@ -998,7 +998,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tKey: %s", it->getGreKey().c_str());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tLocal ip: %s", it->getLocalIp().c_str());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tRemote_ip: %s", it->getRemoteIp().c_str());
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tPhysical port: %s", it->getInterface().c_str());
 	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual links (%u): ",vls.size());
@@ -1181,7 +1180,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	try
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(),endPointsDefinedInMatches,endPointsDefinedInActions,availableEndPoints,orchestrator_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(),endPointsDefinedInMatches,endPointsDefinedInActions,availableEndPoints,un_interface,orchestrator_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New graph for LSI-0:");
 		graphLSI0.print();
 
@@ -1389,9 +1388,9 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	}
 
 	//Retrieve the internal endpoints already existing in the graph
-	set<string> endpoints = graph->getEndPoints();
+	set<string> endpoints = graph->getEndpointsInternalAsString();
 	//Retrieve the internal endpoints required by the update
-	set<string> new_endpoints = newPiece->getEndPoints();
+	set<string> new_endpoints = newPiece->getEndpointsInternalAsString();
 	for(set<string>::iterator it = new_endpoints.begin(); it != new_endpoints.end(); it++)
 	{
 		if(endpoints.count(*it) == 0)
@@ -1399,7 +1398,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			string tmp_ep = *it;
 			string tmp_graph_id = MatchParser::graphID(tmp_ep);
 			//The endpoint is not part of the graph
-			tmp->addEndPoint(tmp_graph_id,*it);
+			tmp->addEndpointInternalAsString(tmp_graph_id,*it);
 		}
 		else
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",(*it).c_str());
@@ -1487,13 +1486,13 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	}
 
 	//Update the internal endpoints
-	set<string> nep = tmp->getEndPoints();
+	set<string> nep = tmp->getEndpointsInternalAsString();
 	for(set<string>::iterator ep = nep.begin(); ep != nep.end(); ep++)
 	{
 		string tmp_ep = *ep;
 		string tmp_graph_id = MatchParser::graphID(tmp_ep);
 		//The endpoint is not part of the graph
-		graph->addEndPoint(tmp_graph_id,*ep);
+		graph->addEndpointInternalAsString(tmp_graph_id,*ep);
 	}
 
 	graph->print();
@@ -1733,7 +1732,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		ep_param[0] = ep->getGreKey();
 		ep_param[1] = ep->getLocalIp();
 		ep_param[2] = ep->getRemoteIp();
-		ep_param[3] = ep->getInterface();
+		ep_param[3] = un_interface;
 		if(ep->isSafe())
 			ep_param[4] = "true";
 		else
@@ -1815,7 +1814,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	{
 		//creates the new rules for LSI-0 and for the tenant-LSI
 
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(newPiece,lsi,graphInfoLSI0.getLSI(), endPointsDefinedInMatches,endPointsDefinedInActions,availableEndPoints,orchestrator_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(newPiece,lsi,graphInfoLSI0.getLSI(),endPointsDefinedInMatches,endPointsDefinedInActions,availableEndPoints,un_interface,orchestrator_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
 		graphLSI0.print();
 		graphLSI0lowLevel.addRules(graphLSI0.getRules());

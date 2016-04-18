@@ -703,7 +703,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											gre_id[id] = interface;
 
 											//Add gre-tunnel end-points
-											highlevel::EndPointGre ep_gre(id, e_name, local_ip, remote_ip, interface, gre_key, ttl, safe);
+											highlevel::EndPointGre ep_gre(id, e_name, local_ip, remote_ip, gre_key, ttl, safe);
 
 											graph.addEndPointGre(ep_gre);
 										}
@@ -741,7 +741,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									stringstream endpoint;
 									endpoint << graph_id << ":" << id_tmp;
 
-									graph.addEndPoint(graph_id,endpoint.str());
+									graph.addEndpointInternalAsString(graph_id,endpoint.str());
 
 									e_internal = false;
 								}

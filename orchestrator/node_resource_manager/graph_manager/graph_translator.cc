@@ -1,6 +1,6 @@
 #include "graph_translator.h"
 
-lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int> endPointsDefinedInMatches, map<string, unsigned int> endPointsDefinedInActions, map<string, unsigned int > &availableEndPoints, bool orchestrator_in_band, bool creating)
+lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int> endPointsDefinedInMatches, map<string, unsigned int> endPointsDefinedInActions, map<string, unsigned int > &availableEndPoints, string un_interface, bool orchestrator_in_band, bool creating)
 {
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating rules for LSI-0");
 
@@ -21,7 +21,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		{
 			//Translate the match
 			lowlevel::Match lsi0Match;
-			map<string,unsigned int>::iterator translation = ports_lsi0.find(it->getInterface());
+			map<string,unsigned int>::iterator translation = ports_lsi0.find(un_interface);
 
 			lsi0Match.setGreKey((char *)it->getGreKey().c_str());
 			lsi0Match.setInputPort(translation->second);
