@@ -95,22 +95,22 @@ private:
 	list<Rule> rules;
 
 	/**
-	*	@brief: List of endPointsInterface describing the graph
+	*	@brief: List of "interface" endpoints
 	*/
 	list<EndPointInterface> endPointsInterface;
 
 	/**
-	*	@brief: List of endPointsInternal describing the graph
+	*	@brief: List of "internal" endpoints
 	*/
 	list<EndPointInternal> endPointsInternal;
 
 	/**
-	*	@brief: List of endPointsGRE describing the graph
+	*	@brief: List of "GRE" endpoints
 	*/
 	list<EndPointGre> endPointsGre;
 
 	/**
-	*	@brief: List of endPointsVlan describing the graph
+	*	@brief: List of "vlan" endpoints
 	*/
 	list<EndPointVlan> endPointsVlan;
 
@@ -216,8 +216,7 @@ public:
 #endif
 
 	/**
-	*	@brief: Add an end point to the graph, to be used to connect the graph itself with
-	*		other graphs.
+	*	@brief: Add a string representing an "internal" endpoint to the graph
 	*
 	*	@param: graphID		Indefier of the graph defining the end point
 	*	@param: endpoint	Identifier of the end point
@@ -227,8 +226,7 @@ public:
 	bool addEndPoint(string graphID, string endpoint);
 
 	/**
-	*	@brief: Return the end points of the graph, i.e. the ports to be used to connect
-	*		multiple graphs together.
+	*	@brief: Return the "internal" endpoints of the graph, as a set of strings
 	*/
 	set<string> getEndPoints();
 
@@ -254,43 +252,43 @@ public:
 	string getName();
 
 	/**
-	*	@brief: Add a new endpointInterface to the graph
+	*	@brief: Add a new "interface" endpoint to the graph
 	*/
 	bool addEndPointInterface(EndPointInterface endpoint);
 
 	/**
-	*	@brief: Return the endpointsInterface of the graph
+	*	@brief: Return the "interface" endpoints of the graph
 	*/
 	//XXX: this functions is not used. 
 	list<EndPointInterface> getEndPointsInterface();
 
 	/**
-	*	@brief: Add a new endpointInternal to the graph
+	*	@brief: Add a new "internal" endpoint to the graph
 	*/
 	bool addEndPointInternal(EndPointInternal endpoint);
 
 	/**
-	*	@brief: Return the endpointsInternal of the graph
+	*	@brief: Return the "internal" endpoints of the graph
 	*/
 	list<EndPointInternal> getEndPointsInternal();
 
 	/**
-	*	@brief: Add a new endpointGre to the graph
+	*	@brief: Add a new "GRE" endpoint to the graph
 	*/
 	bool addEndPointGre(EndPointGre endpoint);
 
 	/**
-	*	@brief: Return the endpointsGre of the graph
+	*	@brief: Return the "GRE" endpoints of the graph
 	*/
 	list<EndPointGre> getEndPointsGre();
 
 	/**
-	*	@brief: Add a new endpointVlan to the graph
+	*	@brief: Add a new "vlan" endpoint to the graph
 	*/
 	bool addEndPointVlan(EndPointVlan endpoint);
 
 	/**
-	*	@brief: Return the endpointsVlan of the graph
+	*	@brief: Return the "vlan" endpoints of the graph
 	*/
 	list<EndPointVlan> getEndPointsVlan();
 
