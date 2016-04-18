@@ -116,8 +116,10 @@ Object VNFs::toJSON()
 
 		pp[_ID] = (*p)[0].c_str();
 		pp[_NAME] = (*p)[1].c_str();
-		pp[PORT_MAC] = (*p)[2].c_str();
-		pp[PORT_IP] = (*p)[3].c_str();
+		if(strlen((*p)[2].c_str()) != 0)
+			pp[PORT_MAC] = (*p)[2].c_str();
+		if(strlen((*p)[3].c_str()) != 0)
+			pp[PORT_IP] = (*p)[3].c_str();
 
 		portS.push_back(pp);
 	}

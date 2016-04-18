@@ -35,7 +35,7 @@ private:
 	*						a network function (but potentially on other
 	*						parameters)
 	*/
-	typedef enum{MATCH_GENERIC,MATCH_PORT,MATCH_NF, MATCH_ENDPOINT}match_t;
+	typedef enum{MATCH_GENERIC,MATCH_PORT,MATCH_NF,MATCH_ENDPOINT_INTERNAL,MATCH_ENDPOINT_GRE}match_t;
 
 	/**
 	*	@brief: this attribute can either represent
@@ -57,7 +57,7 @@ private:
 
 	/**
 	*	@brief: in case the input attribute is a graph ID, this
-	*		variable represents the endpoint idenfier within the
+	*		variable represents the endpoint identifier within the
 	*		graph.
 	*/
 	unsigned int endpoint;
@@ -100,9 +100,17 @@ public:
 	/**
 	*	@brief: set a graph endpoint
 	*
+	*	@param: graphID		identifier of the graph defining the endpoint
 	*	@param: endpoint	identifier of the endpoint within the graph
 	*/
-	bool setEndPoint(unsigned int endpoint);
+	bool setEndPointInternal(string graphID, unsigned int endpoint);
+
+	/**
+	*	@brief: set a graph endpoint gre
+	*
+	*	@param: endpoint	identifier of the endpoint within the graph
+	*/
+	bool setEndPointGre(unsigned int endpoint);
 
 	/**
 	*	@brief: set a input endpoint
@@ -138,7 +146,12 @@ public:
 	/**
 	*	@brief: return true if the match is on a graph endpoint
 	*/
-	bool matchOnEndPoint();
+	bool matchOnEndPointInternal();
+
+	/**
+	*	@brief: return true if the match is on a gre endpoint
+	*/
+	bool matchOnEndPointGre();
 
 	/**
 	*	@brief: return the physical port (the match must be on a physical port)

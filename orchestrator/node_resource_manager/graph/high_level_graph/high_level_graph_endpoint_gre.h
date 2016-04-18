@@ -43,11 +43,6 @@ private:
 	string remote_ip;
 
 	/**
-	*	@brief: the interface of the gre tunnel (e.g., 10.0.0.3)
-	*/
-	string interface;
-
-	/**
 	*	@brief: the key of the gre tunnel (e.g., 1)
 	*/
 	string gre_key;
@@ -64,12 +59,11 @@ private:
 
 public:
 
-	EndPointGre(string id, string name, string local_ip, string remote_ip, string interface, string gre_key, string ttl, bool is_safe);
+	EndPointGre(string id, string name, string local_ip, string remote_ip, string gre_key, string ttl, bool is_safe);
 	string getId();
 	string getName();
 	string getLocalIp();
 	string getRemoteIp();
-	string getInterface();
 	string getGreKey();
 	string getTtl();
 	bool isSafe();

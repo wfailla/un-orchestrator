@@ -51,12 +51,12 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 				}
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
 		    	{
-					bool e_if = false, e_vlan = false;
+					bool e_if = false, e_vlan = false, e_internal = false;
 #if 0
 					bool e_if_out = false
 #endif
 
-					string id, v_id, node, iface, e_name, node_id, sw_id, interface;
+					string id, v_id, node, iface, e_name, node_id, sw_id, ep_id, interface;
 
 	        		const string& fg_name  = fg->first;
 		       		const Value&  fg_value = fg->second;
@@ -568,58 +568,16 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									}
 									else if(ep_name == EP_INTERNAL)
 									{
-										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s. This type of end-point is not supported!", EP_INTERNAL,MODULE_NAME);
+										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is an empty object!", EP_INTERNAL,MODULE_NAME);
+
+										e_internal = true;
 									}
 									//identify interface-out end-points
 									else if(ep_name == EP_IFACE_OUT)
 									{
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s. This type of end-point is not supported!", EP_IFACE_OUT,MODULE_NAME);
-										//IVANO: I comment this code because this end-point
-										//	* has never been defined
-										//	* is not actually supported by the UN (does it make sense for the UN?)
-										//	* has never been tested
-#if 0
-										try{
-											ep_value.getObject();
-										} catch(exception& e)
-										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", EP_IFACE_OUT);
-											return false;
-										}
-
-										Object ep_iface = ep_value.getObject();
-
-										e_if_out = true;
-
-										for(Object::const_iterator epi = ep_iface.begin(); epi != ep_iface.end(); epi++)
-										{
-											const string& epi_name  = epi->first;
-											const Value&  epi_value = epi->second;
-
-											if(epi_name == NODE_ID)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,NODE_ID,epi_value.getString().c_str());
-
-												node_id = epi_value.getString();
-											}
-											else if(epi_name == SW_ID)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,SW_ID,epi_value.getString().c_str());
-
-												sw_id = epi_value.getString();
-											}
-											else if(epi_name == IFACE)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,IFACE,epi_value.getString().c_str());
-
-												interface = epi_value.getString();
-
-												iface_out_id[id] = epi_value.getString();
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_out_id[id].c_str());
-											}
-										}
-#endif
-									}//identify vlan end-points
+									}
+									//identify vlan end-points
 									else if(ep_name == VLAN)
 									{
 										try{
@@ -692,8 +650,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 										try
 										{
-											vector<string> gre_param (5);
-
 											string local_ip, remote_ip, interface, ttl, gre_key;
 											bool safe = false;
 
@@ -709,26 +665,18 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,LOCAL_IP,epi_value.getString().c_str());
 
 													local_ip = epi_value.getString();
-
-													gre_param[1] = epi_value.getString();
-
 												}
 												else if(epi_name == REMOTE_IP)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,REMOTE_IP,epi_value.getString().c_str());
 
 													remote_ip = epi_value.getString();
-
-													gre_param[2] = epi_value.getString();
-
 												}
 												else if(epi_name == IFACE)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,IFACE,epi_value.getString().c_str());
 
 													interface = epi_value.getString();
-
-													gre_param[3] = interface;
 
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), interface.c_str());
 												}
@@ -743,9 +691,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,GRE_KEY,epi_value.getString().c_str());
 
 													gre_key = epi_value.getString();
-
-													gre_param[0] = epi_value.getString();
-
 												}
 												else if(epi_name == SAFE)
 												{
@@ -755,19 +700,12 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												}
 											}
 
-											if(safe)
-												gre_param[4] = string("true");
-											else
-												gre_param[4] = string("false");
-
 											gre_id[id] = interface;
 
 											//Add gre-tunnel end-points
-											highlevel::EndPointGre ep_gre(id, e_name, local_ip, remote_ip, interface, gre_key, ttl, safe);
+											highlevel::EndPointGre ep_gre(id, e_name, local_ip, remote_ip, gre_key, ttl, safe);
 
 											graph.addEndPointGre(ep_gre);
-
-											graph.addEndPoint(id,gre_param);
 										}
 										catch(exception& e)
 										{
@@ -788,16 +726,25 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									graph.addEndPointInterface(ep_if);
 									e_if = false;
 								}
-#if 0
-								//add interface-out end-points
-								else if(e_if_out)
+								//add internal end-points
+								else if(e_internal)
 								{
-									highlevel::EndPointInterfaceOut ep_if_out(id, e_name, node_id, sw_id, interface);
-									graph.addEndPointInterfaceOut(ep_if_out);
+									highlevel::EndPointInternal ep_internal(id, e_name);
+									graph.addEndPointInternal(ep_internal);
 
-									e_if_out = false;
+									string graph_id = graph.getID();
+
+									//e.g (myGraph:1)
+									unsigned id_tmp;
+									sscanf(id.c_str(),"%u",&id_tmp);
+
+									stringstream endpoint;
+									endpoint << graph_id << ":" << id_tmp;
+
+									graph.addEndpointInternalAsString(graph_id,endpoint.str());
+
+									e_internal = false;
 								}
-#endif
 								//add vlan end-points
 								else if(e_vlan)
 								{
@@ -943,7 +890,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 											const Array& actions_array = fr_value.getArray();
 
-											enum port_type { VNF_PORT_TYPE, EP_PORT_TYPE };
+											enum port_type { VNF_PORT_TYPE, EP_PORT_TYPE, EP_INTERNAL_TYPE };
 
 											//One and only one output_to_port is allowed
 											bool foundOneOutputToPort = false;
@@ -979,8 +926,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 														//The action is "output_to_port"
 
 														string port_in_name = a_value.getString();
+														string graph_id;
 														string realName;
 														const char *port_in_name_tmp = port_in_name.c_str();
+														char endpoint_internal[BUFFER_SIZE];
 														char vnf_name_tmp[BUFFER_SIZE];
 
 														//Check the name of port
@@ -1012,12 +961,31 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 																	{
 																		p_type = EP_PORT_TYPE;
 																	}
+																	//end-point internal type
+																	else
+																	{
+																		graph_id.assign(string(pnt));
+																		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Graph id is \"%s\"",graph_id.c_str());
+																		p_type = EP_INTERNAL_TYPE;
+																	}
 																	break;
 																case 1:
 																	if(p_type == VNF_PORT_TYPE)
 																	{
 																		strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 																		strcat(vnf_name_tmp, ":");
+																	}
+																	else if(p_type == EP_INTERNAL_TYPE)
+																	{
+																		strcpy(endpoint_internal, pnt);
+																		strcat(endpoint_internal, ":");
+																	}
+																	break;
+																case 2:
+																	if(p_type == EP_INTERNAL_TYPE)
+																	{
+																		strcat(endpoint_internal, pnt);
+																		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Endpoint is \"%s\"",endpoint_internal);
 																	}
 																	break;
 																case 3:
@@ -1139,11 +1107,21 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 																unsigned int endPoint = MatchParser::epPort(string(s_a_value));
 																if(endPoint == 0)
 																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph end point \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
+																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
 																	return false;
 																}
-																action = new highlevel::ActionEndPoint(endPoint, string(s_a_value));
+																action = new highlevel::ActionEndPointGre(endPoint, string(s_a_value));
 															}
+														}
+														else if(p_type == EP_INTERNAL_TYPE)
+														{
+															unsigned int endPoint = MatchParser::epPort(endpoint_internal);
+															if(graph_id == "" || endPoint == 0)
+															{
+																logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
+																return false;
+															}
+															action = new highlevel::ActionEndPointInternal(graph_id, endPoint, endpoint_internal);
 														}
 													}//End action == output_to_port
 													else if(a_name == SET_VLAN_ID)

@@ -1,5 +1,5 @@
-#ifndef HIGH_LEVEL_ACTION_ENDPOINT_H_
-#define HIGH_LEVEL_ACTION_ENDPOINT_H_ 1
+#ifndef HIGH_LEVEL_ACTION_ENDPOINT_GRE_H_
+#define HIGH_LEVEL_ACTION_ENDPOINT_GRE_H_ 1
 
 #include "high_level_output_action.h"
 #include "../../../utils/logger.h"
@@ -12,7 +12,7 @@ using namespace std;
 namespace highlevel
 {
 
-class ActionEndPoint : public Action
+class ActionEndPointGre : public Action
 {
 private:
 
@@ -28,13 +28,13 @@ private:
 
 public:
 
-	ActionEndPoint(unsigned int endpoint, string input_endpoint);
+	ActionEndPointGre(unsigned int endpoint, string input_endpoint);
 	string getInfo();
 	unsigned int getPort();
 	string getInputEndpoint();
 	string toString();
 
-	bool operator==(const ActionEndPoint &other) const;
+	bool operator==(const ActionEndPointGre &other) const;
 
 	void print();
 	Object toJSON();
@@ -42,4 +42,4 @@ public:
 
 }
 
-#endif //HIGH_LEVEL_ACTION_ENDPOINT_H_
+#endif //HIGH_LEVEL_ACTION_ENDPOINT_GRE_H_

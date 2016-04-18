@@ -1,14 +1,14 @@
-#include "high_level_output_action_endpoint.h"
+#include "high_level_output_action_endpoint_gre.h"
 
 namespace highlevel
 {
 
-ActionEndPoint::ActionEndPoint(unsigned int endpoint, string input_endpoint) :
-	Action(ACTION_ON_ENDPOINT), endpoint(endpoint), input_endpoint(input_endpoint)
+ActionEndPointGre::ActionEndPointGre(unsigned int endpoint, string input_endpoint) :
+	Action(ACTION_ON_ENDPOINT_GRE), endpoint(endpoint), input_endpoint(input_endpoint)
 {
 }
 
-bool ActionEndPoint::operator==(const ActionEndPoint &other) const
+bool ActionEndPointGre::operator==(const ActionEndPointGre &other) const
 {
 	if((endpoint == other.endpoint))
 		return true;
@@ -16,17 +16,41 @@ bool ActionEndPoint::operator==(const ActionEndPoint &other) const
 	return false;
 }
 
-string ActionEndPoint::getInfo()
+string ActionEndPointGre::getInfo()
 {
-	return "";
+	//Check the name of port
+	char delimiter[] = ":";
+	char * pnt;
+
+	string str;
+
+	char tmp[BUFFER_SIZE];
+	strcpy(tmp,(char *)input_endpoint.c_str());
+	pnt=strtok(tmp, delimiter);
+	int i = 0;
+
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 0:
+				str = string(pnt);
+				break;
+		}
+
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+
+	return str;
 }
 
-unsigned int ActionEndPoint::getPort()
+unsigned int ActionEndPointGre::getPort()
 {
 	return endpoint;
 }
 
-string ActionEndPoint::getInputEndpoint()
+string ActionEndPointGre::getInputEndpoint()
 {
 	//Check the name of port
 	char delimiter[] = ":";
@@ -45,6 +69,7 @@ string ActionEndPoint::getInputEndpoint()
 		{
 			case 1:
 				str = string(pnt);
+				break;
 		}
 
 		pnt = strtok( NULL, delimiter );
@@ -54,7 +79,7 @@ string ActionEndPoint::getInputEndpoint()
 	return str;
 }
 
-string ActionEndPoint::toString()
+string ActionEndPointGre::toString()
 {
 	stringstream ss;
 	ss << endpoint;
@@ -62,7 +87,7 @@ string ActionEndPoint::toString()
 	return ss.str();
 }
 
-void ActionEndPoint::print()
+void ActionEndPointGre::print()
 {
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
@@ -74,11 +99,9 @@ void ActionEndPoint::print()
 	}
 }
 
-Object ActionEndPoint::toJSON()
+Object ActionEndPointGre::toJSON()
 {
 	Object action;
-	stringstream ep;
-	ep << endpoint;
 	action[OUTPUT] = input_endpoint.c_str();
 
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
