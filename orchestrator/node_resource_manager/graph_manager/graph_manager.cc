@@ -1363,6 +1363,30 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is already in the graph",(*it).c_str());
 	}
 
+	//Retrieve the interface endpoints already existing in the graph
+	list<highlevel::EndPointInterface> endpointsInterface = graph->getEndPointsInterface();
+	//Retrieve the interface endpoints required by the update
+	list<highlevel::EndPointInterface> new_endpoints_interface = newPiece->getEndPointsInterface();
+	for(list<highlevel::EndPointInterface>::iterator mit = new_endpoints_interface.begin(); mit != new_endpoints_interface.end(); mit++)
+	{
+		bool found = false;
+		string it = mit->getInterface();
+
+		for(list<highlevel::EndPointInterface>::iterator mitt = endpointsInterface.begin(); mitt != endpointsInterface.end(); mitt++)
+		{
+			if(mitt->getInterface().compare(it) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+			tmp->addEndPointInterface(*mit);
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Interface endpoint %s is already in the graph",it.c_str());
+	}
+
 	//Retrieve the gre endpoints already existing in the graph
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
 	//Retrieve the gre endpoints required by the update
@@ -1402,6 +1426,30 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		}
 		else
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",(*it).c_str());
+	}
+
+	//Retrieve the internal endpoints already existing in the graph
+	list<highlevel::EndPointInternal> endpoint_internal = graph->getEndPointsInternal();
+	//Retrieve the internal endpoints required by the update
+	list<highlevel::EndPointInternal> new_endpoints_internal = graph->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator mit = new_endpoints_internal.begin(); mit != new_endpoints_internal.end(); mit++)
+	{
+		bool found = false;
+		string it = mit->getId();
+
+		for(list<highlevel::EndPointGre>::iterator mitt = endpointsGre.begin(); mitt != endpointsGre.end(); mitt++)
+		{
+			if(mitt->getId().compare(it) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+			tmp->addEndPointInternal(*mit);
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",it.c_str());
 	}
 
 	//tmp contains only the new VNFs, the new ports, the new gre endpoints and the new internal endpoints that are not already into the graph
