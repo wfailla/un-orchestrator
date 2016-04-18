@@ -1260,7 +1260,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	*	0) check the validity of the new piece of the graph
 	*	1) update the high level graph
 	*	2) select an implementation for the new NFs
-	*	3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints are required)
+	*	3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints/vlan endpoints are required)
 	*	4) start the new NFs
 	*	5) download the new rules in LSI-0 and tenant-LSI
 	*/
@@ -1271,7 +1271,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	*		* graph -> the original graph to be updated
 	*		* newPiece -> graph containing the update
 	*		* tmp -> graph that will contain the parts in newPiece that have actually to be added in "graph",
-	*			in terms of physical ports, VNFs, gre endpoints and internal endpoints
+	*			in terms of physical ports, VNFs, gre endpoints, internal endpoints and vlan endpoints
 	*/
 
 	highlevel::Graph *tmp = new highlevel::Graph(/*"fake"*/graphID);
@@ -1437,7 +1437,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		bool found = false;
 		string it = mit->getId();
 
-		for(list<highlevel::EndPointGre>::iterator mitt = endpointsGre.begin(); mitt != endpointsGre.end(); mitt++)
+		for(list<highlevel::EndPointInternal>::iterator mitt = endpoint_internal.begin(); mitt != endpoint_internal.end(); mitt++)
 		{
 			if(mitt->getId().compare(it) == 0)
 			{
@@ -1450,6 +1450,31 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			tmp->addEndPointInternal(*mit);
 		else
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",it.c_str());
+	}
+
+	//Retrieve the vlan endpoints already existing in the graph
+	list<highlevel::EndPointVlan> endpointsVlan = graph->getEndPointsVlan();
+	//Retrieve the vlan endpoints required by the update
+	list<highlevel::EndPointVlan> new_endpoints_vlan = newPiece->getEndPointsVlan();
+	for(list<highlevel::EndPointVlan>::iterator mit = new_endpoints_vlan.begin(); mit != new_endpoints_vlan.end(); mit++)
+	{
+		bool found = false;
+		string it = mit->getInterface();
+		string it1 = mit->getVlanId();
+
+		for(list<highlevel::EndPointVlan>::iterator mitt = endpointsVlan.begin(); mitt != endpointsVlan.end(); mitt++)
+		{
+			if(mitt->getInterface().compare(it) == 0 && mitt->getVlanId().compare(it1) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+			tmp->addEndPointVlan(*mit);
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is already in the graph",it.c_str());
 	}
 
 	//tmp contains only the new VNFs, the new ports, the new gre endpoints and the new internal endpoints that are not already into the graph
@@ -1484,6 +1509,14 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	set<string> nps = tmp->getPorts();
 	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
 		graph->addPort(*port);
+
+	//Update the interface endpoints
+	list<highlevel::EndPointInterface> iep = tmp->getEndPointsInterface();
+	for(list<highlevel::EndPointInterface>::iterator ep = iep.begin(); ep != iep.end(); ep++)
+	{
+		//The interface endpoint is not part of the graph
+		graph->addEndPointInterface(*ep);
+	}
 
 	//Update the network functions ports
 	highlevel::Graph::t_nfs_ports_list networkFunctions = tmp->getNetworkFunctions();
@@ -1541,6 +1574,21 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		string tmp_graph_id = MatchParser::graphID(tmp_ep);
 		//The endpoint is not part of the graph
 		graph->addEndpointInternalAsString(tmp_graph_id,*ep);
+	}
+
+	//Update the internal endpoints
+	list<highlevel::EndPointInternal> inep = tmp->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator ep = inep.begin(); ep != inep.end(); ep++)
+	{
+		//The internal endpoint is not part of the graph
+		graph->addEndPointInternal(*ep);
+	}
+
+	//Update the vlan endpoints
+	list<highlevel::EndPointVlan> vep = tmp->getEndPointsVlan();
+	for(list<highlevel::EndPointVlan>::iterator ep = vep.begin(); ep != vep.end(); ep++)
+	{
+		graph->addEndPointVlan(*ep);
 	}
 
 	graph->print();

@@ -1107,7 +1107,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 																unsigned int endPoint = MatchParser::epPort(string(s_a_value));
 																if(endPoint == 0)
 																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
+																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
 																	return false;
 																}
 																action = new highlevel::ActionEndPointGre(endPoint, string(s_a_value));

@@ -351,6 +351,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" with wrong value \"%s\"",VLAN_ID,value.getString().c_str());
 						return false;
 					}
+
 					/*add match on "vlan_id"*/
 					match.setEndpointVlanID(vlanID & 0xFFFF);
 
