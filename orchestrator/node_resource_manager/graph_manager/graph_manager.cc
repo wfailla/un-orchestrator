@@ -1394,11 +1394,13 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 	for(list<highlevel::EndPointGre>::iterator mit = new_endpoints_gre.begin(); mit != new_endpoints_gre.end(); mit++)
 	{
 		bool found = false;
-		string it = mit->getId();
+		string it = mit->getLocalIp();
+		string it1 = mit->getRemoteIp();
+		string it2 = mit->getGreKey();
 
 		for(list<highlevel::EndPointGre>::iterator mitt = endpointsGre.begin(); mitt != endpointsGre.end(); mitt++)
 		{
-			if(mitt->getId().compare(it) == 0)
+			if(mitt->getLocalIp().compare(it) == 0 && mitt->getRemoteIp().compare(it1) == 0 && mitt->getGreKey().compare(it2) == 0)
 			{
 				found = true;
 				break;
@@ -1408,7 +1410,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		if(!found)
 			tmp->addEndPointGre(*mit);
 		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is already in the graph",it.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is already in the graph",mit->getId().c_str());
 	}
 
 	//Retrieve the internal endpoints already existing in the graph
