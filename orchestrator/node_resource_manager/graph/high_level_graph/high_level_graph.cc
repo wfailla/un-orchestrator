@@ -740,24 +740,88 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is already in the graph",neg->getId().c_str());
 	}
 
-
-#if 0
-	//Retrieve the endpoints already existing in the graph
-	map<string, vector<string> > endpoints = this->getEndPoints();
-	//Retrieve the endpoints required by the update
-	map<string, vector<string> > new_endpoints = other->getEndPoints();
-	for(map<string, vector<string> >::iterator mit = new_endpoints.begin(); mit != new_endpoints.end(); mit++)
+	//Retrieve the internal endpoints already existing in the graph, in form of strings
+	set<string> endpoints = this->getEndpointsInternalAsString();
+	//Retrieve the internal endpoints required by the update
+	set<string> new_endpoints = other->getEndpointsInternalAsString();
+	for(set<string>::iterator it = new_endpoints.begin(); it != new_endpoints.end(); it++)
 	{
-		string it = mit->first;
-
-		if(endpoints.count(it) == 0)
+		if(endpoints.count(*it) == 0)
 		{
-			string tmp_ep = it;
+			string tmp_ep = *it;
+			string tmp_graph_id; // = MatchParser::graphID(tmp_ep);
+
+			char delimiter[] = ":";
+			char tmp[BUFFER_SIZE];
+			strcpy(tmp,tmp_ep.c_str());
+			char *pnt=strtok(tmp, delimiter);
+			if( pnt!= NULL )
+				tmp_graph_id = string(pnt);
+			else
+				tmp_graph_id = "";
+
+			//The endpoint is not part of the graph
+			diff->addEndpointInternalAsString(tmp_graph_id,*it);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is added to the graph",(*it).c_str());
 		}
 		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint %s is already in the graph",it.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",(*it).c_str());
 	}
-#endif
+
+	//Retrieve the internal endpoints already existing in the graph
+	list<highlevel::EndPointInternal> endpoint_internal = this->getEndPointsInternal();
+	//Retrieve the internal endpoints required by the update
+	list<highlevel::EndPointInternal> new_endpoints_internal = other->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator mit = new_endpoints_internal.begin(); mit != new_endpoints_internal.end(); mit++)
+	{
+		bool found = false;
+		string it = mit->getId();
+
+		for(list<highlevel::EndPointInternal>::iterator mitt = endpoint_internal.begin(); mitt != endpoint_internal.end(); mitt++)
+		{
+			if(mitt->getId().compare(it) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is added to the graph",it.c_str());
+			diff->addEndPointInternal(*mit);
+		}
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",it.c_str());
+	}
+
+	//Retrieve the vlan endpoints already existing in the graph
+	list<highlevel::EndPointVlan> endpointsVlan = this->getEndPointsVlan();
+	//Retrieve the vlan endpoints required by the update
+	list<highlevel::EndPointVlan> new_endpoints_vlan = other->getEndPointsVlan();
+	for(list<highlevel::EndPointVlan>::iterator mit = new_endpoints_vlan.begin(); mit != new_endpoints_vlan.end(); mit++)
+	{
+		bool found = false;
+		string it = mit->getInterface();
+		string it1 = mit->getVlanId();
+
+		for(list<highlevel::EndPointVlan>::iterator mitt = endpointsVlan.begin(); mitt != endpointsVlan.end(); mitt++)
+		{
+			if(mitt->getInterface().compare(it) == 0 && mitt->getVlanId().compare(it1) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			diff->addEndPointVlan(*mit);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is added to the graph",mit->getId().c_str());
+		}
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is already in the graph",mit->getId().c_str());
+	}
 
 	// f) Handle the configuration of the VNF
 	
