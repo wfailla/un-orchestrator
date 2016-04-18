@@ -576,52 +576,8 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									else if(ep_name == EP_IFACE_OUT)
 									{
 										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s. This type of end-point is not supported!", EP_IFACE_OUT,MODULE_NAME);
-										//IVANO: I comment this code because this end-point
-										//	* has never been defined
-										//	* is not actually supported by the UN (does it make sense for the UN?)
-										//	* has never been tested
-#if 0
-										try{
-											ep_value.getObject();
-										} catch(exception& e)
-										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", EP_IFACE_OUT);
-											return false;
-										}
-
-										Object ep_iface = ep_value.getObject();
-
-										e_if_out = true;
-
-										for(Object::const_iterator epi = ep_iface.begin(); epi != ep_iface.end(); epi++)
-										{
-											const string& epi_name  = epi->first;
-											const Value&  epi_value = epi->second;
-
-											if(epi_name == NODE_ID)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,NODE_ID,epi_value.getString().c_str());
-
-												node_id = epi_value.getString();
-											}
-											else if(epi_name == SW_ID)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,SW_ID,epi_value.getString().c_str());
-
-												sw_id = epi_value.getString();
-											}
-											else if(epi_name == IFACE)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE_OUT,IFACE,epi_value.getString().c_str());
-
-												interface = epi_value.getString();
-
-												iface_out_id[id] = epi_value.getString();
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_out_id[id].c_str());
-											}
-										}
-#endif
-									}//identify vlan end-points
+									}
+									//identify vlan end-points
 									else if(ep_name == VLAN)
 									{
 										try{
@@ -789,16 +745,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 									e_internal = false;
 								}
-#if 0
-								//add interface-out end-points
-								else if(e_if_out)
-								{
-									highlevel::EndPointInterfaceOut ep_if_out(id, e_name, node_id, sw_id, interface);
-									graph.addEndPointInterfaceOut(ep_if_out);
-
-									e_if_out = false;
-								}
-#endif
 								//add vlan end-points
 								else if(e_vlan)
 								{

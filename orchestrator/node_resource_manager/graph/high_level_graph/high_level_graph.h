@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include "high_level_graph_endpoint_interface.h"
-#include "high_level_graph_endpoint_interface_out.h"
 #include "high_level_graph_endpoint_internal.h"
 #include "high_level_graph_endpoint_gre.h"
 #include "high_level_graph_endpoint_vlan.h"
@@ -99,11 +98,6 @@ private:
 	*	@brief: List of endPointsInterface describing the graph
 	*/
 	list<EndPointInterface> endPointsInterface;
-
-	/**
-	*	@brief: List of endPointsInterfaceOut describing the graph
-	*/
-	list<EndPointInterfaceOut> endPointsInterfaceOut;
 
 	/**
 	*	@brief: List of endPointsInternal describing the graph
@@ -267,17 +261,8 @@ public:
 	/**
 	*	@brief: Return the endpointsInterface of the graph
 	*/
+	//XXX: this functions is not used. 
 	list<EndPointInterface> getEndPointsInterface();
-
-	/**
-	*	@brief: Add a new endpointInterfaceOut to the graph
-	*/
-	bool addEndPointInterfaceOut(EndPointInterfaceOut endpoint);
-
-	/**
-	*	@brief: Return the endpointsInterfaceOut of the graph
-	*/
-	list<EndPointInterfaceOut> getEndPointsInterfaceOut();
 
 	/**
 	*	@brief: Add a new endpointInternal to the graph

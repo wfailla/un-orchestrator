@@ -41,24 +41,6 @@ list<EndPointInterface> Graph::getEndPointsInterface()
 	return endPointsInterface;
 }
 
-bool Graph::addEndPointInterfaceOut(EndPointInterfaceOut endpoint)
-{
-	for(list<EndPointInterfaceOut>::iterator e = endPointsInterfaceOut.begin(); e != endPointsInterfaceOut.end(); e++)
-	{
-		if(*e == endpoint)
-			return false;
-	}
-
-	endPointsInterfaceOut.push_back(endpoint);
-
-	return true;
-}
-
-list<EndPointInterfaceOut> Graph::getEndPointsInterfaceOut()
-{
-	return endPointsInterfaceOut;
-}
-
 bool Graph::addEndPointInternal(EndPointInternal endpoint)
 {
 	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end(); e++)
@@ -384,16 +366,6 @@ Object Graph::toJSON()
 	}
 
 	for(list<EndPointInterface>::iterator e = endPointsInterface.begin(); e != endPointsInterface.end();e++)
-	{
-		end_points.push_back(e->toJSON());
-	}
-
-	for(list<EndPointInterfaceOut>::iterator e = endPointsInterfaceOut.begin(); e != endPointsInterfaceOut.end();e++)
-	{
-		end_points.push_back(e->toJSON());
-	}
-
-	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end();e++)
 	{
 		end_points.push_back(e->toJSON());
 	}
