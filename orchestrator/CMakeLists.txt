@@ -259,8 +259,6 @@ SET(SOURCES1
 	node_resource_manager/graph/high_level_graph/high_level_rule.cc
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface.cc
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface.h
-	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface_out.cc
-	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_interface_out.h
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.cc
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_gre.h
 	node_resource_manager/graph/high_level_graph/high_level_graph_endpoint_vlan.cc
