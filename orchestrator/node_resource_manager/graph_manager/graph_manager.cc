@@ -1364,25 +1364,26 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is already in the graph",(*it).c_str());
 	}
 
-	bool found = false;
 	//Retrieve the gre endpoints already existing in the graph
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
 	//Retrieve the gre endpoints required by the update
 	list<highlevel::EndPointGre> new_endpoints_gre = newPiece->getEndPointsGre();
 	for(list<highlevel::EndPointGre>::iterator mit = new_endpoints_gre.begin(); mit != new_endpoints_gre.end(); mit++)
 	{
+		bool found = false;
 		string it = mit->getId();
 
 		for(list<highlevel::EndPointGre>::iterator mitt = endpointsGre.begin(); mitt != endpointsGre.end(); mitt++)
 		{
 			if(mitt->getId().compare(it) == 0)
+			{
 				found = true;
+				break;
+			}
 		}
 
-		if(found)
-		{
-			string tmp_ep = it;
-		}
+		if(!found)
+			tmp->addEndPointGre(*mit);
 		else
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is already in the graph",it.c_str());
 	}

@@ -711,8 +711,7 @@ Is `internal` endpoint is defined as follows:
 	{
 		"id": "00000002",
 		"name": "egress",
-		"type": "internal",
-		"internal": {}
+		"type": "internal"
 	}
 
 As an example, the following command defines an endpoint "myGraph:endpoint:00000001", while the second
