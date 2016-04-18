@@ -643,7 +643,66 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is already in the graph",(*it).c_str());
 	}
 
-	// e) Add the new endpoints
+	// e) Add the new endpoints - This part is quite complex as it considers all the types of endpoints
+
+	//Retrieve the interface endpoints already existing in the graph
+	list<highlevel::EndPointInterface> endpointsInterface = graph->getEndPointsInterface();
+	//Retrieve the interface endpoints required by the update
+	list<highlevel::EndPointInterface> new_endpoints_interface = other->getEndPointsInterface();
+	for(list<highlevel::EndPointInterface>::iterator nei = new_endpoints_interface.begin(); nei != new_endpoints_interface.end(); nei++)
+	{
+		bool found = false;
+		string it = nei->getInterface();
+		
+		for(list<highlevel::EndPointInterface>::iterator mitt = endpointsInterface.begin(); mitt != endpointsInterface.end(); mitt++)
+		{
+			if(mitt->getInterface().compare(it) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			diff->addEndPointInterface(*nei);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Interface endpoint %s is added the to graph",it.c_str());
+		}
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Interface endpoint %s is already in the graph",it.c_str());
+	}
+
+	//Retrieve the gre endpoints already existing in the graph
+	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
+	//Retrieve the gre endpoints required by the update
+	list<highlevel::EndPointGre> new_endpoints_gre = newPiece->getEndPointsGre();
+	for(list<highlevel::EndPointGre>::iterator neg = new_endpoints_gre.begin(); neg != new_endpoints_gre.end(); neg++)
+	{
+		bool found = false;
+		string it = neg->getLocalIp();
+		string it1 = neg->getRemoteIp();
+		string it2 = neg->getGreKey();
+
+		for(list<highlevel::EndPointGre>::iterator mitt = endpointsGre.begin(); mitt != endpointsGre.end(); mitt++)
+		{
+			//TODO: use the == on the EndPointGre
+			if(mitt->getLocalIp().compare(it) == 0 && mitt->getRemoteIp().compare(it1) == 0 && mitt->getGreKey().compare(it2) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			diff->addEndPointGre(*neg);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is added to the graph",neg->getId().c_str());
+		}
+		else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is already in the graph",neg->getId().c_str());
+	}
+
+//////////////////////////////////////////////////////////////////////////////////////
 
 	//Retrieve the endpoints already existing in the graph
 	map<string, vector<string> > endpoints = this->getEndPoints();
