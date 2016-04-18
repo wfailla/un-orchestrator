@@ -333,6 +333,11 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
 
+		if(!dbmanager->resourceExists(BASE_URL_GROUP, group)) {
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User creation failed: unknown group!");
+			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
+		}
+
 		char *token = (char *) MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "X-Auth-Token");
 
 		if(token == NULL) {
@@ -342,12 +347,8 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 
 		user_info_t *creator = dbmanager->getUserByToken(token);
 
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, ">>NEW USER");
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s %s %s\n", username, hash_pwd, t_group);
 		dbmanager->insertUser(username, hash_pwd, t_group);
 
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, ">>NEW RESOURCE");
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s %s %s\n", BASE_URL_USER, username, creator->user);
 		dbmanager->insertResource(BASE_URL_USER, username, creator->user);
 
 		delete t_group;
@@ -530,6 +531,8 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 			return readMultipleGraphs(connection, usr);
 		else if (strcmp(generic_resource, BASE_URL_USER) == 0)
 			return readMultipleUsers(connection, usr);
+		else if (strcmp(generic_resource, BASE_URL_GROUP) == 0)
+			return readMultipleGroups(connection, usr);
 
 		return httpResponse(connection, MHD_HTTP_NOT_IMPLEMENTED);
 	} else if(strcmp(method, PUT) == 0) {
@@ -578,6 +581,8 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 
 		if(strcmp(generic_resource, BASE_URL_GRAPH) == 0)
 			return deployNewGraph(connection, con_info, (char *) resource, usr->user);
+		else if(strcmp(generic_resource, BASE_URL_GROUP) == 0)
+			return createGroup(connection, con_info, (char *) resource, usr->user);;
 
 	// DELETE: for single resource, it can be only deletion... at the moment!
 	} else if(strcmp(method, DELETE) == 0) {
@@ -592,6 +597,8 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 			return deleteGraph(connection, (char *) resource);
 		else if(strcmp(generic_resource, BASE_URL_USER) == 0)
 			return deleteUser(connection, (char *) resource);
+		else if(strcmp(generic_resource, BASE_URL_GROUP) == 0)
+			return deleteGroup(connection, (char *) resource);
 
 	} else if(strcmp(method, POST) == 0) {
 
@@ -843,6 +850,61 @@ int RestServer::readUser(struct MHD_Connection *connection, char *username) {
 	}
 }
 
+int RestServer::readMultipleGroups(struct MHD_Connection *connection, user_info_t *usr) {
+	assert(usr != NULL && dbmanager != NULL);
+
+	struct MHD_Response *response;
+	int ret;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Required resource: %s", BASE_URL_GROUP);
+
+	// Check whether groups exists as a generic resourse in the local database
+	if (!dbmanager->resourceExists(BASE_URL_GROUP)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The generic resource %s does not exist in the local database", BASE_URL_GROUP);
+		response = MHD_create_response_from_buffer(0, (void*) "",
+				MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header(response, "Allow", PUT);
+		ret = MHD_queue_response(connection, MHD_HTTP_METHOD_NOT_ALLOWED,
+				response);
+		MHD_destroy_response(response);
+		return ret;
+	}
+
+	try {
+		Object groups;
+		Array groups_array;
+		std::list<std::string> names;
+
+		// search the names in the database
+		dbmanager->getAllowedResourcesNames(usr, _READ, BASE_URL_GROUP, &names);
+
+		std::list<std::string>::iterator i;
+
+		for(i = names.begin(); i != names.end(); ++i) {
+			Object obj;
+			obj["name"] = *i;
+			groups_array.push_back(obj);
+		}
+
+		groups[BASE_URL_GROUP] = groups_array;
+
+		stringstream ssj;
+		write_formatted(groups, ssj);
+		string sssj = ssj.str();
+		char *aux = (char*) malloc(sizeof(char) * (sssj.length() + 1));
+		strcpy(aux, sssj.c_str());
+		response = MHD_create_response_from_buffer(strlen(aux), (void*) aux,
+				MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header(response, "Content-Type", JSON_C_TYPE);
+		MHD_add_response_header(response, "Cache-Control", NO_CACHE);
+		ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+		MHD_destroy_response(response);
+		return ret;
+	} catch (...) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while retrieving the graph description!");
+		return httpResponse(connection, MHD_HTTP_INTERNAL_SERVER_ERROR);
+	}
+}
 
 int RestServer::readMultipleUsers(struct MHD_Connection *connection, user_info_t *usr) {
 	assert(usr != NULL && dbmanager != NULL);
@@ -960,6 +1022,42 @@ int RestServer::readMultipleGraphs(struct MHD_Connection *connection, user_info_
 	}
 }
 
+int RestServer::createGroup(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner) {
+
+	assert(dbmanager != NULL);
+
+	int ret = 0;
+	struct MHD_Response *response;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Received request for deploying %s/%s", BASE_URL_GROUP, resource);
+
+	// Check whether the group already exists in the database
+	if(dbmanager->resourceExists(BASE_URL_GROUP, resource)) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: cannot create an already existing group in the database!");
+		return httpResponse(connection, MHD_HTTP_FORBIDDEN);
+	}
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource to be created/updated: %s/%s", BASE_URL_GROUP, resource);
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Content:");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s", con_info->message);
+
+	// Update database
+	dbmanager->insertResource(BASE_URL_GROUP, resource, owner);
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The group has been properly created!");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
+
+	//TODO: put the proper content in the answer
+	response = MHD_create_response_from_buffer(0, (void*) "", MHD_RESPMEM_PERSISTENT);
+	stringstream absolute_url;
+	absolute_url << REST_URL << ":" << REST_PORT << "/" << BASE_URL_GROUP << "/" << resource;
+	MHD_add_response_header(response, "Location", absolute_url.str().c_str());
+	ret = MHD_queue_response(connection, MHD_HTTP_CREATED, response);
+
+	MHD_destroy_response(response);
+	return ret;
+}
+
 int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner) {
 
 	int ret = 0;
@@ -1075,6 +1173,36 @@ int RestServer::deleteGraph(struct MHD_Connection *connection, char *resource) {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
 
 	return httpResponse(connection, MHD_HTTP_NO_CONTENT);
+}
+
+int RestServer::deleteGroup(struct MHD_Connection *connection, char *group) {
+	assert(dbmanager != NULL);
+
+	int ret = 0;
+	struct MHD_Response *response;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Received request for deleting %s/%s", BASE_URL_GROUP, group);
+
+	// Check whether the user does exist in the database
+	if(!dbmanager->resourceExists(BASE_URL_GROUP, group)) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Cannot delete a non-existing group in the database!");
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		MHD_add_response_header (response, "Allow", PUT);
+		ret = MHD_queue_response (connection, MHD_HTTP_METHOD_NOT_ALLOWED, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
+
+	if(!dbmanager->usersExistForGroup(group)) {
+			dbmanager->deleteGroup(group);
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The group has been properly deleted!");
+			return httpResponse(connection, MHD_HTTP_ACCEPTED);
+	} else {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Cannot remove a group having one or more members!");
+		return httpResponse(connection, MHD_HTTP_FORBIDDEN);
+	}
+
+
 }
 
 int RestServer::deleteUser(struct MHD_Connection *connection, char *username) {

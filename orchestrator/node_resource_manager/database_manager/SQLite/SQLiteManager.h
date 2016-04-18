@@ -85,6 +85,9 @@ public:
 
 	bool isLogged(char *username);
 
+	int deleteGroup(char *group);
+
+	bool usersExistForGroup(const char *group);
 
 	int deleteUser(struct MHD_Connection *connection, char *username);
 

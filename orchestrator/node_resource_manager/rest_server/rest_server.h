@@ -115,12 +115,17 @@ private:
 
 	static int deployNewGraph(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner);
 
+	static int createGroup(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner);
+
 	static int deleteGraph(struct MHD_Connection *connection, char *resource);
 	static int deleteUser(struct MHD_Connection *connection, char *username);
 
 	static int addNewFlow(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *extra_info);
 	static int deleteFlow(struct MHD_Connection *connection, char *resource, char *extra_info);
 
+	static int deleteGroup(struct MHD_Connection *connection, char *group);
+
+	static int readMultipleGroups(struct MHD_Connection *connection, user_info_t *usr);
 
 	static int readUser(struct MHD_Connection *connection, char *username);
 
