@@ -1474,7 +1474,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newPiece)
 		if(!found)
 			tmp->addEndPointVlan(*mit);
 		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is already in the graph",it.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is already in the graph",mit->getId().c_str());
 	}
 
 	//tmp contains only the new VNFs, the new ports, the new gre endpoints and the new internal endpoints that are not already into the graph
