@@ -1255,15 +1255,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	/**
 	*	Outline:
 	*
-	*	0) check the validity of the new piece of the graph	//TODO: remove this old point 0
-	//
-	//
-	//
-	//
-	*	0) calculate the diff with respect to the graph already deployed
-	//
-	//
-	//
+	*	0) calculate the diff with respect to the graph already deployed (and check its validity)
 	*	1) update the high level graph
 	*	2) select an implementation for the new NFs
 	*	3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints/vlan endpoints are required)
@@ -1374,7 +1366,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		graph->addEndPointGre(*ep);
 	}
 
-	//Update the internal endpoints
+	//Update the internal endpoints (represented as strings)
 	set<string> nep = diff->getEndpointsInternalAsString();
 	for(set<string>::iterator ep = nep.begin(); ep != nep.end(); ep++)
 	{

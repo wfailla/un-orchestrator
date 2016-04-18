@@ -237,6 +237,7 @@ public:
 	*
 	*	@return: true if the endpoint is defined in the current graph; false otherwise
 	*/
+	//FIXME: why do we need to store this information?
 	bool addEndpointInternalAsString(string graphID, string endpoint);
 
 	/**
