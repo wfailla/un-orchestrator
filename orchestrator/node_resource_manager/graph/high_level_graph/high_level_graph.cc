@@ -536,7 +536,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating graph diff...");
 
-	Graph *diff = new Graph(/*"fake"*/graphID);
+	Graph *diff = new Graph(graphID);
 	
 	set<string> new_vnfs_name;
 
