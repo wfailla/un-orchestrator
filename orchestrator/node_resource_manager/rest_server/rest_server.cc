@@ -623,7 +623,6 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 	struct MHD_Response *response;
 	int ret;
 
-	bool request = 0; //false->graph - true->interfaces
 
 	//Check the URL
 	char delimiter[] = "/";
@@ -639,11 +638,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 		switch(i)
 		{
 			case 0:
-				if(strcmp(pnt,BASE_URL_GRAPH) == 0)
-					request = false;
-				else if(strcmp(pnt,BASE_URL_IFACES) == 0)
-					request = true;
-				else
+				if(strcmp(pnt,BASE_URL_GRAPH) != 0)
 				{
 get_malformed_url:
 					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource \"%s\" does not exist", url);
@@ -660,7 +655,7 @@ get_malformed_url:
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	if( (!request && i != 2) || (request == 1 && i != 1) )
+	if( i != 2) 
 	{
 		//the URL is malformed
 		goto get_malformed_url;
@@ -690,12 +685,7 @@ get_malformed_url:
 		}
 	}
 
-	if(!request)
-		//request for a graph description
-		return doGetGraph(connection,graphID);
-	else
-		//request for interfaces description
-		return doGetInterfaces(connection);
+	return doGetGraph(connection,graphID);
 }
 
 int RestServer::doGetGraph(struct MHD_Connection *connection,char *graphID)
@@ -732,35 +722,6 @@ int RestServer::doGetGraph(struct MHD_Connection *connection,char *graphID)
 	}catch(...)
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while retrieving the graph description!");
-		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-		ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-		MHD_destroy_response (response);
-		return ret;
-	}
-}
-
-int RestServer::doGetInterfaces(struct MHD_Connection *connection)
-{
-	struct MHD_Response *response;
-	int ret;
-
-	try
-	{
-		Object json = gm->toJSONPhysicalInterfaces();
-		stringstream ssj;
- 		write_formatted(json, ssj );
- 		string sssj = ssj.str();
- 		char *aux = (char*)malloc(sizeof(char) * (sssj.length()+1));
- 		strcpy(aux,sssj.c_str());
-		response = MHD_create_response_from_buffer (strlen(aux),(void*) aux, MHD_RESPMEM_PERSISTENT);
-		MHD_add_response_header (response, "Content-Type",JSON_C_TYPE);
-		MHD_add_response_header (response, "Cache-Control",NO_CACHE);
-		ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
-		MHD_destroy_response (response);
-		return ret;
-	}catch(...)
-	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred while retrieving the description of the physical interfaces!");
 		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 		ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
 		MHD_destroy_response (response);

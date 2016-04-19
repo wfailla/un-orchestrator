@@ -54,11 +54,6 @@ private:
 	map<string,unsigned int> physical_ports;
 
 	/**
-	*	@brief: the pair is <port name, port type>
-	*/
-	map<string,string> physical_ports_type;
-
-	/**
 	*	@brief: Data related to a specific NF
 	*/
 	struct nfData {
@@ -137,7 +132,7 @@ private:
 
 public:
 
-	LSI(string controllerAddress, string controllerPort, map<string,string> ports, map<string, list <unsigned int> > network_functions,
+	LSI(string controllerAddress, string controllerPort, set<string> physical_ports, map<string, list <unsigned int> > network_functions,
 		list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
@@ -150,7 +145,6 @@ public:
 	uint64_t getDpid();
 
 	list<string> getPhysicalPortsName();
-	map<string,string> getPhysicalPortsType();
 	map<string,unsigned int> getPhysicalPorts();
 
 	set<string> getNetworkFunctionsName();

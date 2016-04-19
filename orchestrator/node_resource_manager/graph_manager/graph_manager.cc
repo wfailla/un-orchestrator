@@ -21,11 +21,9 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string un_address,
 	{
 		throw GraphManagerException();
 	}
-	map<string,string> phyPorts;
+	set<string> phyPorts;//maps the name into the side
 	for(set<CheckPhysicalPortsIn>::iterator pp = phyPortsRequired.begin(); pp != phyPortsRequired.end(); pp++)
-	{
-		phyPorts[pp->getPortName()] = pp->getPortSideToString();
-	}
+		phyPorts.insert(pp->getPortName());
 
 	//Create the openflow controller for the LSI-0
 
@@ -48,9 +46,9 @@ GraphManager::GraphManager(int core_mask,string portsFileName,string un_address,
 		throw GraphManagerException();
 	}
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d available physical interfaces:",phyPorts.size());
-	for(map<string,string>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s (%s)",p->first.c_str(),p->second.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d physical interfaces under the control of the un-orchestrator:",phyPorts.size());
+	for(set<string>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s",(*p).c_str());
 
 	//Create the openflow controller for the lsi-0
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating the openflow controller for LSI-0...");
@@ -344,28 +342,6 @@ Object GraphManager::toJSON(string graphID)
 	}
 
 	return flow_graph;
-}
-
-Object GraphManager::toJSONPhysicalInterfaces()
-{
-	Object interfaces;
-
-	LSI *lsi0 = graphInfoLSI0.getLSI();
-
-	map<string,string> types = lsi0->getPhysicalPortsType();
-
-	Array interfaces_array;
-	for(map<string,string>::iterator t = types.begin(); t != types.end(); t++)
-	{
-		Object iface;
-		iface["name"] = t->first;
-		iface["type"] = t->second;
-		interfaces_array.push_back(iface);
-	}
-
-	interfaces["interfaces"] = interfaces_array;
-
-	return interfaces;
 }
 
 bool GraphManager::deleteGraph(string graphID, bool shutdown)
@@ -790,7 +766,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	//The tenant-LSI is not connected to physical ports, but just the LSI-0
 	//through virtual links, and to network functions through virtual ports
-	map<string, string> dummyPhyPorts;
+	set<string> dummyPhyPorts;
 
 	map<string, nf_t>  nf_types;
 	map<string, map<unsigned int, PortType> > nfs_ports_type;  // nf_name -> map( port_id -> port_type )

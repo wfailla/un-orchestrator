@@ -11,7 +11,6 @@
 
 #define REST_PORT 				8080
 #define BASE_URL_GRAPH			"NF-FG"
-#define BASE_URL_IFACES			"interfaces"
 #define BASE_URL_LOGIN			"login"
 #define REST_URL 				"http://localhost"
 #define REQ_SIZE 				2*1024*1024
@@ -172,7 +171,6 @@
 #define PORT_ELEMENT			"port"
 #define NAME_ATTRIBUTE			"name"
 #define TYPE_ATTRIBUTE			"type"
-#define SIDE_ATTRIBUTE			"side"
 
 #define VIRTUALIZED_ELEMENT		"virtualized"
 #define AS_ATTRIBUTE			"as"
@@ -181,10 +179,6 @@
 
 #define TYPE_ETHERNET			"ethernet"
 #define TYPE_WIFI				"wifi"
-
-#define SIDE_CORE				"core"
-#define SIDE_EDGE				"edge"
-#define SIDE_NONE				"none"
 
 /*
  * Supported Openflow versions.

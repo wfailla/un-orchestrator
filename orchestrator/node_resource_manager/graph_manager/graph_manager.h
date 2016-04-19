@@ -320,12 +320,6 @@ public:
 	Object toJSON(string graphID);
 
 	/**
-	*	@brief: create the JSON representation of the physical interfaces that can be connected
-	*		to the graphs (both ethernet and wifi)
-	*/
-	Object toJSONPhysicalInterfaces();
-
-	/**
 	*	@brief: prints information on the graphs deployed
 	*/
 	void printInfo(bool complete = true);

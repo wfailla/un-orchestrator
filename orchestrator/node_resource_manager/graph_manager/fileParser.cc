@@ -83,22 +83,18 @@ set<CheckPhysicalPortsIn> FileParser::parseConfigurationFile(string fileName)
 
 					xmlChar* attr_name = xmlGetProp(port, (const xmlChar*)NAME_ATTRIBUTE);
 					xmlChar* attr_type = xmlGetProp(port, (const xmlChar*)TYPE_ATTRIBUTE);
-					xmlChar* attr_side = xmlGetProp(port, (const xmlChar*)SIDE_ATTRIBUTE);
 
 					assert(attr_name != NULL);
 					assert(attr_type != NULL);
-					assert(attr_side != NULL);
 
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port: %s - Type: %s - Side: %s",attr_name,attr_type,attr_side);
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port: %s - Type: %s",attr_name,attr_type);
 
 					string name((const char*)attr_name);
 					string type((const char*)attr_type);
-					string side((const char*)attr_side);
 
 					physicalPortType_t ptype = (type == TYPE_ETHERNET)? ETHERNET_PORT : WIFI_PORT;
-					physicalPortSide_t pside = (side == SIDE_CORE)? CORE : ( (side == SIDE_EDGE)? EDGE : NONE );
 
-					CheckPhysicalPortsIn cppi(name,ptype,pside);
+					CheckPhysicalPortsIn cppi(name,ptype);
 					physicalPorts.insert(cppi);
 				}
 			}

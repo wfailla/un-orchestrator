@@ -153,10 +153,6 @@ Delete the flow with ID "flow_id" from the graph with name "myGraph":
 
 	DELETE /NF-FG/myGraph/flow_id HTTP/1.1
 
-Retrieve information on the available physical interfaces:
-
-	GET /interfaces HTTP/1.1
-
 ## User authentication
 
 The un-orchestrator supports user authentication, which has to be enabled through the configuration file of the module.

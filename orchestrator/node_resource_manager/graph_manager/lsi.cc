@@ -10,16 +10,13 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 	return ss.str();
 }
 
-LSI::LSI(string controllerAddress, string controllerPort, map<string,string> physical_ports, map<string, list<unsigned int> > nf_ports,
+LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_ports, map<string, list<unsigned int> > nf_ports,
 	list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
-	for(map<string,string>::iterator p = physical_ports.begin(); p != physical_ports.end(); p++)
-	{
-		this->physical_ports[p->first] = 0;
-		this->physical_ports_type[p->first] = p->second;
-	}
+	for(set<string>::iterator p = physical_ports.begin(); p != physical_ports.end(); p++)
+		this->physical_ports[*p] = 0;
 
 	//create NF ports (and give them names)
 	for(map<string, list< unsigned int> >::iterator nf = nf_ports.begin(); nf != nf_ports.end(); nf++)
@@ -234,11 +231,6 @@ uint64_t LSI::getDpid()
 map<string,unsigned int> LSI::getPhysicalPorts()
 {
 	return physical_ports;
-}
-
-map<string,string> LSI::getPhysicalPortsType()
-{
-	return physical_ports_type;
 }
 
 map<string,unsigned int> LSI::getNetworkFunctionsPorts(string nf)
