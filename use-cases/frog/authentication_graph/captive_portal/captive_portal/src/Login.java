@@ -184,16 +184,16 @@ public class Login extends HttpServlet {
 		
 		HttpPut putRequest = new HttpPut(temp.toString());
 
-		StringEntity input_entity = new StringEntity(
-				"{\"session\": {\"node_id\": \"" + mac
+		StringEntity input_entity = new StringEntity("{\"session\": {\"node_id\": \"" + mac
 						+ "\", \"SW_endpoint\": \"" + ip_address
-						+ "\", \"mac\": \"" + user_MAC
-						+ "\", \"port\": \"" + user_port + "\"}}");
+						+ "\", \"device\": {\"mac\": \"" + user_MAC
+						+ "\", \"port\": \"" + user_port + "\"}}}");
+
 		
 		System.out.println("{\"session\": {\"node_id\": \"" + mac
 						+ "\", \"SW_endpoint\": \"" + ip_address
-						+ "\", \"mac\": \"" + user_MAC
-						+ "\", \"port\": \"" + user_port + "\"}}");
+						+ "\", \"device\": {\"mac\": \"" + user_MAC
+						+ "\", \"port\": \"" + user_port + "\"}}}");
 		
 		input_entity.setContentType("application/json");
 		putRequest.setEntity(input_entity);
