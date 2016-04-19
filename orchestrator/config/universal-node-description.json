@@ -1,13 +1,14 @@
 {
-  "netgroup-domain:informations": {
+  "frog-domain:informations": {
     "name": "universal-node-example",
     "management-address": "192.168.1.1:8080",
     "type": "UN",
-    "netgroup-network-manager:informations": {
+    "frog-network-manager:informations": {
       "openconfig-interfaces:interfaces": {
         "openconfig-interfaces:interface": [
           {
             "name": "eth1",
+            "frog-interface-type": "access",
             "config": {
               "type": "ethernetCsmacd",
               "description": "something",
@@ -72,7 +73,7 @@
                     }
                   },
                   "openconfig-if-ip:ipv6": {
-                    "netgroup-polito-if-ip:address": [
+                    "frog-polito-if-ip:address": [
                       {
                         "ip": "2001:cdba:0000:0000:0000:0000:3257:9652",
                         "config": {
@@ -111,7 +112,7 @@
                       "enabled": true
                     }
                   },
-                  "netgroup-if-gre:gre": [
+                  "frog-if-gre:gre": [
                     {
                       "name": "name1",
                       "config": {
@@ -151,7 +152,7 @@
                   ]
                 }
               },
-              "netgroup-neighbor:neighbor": [
+              "frog-neighbor:neighbor": [
                 {
                   "domain-name": "universal-node-2",
                   "remote-interface": "eth3"
