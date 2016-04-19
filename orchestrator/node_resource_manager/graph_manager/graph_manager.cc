@@ -1238,6 +1238,19 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 {
+	/**
+	*	Limitations:
+	*
+	*	- only used to add new parts to the graph, and not to remove parts
+	*		- new VNFs
+	*		- new endpoints (interface, GRE, vlan, internal)
+	*	- it is not possible to update a VNF, then the following parameters cannot be updated:
+	*		- number of ports
+	*		- ports configuration
+	*		- environment variables
+	*		- control connection
+	**/
+
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s'...",graphID.c_str());
 
 	assert(tenantLSIs.count(graphID) != 0);
