@@ -25,7 +25,7 @@ enum physicalPortType_t {ETHERNET_PORT,WIFI_PORT};
 class CheckPhysicalPortsIn
 {
 
-friend class FileParser;
+friend class GraphManager;
 
 private:
 
@@ -41,7 +41,7 @@ private:
 
 
 protected:
-	CheckPhysicalPortsIn(string name, physicalPortType_t type)
+	CheckPhysicalPortsIn(string name, physicalPortType_t type = ETHERNET_PORT)
 		: name(name), type(type)
 	{
 	}

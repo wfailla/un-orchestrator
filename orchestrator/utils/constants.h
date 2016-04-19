@@ -153,33 +153,6 @@
 */
 #define CORE_MASK				0x2
 
-/**
-*	@brief: Constants related to the configuration file containing the description of the physical ports
-*
-*	XXX This constants must be updated in case the XML schema is modified
-*/
-#define PHY_PORTS_XSD			"config/universal-node-schema.xsd"
-
-#define RESOURCES_ELEMENT		"resources"
-#define CPU_ELEMENT				"cpu"
-#define MEMORY_ELEMENT			"memory"
-#define STORAGE_ELEMENT			"storage"
-#define AMOUNT_ATTRIBUTE		"amount"
-#define UNIT_ATTRIBUTE			"unit"
-
-#define PORTS_ELEMENT			"ports"
-#define PORT_ELEMENT			"port"
-#define NAME_ATTRIBUTE			"name"
-#define TYPE_ATTRIBUTE			"type"
-
-#define VIRTUALIZED_ELEMENT		"virtualized"
-#define AS_ATTRIBUTE			"as"
-#define PORT_TYPE_ATTRIBUTE		"port-type"
-#define SAP_ATTRIBUTE			"sap"
-
-#define TYPE_ETHERNET			"ethernet"
-#define TYPE_WIFI				"wifi"
-
 /*
  * Supported Openflow versions.
  */

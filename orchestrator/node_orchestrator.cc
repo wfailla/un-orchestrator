@@ -40,7 +40,7 @@ SQLiteManager *dbm = NULL;
 *	Private prototypes
 */
 bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file, bool *init_db, char **pwd);
-bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **ipsec_certificate);
+bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, set<string> &physical_ports, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **ipsec_certificate);
 bool usage(void);
 void printUniversalNodeInfo();
 bool doChecks(void);
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 	int rest_port, t_rest_port;
 	bool cli_auth, t_cli_auth, orchestrator_in_band, t_orchestrator_in_band, init_db = false;
 	char *config_file_name = new char[BUFFER_SIZE];
-	char *ports_file_name = new char[BUFFER_SIZE], *t_ports_file_name = NULL;
+	set<string> physical_ports;
 	char *nffg_file_name = new char[BUFFER_SIZE], *t_nffg_file_name = NULL;
 	char *descr_file_name = new char[BUFFER_SIZE], *t_descr_file_name = NULL;
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
@@ -113,14 +113,8 @@ int main(int argc, char *argv[])
 	if(!parse_command_line(argc,argv,&core_mask,&config_file_name,&init_db,&pwd))
 		exit(EXIT_FAILURE);
 
-	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,&t_ports_file_name,&t_descr_file_name,&t_client_name,&t_broker_address,&t_key_path,&t_orchestrator_in_band,&t_un_interface,&t_un_address,&t_ipsec_certificate))
+	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,physical_ports,&t_descr_file_name,&t_client_name,&t_broker_address,&t_key_path,&t_orchestrator_in_band,&t_un_interface,&t_un_address,&t_ipsec_certificate))
 		exit(EXIT_FAILURE);
-
-	strcpy(ports_file_name, t_ports_file_name);
-	if(strcmp(t_nffg_file_name, "UNKNOWN") != 0)
-		strcpy(nffg_file_name, t_nffg_file_name);
-	else
-		nffg_file_name = NULL;
 
 	if(strcmp(t_descr_file_name, "UNKNOWN") != 0)
 		strcpy(descr_file_name, t_descr_file_name);
@@ -217,7 +211,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,ports_file_name,s_un_address,orchestrator_in_band,un_interface,ipsec_certificate))
+	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,physical_ports,s_un_address,orchestrator_in_band,un_interface,ipsec_certificate))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 		exit(EXIT_FAILURE);
@@ -328,9 +322,8 @@ static struct option lgopts[] = {
 	return true;
 }
 
-bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **ipsec_certificate)
+bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, set<string> &physical_ports, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **ipsec_certificate)
 {
-	ports_file_name[0] = '\0';
 	nffg_file_name[0] = '\0';
 	*rest_port = REST_PORT;
 
@@ -346,15 +339,32 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 		return false;
 	}
 
-	/* physical ports file name */
-	char *temp_config_file = new char[64];
-	strcpy(temp_config_file, (char *)reader.Get("rest server", "configuration_file", "UNKNOWN").c_str());
-	if(strcmp(temp_config_file, "UNKNOWN") != 0 && strcmp(temp_config_file, "") != 0)
-		*ports_file_name = temp_config_file;
-	else
+	/* Physical ports */
+	char *tmp_physical_ports = new char[64];
+	strcpy(tmp_physical_ports, (char *)reader.Get("physical ports", "ports_name", "UNKNOWN").c_str());
+	if(strcmp(tmp_physical_ports, "UNKNOWN") != 0 && strcmp(tmp_physical_ports, "") != 0)
 	{
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Physical ports file must be present");
-		return false;
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Physical ports read from configuation file: %s",tmp_physical_ports);
+		//the string must start and terminate respectively with [ and ]
+		if((tmp_physical_ports[strlen(tmp_physical_ports)-1] != ']') || (tmp_physical_ports[0] != '[') )
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Wrong list of physical ports '%s'. It must be enclosed in '[...]'",tmp_physical_ports);
+			return false;
+		}
+		tmp_physical_ports[strlen(tmp_physical_ports)-1] = '\0';
+		tmp_physical_ports++;
+		
+		//the string just read must be tokenized
+		char delimiter[] = " ";
+	 	char * pnt;
+	 	pnt=strtok(tmp_physical_ports, delimiter);
+	 	while(pnt!= NULL)
+	 	{
+	 		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tphysical port: %s",pnt);
+		 	string s(pnt);
+		 	physical_ports.insert(pnt);
+		 	pnt = strtok( NULL, delimiter );
+	 	}
 	}
 
 	/* REST port */

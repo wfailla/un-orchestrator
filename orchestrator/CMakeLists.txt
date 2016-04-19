@@ -233,8 +233,6 @@ SET(SOURCES1
 	node_resource_manager/graph_manager/lsi.cc
 	node_resource_manager/graph_manager/virtual_link.h
 	node_resource_manager/graph_manager/virtual_link.cc
-	node_resource_manager/graph_manager/fileParser.h
-	node_resource_manager/graph_manager/fileParser.cc
 
 	node_resource_manager/graph/match.h
 	node_resource_manager/graph/match.cc

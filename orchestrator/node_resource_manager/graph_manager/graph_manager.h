@@ -6,7 +6,6 @@
 #include "graph_info.h"
 #include "lsi.h"
 #include "graph_translator.h"
-#include "fileParser.h"
 #include "../../network_controller/openflow_controller/controller.h"
 #include "../../utils/constants.h"
 #include "../graph/high_level_graph/high_level_graph.h"
@@ -234,7 +233,7 @@ public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
 
-	GraphManager(int core_mask,string portsFileName,string un_address,bool control,string un_interface,string ipsec_certificate);
+	GraphManager(int core_mask,set<string> physical_ports,string un_address,bool control,string un_interface,string ipsec_certificate);
 	~GraphManager();
 
 	/**

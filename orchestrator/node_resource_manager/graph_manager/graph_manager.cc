@@ -8,19 +8,17 @@ void GraphManager::mutexInit()
 	pthread_mutex_init(&graph_manager_mutex, NULL);
 }
 
-GraphManager::GraphManager(int core_mask,string portsFileName,string un_address,bool orchestrator_in_band,string un_interface,string ipsec_certificate) :
+GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_address,bool orchestrator_in_band,string un_interface,string ipsec_certificate) :
 	un_address(un_address), orchestrator_in_band(orchestrator_in_band), un_interface(un_interface), ipsec_certificate(ipsec_certificate), switchManager()
 {
 	//Parse the file containing the description of the physical ports to be managed by the node orchestrator
 	set<CheckPhysicalPortsIn> phyPortsRequired;
-	try
+	for(set<string>::iterator pp = physical_ports.begin(); pp != physical_ports.end(); pp++)
 	{
-		phyPortsRequired = FileParser::parseConfigurationFile(portsFileName);
+		CheckPhysicalPortsIn cppi(*pp);
+		phyPortsRequired.insert(cppi);
 	}
-	catch(...)
-	{
-		throw GraphManagerException();
-	}
+
 	set<string> phyPorts;//maps the name into the side
 	for(set<CheckPhysicalPortsIn>::iterator pp = phyPortsRequired.begin(); pp != phyPortsRequired.end(); pp++)
 		phyPorts.insert(pp->getPortName());
