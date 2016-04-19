@@ -6,7 +6,7 @@
       "openconfig-interfaces:interfaces": {
         "openconfig-interfaces:interface": [
           {
-            "name": "10.1.1.1/eth3",
+            "name": "eth1",
             "config": {
               "type": "ethernetCsmacd",
               "description": "something",
