@@ -1,6 +1,7 @@
 {
   "netgroup-domain:informations": {
-    "name": "domain_example",
+    "name": "universal-node-example",
+    "management-address": "192.168.1.1:8080",
     "type": "UN",
     "netgroup-network-manager:informations": {
       "openconfig-interfaces:interfaces": {
