@@ -370,6 +370,11 @@ Object Graph::toJSON()
 		end_points.push_back(e->toJSON());
 	}
 
+	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end();e++)
+	{
+		end_points.push_back(e->toJSON());
+	}
+
 	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end();e++)
 	{
 		end_points.push_back(e->toJSON());

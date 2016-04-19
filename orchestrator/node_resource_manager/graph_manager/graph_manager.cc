@@ -577,6 +577,7 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	set<string> phyPorts = graph->getPorts();
 	set<string> endPoints = graph->getEndpointsInternalAsString();
 	list<highlevel::EndPointGre> endPointsGre = graph->getEndPointsGre();
+	list<highlevel::EndPointVlan> endPointsVlan = graph->getEndPointsVlan();
 
 	string graphID = graph->getID();
 
@@ -603,7 +604,7 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 			//since this endpoint is defined into another graph, that endpoint must already exist
 			if(availableEndPoints.count(*graphEP) == 0)
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint \"%s\" is not defined by the current graph, and it does not exist yet",graphEP->c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not defined by the current graph, and it does not exist yet",graphEP->c_str());
 				return false;
 			}
 
@@ -612,7 +613,7 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 				//Another graph must have been defined it in an action
 				if(endPointsDefinedInActions.count(*graphEP) == 0)
 				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint \"%s\" is used in a match of the current graph, but it was not defined in an action of another graph",graphEP->c_str());
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in a match of the current graph, but it was not defined in an action of another graph",graphEP->c_str());
 					return false;
 				}
 			}
@@ -629,6 +630,8 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d gre endpoints (i.e., gre ports to be used to connect two nodes together)",endPointsGre.size());
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d vlan endpoints",endPointsVlan.size());
 
 	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctions();
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires to retrieve %d new NFs",network_functions.size());
