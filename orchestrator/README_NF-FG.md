@@ -600,9 +600,10 @@ This way, the un-orchestrator is able to implement the behavior required by the
 
 ### Endpoint type: `gre-tunnel`
  
-It represents again an endpoint associated with a physical interface; however, the UN guarantees
-that only the traffic encapsulated in a specific GRE tunnel enters from this endpoint, and that 
-all the traffic  exiting from such an endpoint will be encapsulated in such a GRE tunnel. 
+It represents an endpoint that is actually a GRE tunnel; hence, the UN guarantees 
+that only the traffic encapsulated in a specific GRE tunnel enters from this 
+endpoint, and that all the traffic  exiting from such an endpoint will be encapsulated 
+in such a GRE tunnel. 
 For instance, the `gre-tunnel` endpoint can be used to connect together pieces of the same service 
 deployed  on different Universal Nodes.
 
@@ -614,24 +615,23 @@ Is `gre-tunnel` endpoint is defined as follows:
 		"type": "gre-tunnel",
 		"gre-tunnel": {
 			"local-ip": "10.0.0.1",
-			"remote-ip": "10.0.0.2",
-			"interface" : "eth1",
+			"remote-ip": "10.0.0.2"
 			"gre-key" : "1"
 		}
 	}
 	
-In this example, only the traffic coming from the physical interface `eth1` and belonging to the following GRE 
-tunnel is enable to enter through such an end point: `10.0.0.1` as a source IP address, `10.0.0.2` as a 
-destination IP address, `1` as `gre-key`. Similarly, all the traffic that will exit from such an end point,
-will be sent through the physical interface `eth1` encapsulated into the GRE tunnel defined with the parameters 
-listed before. Note that all the operations needed to reproduce this behavior (e.g., create the GRE tunnel, encpusulta
-the traffic in the GRE tunnel) are transparently implemented by the un-orchestrator.	
+In this example, only the traffic belonging to the following GRE tunnel is enable 
+to enter through such an end point: `10.0.0.1` as a source IP address, `10.0.0.2` as a 
+destination IP address, `1` as `gre-key`. Similarly, all the traffic that will exit from 
+such an end point, will be encapsulated into the GRE tunnel defined with the parameters 
+listed before. Note that all the operations needed to reproduce this behavior (e.g., create 
+the GRE tunnel, encpusulate the traffic in the GRE tunnel) are transparently implemented 
+by the un-orchestrator.	
 
-A complete example that shows the usage of the `gre-tunnel` endpoint is the following, in which the endpoint is associated 
-with the physical port `eth1` and with the following GRE tunnel: source IP `10.0.0.1`, destination IP `10.0.0.2"`, 
-GRE key `1`. 
-The traffic coming from this endpoint is then provided to the `firewall` VNF, and then leaves the UN again through 
-the `gre-tunnel` endpoint. 
+A complete example that shows the usage of the `gre-tunnel` endpoint is the following, in which 
+the endpoint is assocaited with the following GRE tunnel: source IP `10.0.0.1`, destination IP `10.0.0.2"`, 
+GRE key `1`. The traffic coming from this endpoint is provided to the `firewall` VNF, and then 
+leaves the UN again through the `gre-tunnel` endpoint. 
  
  	{
 		"forwarding-graph": 
@@ -662,7 +662,6 @@ the `gre-tunnel` endpoint.
 		    	"gre-tunnel": {
 		      		"local-ip": "10.0.0.1",
 		      		"remote-ip": "10.0.0.2",
-		      		"interface" : "eth1",
 		      		"gre-key" : "1"
 		    	}
 		  	}
@@ -784,7 +783,6 @@ command uses that endpoint.
 		"gre-tunnel": {
 		  "local-ip": "10.0.0.1",
 		  "remote-ip": "10.0.0.2",
-		  "interface" : "eth0",
 		  "gre-key" : "1"
 		}
 	      }
