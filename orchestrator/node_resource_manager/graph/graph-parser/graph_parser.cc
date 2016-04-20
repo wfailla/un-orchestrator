@@ -698,14 +698,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 													remote_ip = epi_value.getString();
 												}
-												else if(epi_name == IFACE)
-												{
-													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,IFACE,epi_value.getString().c_str());
-
-													interface = epi_value.getString();
-
-													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), interface.c_str());
-												}
 												else if(epi_name == TTL)
 												{
 													logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,TTL,epi_value.getString().c_str());
