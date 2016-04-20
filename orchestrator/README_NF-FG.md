@@ -623,13 +623,13 @@ The `gre-tunnel` endpoint is defined as follows:
 In this example, only the traffic belonging to the following GRE tunnel is enabled 
 to enter through such an end point: `10.0.0.1` as a source IP address, `10.0.0.2` as a 
 destination IP address, `1` as `gre-key`. Similarly, all the traffic that will exit from 
-such an end point, will be encapsulated into the GRE tunnel defined with the parameters 
+such an end point will be encapsulated into the GRE tunnel defined with the parameters 
 listed before. Note that all the operations needed to reproduce this behavior (e.g., create 
 the GRE tunnel, encpusulate the traffic in the GRE tunnel) are transparently implemented 
 by the un-orchestrator.	
 
 A complete example that shows the usage of the `gre-tunnel` endpoint is the following, in which 
-the endpoint is assocaited with the following GRE tunnel: source IP `10.0.0.1`, destination IP `10.0.0.2"`, 
+the endpoint is associated with the following GRE tunnel: source IP `10.0.0.1`, destination IP `10.0.0.2"`, 
 GRE key `1`. The traffic coming from this endpoint is provided to the `firewall` VNF, and then 
 leaves the UN again through the `gre-tunnel` endpoint. 
  
