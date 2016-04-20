@@ -607,7 +607,7 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d vlan endpoints",endPointsVlan.size());
 
-	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctions();
+	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires to retrieve %d new NFs",network_functions.size());
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
@@ -730,7 +730,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	set<string> phyPorts = graph->getPorts();
 
-	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions();
+	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
 	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
@@ -1309,7 +1309,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	}
 
 	//Update the network functions ports
-	highlevel::Graph::t_nfs_ports_list networkFunctions = diff->getNetworkFunctions();
+	highlevel::Graph::t_nfs_ports_list networkFunctions = diff->getNetworkFunctionsPorts();
+	//networkFunctions maps, for each network function, its name with the list of port IDs
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
 	{
 		graph->addNetworkFunction(nf->first);
@@ -1392,7 +1393,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 	set<string> phyPorts = diff->getPorts();
 
-	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctions();
+	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctionsPorts();
 //	map<string, vector<string> > tmp_endpoints = diff->getEndPoints();//#ADDED
 	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();//#ADDED
 
