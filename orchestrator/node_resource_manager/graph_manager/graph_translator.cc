@@ -59,8 +59,8 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		if( (match.matchOnNF() || match.matchOnEndPointGre()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL) )
 		{
 			/**
-			*	NF -> endpoint
-			*	Gre -> endpoint
+			*	NF -> internal endpoint
+			*	Gre -> internal endpoint
 			*/
 			if(graph->isDefinedHere(action->toString()))
 			{
@@ -339,7 +339,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			 assert(action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION || action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE);
 
 			 stringstream ss;
-			 ss << match.getGraphID() << ":" << match.getEndPoint();
+			 ss << match.getEndPoint();
 
 			 if(graph->isDefinedHere(ss.str()))
 			 {
@@ -719,12 +719,11 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 			}
 			else if(action->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL)
 			{
-				highlevel::ActionEndPointInternal *action_ep = (highlevel::ActionEndPointInternal*)action;
 
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the gre endpoint \"%s\", and the action is \"%s:%d\"",input_endpoint,action_info.c_str(),action_ep->getPort());
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the gre endpoint \"%s\", and the action is \"%s\"",input_endpoint,action_info.c_str());
 
 				stringstream action_port;
-				action_port << action_info << ":" << action_ep->getPort();
+				action_port << action_info;
 
 				//Translate the action
 				map<string, uint64_t> ep_vlinks = tenantLSI->getEndPointsVlinks();

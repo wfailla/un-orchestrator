@@ -21,12 +21,12 @@ private:
 	/**
 	*	@brief: ID of the graph defining this endpoint
 	*/
-	string graphID;
+	//string graphID;
 	
 	/**
-	*	@brief: endpoint identifier
+	*	@brief: identifier of the endpoint group
 	*/
-	unsigned int endpoint;
+	string group;
 	
 	/**
 	*	@brief: the name of the endpoint (e.g., endpoint:00000001)
@@ -35,9 +35,9 @@ private:
 
 public:
 
-	ActionEndPointInternal(string graphID, unsigned int endpoint, string input_endpoint);
+	ActionEndPointInternal(/*string graphID, */string group, string input_endpoint);
 	string getInfo();
-	unsigned int getPort();
+	unsigned int getGroup();
 	string getInputEndpoint();
 	string toString();
 	

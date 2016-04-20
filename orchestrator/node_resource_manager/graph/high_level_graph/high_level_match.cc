@@ -34,14 +34,16 @@ bool Match::setNFport(string network_function, int port)
 	return true;
 }
 
-bool Match::setEndPointInternal(string graphID, unsigned int endpoint)
+bool Match::setEndPointInternal(/*string graphID, unsigned int endpoint*/string group)
 {
 	if(type != MATCH_GENERIC)
 		return false;
 
-	input = (char*)malloc(sizeof(char)*(graphID.length()+1));
-	strcpy(input,graphID.c_str());
-	this->endpoint = endpoint;
+	/*input = (char*)malloc(sizeof(char)*(graphID.length()+1));
+	strcpy(input,graphID.c_str());*/
+	//this->endpoint = endpoint;
+
+	sscanf(group.c_str(), "%u", &this->endpoint);
 	type = MATCH_ENDPOINT_INTERNAL;
 
 	return true;
@@ -172,15 +174,10 @@ void Match::print()
 	{
 		cout << "\t\tmatch:" << endl << "\t\t{" << endl;
 
-		if(type == MATCH_PORT || type == MATCH_ENDPOINT_GRE)
+		if(type == MATCH_PORT || type == MATCH_ENDPOINT_GRE || type == MATCH_ENDPOINT_INTERNAL)
 			cout << "\t\t\tport_in: " << input << endl;
 		else if(type == MATCH_NF)
 			cout << "\t\t\tport_in: " << input << ":" << nf_port << endl;
-		else
-		{
-			assert(type == MATCH_ENDPOINT_INTERNAL);
-			cout << "\t\t\tport_in: " << input << ":" << endpoint << endl;
-		}
 
 		graph::Match::print();
 
@@ -192,14 +189,8 @@ Object Match::toJSON()
 {
 	Object match;
 
-	if(type == MATCH_PORT || type == MATCH_ENDPOINT_GRE)
+	if(type == MATCH_PORT || type == MATCH_ENDPOINT_GRE || type == MATCH_ENDPOINT_INTERNAL)
 		match[PORT_IN]  = input_endpoint;
-	else if(type == MATCH_ENDPOINT_INTERNAL)
-	{
-		stringstream ss;
-		ss << input << ":" << input_endpoint;
-		match[PORT_IN]  = ss.str().c_str();
-	}
 	else if(type == MATCH_NF)
 	{
 		stringstream nf;

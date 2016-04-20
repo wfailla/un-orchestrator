@@ -230,22 +230,6 @@ public:
 #endif
 
 	/**
-	*	@brief: Add a string representing an "internal" endpoint to the graph
-	*
-	*	@param: graphID		Indefier of the graph defining the end point
-	*	@param: endpoint	Identifier of the end point
-	*
-	*	@return: true if the endpoint is defined in the current graph; false otherwise
-	*/
-	//FIXME: why do we need to store this information?
-	bool addEndpointInternalAsString(string graphID, string endpoint);
-
-	/**
-	*	@brief: Return the "internal" endpoints of the graph, as a set of strings
-	*/
-	set<string> getEndpointsInternalAsString();
-
-	/**
 	*	@brief: given a graph endpoint (in the form graphID:epID), return true if it is defined
 	*		in this graph
 	*/

@@ -33,11 +33,17 @@ private:
 	*/
 	string name;
 
+	/**
+	*	@brief: the group id of the endpoint port (e.g., 25)
+	*/
+	string group;
+
 public:
 
-	EndPointInternal(string id, string name);
+	EndPointInternal(string id, string name, string group);
 	string getId();
 	string getName();
+	string getGroup();
 
 	~EndPointInternal();
 

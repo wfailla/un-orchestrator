@@ -371,14 +371,14 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	if(!shutdown)
 	{
-		set<string> endpoints = highLevelGraph->getEndpointsInternalAsString();
-		for(set<string>::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
+		list<highlevel::EndPointInternal> endpointsInternal = highLevelGraph->getEndPointsInternal();
+		for(list<highlevel::EndPointInternal>::iterator ep = endpointsInternal.begin(); ep != endpointsInternal.end(); ep++)
 		{
-			if(highLevelGraph->isDefinedHere(*ep))
+			if(highLevelGraph->isDefinedHere(ep->getGroup()))
 			{
-				if(availableEndPoints.find(*ep)->second !=0)
+				if(availableEndPoints.find(ep->getGroup())->second !=0)
 				{
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph cannot be deleted. It defines the endpoint \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep->c_str(),availableEndPoints.find(*ep)->second);
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph cannot be deleted. It defines the endpoint \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep->getGroup().c_str(),availableEndPoints.find(ep->getGroup())->second);
 					return false;
 				}
 			}
@@ -427,24 +427,24 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	if(!shutdown)
 	{
-		set<string> endpoints = highLevelGraph->getEndpointsInternalAsString();
-		for(set<string>::iterator ep = endpoints.begin(); ep != endpoints.end();)
+		list<highlevel::EndPointInternal> endpointsInternal = highLevelGraph->getEndPointsInternal();
+		for(list<highlevel::EndPointInternal>::iterator ep = endpointsInternal.begin(); ep != endpointsInternal.end();)
 		{
-			if(highLevelGraph->isDefinedHere(*ep))
+			if(highLevelGraph->isDefinedHere(ep->getGroup()))
 			{
-				assert(availableEndPoints.find(*ep)->second ==0);
-				assert(endPointsDefinedInMatches.count(*ep) != 0 || endPointsDefinedInActions.count(*ep) != 0);
+				assert(availableEndPoints.find(ep->getGroup())->second ==0);
+				assert(endPointsDefinedInMatches.count(ep->getGroup()) != 0 || endPointsDefinedInActions.count(ep->getGroup()) != 0);
 
-				set<string>::iterator tmp = ep;
+				list<highlevel::EndPointInternal>::iterator tmp = ep;
 				ep++;
 
-				availableEndPoints.erase(*tmp);
-				if(endPointsDefinedInActions.count(*tmp) != 0)
-					endPointsDefinedInActions.erase(*tmp);
-				if(endPointsDefinedInMatches.count(*tmp) != 0)
-					endPointsDefinedInMatches.erase(*tmp);
+				availableEndPoints.erase(tmp->getGroup());
+				if(endPointsDefinedInActions.count(tmp->getGroup()) != 0)
+					endPointsDefinedInActions.erase(tmp->getGroup());
+				if(endPointsDefinedInMatches.count(tmp->getGroup()) != 0)
+					endPointsDefinedInMatches.erase(tmp->getGroup());
 
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The endpoint \"%s\" is no longer available",tmp->c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The endpoint \"%s\" is no longer available",tmp->getGroup().c_str());
 			}
 			else
 				ep++;
@@ -549,7 +549,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController *computeController)
 {
 	set<string> phyPorts = graph->getPorts();
-	set<string> endPoints = graph->getEndpointsInternalAsString();
+	list<highlevel::EndPointInternal> endPointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endPointsGre = graph->getEndPointsGre();
 	list<highlevel::EndPointVlan> endPointsVlan = graph->getEndPointsVlan();
 
@@ -569,34 +569,34 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		}
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d internal endpoints (i.e., logical ports to be used to connect two graphs together)",endPoints.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d internal endpoints (i.e., logical ports to be used to connect two graphs together)",endPointsInternal.size());
 
-	for(set<string>::iterator graphEP = endPoints.begin(); graphEP != endPoints.end(); graphEP++)
+	for(list<highlevel::EndPointInternal>::iterator graphEP = endPointsInternal.begin(); graphEP != endPointsInternal.end(); graphEP++)
 	{
-		if(!graph->isDefinedHere(*graphEP))
+		if(!graph->isDefinedHere(graphEP->getGroup()))
 		{
-			//since this endpoint is defined into another graph, that endpoint must already exist
-			if(availableEndPoints.count(*graphEP) == 0)
+			//since this internal endpoint is defined into another graph, that internal endpoint must already exist
+			if(availableEndPoints.count(graphEP->getGroup()) == 0)
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not defined by the current graph, and it does not exist yet",graphEP->c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not defined by the current graph, and it does not exist yet",graphEP->getGroup().c_str());
 				return false;
 			}
 
-			if(graph->endpointIsUsedInMatch(*graphEP))
+			if(graph->endpointIsUsedInMatch(graphEP->getGroup()))
 			{
 				//Another graph must have been defined it in an action
-				if(endPointsDefinedInActions.count(*graphEP) == 0)
+				if(endPointsDefinedInActions.count(graphEP->getGroup()) == 0)
 				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in a match of the current graph, but it was not defined in an action of another graph",graphEP->c_str());
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in a match of the current graph, but it was not defined in an action of another graph",graphEP->getGroup().c_str());
 					return false;
 				}
 			}
-			if(graph->endpointIsUsedInAction(*graphEP))
+			if(graph->endpointIsUsedInAction(graphEP->getGroup()))
 			{
 				//Another graph must have been defined it in a match
-				if(endPointsDefinedInMatches.count(*graphEP) == 0)
+				if(endPointsDefinedInMatches.count(graphEP->getGroup()) == 0)
 				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint \"%s\" is used in an action of the current graph, but it was not defined in a match of another graph",graphEP->c_str());
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in an action of the current graph, but it was not defined in a match of another graph",graphEP->getGroup().c_str());
 					return false;
 				}
 			}
@@ -736,7 +736,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
 	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
 #endif
-	set<string> endpointsInternal = graph->getEndpointsInternalAsString();
+	list<highlevel::EndPointInternal> endpointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
 
 	vector<set<string> > vlVector = identifyVirtualLinksRequired(graph);
@@ -1354,16 +1354,6 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	{
 		//The gre endpoint is not part of the graph
 		graph->addEndPointGre(*ep);
-	}
-
-	//Update the internal endpoints (represented as strings)
-	set<string> nep = diff->getEndpointsInternalAsString();
-	for(set<string>::iterator ep = nep.begin(); ep != nep.end(); ep++)
-	{
-		string tmp_ep = *ep;
-		string tmp_graph_id = MatchParser::graphID(tmp_ep);
-		//The endpoint is not part of the graph
-		graph->addEndpointInternalAsString(tmp_graph_id,*ep);
 	}
 
 	//Update the internal endpoints

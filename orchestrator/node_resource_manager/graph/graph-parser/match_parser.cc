@@ -170,7 +170,7 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 	return true;
 }
 
-bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string > &iface_out_id, map<string,pair<string,string> > &vlan_id, map<string,string> &gre_id, highlevel::Graph &graph)
+bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string> &internal_id, map<string,pair<string,string> > &vlan_id, map<string,string> &gre_id, highlevel::Graph &graph)
 {
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
@@ -193,12 +193,12 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 			foundOne = true;
 
+			string internal_group;
 			string port_in_name = value.getString();
 			string realName;
 			string v_id;
 			string graph_id;
 			const char *port_in_name_tmp = port_in_name.c_str();
-			char endpoint_internal[BUFFER_SIZE];
 			char vnf_name_tmp[BUFFER_SIZE];
 
 			//Check the name of port
@@ -231,11 +231,11 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 							match.setInputEndpoint(/*string(ep_tmp)*/port_in_name_tmp);
 						}
 						//end-point internal type
-						else
+						/*else
 						{
 							graph_id = string(pnt);
 							p_type = EP_INTERNAL_TYPE;
-						}
+						}*/
 						break;
 					case 1:
 						if(p_type == VNF_PORT_TYPE)
@@ -243,13 +243,13 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 							strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 							strcat(vnf_name_tmp,":");
 						}
-						else if(p_type == EP_INTERNAL_TYPE)
+						/*else if(p_type == EP_INTERNAL_TYPE)
 						{
 							strcpy(endpoint_internal, pnt);
 							strcat(endpoint_internal, ":");
-						}
+						}*/
 						break;
-					case 2:
+					/*case 2:
 						if(p_type == EP_INTERNAL_TYPE)
 						{
 							strcat(endpoint_internal, pnt);
@@ -258,7 +258,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 #endif
 							match.setInputEndpoint(string(endpoint_internal));
 						}
-						break;
+						break;*/
 					case 3:
 						if(p_type == VNF_PORT_TYPE)
 						{
@@ -301,13 +301,13 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 			//end-points port type
 			else if(p_type == EP_PORT_TYPE)
 			{
-				bool iface_found = false, vlan_found = false, gre_found=false;
+				bool iface_found = false, internal_found = false, vlan_found = false, gre_found=false;
 				char *s_value = new char[BUFFER_SIZE];
 				strcpy(s_value, (char *)value.getString().c_str());
 				string eP = epName(value.getString());
 				if(eP != ""){
 					map<string,string>::iterator it = iface_id.find(eP);
-					map<string,string>::iterator it1 = iface_out_id.find(eP);
+					map<string,string>::iterator it1 = internal_id.find(eP);
 					map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
 					map<string,string>::iterator it3 = gre_id.find(eP);
 					if(it != iface_id.end())
@@ -316,11 +316,11 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						realName.assign(iface_id[eP]);
 						iface_found = true;
 					}
-					else if(it1 != iface_out_id.end())
+					else if(it1 != internal_id.end())
 					{
-						//physical port
-						realName.assign(iface_out_id[eP]);
-						iface_found = true;
+						//internal
+						internal_group.assign(internal_id[eP]);
+						internal_found = true;
 					}
 					else if(it2 != vlan_id.end())
 					{
@@ -339,6 +339,17 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				{
 					match.setInputPort(realName);
 					graph.addPort(realName);
+				}
+				else if(internal_found)
+				{
+					//unsigned int endPoint = epPort(string(endpoint_internal));
+					if(/*endPoint == 0*/internal_group == "")
+					{
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not valid. It must have the \"%s\" attribute",value.getString().c_str(), INTERNAL_GROUP);
+						return false;
+					}
+
+					match.setEndPointInternal(/*graph_id,endPoint*/internal_group);
 				}
 				/*vlan endpoint*/
 				else if(vlan_found)
@@ -374,19 +385,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					}
 					match.setEndPointGre(endPoint);
 				}
-			}
-			else if(p_type == EP_INTERNAL_TYPE)
-			{
-				unsigned int endPoint = epPort(string(endpoint_internal));
-				if(endPoint == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
-					return false;
-				}
-#if 0
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint is \"%s\" and endPoint is \"%d\"",endpoint_internal, endPoint);
-#endif
-				match.setEndPointInternal(graph_id,endPoint);
 			}
 		}
 		else if(name == HARD_TIMEOUT)

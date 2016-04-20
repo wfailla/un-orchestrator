@@ -3,14 +3,14 @@
 namespace highlevel
 {
 
-ActionEndPointInternal::ActionEndPointInternal(string graphID, unsigned int endpoint, string input_endpoint) :
-	Action(ACTION_ON_ENDPOINT_INTERNAL), graphID(graphID), endpoint(endpoint), input_endpoint(input_endpoint)
+ActionEndPointInternal::ActionEndPointInternal(/*string graphID, */string group, string input_endpoint) :
+	Action(ACTION_ON_ENDPOINT_INTERNAL), /*graphID(graphID), */group(group), input_endpoint(input_endpoint)
 {
 }	
 
 bool ActionEndPointInternal::operator==(const ActionEndPointInternal &other) const
 {
-	if((graphID == other.graphID) && (endpoint == other.endpoint))
+	if(/*(graphID == other.graphID) && */group == other.group)
 		return true;
 		
 	return false;
@@ -18,12 +18,16 @@ bool ActionEndPointInternal::operator==(const ActionEndPointInternal &other) con
 
 string ActionEndPointInternal::getInfo()
 {
-	return graphID;
+	return group;
 }
 
-unsigned int ActionEndPointInternal::getPort()
+unsigned int ActionEndPointInternal::getGroup()
 {
-	return endpoint;
+	unsigned int in_group;
+
+	sscanf(group.c_str(), "%u", &in_group);
+
+	return in_group;
 }
 
 string ActionEndPointInternal::getInputEndpoint()
@@ -57,7 +61,7 @@ string ActionEndPointInternal::getInputEndpoint()
 string ActionEndPointInternal::toString()
 {
 	stringstream ss;
-	ss << graphID << ":" << endpoint;
+	ss << group;
 	
 	return ss.str();
 }
@@ -67,7 +71,7 @@ void ActionEndPointInternal::print()
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
 		cout << "\t\tAction:" << endl << "\t\t{" << endl;
-		cout << "\t\t\toutput_to_port: " << graphID << ":" << endpoint << endl;
+		cout << "\t\t\toutput_to_port: " << input_endpoint << endl;
 		for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 			(*ga)->print();
 		cout << "\t\t}" << endl;
@@ -78,7 +82,7 @@ Object ActionEndPointInternal::toJSON()
 {
 	Object action;
 	stringstream ss;
-	ss << graphID << ":" << input_endpoint;
+	ss << input_endpoint;
 
 	action[OUTPUT] = ss.str().c_str();
 	

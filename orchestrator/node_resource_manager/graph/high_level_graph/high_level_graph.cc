@@ -51,6 +51,8 @@ bool Graph::addEndPointInternal(EndPointInternal endpoint)
 
 	endPointsInternal.push_back(endpoint);
 
+	endpoints[endpoint.getGroup()] = true;
+
 	return true;
 }
 
@@ -502,29 +504,6 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::addEndpointInternalAsString(string graphID, string endpoint)
-{
-#if 0
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint is \"%s\"",endpoint.c_str());
-#endif
-	if(graphID == ID)
-		endpoints[endpoint] = true;
-	else
-		endpoints[endpoint] = false;
-
-	return endpoints[endpoint];
-}
-
-set<string> Graph::getEndpointsInternalAsString()
-{
-	set<string> endPoints;
-
-	for(map<string,bool>::iterator ep = endpoints.begin(); ep != endpoints.end(); ep++)
-		endPoints.insert(ep->first);
-
-	return endPoints;
-}
-
 bool Graph::isDefinedHere(string endpoint)
 {
 #if 0
@@ -746,31 +725,21 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	}
 
 	//Retrieve the internal endpoints already existing in the graph, in form of strings
-	set<string> endpoints = this->getEndpointsInternalAsString();
+	list<highlevel::EndPointInternal> endpointsInternal = this->getEndPointsInternal();
 	//Retrieve the internal endpoints required by the update
-	set<string> new_endpoints = other->getEndpointsInternalAsString();
-	for(set<string>::iterator it = new_endpoints.begin(); it != new_endpoints.end(); it++)
+	list<highlevel::EndPointInternal> new_endpointsInternal = other->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator it = new_endpointsInternal.begin(); it != new_endpointsInternal.end(); it++)
 	{
-		if(endpoints.count(*it) == 0)
+		if(endpoints.count(it->getGroup()) == 0)
 		{
-			string tmp_ep = *it;
-			string tmp_graph_id; // = MatchParser::graphID(tmp_ep);
+			string tmp_ep = it->getGroup();
 
-			char delimiter[] = ":";
-			char tmp[BUFFER_SIZE];
-			strcpy(tmp,tmp_ep.c_str());
-			char *pnt=strtok(tmp, delimiter);
-			if( pnt!= NULL )
-				tmp_graph_id = string(pnt);
-			else
-				tmp_graph_id = "";
-
-			//The endpoint is not part of the graph
-			diff->addEndpointInternalAsString(tmp_graph_id,*it);
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is added to the graph",(*it).c_str());
+			//The internal endpoint is not part of the graph
+			diff->addEndPointInternal(*it);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is added to the graph",it->getGroup().c_str());
 		}
 		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",(*it).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",it->getGroup().c_str());
 	}
 
 	//Retrieve the internal endpoints already existing in the graph
