@@ -120,7 +120,7 @@ set<string> Graph::getPorts()
 	return ports;
 }
 
-map<string, list<unsigned int> > Graph::getNetworkFunctions()
+map<string, list<unsigned int> > Graph::getNetworkFunctionsPorts()
 {
 	return networkFunctions;
 }
@@ -574,10 +574,10 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	// b) Add the new NFs to "diff"
 
 	//Retrieve the NFs already existing in the graph
-	highlevel::Graph::t_nfs_ports_list nfs = this->getNetworkFunctions();
+	highlevel::Graph::t_nfs_ports_list nfs = this->getNetworkFunctionsPorts();
 
 	//Retrieve the NFs required by the update (this part is related to the network functions ports)
-	highlevel::Graph::t_nfs_ports_list new_nfs = other->getNetworkFunctions();
+	highlevel::Graph::t_nfs_ports_list new_nfs = other->getNetworkFunctionsPorts();
 	for(highlevel::Graph::t_nfs_ports_list::iterator it = new_nfs.begin(); it != new_nfs.end(); it++)
 	{
 		if(nfs.count(it->first) == 0)

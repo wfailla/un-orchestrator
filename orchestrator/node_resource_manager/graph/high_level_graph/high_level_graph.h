@@ -210,7 +210,7 @@ public:
 	/**
 	*	@brief: Return the NFs of the graph and the ports they require
 	*/
-	t_nfs_ports_list getNetworkFunctions();
+	t_nfs_ports_list getNetworkFunctionsPorts();
 
 	/**
 	*	@brief: Return the VNFs of the graph and the description of the ports they require
