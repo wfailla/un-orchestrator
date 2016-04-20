@@ -36,22 +36,21 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 			//Identify the forwarding graph
 			if(name == FORWARDING_GRAPH)
 			{
-	    		foundFlowGraph = true;
+				foundFlowGraph = true;
 
-			bool foundEP = false;
-	    		vector<string> id_gre (256);
+				vector<string> id_gre (256);
 
 				Object forwarding_graph;
 				try
 				{
-		  			forwarding_graph = value.getObject();
+					forwarding_graph = value.getObject();
 				} catch(exception& e)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", FORWARDING_GRAPH);
 					return false;
 				}
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
-		    	{
+				{
 					bool e_if = false, e_vlan = false, e_internal = false;
 #if 0
 					bool e_if_out = false
@@ -59,21 +58,21 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 					string id, v_id, node, iface, e_name, node_id, sw_id, ep_id, interface, in_group;
 
-	        		const string& fg_name  = fg->first;
-		       		const Value&  fg_value = fg->second;
+					const string& fg_name  = fg->first;
+					const Value&  fg_value = fg->second;
 
 					if(fg_name == _ID)
-	         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
+						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_ID,fg_value.getString().c_str());
 					else if(fg_name == _NAME)
 					{
-	         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_NAME,fg_value.getString().c_str());
+						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,_NAME,fg_value.getString().c_str());
 
 						//set name of the graph
 						graph.setName(fg_value.getString());
 					}
 					else if(fg_name == F_DESCR)
 					{
-		         			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,F_DESCR,fg_value.getString().c_str());
+						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",FORWARDING_GRAPH,F_DESCR,fg_value.getString().c_str());
 
 						//XXX: currently, this information is ignored
 					}
@@ -289,7 +288,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												}
 												else
 												{
-													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in an element of \"%s\"",ev_name.c_str(),UNIFY_ENV_VARIABLES);
+													logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in an element of \"%s\"",ev_name.c_str(),UNIFY_ENV_VARIABLES);
 													return false;
 												}
 											}
@@ -376,7 +375,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												}
 												else
 												{
-													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a VNF of \"%s\"",p_name.c_str(),VNF_PORTS);
+													logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a VNF of \"%s\"",p_name.c_str(),VNF_PORTS);
 													return false;
 												}
 											}
@@ -416,13 +415,13 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									}
 									else
 									{
-										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a VNF of \"%s\"",nf_name.c_str(),VNFS);
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a VNF of \"%s\"",nf_name.c_str(),VNFS);
 										return false;
 									}
 								}
 								if(!foundName)
 								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in an element of \"%s\"",_NAME,VNFS);
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in an element of \"%s\"",_NAME,VNFS);
 									return false;
 								}
 
@@ -466,20 +465,17 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 							*	- type
 							*		- internal
 							*		- interface
-							*		- interface-out		-> NOT SUPPORTED
 							*		- gre-tunnel
 							*		- vlan
 							*	- Other information that depend on the type
 							*/
 
-					    	const Array& end_points_array = fg_value.getArray();
-
-							foundEP = true;	//this variable is valid only for the current iteration
+							const Array& end_points_array = fg_value.getArray();
 
 							logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",END_POINTS);
 
-				    		//Iterate on the end-points
-				    		for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
+							//Iterate on the end-points
+							for( unsigned int ep = 0; ep < end_points_array.size(); ++ep )
 							{
 								try{
 									end_points_array[ep].getObject();
@@ -716,6 +712,11 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 													safe = epi_value.getBool();
 												}
+												else
+												{
+													logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" inside \"%s\"",epi_name.c_str(),EP_GRE);
+													return false;
+												}
 											}
 
 											gre_id[id] = local_ip;
@@ -797,17 +798,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 					}
 					else
 					{
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",fg_name.c_str(),FORWARDING_GRAPH);
+						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",fg_name.c_str(),FORWARDING_GRAPH);
 						return false;
 					}
 
-					//Since we found the element "end-points", we can now parse the content of "big-switch"
-					if(foundEP)
-					{
-						logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"",BIG_SWITCH);
-						foundEP = false;
-
-		    		}//end if(foundEP)
 				}// End iteration on the elements of "forwarding-graph"
 
 				/*******************************************/
@@ -1268,7 +1262,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													}
 													else
 													{
-														logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",a_name.c_str(),ACTIONS);
+														logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in \"%s\"",a_name.c_str(),ACTIONS);
 														return false;
 													}
 												}//end iteration on the keywords of an action element (remember that a single keywork is allowed in each element)
@@ -1278,7 +1272,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											if(!foundOneOutputToPort)
 											{
 												//"output_to_port" is a mandatory action
-												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",OUTPUT,ACTIONS);
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",OUTPUT,ACTIONS);
 												return false;
 											}
 											assert(action != NULL);
@@ -1293,14 +1287,14 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									}//end if(fr_name == ACTION)
 									else
 									{
-										logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a rule of \"%s\"",name.c_str(),FLOW_RULES);
+										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" in a rule of \"%s\"",name.c_str(),FLOW_RULES);
 										return false;
 									}
 								}
 
 								if(!foundAction || !foundMatch || !foundID)
 								{
-									logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or key \"%s\", or all of them not found in an elmenet of \"%s\"",_ID,MATCH,ACTIONS,FLOW_RULES);
+									logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or key \"%s\", or key \"%s\", or all of them not found in an elmenet of \"%s\"",_ID,MATCH,ACTIONS,FLOW_RULES);
 									return false;
 								}
 
@@ -1345,14 +1339,14 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 					}// end  if (fg_name == FLOW_RULES)
 					else
 					{
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",bs_name.c_str());
+						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",bs_name.c_str());
 						return false;
 					}
 				}//End iteration on the elements inside "big-switch"
 
 				if(!foundFlowRules)
 				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",FLOW_RULES,FORWARDING_GRAPH);
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found in \"%s\"",FLOW_RULES,FORWARDING_GRAPH);
 					return false;
 				}
 
@@ -1360,13 +1354,13 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 			}//End if(name == FORWARDING_GRAPH)
 			else
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",name.c_str());
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key: %s",name.c_str());
 				return false;
 			}
 		}
 		if(!foundFlowGraph)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found",FORWARDING_GRAPH);
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" not found",FORWARDING_GRAPH);
 			return false;
 		}
 	}catch(exception& e)
