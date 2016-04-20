@@ -675,6 +675,8 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											string local_ip, remote_ip, interface, ttl, gre_key;
 											bool safe = false;
 
+											bool found_local_ip = false, found_remote_ip = false, found_key = false;
+
 											ep_gre=ep_value.getObject();
 
 											for(Object::const_iterator epi = ep_gre.begin(); epi != ep_gre.end(); epi++)
@@ -685,13 +687,13 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												if(epi_name == LOCAL_IP)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,LOCAL_IP,epi_value.getString().c_str());
-
+													found_local_ip = true;
 													local_ip = epi_value.getString();
 												}
 												else if(epi_name == REMOTE_IP)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,REMOTE_IP,epi_value.getString().c_str());
-
+													found_remote_ip = true;
 													remote_ip = epi_value.getString();
 												}
 												else if(epi_name == TTL)
@@ -703,7 +705,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												else if(epi_name == GRE_KEY)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_GRE,GRE_KEY,epi_value.getString().c_str());
-
+													found_key = true;
 													gre_key = epi_value.getString();
 												}
 												else if(epi_name == SAFE)
@@ -717,6 +719,12 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" inside \"%s\"",epi_name.c_str(),EP_GRE);
 													return false;
 												}
+											}
+
+											if(!found_local_ip || !found_remote_ip || !found_key)
+											{
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\", or  Key \"%s\", or Key \"%s\" not found in \"%s\"",LOCAL_IP,REMOTE_IP,GRE_KEY,EP_GRE);
+												return false;
 											}
 
 											gre_id[id] = local_ip;
