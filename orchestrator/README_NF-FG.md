@@ -607,7 +607,7 @@ in such a GRE tunnel.
 For instance, the `gre-tunnel` endpoint can be used to connect together pieces of the same service 
 deployed  on different Universal Nodes.
 
-This `gre-tunnel` endpoint is defined as follows:
+The `gre-tunnel` endpoint is defined as follows:
 	
 	{
 		"id": "00000002",
@@ -705,7 +705,7 @@ is the graph that defines the `internal` endpoint.
 A graph that want to use an `internal` endpoint defined by another graph, can do it only if that
 `internal` endpoint has been specified by that graph.
 
-This `internal` endpoint is defined as follows:
+The `internal` endpoint is defined as follows:
 	
 	{
 		"id": "00000002",
