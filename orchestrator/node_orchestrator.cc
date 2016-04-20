@@ -121,6 +121,11 @@ int main(int argc, char *argv[])
 	else
 		descr_file_name = NULL;
 
+	if(strcmp(t_nffg_file_name, "UNKNOWN") != 0)
+		strcpy(nffg_file_name, t_nffg_file_name);
+	else
+		nffg_file_name = NULL;
+
 #ifdef ENABLE_DOUBLE_DECKER_CONNECTION
 	if(strcmp(t_client_name, "UNKNOWN") != 0)
 		strcpy(client_name, t_client_name);
