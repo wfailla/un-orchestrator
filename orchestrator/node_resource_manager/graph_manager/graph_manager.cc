@@ -730,7 +730,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	set<string> phyPorts = graph->getPorts();
 
-	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions(); //the returned structure maps each NF name to the list of ports ID
+	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctions();
 	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
@@ -768,25 +768,21 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	map<string, nf_t>  nf_types;
 	map<string, map<unsigned int, PortType> > nfs_ports_type;  // nf_name -> map( port_id -> port_type )
-	//Iterate on all the network functions of the graph
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); nf_it++) 
-	{
+	for(highlevel::Graph::t_nfs_ports_list::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); nf_it++) {
 		const string& nf_name = nf_it->first;
 		list<unsigned int>& nf_ports = nf_it->second;
 
-		nf_types[nf_name] = computeController->getNFType(nf_name); //map the NF name on the NF type (here the NF implementation has already been selected)
+		nf_types[nf_name] = computeController->getNFType(nf_name);
 
 		//Gather VNF ports types
 		const Description* descr = computeController->getNFSelectedImplementation(nf_name);
 		map<unsigned int, PortType> nf_ports_type = descr->getPortTypes();  // Port types as specified by the retrieved and selected NF implementation
 
-		//TODO: when we introduce the hotplug, this check will be wrong. We should check that (nf_ports_type.size() <= nf_ports.size())
 		if (nf_ports_type.size() != nf_ports.size())
 			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from (%d) graph does not match number of ports from NF description (%d) for \"%s\"",nf_ports.size(),nf_ports_type.size(), nf_name.c_str());
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" selected implementation (type %d) defines type for %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
-
-		// Check that the ports type specified in the graph corresponds to that indicated by the name-resolver
+		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
 		for (list<unsigned int>::iterator p_it = nf_ports.begin(); p_it != nf_ports.end(); p_it++) {
 			map<unsigned int, PortType>::iterator pt_it = nf_ports_type.find(*p_it);
 			if (pt_it == nf_ports_type.end()) {
@@ -1484,7 +1480,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			VLink vlink = lsi->getVirtualLink(vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link: (ID: %x) %x:%d -> %x:%d",vlink.getID(),dpid,vlink.getLocalID(),vlink.getRemoteDpid(),vlink.getRemoteID());
 
-			lsi->addEndpointvlink(*ep,vlinkID);
+			lsi->addEndpointGrevlink(*ep,vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint '%s' uses the vlink '%x'",(*ep).c_str(),vlink.getID());
 		}catch(SwitchManagerException e)
 		{
@@ -1607,11 +1603,11 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 	for(list<highlevel::EndPointGre>::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
-//#ifdef VSWITCH_IMPLEMENTATION_OVSDB
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 		//fill the vector related to the endpoint params [gre key, local-ip, remote-ip, interface, isSafe]
 		vector<string> ep_param(5);
-		ep_param[0] = ep->getGreKey();
-		ep_param[1] = ep->getLocalIp();
+		ep_param[0] = ep->getLocalIp();
+		ep_param[1] = ep->getGreKey();
 		ep_param[2] = ep->getRemoteIp();
 		ep_param[3] = un_interface;
 		if(ep->isSafe())
@@ -1646,10 +1642,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			diff = NULL;
 			throw GraphManagerException();
 		}
-//#else
+#else
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable");
 		throw GraphManagerException();
-//#endif
+#endif
 	}
 
 	/**
