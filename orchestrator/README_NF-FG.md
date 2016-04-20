@@ -620,7 +620,7 @@ The `gre-tunnel` endpoint is defined as follows:
 		}
 	}
 	
-In this example, only the traffic belonging to the following GRE tunnel is enable 
+In this example, only the traffic belonging to the following GRE tunnel is enabled 
 to enter through such an end point: `10.0.0.1` as a source IP address, `10.0.0.2` as a 
 destination IP address, `1` as `gre-key`. Similarly, all the traffic that will exit from 
 such an end point, will be encapsulated into the GRE tunnel defined with the parameters 
