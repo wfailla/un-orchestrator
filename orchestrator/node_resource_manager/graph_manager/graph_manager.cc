@@ -1607,7 +1607,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 	for(list<highlevel::EndPointGre>::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
-//#ifdef VSWITCH_IMPLEMENTATION_OVSDB
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
 		//fill the vector related to the endpoint params [gre key, local-ip, remote-ip, interface, isSafe]
 		vector<string> ep_param(5);
 		ep_param[0] = ep->getGreKey();
@@ -1646,10 +1646,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			diff = NULL;
 			throw GraphManagerException();
 		}
-//#else
+#else
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable");
 		throw GraphManagerException();
-//#endif
+#endif
 	}
 
 	/**
