@@ -3,8 +3,8 @@
 namespace highlevel
 {
 
-ActionEndPointInternal::ActionEndPointInternal(/*string graphID, */string group, string input_endpoint) :
-	Action(ACTION_ON_ENDPOINT_INTERNAL), /*graphID(graphID), */group(group), input_endpoint(input_endpoint)
+ActionEndPointInternal::ActionEndPointInternal(string group, string input_endpoint) :
+	Action(ACTION_ON_ENDPOINT_INTERNAL), group(group), input_endpoint(input_endpoint)
 {
 }	
 

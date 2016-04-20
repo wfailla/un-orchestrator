@@ -62,7 +62,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			*	NF -> internal endpoint
 			*	Gre -> internal endpoint
 			*/
-			if(graph->isDefinedHere(action->toString()))
+			if(/*graph->isDefinedHere(action->toString())*/endPointsDefinedInActions.count(action->toString()) == 0)
 			{
 				/**
 				*	the rule is not included in case the internal endpoint is defined by the graph itself
@@ -76,19 +76,19 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				if(creating)
 				{
 					availableEndPoints[action->toString()]++;
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
+					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal endpoint \"%s\" used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
 				}
 				else
 				{
 					availableEndPoints[action->toString()]--;
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" still used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
+					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal endpoint \"%s\" still used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
 				}
 
 				/**
-				*	The entire match must be replaced with the virtual link associated with the endpoint
+				*	The entire match must be replaced with the virtual link associated with the internal endpoint
 				*	expressed in the action.
-				*	The endpoint in the action must be replaced with the port identifier defined into the graph defining
-				*	the endpoint itself (hence expressed in endPointsDefinedInMatches)
+				*	The internal endpoint in the action must be replaced with the port identifier defined into the graph defining
+				*	the internal endpoint itself (hence expressed in endPointsDefinedInMatches)
 				*/
 
 				string action_info = action->getInfo();
@@ -107,10 +107,10 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				map<string, uint64_t> endpoints_vlinks = tenantLSI->getEndPointsVlinks();
 				if(endpoints_vlinks.count(action->toString()) == 0)
 				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on endpoint \"%s\", which has not been translated into a virtual link",action->toString().c_str());
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on internal endpoint \"%s\", which has not been translated into a virtual link",action->toString().c_str());
 				}
 				uint64_t vlink_id = endpoints_vlinks.find(action->toString())->second;
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tThe virtual link related to endpoint \"%s\" has ID: %x",action->toString().c_str(),vlink_id);
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tThe virtual link related to internal endpoint \"%s\" has ID: %x",action->toString().c_str(),vlink_id);
 				vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
 				for(;vlink != tenantVirtualLinks.end(); vlink++)
 				{
@@ -341,7 +341,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			 stringstream ss;
 			 ss << match.getEndPoint();
 
-			 if(graph->isDefinedHere(ss.str()))
+			 if(/*graph->isDefinedHere(ss.str())*/endPointsDefinedInMatches.count(ss.str()) == 0)
 			 {
 				 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tRule with match expressed on internal endpoint \"%s\" defined in this graph. The rule is not inserted in the LSI-0",ss.str().c_str());
 			 }

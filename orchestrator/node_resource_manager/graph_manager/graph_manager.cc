@@ -1057,8 +1057,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		for(set<string>::iterator ep = vlEndPointsInternal.begin(); ep != vlEndPointsInternal.end(); ep++, vl4++)
 		{
 			endpoints_internal_vlinks[*ep] = vl4->getID();
+
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*ep).c_str(),vl4->getID());
-			if(graph->isDefinedHere(*ep))
+			if(/*graph->isDefinedHere(*ep)*/endPointsDefinedInActions.count(*ep) == 0)
 			{
 				//since this endpoint is in an action (hence it requires a virtual link), and it is defined in this
 				//graph, we save the port of the vlink in LSI-0, so that other graphs can use this endpoint
@@ -1757,8 +1758,8 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 				if(match.matchOnEndPointInternal())
 				{
 					stringstream ssm;
-					ssm << match.getGraphID() << ":" << match.getEndPoint();
-					if(graph->isDefinedHere(ssm.str()))
+					ssm << match.getEndPoint();
+					if(/*graph->isDefinedHere(ssm.str())*/endPointsDefinedInMatches.count(ssm.str()) == 0)
 						NFsFromEndPoint.insert(ss.str());
 				}
 			}
@@ -1773,8 +1774,8 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 				if(match.matchOnEndPointInternal())
 				{
 					stringstream ssm;
-					ssm << match.getGraphID() << ":" << match.getEndPoint();
-					if(graph->isDefinedHere(ssm.str()))
+					ssm << match.getEndPoint();
+					if(/*graph->isDefinedHere(ssm.str())*/endPointsDefinedInMatches.count(ssm.str()) == 0)
 						GREsFromEndPoint.insert(action_ep->toString());
 				}
 			}
@@ -2337,7 +2338,7 @@ string GraphManager::findEndPointTowardsGRE(highlevel::Graph *graph, string ep)
 			if(ep == ss.str())
 			{
 				stringstream ssm;
-				ssm << match.getGraphID() << ":" << match.getEndPoint();
+				ssm << match.getEndPoint();
 				return ssm.str();
 			}
 		}
@@ -2364,7 +2365,7 @@ string GraphManager::findEndPointTowardsNF(highlevel::Graph *graph, string nf)
 			if(nf == ss.str())
 			{
 				stringstream ssm;
-				ssm << match.getGraphID() << ":" << match.getEndPoint();
+				ssm << match.getEndPoint();
 				return ssm.str();
 			}
 		}
