@@ -112,7 +112,7 @@ map<string, list< struct nf_port_info> > LSI::getNetworkFunctionsPortsInfo()
 			struct nf_port_info pi;
 			pi.port_name = port_name;
 			pi.port_type = getNetworkFunctionPortType(nf_name, port_name);
-			pi_list.push_back(pi);
+			pi_list.push_back(pi); //each element contains the port name and the port type
 		}
 		res[nf_name] = pi_list;
 	}
@@ -164,15 +164,21 @@ bool LSI::setPhysicalPortID(string port, uint64_t id)
 
 bool LSI::setNfSwitchPortsID(string nf, map<string, unsigned int> translation)
 {
+	//The network function must exist
+	assert(network_functions.count(nf) != 0);
 	if(network_functions.count(nf) == 0)
 		return false;
 
+	//Retrieve the data associated with this network function
 	struct nfData& nf_data = network_functions[nf];
 
 	for(map<string, unsigned int>::iterator t = translation.begin(); t != translation.end(); t++)
 	{
+		//The network function port must exist
+		assert(nf_data.ports_switch_id.count(t->first) != 0)
 		if(nf_data.ports_switch_id.count(t->first) == 0)
 			return false;
+
 		nf_data.ports_switch_id[t->first] = t->second;
 	}
 
@@ -374,6 +380,11 @@ void LSI::removeEndPointGrevlink(string endpoint)
 
 bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned int, PortType>& a_nf_ports_type)
 {
+	//TODO: this assert will not be valid when we will introduce the hotplug.
+	//In that case, this function should be modified so that the nfData (already existing) of the network
+	//function is retrieved and updated. 
+	assert(network_functions.count(nf_name) == 0);
+
 	nfData nf_data;
 	nf_data.nf_ports_id = ports;
 

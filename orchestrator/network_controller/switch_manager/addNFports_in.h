@@ -40,7 +40,8 @@ private:
 	nf_t type;
 
 	/**
-	*	@brief: list of ports of the network function to be attached to the lsi
+	*	@brief: list of ports of the network function to be attached to the lsi.
+	*			Each element of the list is in the form "port name, port type"
 	*/
 	list<struct nf_port_info> nf_ports;
 
