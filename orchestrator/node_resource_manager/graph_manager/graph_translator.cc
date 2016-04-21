@@ -55,21 +55,21 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a NF, and the action is a NF. Not inserted in LSI-0");
 			continue;
 		}
-		
+
 		if( (match.matchOnNF()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE) )
 		{
 			//NF -> gre : rule not included in LSI-0
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a NF, and the action is a GRE tunnel. Not inserted in LSI-0");
 			continue;
 		}
-		
+
 		if( (match.matchOnEndPointGre()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE) )
 		{
 			//gre -> gre : rule not included in LSI-0 - it's a strange case, but let's consider it
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a GRE tunnel, and the action is a GRE tunnel. Not inserted in LSI-0");
 			continue;
 		}
-		
+
 		if( (match.matchOnEndPointGre()) && (action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION) )
 		{
 			//gre -> NF : rule not included in LSI-0 - it's a strange case, but let's consider it
