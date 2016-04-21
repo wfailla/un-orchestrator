@@ -609,8 +609,16 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 
 	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires to retrieve %d new NFs",network_functions.size());
+	//The description must be actually retrieved only for new VNFs, and not for VNFs whose number of ports is changed
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
+
+		if(computeController->getNFSelectedImplementation(nf->first))
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t* NF \"%s\" is already part of the graph; it is not retrieved again",nf->first.c_str());
+			continue;
+		}
+
 		nf_manager_ret_t retVal = computeController->retrieveDescription(nf->first);
 
 		if(retVal == NFManager_NO_NF)
@@ -1278,8 +1286,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the new pieces of the graph");
 	highlevel::Graph *diff = graph->calculateDiff(newGraph, graphID);
-	
-	
+
 	Object json_diff = diff->toJSON();
 	stringstream ssj;
 	write_formatted(json_diff, ssj );
