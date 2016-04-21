@@ -124,7 +124,7 @@ map<unsigned int, string> LSI::getNetworkFunctionsPortsNameOnSwitchMap(string nf
 {
 	map<unsigned int, string> res;
 
-	map<string, nfData>::iterator nf_it = network_functions.find(nf);
+	map<string, nfData>::iterator nf_it = network_functions.find(nf);	//Retrieve the info associated with the required network function
 	if (nf_it != network_functions.end()) {
 		struct nfData& nf_data = nf_it->second;
 
@@ -175,7 +175,7 @@ bool LSI::setNfSwitchPortsID(string nf, map<string, unsigned int> translation)
 	for(map<string, unsigned int>::iterator t = translation.begin(); t != translation.end(); t++)
 	{
 		//The network function port must exist
-		assert(nf_data.ports_switch_id.count(t->first) != 0)
+		assert(nf_data.ports_switch_id.count(t->first) != 0);
 		if(nf_data.ports_switch_id.count(t->first) == 0)
 			return false;
 
@@ -209,6 +209,9 @@ bool LSI::setEndpointPortID(string ep, uint64_t id)
  * TODO: Clarity and robustness would benefit from changing this to
  * e.g. map<unsigned int, string> (port_id -> port_name_on_switch). However it
  * only helps if the change is also done at the source of this data...
+ *
+ * This thing is fundamental to implement the hotplug, where the first port created for sure does not
+ * have ID equal to 1.
  */
 void LSI::setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names)
 {

@@ -482,6 +482,8 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 			gnumber++;
 
+			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "GRE tunnel -> key: %s - local IP: %s - remote IP: %s",key,local_ip,remote_ip);
+
 			add_endpoint(dnumber, local_ip, remote_ip, key, port_name, ifac, s, is_safe);
 
 			endpoints_ports[id] = rnumber-1;
@@ -536,33 +538,33 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 	}
 
 	//increment switch number
-    	dnumber++;
+	dnumber++;
 
-    	root.clear();
-    	params.clear();
-    	row.clear();
-    	first_obj.clear();
-    	port2.clear();
-    	port1.clear();
-    	port.clear();
-    	peer.clear();
-    	peer1.clear();
-    	peer2.clear();
+	root.clear();
+	params.clear();
+	row.clear();
+	first_obj.clear();
+	port2.clear();
+	port1.clear();
+	port.clear();
+	peer.clear();
+	peer1.clear();
+	peer2.clear();
 
-    	uint64_t pi = 0;
+	uint64_t pi = 0;
 
-    	Array ma;
+	Array ma;
 	Array maa;
 
 	Array third_object;
 	Array fourth_object;
 
 	//disconnect socket
-    	cmd_disconnect(s);
+	cmd_disconnect(s);
 
 	l = 0;
 
-    	if(vport.size() != 0)
+	if(vport.size() != 0)
 	{
 		for(list<uint64_t>::iterator nf = vport.begin(); nf != vport.end(); nf++)
 		{
@@ -1482,7 +1484,7 @@ void commands::cmd_editconfig_lsi_delete(uint64_t dpi, int s)
 
 AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int socketNumber)
 {
-	list<struct nf_port_info> portInfo = anpi.getNetworkFunctionsPorts();
+	list<struct nf_port_info> portInfo = anpi.getNetworkFunctionsPorts();//each element of portInfo contains the port name and the port type
 	uint64_t datapathNumber = anpi.getDpid();
 
 	list<string> ports_name_on_switch;
