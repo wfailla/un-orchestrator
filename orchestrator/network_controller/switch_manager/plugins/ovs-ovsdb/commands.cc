@@ -477,12 +477,11 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 			strcpy(is_safe, gre_param[4].c_str());
 
 			sprintf(port_name, "gre%d", gnumber);
-
 			sprintf(ifac, "iface%d", rnumber);
 
 			gnumber++;
 
-			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "GRE tunnel -> key: %s - local IP: %s - remote IP: %s",key,local_ip,remote_ip);
+			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "GRE tunnel -> key: %s - local IP: %s - remote IP: %s - interface: %s - safe: %s",key,local_ip,remote_ip,ifac,is_safe);
 
 			add_endpoint(dnumber, local_ip, remote_ip, key, port_name, ifac, s, is_safe);
 

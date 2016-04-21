@@ -131,7 +131,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 								string id, name, vnf_template, port_id, port_name;
 								list<string> groups;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-								int vnf_tcp_port, host_tcp_port;
+								int vnf_tcp_port = 0, host_tcp_port = 0;
 								//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
 								list<pair<string, string> > controlPorts;
 								//list of environment variables in the form "variable=value"
@@ -405,7 +405,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											return false;
 										}
 										const Array& myGroups_Array = nf_value.getArray();
-										for(unsigned int i; i<myGroups_Array.size();i++)
+										for(unsigned int i = 0; i<myGroups_Array.size();i++)
 										{
 											logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,VNF_GROUPS,myGroups_Array[i].getString().c_str());
 											string group = myGroups_Array[i].getString();
