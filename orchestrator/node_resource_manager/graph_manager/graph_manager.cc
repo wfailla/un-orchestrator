@@ -810,7 +810,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		//Create a new tenant-LSI
 		map<string, vector<string> > endpoints;
 		list<highlevel::EndPointGre> endpoints_gre = lsi->getEndpointsPorts();
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d GRE endpoints must be created");
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d GRE endpoints must be created",endpoints_gre.size());
 		if(endpoints_gre.size() != 0)
 		{
 			vector<string> v_ep(5);
@@ -826,12 +826,15 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 					v_ep[4].assign("true");
 				else
 					v_ep[4].assign("false");
-					
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tkey: %s - local IP: %s - remote IP: %s",(e->getGreKey()).c_str(),(e->getLocalIp()).c_str(),(e->getRemoteIp()).c_str());
+
+				endpoints[iface] = v_ep;
+				
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tkey: %s - local IP: %s - remote IP: %s - iface: %s",(e->getGreKey()).c_str(),(e->getLocalIp()).c_str(),(e->getRemoteIp()).c_str(),iface.c_str());
 			}
 
-			endpoints[iface] = v_ep;
 		}
+
+		assert(endpoints.size() == endpoints_gre.size());
 
 		map<string,list<string> > netFunctionsPortsName;
 		for(map<string, list<unsigned int> >::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
