@@ -759,17 +759,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									highlevel::EndPointInternal ep_internal(id, e_name, in_group);
 									graph.addEndPointInternal(ep_internal);
 
-									/*string graph_id = graph.getID();
-
-									//e.g (myGraph:1)
-									unsigned id_tmp;
-									sscanf(id.c_str(),"%u",&id_tmp);
-
-									stringstream endpoint;
-									endpoint << graph_id << ":" << id_tmp;
-
-									graph.addEndpointInternalAsString(graph_id,endpoint.str());*/
-
 									e_internal = false;
 								}
 								//add vlan end-points
@@ -981,13 +970,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 																	{
 																		p_type = EP_PORT_TYPE;
 																	}
-																	//end-point internal type
-																	/*else
-																	{
-																		graph_id.assign(string(pnt));
-																		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Graph id is \"%s\"",graph_id.c_str());
-																		p_type = EP_INTERNAL_TYPE;
-																	}*/
 																	break;
 																case 1:
 																	if(p_type == VNF_PORT_TYPE)
@@ -995,19 +977,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 																		strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 																		strcat(vnf_name_tmp, ":");
 																	}
-																	/*else if(p_type == EP_INTERNAL_TYPE)
-																	{
-																		strcpy(endpoint_internal, pnt);
-																		strcat(endpoint_internal, ":");
-																	}*/
 																	break;
-																/*case 2:
-																	if(p_type == EP_INTERNAL_TYPE)
-																	{
-																		strcat(endpoint_internal, pnt);
-																		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Endpoint is \"%s\"",endpoint_internal);
-																	}
-																	break;*/
 																case 3:
 																	if(p_type == VNF_PORT_TYPE)
 																	{
@@ -1105,13 +1075,12 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 															}
 															else if(internal_found)
 															{
-																//unsigned int endPoint = MatchParser::epPort(endpoint_internal);
-																if(/*graph_id == "" || endPoint == 0*/internal_group == "")
+																if(internal_group == "")
 																{
 																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not valid. It must have the \"%s\" attribute",value.getString().c_str(), INTERNAL_GROUP);
 																	return false;
 																}
-																action = new highlevel::ActionEndPointInternal(/*graph_id, endPoint*/internal_group, string(s_a_value));
+																action = new highlevel::ActionEndPointInternal(internal_group, string(s_a_value));
 															}
 															//vlan endpoint
 															else if(vlan_found)

@@ -24,7 +24,7 @@ class LSI
 
 /**
 *	@brief: This class is intended to represent the current situation on the LSI.
-*		The it MUST only contain infor,ation related to the LSI used to implement
+*		The it MUST only contain information related to the LSI used to implement
 *		a single graph (and not information related to the configuration of the
 *		VNFs).
 */

@@ -53,7 +53,7 @@ bool Graph::addEndPointInternal(EndPointInternal endpoint)
 
 	endpoints[endpoint.getGroup()] = true;
 
-	return true;
+	return endpoints[endpoint.getGroup()];
 }
 
 list<EndPointInternal> Graph::getEndPointsInternal()
@@ -506,9 +506,6 @@ bool Graph::stillExistPort(string port)
 
 bool Graph::isDefinedHere(string endpoint)
 {
-#if 0
-	assert(endpoints.count(endpoint) != 0);
-#endif
 	return endpoints[endpoint];
 }
 

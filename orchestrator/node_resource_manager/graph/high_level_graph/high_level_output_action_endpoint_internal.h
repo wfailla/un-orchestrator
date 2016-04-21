@@ -18,10 +18,6 @@ namespace highlevel
 class ActionEndPointInternal : public Action
 {
 private:
-	/**
-	*	@brief: ID of the graph defining this endpoint
-	*/
-	//string graphID;
 	
 	/**
 	*	@brief: identifier of the endpoint group
@@ -35,7 +31,7 @@ private:
 
 public:
 
-	ActionEndPointInternal(/*string graphID, */string group, string input_endpoint);
+	ActionEndPointInternal(string group, string input_endpoint);
 	string getInfo();
 	unsigned int getGroup();
 	string getInputEndpoint();

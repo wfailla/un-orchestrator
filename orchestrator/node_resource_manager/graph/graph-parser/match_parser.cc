@@ -226,16 +226,8 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 						//end-point port type
 						else if(strcmp(pnt,ENDPOINT) == 0){
 							p_type = EP_PORT_TYPE;
-							/*char ep_tmp[BUFFER_SIZE];
-							sprintf(ep_tmp,"%d",epPort(string(port_in_name_tmp)));*/
-							match.setInputEndpoint(/*string(ep_tmp)*/port_in_name_tmp);
+							match.setInputEndpoint(port_in_name_tmp);
 						}
-						//end-point internal type
-						/*else
-						{
-							graph_id = string(pnt);
-							p_type = EP_INTERNAL_TYPE;
-						}*/
 						break;
 					case 1:
 						if(p_type == VNF_PORT_TYPE)
@@ -243,22 +235,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 							strcpy(vnf_name_tmp,nfs_id[pnt].c_str());
 							strcat(vnf_name_tmp,":");
 						}
-						/*else if(p_type == EP_INTERNAL_TYPE)
-						{
-							strcpy(endpoint_internal, pnt);
-							strcat(endpoint_internal, ":");
-						}*/
 						break;
-					/*case 2:
-						if(p_type == EP_INTERNAL_TYPE)
-						{
-							strcat(endpoint_internal, pnt);
-#if 0
-							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Endpoint internal is \"%s\" \"%d\"",endpoint_internal, strlen(endpoint_internal));
-#endif
-							match.setInputEndpoint(string(endpoint_internal));
-						}
-						break;*/
 					case 3:
 						if(p_type == VNF_PORT_TYPE)
 						{
