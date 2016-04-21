@@ -180,6 +180,11 @@ public:
 	*/
 	highlevel::Graph *calculateDiff(highlevel::Graph *other, string graphID);
 
+	/**
+	*	@brief: Given a graph, add its component to the called graph
+	*/	
+	bool addGraphToGraph(highlevel::Graph *other);
+
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
 	*	@brief: Add a VNF control port to the graph

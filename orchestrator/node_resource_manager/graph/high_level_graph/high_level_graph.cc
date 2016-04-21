@@ -552,9 +552,6 @@ list<highlevel::Rule> Graph::calculateNewRules(Graph *other)
 
 Graph *Graph::calculateDiff(Graph *other, string graphID)
 {
-
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Generating graph diff...");
-
 	Graph *diff = new Graph(graphID);
 	
 	set<string> new_vnfs_name;
@@ -836,6 +833,99 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 #endif
 
 	return diff;
+}
+
+bool Graph::addGraphToGraph(highlevel::Graph *other)
+{
+	//Update the rules
+	list<highlevel::Rule> newRules = other->getRules();
+	for(list<highlevel::Rule>::iterator rule = newRules.begin(); rule != newRules.end(); rule++)
+	{
+		if(!this->addRule(*rule))
+		{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",rule->getFlowID().c_str());
+			return false;
+		}
+	}
+
+	//Update the physical ports
+	set<string> nps = other->getPorts();
+	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
+		this->addPort(*port);
+
+	//Update the interface endpoints
+	list<highlevel::EndPointInterface> iep = other->getEndPointsInterface();
+	for(list<highlevel::EndPointInterface>::iterator ep = iep.begin(); ep != iep.end(); ep++)
+	{
+		//The interface endpoint is not part of the graph
+		this->addEndPointInterface(*ep);
+	}
+
+	//Update the network functions ports
+	highlevel::Graph::t_nfs_ports_list networkFunctions = other->getNetworkFunctionsPorts();
+	//networkFunctions maps, for each network function, its name with the list of port IDs
+	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
+	{
+		this->addNetworkFunction(nf->first);
+#ifndef UNIFY_NFFG
+		list<unsigned int>& nfPorts = nf->second;
+		for(list<unsigned int>::iterator p = nfPorts.begin(); p != nfPorts.end(); p++)
+		{
+			this->updateNetworkFunction(nf->first, *p);
+		}
+#endif
+	}
+
+	//Update the network functions
+	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
+	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = other->getNetworkFunctionsConfiguration();
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
+	map<string, list<string> > new_nfs_env_variables = other->getNetworkFunctionsEnvironmentVariables();
+#endif
+	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
+	{
+		string vnfname = vtba->getName();
+		this->addVNF(*vtba);
+		if(new_nfs_ports_configuration.count(vnfname) != 0)
+			this->addNetworkFunctionPortConfiguration(vtba->getName(),new_nfs_ports_configuration[vnfname]);
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		//We have to consider the configuration of this network function
+		list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
+		for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
+			this->addNetworkFunctionControlPort(vtba->getName(), *cp);
+
+		//We have to consider the environment variables of this network function
+		list<string> environment_variables = new_nfs_env_variables[vnfname];
+		for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
+			this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
+#endif
+	}
+
+	//Update the gre endpoints
+	list<highlevel::EndPointGre> nepp = other->getEndPointsGre();
+	for(list<highlevel::EndPointGre>::iterator ep = nepp.begin(); ep != nepp.end(); ep++)
+	{
+		//The gre endpoint is not part of the graph
+		this->addEndPointGre(*ep);
+	}
+
+	//Update the internal endpoints
+	list<highlevel::EndPointInternal> inep = other->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator ep = inep.begin(); ep != inep.end(); ep++)
+	{
+		//The internal endpoint is not part of the graph
+		this->addEndPointInternal(*ep);
+	}
+
+	//Update the vlan endpoints
+	list<highlevel::EndPointVlan> vep = other->getEndPointsVlan();
+	for(list<highlevel::EndPointVlan>::iterator ep = vep.begin(); ep != vep.end(); ep++)
+	{
+		this->addEndPointVlan(*ep);
+	}
+
+	return true;
 }
 
 bool Graph::endpointIsUsedInMatch(string endpoint)

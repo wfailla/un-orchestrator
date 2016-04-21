@@ -1273,15 +1273,12 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*		* diff -> graph that will contain the parts in newGraph that are not part of graph
 	*/
 
-
-	//tmp contains only the new VNFs, the new ports and the new endpoints that are not already into the graph
-
+	/**
+	*	0) Calculate the diff ad check the validity of the update
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the new pieces of the graph");
 	highlevel::Graph *diff = graph->calculateDiff(newGraph, graphID);
 
-	/**
-	*	0) Check the validity of the update
-	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Check the validity of the update");	
 	if(!checkGraphValidity(diff,computeController))
 	{
 		//This is an error in the request
@@ -1296,93 +1293,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 
-	//Update the rules
-	list<highlevel::Rule> newRules = diff->getRules();
-	for(list<highlevel::Rule>::iterator rule = newRules.begin(); rule != newRules.end(); rule++)
-	{
-		if(!graph->addRule(*rule))
-		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",rule->getFlowID().c_str());
-			return false;
-		}
-	}
-
-	//Update the physical ports
-	set<string> nps = diff->getPorts();
-	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
-		graph->addPort(*port);
-
-	//Update the interface endpoints
-	list<highlevel::EndPointInterface> iep = diff->getEndPointsInterface();
-	for(list<highlevel::EndPointInterface>::iterator ep = iep.begin(); ep != iep.end(); ep++)
-	{
-		//The interface endpoint is not part of the graph
-		graph->addEndPointInterface(*ep);
-	}
-
-	//Update the network functions ports
-	highlevel::Graph::t_nfs_ports_list networkFunctions = diff->getNetworkFunctionsPorts();
-	//networkFunctions maps, for each network function, its name with the list of port IDs
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
-	{
-		graph->addNetworkFunction(nf->first);
-#ifndef UNIFY_NFFG
-		list<unsigned int>& nfPorts = nf->second;
-		for(list<unsigned int>::iterator p = nfPorts.begin(); p != nfPorts.end(); p++)
-		{
-			graph->updateNetworkFunction(nf->first, *p);
-		}
-#endif
-	}
-
-	//Update the network functions
-	list<highlevel::VNFs> vnfs_tobe_added = diff->getVNFs();
-	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = diff->getNetworkFunctionsConfiguration();
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
-	map<string, list<string> > new_nfs_env_variables = diff->getNetworkFunctionsEnvironmentVariables();
-#endif
-	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
-	{
-		string vnfname = vtba->getName();
-		graph->addVNF(*vtba);
-		if(new_nfs_ports_configuration.count(vnfname) != 0)
-			graph->addNetworkFunctionPortConfiguration(vtba->getName(),new_nfs_ports_configuration[vnfname]);
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		//We have to consider the configuration of this network function
-		list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
-		for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
-			graph->addNetworkFunctionControlPort(vtba->getName(), *cp);
-
-		//We have to consider the environment variables of this network function
-		list<string> environment_variables = new_nfs_env_variables[vnfname];
-		for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
-			graph->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
-#endif
-	}
-
-	//Update the gre endpoints
-	list<highlevel::EndPointGre> nepp = diff->getEndPointsGre();
-	for(list<highlevel::EndPointGre>::iterator ep = nepp.begin(); ep != nepp.end(); ep++)
-	{
-		//The gre endpoint is not part of the graph
-		graph->addEndPointGre(*ep);
-	}
-
-	//Update the internal endpoints
-	list<highlevel::EndPointInternal> inep = diff->getEndPointsInternal();
-	for(list<highlevel::EndPointInternal>::iterator ep = inep.begin(); ep != inep.end(); ep++)
-	{
-		//The internal endpoint is not part of the graph
-		graph->addEndPointInternal(*ep);
-	}
-
-	//Update the vlan endpoints
-	list<highlevel::EndPointVlan> vep = diff->getEndPointsVlan();
-	for(list<highlevel::EndPointVlan>::iterator ep = vep.begin(); ep != vep.end(); ep++)
-	{
-		graph->addEndPointVlan(*ep);
-	}
+	graph->addGraphToGraph(diff);
 
 	graph->print();
 
@@ -1688,9 +1599,12 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	{
 		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first); //Returns the map <port ID, port name on switch>
 		//TODO: the following information should be retrieved through the highlevel graph
+		map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = diff->getNetworkFunctionsConfiguration();
 		map<unsigned int, port_network_config_t > nfs_ports_configuration = new_nfs_ports_configuration[nf->first];
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
 		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->first];
+		map<string, list<string> > new_nfs_env_variables = diff->getNetworkFunctionsEnvironmentVariables();
 		list<string> environment_variables_tmp = new_nfs_env_variables[nf->first];
 #endif
 		//TODO: for the hotplug, we may extend the computeController with a call that says if a VNF is already running or not.

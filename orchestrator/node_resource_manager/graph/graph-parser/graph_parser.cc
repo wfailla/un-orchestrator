@@ -1348,6 +1348,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 	//FIXME The number of ports is provided by the name resolver, and should not depend on the flows inserted. In fact,
 	//it should be possible to start VNFs without setting flows related to such a function!
+	//FIXME (21/04/16) actually the number is indicated in the NF-FG
     for(map<string,set<unsigned int> >::iterator it = nfs_ports_found.begin(); it != nfs_ports_found.end(); it++)
 	{
 		set<unsigned int> ports = it->second;
