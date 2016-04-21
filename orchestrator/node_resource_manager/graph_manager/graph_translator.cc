@@ -55,6 +55,27 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a NF, and the action is a NF. Not inserted in LSI-0");
 			continue;
 		}
+		
+		if( (match.matchOnNF()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE) )
+		{
+			//NF -> gre : rule not included in LSI-0
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a NF, and the action is a GRE tunnel. Not inserted in LSI-0");
+			continue;
+		}
+		
+		if( (match.matchOnEndPointGre()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE) )
+		{
+			//gre -> gre : rule not included in LSI-0 - it's a strange case, but let's consider it
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a GRE tunnel, and the action is a GRE tunnel. Not inserted in LSI-0");
+			continue;
+		}
+		
+		if( (match.matchOnEndPointGre()) && (action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION) )
+		{
+			//gre -> NF : rule not included in LSI-0 - it's a strange case, but let's consider it
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a GRE tunnel, and the action is a GRE tunnel. Not inserted in LSI-0");
+			continue;
+		}
 
 		if( (match.matchOnNF() || match.matchOnEndPointGre()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL) )
 		{
@@ -275,7 +296,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		 } //end of match.matchOnPort()
 		 else if(match.matchOnEndPointGre())
 		 {
-		 	assert(action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION || action->getType() == highlevel::ACTION_ON_PORT);
+		 	assert(action->getType() == highlevel::ACTION_ON_PORT);
 
 		 	stringstream ss;
 		 	ss << match.getEndPoint();
@@ -284,55 +305,54 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			lowlevel::Match lsi0Match;
 			string action_info = action->getInfo();
 
-			if(action->getType() == highlevel::ACTION_ON_PORT)
+			map<string, uint64_t> port_vlinks = tenantLSI->getPortsVlinks(); ///tenantLSI->getEndPointsGreVlinks(); IVANO->this is probably wrong
+			if(port_vlinks.count(action_info) == 0)
 			{
-				map<string, uint64_t> ep_vlinks = tenantLSI->getEndPointsGreVlinks();
-				if(ep_vlinks.count(ss.str()) == 0)
-				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a gre endpoint \"%s\" which has not been translated into a virtual link",ss.str().c_str());
-				}
-				else
-				{
-					uint64_t vlink_id = ep_vlinks.find(ss.str())->second;
-					vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
-					for(;vlink != tenantVirtualLinks.end(); vlink++)
-					{
-						if(vlink->getID() == vlink_id)
-							break;
-					}
-					assert(vlink != tenantVirtualLinks.end());
-
-					//All the traffic for a gre endpoint is sent on the same virtual link
-					lsi0Match.setAllCommonFields(match);
-					lsi0Match.setInputPort(vlink->getRemoteID());
-				}
-
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the port \"%s\", and the action is \"%s\"",ss.str().c_str(),action_info.c_str());
-
-				//The port name must be replaced with the port identifier
-				if(ports_lsi0.count(action_info) == 0)
-				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which is not attached to LSI-0",action_info.c_str());
-					throw GraphManagerException();
-				}
-
-				map<string,unsigned int>::iterator translation = ports_lsi0.find(action_info);
-				unsigned int portForAction = translation->second;
-
-				lowlevel::Action lsi0Action(portForAction);
-				//XXX the generic actions must be inserted in this graph.
-				list<GenericAction*> gas = action->getGenericActions();
-				for(list<GenericAction*>::iterator ga = gas.begin(); ga != gas.end(); ga++)
-					lsi0Action.addGenericAction(*ga);
-
-				//Create the rule and add it to the graph
-				//The rule ID is created as follows  highlevelGraphID_hlrID
-				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
-				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
-				lsi0Graph.addRule(lsi0Rule);
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on the physical port \"%s\" which has not been translated into a virtual link",action_info.c_str());
 			}
-			continue;
+			else
+			{
+				uint64_t vlink_id = port_vlinks.find(action_info)->second;
+				vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
+				for(;vlink != tenantVirtualLinks.end(); vlink++)
+				{
+					if(vlink->getID() == vlink_id)
+						break;
+				}
+				assert(vlink != tenantVirtualLinks.end());
+				
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link used for a rule GRE -> physical_port has ID: %d",vlink_id);
+
+				//All the traffic for a gre endpoint is sent on the same virtual link
+				lsi0Match.setAllCommonFields(match);
+				lsi0Match.setInputPort(vlink->getRemoteID());
+			}
+
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a gre tunnel \"%s\", and the action is the output to port \"%s\"",ss.str().c_str(),action_info.c_str());
+
+			//The port name must be replaced with the port identifier
+			if(ports_lsi0.count(action_info) == 0)
+			{
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action on port \"%s\", which is not attached to LSI-0",action_info.c_str());
+				throw GraphManagerException();
+			}
+
+			map<string,unsigned int>::iterator translation = ports_lsi0.find(action_info);
+			unsigned int portForAction = translation->second;
+
+			lowlevel::Action lsi0Action(portForAction);
+			//XXX the generic actions must be inserted in this graph.
+			list<GenericAction*> gas = action->getGenericActions();
+			for(list<GenericAction*>::iterator ga = gas.begin(); ga != gas.end(); ga++)
+				lsi0Action.addGenericAction(*ga);
+
+			//Create the rule and add it to the graph
+			//The rule ID is created as follows  highlevelGraphID_hlrID
+			stringstream newRuleID;
+			newRuleID << graph->getID() << "_" << hlr->getFlowID();
+			lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
+			lsi0Graph.addRule(lsi0Rule);
+			
 		 } //end of match.matchOnEndPointGre()
 		 else if (match.matchOnEndPointInternal())
 		 {

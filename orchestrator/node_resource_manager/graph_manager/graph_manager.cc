@@ -752,6 +752,11 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	In principle a virtual link could also be shared between a NF port and an endpoint but, for simplicity, we
 	*	use separated virtual links in case of endpoint.
 	*/
+	//FIXME: this is completely wrong! It does not work with a simple graph as the following:
+	// pri: 100 - eth0 & ip.src==1.1.1.1 -> VNF
+	// pri: 10  - eth0 & ip.src==1.1.1.2 -> gre
+	// In fact, according to the rules below, this would require a single virtual link. Instead, two vlinks are required toward the tenant-lsi! One
+	// that brings traffic to the VNF, and one that bring traffic into the tunnel!
 	unsigned int numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();*/(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
 
 	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()/* + vlEndPointsGre.size()*/;
@@ -1415,8 +1420,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	set<string> GREsFromEndPoint = vlVector[5];
 
 	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)
-	unsigned int numberOfVLrequiredBeforeEndPoints = /*(vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size();*/(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
-	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()/* + vlEndPointsGre.size()*/;
+	unsigned int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size(); //(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
+	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()  + vlEndPointsGre.size();
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);
 
@@ -1428,6 +1433,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		AddVirtualLinkOut *avlo = NULL;
 		try
 		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Adding vlink required to physical port/VNF port");
 			VLink newLink(dpid0);
 			int vlinkPosition = lsi->addVlink(newLink);
 
@@ -1443,6 +1449,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 			VLink vlink = lsi->getVirtualLink(vlinkID); //FIXME: vlink is the same of newLink
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link: (ID: %x) %x:%d -> %x:%d",vlink.getID(),dpid,vlink.getLocalID(),vlink.getRemoteDpid(),vlink.getRemoteID());
+			assert(vlinkID == vlink.getID());
 
 			if(nf != vlNFs.end())
 			{
@@ -1473,6 +1480,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		AddVirtualLinkOut *avlo = NULL;
 		try
 		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Adding vlink required to GRE tunnel");
+		
 			VLink newLink(dpid0);
 			int vlinkPosition = lsi->addVlink(newLink);
 
@@ -1487,6 +1496,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 			VLink vlink = lsi->getVirtualLink(vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link: (ID: %x) %x:%d -> %x:%d",vlink.getID(),dpid,vlink.getLocalID(),vlink.getRemoteDpid(),vlink.getRemoteID());
+			assert(vlinkID == vlink.getID());
 
 			lsi->addEndpointGrevlink(*ep,vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint '%s' uses the vlink '%x'",(*ep).c_str(),vlink.getID());
