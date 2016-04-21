@@ -1278,6 +1278,13 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the new pieces of the graph");
 	highlevel::Graph *diff = graph->calculateDiff(newGraph, graphID);
+	
+	
+	Object json_diff = diff->toJSON();
+	stringstream ssj;
+	write_formatted(json_diff, ssj );
+ 	string sssj = ssj.str();
+ 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The diff graph is %s",sssj.c_str());
 
 	if(!checkGraphValidity(diff,computeController))
 	{

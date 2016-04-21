@@ -564,7 +564,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 
 	for(list<highlevel::Rule>::iterator rule = newrules.begin(); rule != newrules.end(); rule++)
 		diff->addRule(*rule);
-	
+
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New rules required: ");
 	diff->print();
 
@@ -574,6 +574,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	highlevel::Graph::t_nfs_ports_list nfs = this->getNetworkFunctionsPorts();
 
 	//Retrieve the NFs required by the update (this part is related to the network functions ports)
+	//note that the update may require new ports for a network functions
 	highlevel::Graph::t_nfs_ports_list new_nfs = other->getNetworkFunctionsPorts();
 	for(highlevel::Graph::t_nfs_ports_list::iterator it = new_nfs.begin(); it != new_nfs.end(); it++)
 	{
@@ -581,21 +582,24 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		{
 			//The udpdate requires a NF that was not part of the graph
 			diff->addNetworkFunction(it->first);
-#ifndef UNIFY_NFFG
 			//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
 			list<unsigned int> ports = it->second;
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The new network function '%s' requires the following ports: ",(it->first).c_str());
 			for(list<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
 				diff->updateNetworkFunction(it->first, *p);
-#endif
+			}
 		}
-#ifndef UNIFY_NFFG
 		//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
 		else
 		{
-			//The NF is already part of the graph, but the update
-			//must not contain new ports for the NF
+			//The NF is already part of the graph, but the update may contain new ports
 			list<unsigned int> new_ports = it->second;
 			list<unsigned int> ports = nfs.find(it->first)->second;
+			list<unsigned int> diff_ports;
+			//iterates on the ports specified in the update
+			bool requireNewPorts = false;
 			for(list<unsigned int>::iterator np = new_ports.begin(); np != new_ports.end(); np++)
 			{
 				list<unsigned int>::iterator p = ports.begin();
@@ -606,12 +610,22 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 				}
 				if(p == ports.end())
 				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "A new port '%d' is required for NF '%s'", *np, it->first.c_str());
-					return NULL;
+					//The update contains new ports
+					requireNewPorts = true;
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "A new port '%d' is required for NF '%s'", *np, it->first.c_str());
+					diff_ports.push_back(*np);
+				}
+			}
+			if(requireNewPorts)
+			{
+				diff->addNetworkFunction(it->first);
+				for(list<unsigned int>::iterator p = diff_ports.begin(); p != diff_ports.end(); p++)
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
+					diff->updateNetworkFunction(it->first, *p);
 				}
 			}
 		}
-#endif
 	}
 
 	// c) Add the new NFs to "diff"
@@ -630,16 +644,50 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 			if((*there) == (*it))
 			{
 				alreadyThere = true;
+				//we have to check the ports. In fact the VNF may require new ports
+				
+				list<vector<string> > ports_needed_by_diff;							//this set will contain the ports needed by the diff
+				list<vector<string> > vnf_ports_already_there = there->getPorts();	//ports of the VNF before the update
+				list<vector<string> > vnf_ports_required = it->getPorts();		 	//ports of the VNF required by the update
+				for(list<vector<string> >::iterator p_required = vnf_ports_required.begin(); p_required != vnf_ports_required.end(); p_required++)
+				{
+					bool port_already_in_graph = false;
+					vector<string> required_tmp = *p_required;
+					for(list<vector<string> >::iterator p_there = vnf_ports_already_there.begin(); p_there != vnf_ports_already_there.end(); p_there++)
+					{
+						vector<string> there_tmp = *p_there;
+						if(required_tmp[0] == there_tmp[0])
+						{
+							//The port is already part of the graph
+							port_already_in_graph = true;
+							break;
+						}
+					}
+					if(!port_already_in_graph)
+					{
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tThe VNF port with id '%s' is needed for VNF '%s'",required_tmp[0].c_str(),(it->getName()).c_str());
+						ports_needed_by_diff.push_back(*p_required);
+					}
+				}
+				
+				//If the VNF requires new ports, it must be added to the "diff" graph (only with the new ports)
+				if(ports_needed_by_diff.size() !=0)
+				{
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tUpdate for VNF '%s' is added to the diff graph",(it->getName()).c_str());
+					highlevel::VNFs the_vnf(it->getId(), it->getName(), it->getGroups(), it->getVnfTemplate(), ports_needed_by_diff, it->getControlPorts(),it->getEnvironmentVariables());
+					diff->addVNF(the_vnf);
+				}
+
 				break;
 			}
-		}
+		}//end itearation on the VNFs already deployed
 		if(!alreadyThere)
 		{
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new VNF is required - ID: '%s' - name: '%s'", (it->getId()).c_str(),(it->getName()).c_str());
 			diff->addVNF(*it);
 			new_vnfs_name.insert(it->getName());
 		}
-	}
+	}//end iteration on the VNFs required by the update
 	
 	// d) Add the new physical ports
 

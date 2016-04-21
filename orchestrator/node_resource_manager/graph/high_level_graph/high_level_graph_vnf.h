@@ -45,6 +45,13 @@ private:
 
 	/**
 	*	@brief: the list of ports configuration of the VNF
+	*	FIXME: the usage of the vector is really bad!
+	*
+	*	Meaning of the elements of the vector:
+	*	- 0: port ID
+	*	- 1: port name
+	*	- 2: mac address
+	*	- 3: ip address (only if ENABLE_UNIFY_PORTS_CONFIGURATION is enabled)
 	*/
 	list<vector<string> > ports;
 
@@ -74,6 +81,10 @@ public:
 	list<string> getGroups();
 	string getVnfTemplate();
 	list<vector<string> > getPorts();
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	list<pair<string, string> >  getControlPorts();
+	list<string> getEnvironmentVariables();
+#endif
 
 	~VNFs();
 

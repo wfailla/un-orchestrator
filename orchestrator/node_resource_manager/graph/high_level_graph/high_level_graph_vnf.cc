@@ -150,4 +150,16 @@ Object VNFs::toJSON()
 	return vnf;
 }
 
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+list<pair<string, string> >  VNFs::getControlPorts()
+{
+	return control_ports;
+}
+
+list<string> VNFs::getEnvironmentVariables()
+{
+	return environment_variables;
+}
+#endif
+
 }
