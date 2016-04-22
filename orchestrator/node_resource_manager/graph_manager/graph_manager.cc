@@ -1021,14 +1021,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		
 		for(list<highlevel::vnf_port_t>::iterator n = nf_ports.begin(); n != nf_ports.end(); n++)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s",(n->name).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t* %s - %s",(n->name).c_str(),(n->id).c_str());
 			port_network_config config = n->configuration;
 
 			if(!(config.mac_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tMac address -> %s",(config.mac_address).c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t\tMac address -> %s",(config.mac_address).c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 			if(!(config.ip_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tIP address -> %s",(config.ip_address).c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t\tIP address -> %s",(config.ip_address).c_str());
 #endif
 		}
 	}
