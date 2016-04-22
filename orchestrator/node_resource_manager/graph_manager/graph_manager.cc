@@ -498,13 +498,6 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		return deleteGraph(graphID);
 	}
 
-	/**
-	*	The flow can be removed only if does not define an endpoint used by some other graph
-	*/
-#if 0
-	if(!canDeleteFlow(graph,flowID))
-		return false;
-#endif
 	string endpointInvolved = graph->getEndpointInvolved(flowID);
 	bool definedHere = false;
 	if(endpointInvolved != "")
@@ -1692,7 +1685,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 bool GraphManager::updateGraph_removePieces(string graphID, highlevel::Graph *newGraph)
 {
-
+	return true;
 }
 
 vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph *graph)
@@ -2339,42 +2332,6 @@ string GraphManager::findEndPointTowardsNF(highlevel::Graph *graph, string nf)
 
 	return ""; //just for the compiler
 }
-
-#if 0
-bool GraphManager::canDeleteFlow(highlevel::Graph *graph, string flowID)
-{
-	highlevel::Rule r = graph->getRuleFromID(flowID);
-	highlevel::Match m = r.getMatch();
-	highlevel::Action *a = r.getAction();
-
-	map<string, vector<string> > endpoints = graph->getEndPoints();
-	for(map<string, vector<string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
-	{
-		string ep = mep->first;
-
-		if( (a->getType() == highlevel::ACTION_ON_ENDPOINT) && (a->toString() == ep) )
-		{
-			if(availableEndPoints.find(ep)->second !=0)
-			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow cannot be deleted. It defines (in the action) the endpoint \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep.c_str(),availableEndPoints.find(ep)->second);
-				return false;
-			}
-		}
-		if(m.matchOnEndPoint())
-		{
-			stringstream ss;
-			ss << m.getGraphID() << ":" << m.getEndPoint();
-			if(ss.str() == ep && availableEndPoints.find(ep)->second !=0)
-			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow cannot be deleted. It defines (in the match) the endpoint \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep.c_str(),availableEndPoints.find(ep)->second);
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-#endif
 
 void GraphManager::printInfo(lowlevel::Graph graphLSI0, LSI *lsi0)
 {
