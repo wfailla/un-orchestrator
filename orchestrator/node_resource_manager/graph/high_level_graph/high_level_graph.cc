@@ -106,8 +106,8 @@ addvnf_t Graph::addVNF(VNFs vnf)
 			//The vnf is already part of the graph. But we have to check that also the ports are the same.
 			//In case new ports are specified, the VNF is updated with the new ports
 			bool changes = false;
-			list<vector<string> > ports = vnf.getPorts();
-			for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
+			list<vnf_port_t> ports = vnf.getPorts();
+			for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
 			{
 				if(v->addPort(*p))
 					changes = true;
@@ -660,17 +660,17 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 				alreadyThere = true;
 				//we have to check the ports. In fact the VNF may require new ports
 				
-				list<vector<string> > ports_needed_by_diff;							//this set will contain the ports needed by the diff
-				list<vector<string> > vnf_ports_already_there = there->getPorts();	//ports of the VNF before the update
-				list<vector<string> > vnf_ports_required = it->getPorts();		 	//ports of the VNF required by the update
-				for(list<vector<string> >::iterator p_required = vnf_ports_required.begin(); p_required != vnf_ports_required.end(); p_required++)
+				list<vnf_port_t> ports_needed_by_diff;							//this set will contain the ports needed by the diff
+				list<vnf_port_t> vnf_ports_already_there = there->getPorts();	//ports of the VNF before the update
+				list<vnf_port_t> vnf_ports_required = it->getPorts();		 	//ports of the VNF required by the update
+				for(list<vnf_port_t>::iterator p_required = vnf_ports_required.begin(); p_required != vnf_ports_required.end(); p_required++)
 				{
 					bool port_already_in_graph = false;
-					vector<string> required_tmp = *p_required;
-					for(list<vector<string> >::iterator p_there = vnf_ports_already_there.begin(); p_there != vnf_ports_already_there.end(); p_there++)
+					vnf_port_t required_tmp = *p_required;
+					for(list<vnf_port_t>::iterator p_there = vnf_ports_already_there.begin(); p_there != vnf_ports_already_there.end(); p_there++)
 					{
-						vector<string> there_tmp = *p_there;
-						if(required_tmp[0] == there_tmp[0])
+						vnf_port_t there_tmp = *p_there;
+						if(required_tmp.id == there_tmp.id)
 						{
 							//The port is already part of the graph
 							port_already_in_graph = true;
@@ -679,7 +679,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 					}
 					if(!port_already_in_graph)
 					{
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tThe VNF port with id '%s' is needed for VNF '%s'",required_tmp[0].c_str(),(it->getName()).c_str());
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tThe VNF port with id '%s' is needed for VNF '%s'",required_tmp.id.c_str(),(it->getName()).c_str());
 						ports_needed_by_diff.push_back(*p_required);
 					}
 				}

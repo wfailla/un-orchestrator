@@ -82,8 +82,6 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 	vector<VLink> dummy_virtual_links;
 	map<string,nf_t>  nf_types;
 
-	unsigned int i = 0;
-
 	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions,
 	dummy_endpoints,dummy_virtual_links,dummy_nfs_ports_type);
 
@@ -168,86 +166,93 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 
 	//if control is in band install the default rules on LSI-0 otherwise skip this code
 	if(orchestrator_in_band && !un_interface.empty() && !un_address.empty())
+		handleInBandController(lsi,controller);
+}
+
+void GraphManager::handleInBandController(LSI *lsi, Controller *controller)
+{
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Handling in band controller");
+
+	unsigned int i = 0;
+
+	//remove first " character
+	un_interface.erase(0,1);
+	//remove last " character
+	un_interface.erase(un_interface.size()-1,1);
+
+	//Install the default rules on LSI-0
+	map<string,unsigned int> lsi_ports = lsi->getPhysicalPorts();
+	lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
+	if(lsi_ports.count((char *)un_interface.c_str()) == 0)
 	{
-		//remove first " character
-		un_interface.erase(0,1);
-		//remove last " character
-		un_interface.erase(un_interface.size()-1,1);
-
-		//Install the default rules on LSI-0
-		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
-		if(lsi_ports.count((char *)un_interface.c_str()) == 0)
-		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Control interface does not exist in a list of available plysical ports.");
-			throw GraphManagerException();
-		}
-
-		map<string,unsigned int>::iterator translation = lsi_ports.find((char *)un_interface.c_str());
-
-		/* It is necessary to intercept incoming arp requests with IP source equal to un_interface?
-
-		lsi0Match.setArpSpa((char *)un_address.c_str());
-		lsi0Match.setEthType(2054 & 0xFFFF);
-		lsi0Match.setInputPort(translation->second);
-
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule);
-
-		i++;
-		*/
-
-		lsi0Match0.setArpTpa((char *)un_address.c_str());
-		lsi0Match0.setEthType(2054 & 0xFFFF);
-		lsi0Match0.setInputPort(translation->second);
-
-		lsi0Match1.setIpv4Dst((char *)un_address.c_str());
-		lsi0Match1.setEthType(2048 & 0xFFFF);
-		lsi0Match1.setInputPort(translation->second);
-
-		lowlevel::Action lsi0Action(true);
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		stringstream newRuleID;
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule0);
-
-		i++;
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		newRuleID.str("");
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule1);
-
-		i++;
-
-		lowlevel::Match lsi0Match3(true);
-
-		lowlevel::Action lsi0Action1(translation->second);
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		newRuleID.str("");
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule3(lsi0Match3,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule3);
-
-		graphLSI0lowLevel.print();
-
-		//Insert new rules into the LSI-0
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
-		controller->installNewRules(graphLSI0lowLevel.getRules());
-
-		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Control interface does not exist in a list of available plysical ports.");
+		throw GraphManagerException();
 	}
 
+	map<string,unsigned int>::iterator translation = lsi_ports.find((char *)un_interface.c_str());
+
+	/* It is necessary to intercept incoming arp requests with IP source equal to un_interface?
+
+	lsi0Match.setArpSpa((char *)un_address.c_str());
+	lsi0Match.setEthType(2054 & 0xFFFF);
+	lsi0Match.setInputPort(translation->second);
+
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule);
+
+	i++;
+	*/
+
+	lsi0Match0.setArpTpa((char *)un_address.c_str());
+	lsi0Match0.setEthType(2054 & 0xFFFF);
+	lsi0Match0.setInputPort(translation->second);
+
+	lsi0Match1.setIpv4Dst((char *)un_address.c_str());
+	lsi0Match1.setEthType(2048 & 0xFFFF);
+	lsi0Match1.setInputPort(translation->second);
+
+	lowlevel::Action lsi0Action(true);
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	stringstream newRuleID;
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule0);
+
+	i++;
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	newRuleID.str("");
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule1);
+
+	i++;
+
+	lowlevel::Match lsi0Match3(true);
+
+	lowlevel::Action lsi0Action1(translation->second);
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	newRuleID.str("");
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule3(lsi0Match3,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule3);
+
+	graphLSI0lowLevel.print();
+
+	//Insert new rules into the LSI-0
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
+	controller->installNewRules(graphLSI0lowLevel.getRules());
+
+	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 }
 
 GraphManager::~GraphManager()
@@ -493,13 +498,6 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		return deleteGraph(graphID);
 	}
 
-	/**
-	*	The flow can be removed only if does not define an endpoint used by some other graph
-	*/
-#if 0
-	if(!canDeleteFlow(graph,flowID))
-		return false;
-#endif
 	string endpointInvolved = graph->getEndpointInvolved(flowID);
 	bool definedHere = false;
 	if(endpointInvolved != "")
@@ -1249,7 +1247,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*		- control connections
 	**/
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s'...",graphID.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' with new 'pieces'...",graphID.c_str());
 
 	assert(tenantLSIs.count(graphID) != 0);
 
@@ -1329,8 +1327,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	set<string> phyPorts = diff->getPorts();
 
 	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctionsPorts();
-//	map<string, vector<string> > tmp_endpoints = diff->getEndPoints();//#ADDED
-	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();//#ADDED
+	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
 
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 
@@ -1518,7 +1515,30 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			map<string, list<struct nf_port_info> >::iterator pi_it = pi_map.find(nf->first); //select the info related to the network function currently considered
 			//TODO: when the hotplug will be introduced, pi_it->second will also contain the old ports of the VNF. Then a further skimming will be required
 			assert(pi_it != pi_map.end());
-			AddNFportsIn anpi(dpid, nf->first, computeController->getNFType(nf->first), pi_it->second); //prepare the input for the switch manager
+
+			if(pi_it->second.size() == nf->second.size()) //check if the nf is a new one or some ports are already plugged
+				AddNFportsIn anpi(dpid, nf->first, computeController->getNFType(nf->first), pi_it->second); //prepare the input for the switch manager
+			else
+			{
+				list<struct nf_port_info> newPortList;
+				for(list< unsigned int>::iterator port_it = nf->second.begin(); port_it != nf->second.end(); ++port_it)
+				{
+					unsigned int port_id = (*port_it);
+					stringstream ss;
+        				ss << nf->first << "_" << port_id;
+        				string port_name = ss.str();
+					for(list<struct nf_port_info>::iterator lsiPort_it = pi_it->second.begin(); lsiPort_it != pi_it->second.end; ++lsiPort_it)
+					{
+						struct nf_port_info portData = (*lsiPort_it);
+						if(portData.port_name.compare(port_name) == 0)
+						{
+							newPortList.push_back(portData);
+							break;
+						}
+					}
+				}
+				AddNFportsIn anpi(dpid, nf->first, computeController->getNFType(nf->first), newPortList); //prepare the input for the switch manager
+			}
 
 			//We add, with a single call, all the ports of a single network function
 			anpo = switchManager.addNFPorts(anpi);
@@ -1679,10 +1699,15 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		throw GraphManagerException();
 	}
 
-	//The new flows have been added to the graph!
+	//The new flows, endpoints and VNFs have been added to the graph!
 
 	delete(diff);
 	diff = NULL;
+	return true;
+}
+
+bool GraphManager::updateGraph_removePieces(string graphID, highlevel::Graph *newGraph)
+{
 	return true;
 }
 
@@ -2330,42 +2355,6 @@ string GraphManager::findEndPointTowardsNF(highlevel::Graph *graph, string nf)
 
 	return ""; //just for the compiler
 }
-
-#if 0
-bool GraphManager::canDeleteFlow(highlevel::Graph *graph, string flowID)
-{
-	highlevel::Rule r = graph->getRuleFromID(flowID);
-	highlevel::Match m = r.getMatch();
-	highlevel::Action *a = r.getAction();
-
-	map<string, vector<string> > endpoints = graph->getEndPoints();
-	for(map<string, vector<string> >::iterator mep = endpoints.begin(); mep != endpoints.end(); mep++)
-	{
-		string ep = mep->first;
-
-		if( (a->getType() == highlevel::ACTION_ON_ENDPOINT) && (a->toString() == ep) )
-		{
-			if(availableEndPoints.find(ep)->second !=0)
-			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow cannot be deleted. It defines (in the action) the endpoint \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep.c_str(),availableEndPoints.find(ep)->second);
-				return false;
-			}
-		}
-		if(m.matchOnEndPoint())
-		{
-			stringstream ss;
-			ss << m.getGraphID() << ":" << m.getEndPoint();
-			if(ss.str() == ep && availableEndPoints.find(ep)->second !=0)
-			{
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow cannot be deleted. It defines (in the match) the endpoint \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep.c_str(),availableEndPoints.find(ep)->second);
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-#endif
 
 void GraphManager::printInfo(lowlevel::Graph graphLSI0, LSI *lsi0)
 {
