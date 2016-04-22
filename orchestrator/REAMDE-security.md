@@ -1,4 +1,4 @@
-#Security Manager
+#Orchestrator Security Module
 
 ##Overwiew
 
