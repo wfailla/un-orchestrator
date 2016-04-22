@@ -4,14 +4,14 @@ namespace highlevel
 {
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports, list<string> environment_variables) :
+VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<pair<string, string> > control_ports, list<string> environment_variables) :
 	id(id), name(name), groups(groups), vnf_template(vnf_template)
 #else
-VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vector<string> > ports) :
+VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports) :
 	id(id), name(name), groups(groups), vnf_template(vnf_template)
 #endif
 {
-	for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
+	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
 	{
 		this->ports.push_back((*p));
 	}
@@ -35,13 +35,13 @@ bool VNFs::operator==(const VNFs &other) const
 	return false;
 }
 
-bool VNFs::addPort(vector<string> port)
+bool VNFs::addPort(vnf_port_t port)
 {
 	// the port is added if is not yet part of the VNF
-	for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
+	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
 	{
-		vector<string> current = *p;
-		if(current[0] == port[0])
+		vnf_port_t current = *p;
+		if(current.id == port.id)
 			// the port is already part of the graph
 			return false;
 	}
@@ -69,7 +69,7 @@ string VNFs::getVnfTemplate()
 	return vnf_template;
 }
 
-list <vector<string> > VNFs::getPorts()
+list <vnf_port_t> VNFs::getPorts()
 {
 	return ports;
 }
@@ -90,16 +90,18 @@ Object VNFs::toJSON()
 		groups_Array.push_back((*it).c_str());
 	if(groups.size()!=0)
 		vnf[VNF_GROUPS] = groups_Array;
-	for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
+	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
 	{
 		Object pp;
 
-		pp[_ID] = (*p)[0].c_str();
-		pp[_NAME] = (*p)[1].c_str();
-		if(strlen((*p)[2].c_str()) != 0)
-			pp[PORT_MAC] = (*p)[2].c_str();
-		if(strlen((*p)[3].c_str()) != 0)
-			pp[PORT_IP] = (*p)[3].c_str();
+		pp[_ID] = p->id.c_str();
+		pp[_NAME] = p->name.c_str();
+		if(strlen(p->mac_address.c_str()) != 0)
+			pp[PORT_MAC] = p->mac_address.c_str();
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		if(strlen(p->ip_address.c_str()) != 0)
+			pp[PORT_IP] = p->ip_address.c_str();
+#endif
 
 		portS.push_back(pp);
 	}
