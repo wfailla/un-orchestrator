@@ -82,6 +82,12 @@ private:
 	list<string> environment_variables;
 #endif
 
+	/**
+	*	@brief: starting from the ID of a VNF port, return its index (i.e., the
+	*			number of at the end of the ID)
+	*/
+	unsigned int extract_number_from_id(string port_id);
+
 public:
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
@@ -99,7 +105,16 @@ public:
 	string getName();
 	list<string> getGroups();
 	string getVnfTemplate();
+
+	/*
+	*	@brief: return the list of ports of the VNF
+	*/
 	list<vnf_port_t> getPorts();
+	/*
+	*	@brief: only return the list of port ID of the VNF
+	*/
+	list<unsigned int> getPortsId();
+
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	list<pair<string, string> >  getControlPorts();
 	list<string> getEnvironmentVariables();
@@ -112,6 +127,9 @@ public:
 	**/
 	bool operator==(const VNFs &other) const;
 
+	/**
+	*	Create the json representing the VNF, according to the NF-FG formalism
+	**/
 	Object toJSON();
 };
 

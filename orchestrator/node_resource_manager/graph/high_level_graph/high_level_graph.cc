@@ -133,10 +133,12 @@ set<string> Graph::getPorts()
 	return ports;
 }
 
+#if 0
 map<string, list<unsigned int> > Graph::getNetworkFunctionsPorts()
 {
 	return networkFunctions;
 }
+#endif
 
 map<string, map<unsigned int, port_network_config > > Graph::getNetworkFunctionsConfiguration()
 {
@@ -170,6 +172,7 @@ bool Graph::addPort(string port)
 	return true;
 }
 
+#if 0
 bool Graph::addNetworkFunction(string nf)
 {
 	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunction(\"%s\")",nf.c_str());
@@ -184,14 +187,18 @@ bool Graph::addNetworkFunction(string nf)
 
 	return true;
 }
+#endif
 
+#if 0
 bool Graph::addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > config)
 {
 	networkFunctionsConfiguration[nf] = config;
 
 	return true;
 }
+#endif
 
+#if 0
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 void Graph::addNetworkFunctionControlPort(string nf, port_mapping_t control)
 {
@@ -203,7 +210,9 @@ void Graph::addNetworkFunctionEnvironmentVariable(string nf, string env_var)
 	networkFunctionsEnvironmentVariables[nf].push_back(env_var);
 }
 #endif
+#endif
 
+#if 0
 bool Graph::updateNetworkFunction(string nf, unsigned int port)
 {
 	if(networkFunctions.count(nf) == 0)
@@ -219,6 +228,7 @@ bool Graph::updateNetworkFunction(string nf, unsigned int port)
 
 	return true;
 }
+#endif
 
 bool Graph::addRule(Rule rule)
 {
@@ -578,6 +588,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	for(list<highlevel::Rule>::iterator rule = newrules.begin(); rule != newrules.end(); rule++)
 		diff->addRule(*rule);
 
+#if 0
 	// b) Add the new NFs to "diff"
 
 	//Retrieve the NFs already existing in the graph
@@ -591,14 +602,18 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		if(nfs.count(it->first) == 0)
 		{
 			//The udpdate requires a NF that was not part of the graph
+#if 0
 			diff->addNetworkFunction(it->first);
+#endif
 			//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
 			list<unsigned int> ports = it->second;
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The new network function '%s' requires the following ports: ",(it->first).c_str());
 			for(list<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
 			{
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
+#if 0
 				diff->updateNetworkFunction(it->first, *p);
+#endif
 			}
 		}
 		//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
@@ -628,16 +643,20 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 			}
 			if(requireNewPorts)
 			{
+#if 0
 				diff->addNetworkFunction(it->first);
+#endif
 				for(list<unsigned int>::iterator p = diff_ports.begin(); p != diff_ports.end(); p++)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
+#if 0
 					diff->updateNetworkFunction(it->first, *p);
+#endif
 				}
 			}
 		}
 	}
-
+#endif
 	// c) Add the new NFs to "diff"
 	//FIXME: why do we have two different representations for the network functions in a graph?
 
@@ -864,7 +883,9 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		if(new_vnfs_name.count(config->first) != 0)
 		{
 			//This is a new VNF, then we have to add its configuration to "diff"
+#if 0
 			diff->addNetworkFunctionPortConfiguration(config->first,config->second);
+#endif
 		}
 	}
 
@@ -876,8 +897,10 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		{
 			//This is a new VNF, then we have to its control information to "diff"
 			list<port_mapping_t> control_ports = control->second;
+#if 0
 			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
 				diff->addNetworkFunctionControlPort(control->first,*cp);
+#endif
 		}
 	}
 	
@@ -888,8 +911,10 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		{
 			//This is a new VNF, then we have to its control information to "diff"
 			list<string> environment_variables = envvar->second;
+#if 0
 			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
 				diff->addNetworkFunctionEnvironmentVariable(envvar->first,*ev);
+#endif
 		}
 	}
 #endif
@@ -923,18 +948,26 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		this->addEndPointInterface(*ep);
 	}
 
+#if 0
 	//Update the network functions ports
 	highlevel::Graph::t_nfs_ports_list networkFunctions = other->getNetworkFunctionsPorts();
 	//networkFunctions maps, for each network function, its name with the list of port IDs
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
 	{
+#if 0
 		this->addNetworkFunction(nf->first);
+#endif
+#if 0
 		list<unsigned int>& nfPorts = nf->second;
+#endif
+#if 0
 		for(list<unsigned int>::iterator p = nfPorts.begin(); p != nfPorts.end(); p++)
 		{
 			this->updateNetworkFunction(nf->first, *p);
 		}
+#endif
 	}
+#endif
 
 	//Update the network functions
 	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
@@ -951,7 +984,9 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		assert(status != NOTHING);
 		if(new_nfs_ports_configuration.count(vnfname) != 0)
 			//Add the configuration for the new ports
+#if 0
 			this->addNetworkFunctionPortConfiguration(vtba->getName(),new_nfs_ports_configuration[vnfname]);
+#endif
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		if(status == ADDED)
 		{
@@ -959,13 +994,16 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 
 			//We have to consider the configuration of this network function
 			list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
+#if 0
 			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
 				this->addNetworkFunctionControlPort(vtba->getName(), *cp);
-
+#endif
 			//We have to consider the environment variables of this network function
 			list<string> environment_variables = new_nfs_env_variables[vnfname];
+#if 0
 			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
 				this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
+#endif
 		}
 #endif
 	}

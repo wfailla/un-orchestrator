@@ -2,8 +2,10 @@
 
 bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph, GraphManager *gm)
 {
+#if 0
 	//for each NF, contains the set of ports it requires
 	map<string,set<unsigned int> > nfs_ports_found;
+#endif
 	//for each NF, contains the id
 	map<string, string> nfs_id;
 	//for each endpoint (interface), contains the id
@@ -150,12 +152,13 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,_NAME,nf_value.getString().c_str());
 										foundName = true;
+#if 0
 										if(!graph.addNetworkFunction(nf_value.getString()))
 										{
 											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 											return false;
 										}
-
+#endif
 										name = nf_value.getString();
 
 										nfs_id[id] = nf_value.getString();
@@ -236,8 +239,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											port_mapping.host_port = ss.str();
 											port_mapping.guest_port = sss.str();
 
+#if 0
 											//Add VNF control port description
 											graph.addNetworkFunctionControlPort(name, port_mapping);
+#endif
 											controlPorts.push_back(make_pair(ss.str(), sss.str()));
 										}//end iteration on the control ports
 #endif
@@ -292,9 +297,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													return false;
 												}
 											}
-
+#if 0
 											//Add an environment variable for the VNF
 											graph.addNetworkFunctionEnvironmentVariable(name, theEnvVar.str());
+#endif
 											environmentVariables.push_back(theEnvVar.str());
 										}//end iteration on the environment variables
 
@@ -381,14 +387,14 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 											//Each VNF port has its own configuration if provided
 											vnf_port_config[ports+1] = port_config;
-
+#if 0
 											//Add NF ports descriptions
 											if(!graph.addNetworkFunctionPortConfiguration(name, vnf_port_config))
 											{
 												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
 												return false;
 											}
-
+#endif
 											portS.push_back(port_descr);
 										}
 									}
@@ -878,7 +884,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									{
 										try{
 											foundMatch = true;
-											if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action),nfs_ports_found,nfs_id,iface_id,internal_id,vlan_id,gre_id,graph))
+											if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action)/*,nfs_ports_found*/,nfs_id,iface_id,internal_id,vlan_id,gre_id,graph))
 											{
 												return false;
 											}
@@ -1021,16 +1027,18 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 																return false;
 															}
 
-															/*nf port starts from 0*/
+															/*nf port starts from 0 - here we want that they start from 1*/
 															port++;
 
 															action = new highlevel::ActionNetworkFunction(name, string(port_in_name_tmp), port);
 
+#if 0
 															set<unsigned int> ports_found;
 															if(nfs_ports_found.count(name) != 0)
 																ports_found = nfs_ports_found[name];
 															ports_found.insert(port);
 															nfs_ports_found[name] = ports_found;
+#endif
 														}
 														//end-points port type
 														else if(p_type == EP_PORT_TYPE)
@@ -1350,6 +1358,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 		return false;
 	}
 
+#if 0
 	//FIXME The number of ports is provided by the name resolver, and should not depend on the flows inserted. In fact,
 	//it should be possible to start VNFs without setting flows related to such a function!
 	//FIXME (21/04/16) actually the number is indicated in the NF-FG
@@ -1357,7 +1366,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 	{
 		set<unsigned int> ports = it->second;
 		assert(ports.size() != 0);
-
+#if 0
 		for(set<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
 		{
 			if(!graph.updateNetworkFunction(it->first,*p))
@@ -1371,7 +1380,9 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 					//if the NF is no longer part of the graph, there is an error, and the graph cannot be updated.
 					if(gm->graphContainsNF(graph.getID(),it->first))
 					{
+#if 0
 						graph.addNetworkFunction(it->first);
+#endif
 						graph.updateNetworkFunction(it->first,*p);
 					}
 					else
@@ -1379,11 +1390,12 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 				}
 			}
 		}
-
+#endif
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" requires ports:",it->first.c_str());
 		for(set<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
 	}
+#endif
 
 	return true;
 }

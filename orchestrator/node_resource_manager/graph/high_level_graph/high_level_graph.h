@@ -164,13 +164,16 @@ public:
 	*/
 	set<string> getPorts();
 
+#if 0
 	/**
 	*	@brief: Add a NF to the graph
 	*
 	*	@param:	nf	Name of the network function to be added
 	*/
 	bool addNetworkFunction(string nf);
+#endif
 
+#if 0
 	/**
 	*	@brief: Add a NF port description to the graph
 	*
@@ -179,6 +182,7 @@ public:
 	*/
 	//FIXME: is the return value useful?
 	bool addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > description);
+#endif
 
 	/**
 	*	@brief: Given a graph, calculate the things (e.g., NFs) that are in such a graph and not in the
@@ -200,6 +204,7 @@ public:
 	*/
 	bool removeGraphFromGraph(highlevel::Graph *other);
 
+#if 0
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
 	*	@brief: Add a VNF control port to the graph
@@ -217,7 +222,9 @@ public:
 	*/
 	void addNetworkFunctionEnvironmentVariable(string nf, string env_variable);
 #endif
+#endif
 
+#if 0
 	/**
 	*	@brief: Update a NF by adding a port
 	*	//FIXME: is this useful?
@@ -226,11 +233,14 @@ public:
 	*	@param: port	Identifier of the port of the network function
 	*/
 	bool updateNetworkFunction(string nf, unsigned port);
+#endif
 
+#if 0
 	/**
 	*	@brief: Return the NFs of the graph and the ports they require
 	*/
 	t_nfs_ports_list getNetworkFunctionsPorts();
+#endif
 
 	/**
 	*	@brief: Return the VNFs of the graph and the description of the ports they require

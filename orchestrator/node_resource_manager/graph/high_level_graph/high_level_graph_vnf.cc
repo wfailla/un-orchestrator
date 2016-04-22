@@ -74,6 +74,18 @@ list <vnf_port_t> VNFs::getPorts()
 	return ports;
 }
 
+list<unsigned int> VNFs::getPortsId()
+{
+	list<unsigned int> ids;
+	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
+	{
+		string the_id = p->id;
+		unsigned int id = extract_number_from_id(the_id);
+		ids.push_back(id);
+	}
+	return ids;
+}
+
 Object VNFs::toJSON()
 {
 	Object vnf;
@@ -143,5 +155,31 @@ list<string> VNFs::getEnvironmentVariables()
 	return environment_variables;
 }
 #endif
+
+unsigned int VNFs::extract_number_from_id(string port_id)
+{
+	char delimiter[] = ":";
+	char tmp[BUFFER_SIZE];
+	strcpy(tmp,port_id.c_str());
+	char *pnt=strtok((char*)port_id.c_str(), delimiter);
+	unsigned int port = 0;
+
+	int i = 0;
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 1:
+				sscanf(pnt,"%u",&port);
+				return port;
+			break;
+		}
+
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+	return port;
+}
+
 
 }
