@@ -387,9 +387,17 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 	//In that case, this function should be modified so that the nfData (already existing) of the network
 	//function is retrieved and updated. 
 	assert(network_functions.count(nf_name) == 0);
-
-	nfData nf_data;
-	nf_data.nf_ports_id = ports;
+	
+	if(network_functions.count(nf_name) != 0)
+	{
+		nfData nf_data = network_functions[nf_name];
+		nf_data.nf_ports_id.insert(nf_data.nf_ports_id.end(), ports.begin(), ports.end());
+	}
+	else
+	{
+		nfData nf_data;
+		nf_data.nf_ports_id = ports;
+	}
 
 	for (list< unsigned int>::iterator port_it = ports.begin(); port_it != ports.end(); ++port_it) {
 		unsigned int port_id = (*port_it);  // This is the VNF port id from the NF-FG ("my_vnf:1" -> 1)
