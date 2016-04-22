@@ -35,6 +35,20 @@ bool VNFs::operator==(const VNFs &other) const
 	return false;
 }
 
+bool VNFs::addPort(vector<string> port)
+{
+	// the port is added if is not yet part of the VNF
+	for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
+	{
+		vector<string> current = *p;
+		if(current[0] == port[0])
+			// the port is already part of the graph
+			return false;
+	}
+	ports.push_back(port);
+	return true;
+}
+
 string VNFs::getId()
 {
 	return id;

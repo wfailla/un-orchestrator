@@ -97,17 +97,30 @@ list<EndPointVlan> Graph::getEndPointsVlan()
 	return endPointsVlan;
 }
 
-bool Graph::addVNF(VNFs vnf)
+addvnf_t Graph::addVNF(VNFs vnf)
 {
 	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end(); v++)
 	{
 		if(*v == vnf)
-			return false;
+		{
+			//The vnf is already part of the graph. But we have to check that also the ports are the same.
+			//In case new ports are specified, the VNF is updated with the new ports
+			bool changes = false;
+			list<vector<string> > ports = vnf.getPorts();
+			for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
+			{
+				if(v->addPort(*p))
+					changes = true;
+			}
+			if(changes)
+				return UPDATED;
+			return NOTHING;
+		}
 	}
 
+	//The VNF is not yet part of the graph
 	vnfs.push_back(vnf);
-
-	return true;
+	return ADDED;
 }
 
 list<VNFs> Graph::getVNFs()
@@ -675,7 +688,11 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 				if(ports_needed_by_diff.size() !=0)
 				{
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tUpdate for VNF '%s' is added to the diff graph",(it->getName()).c_str());
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 					highlevel::VNFs the_vnf(it->getId(), it->getName(), it->getGroups(), it->getVnfTemplate(), ports_needed_by_diff, it->getControlPorts(),it->getEnvironmentVariables());
+#else
+					highlevel::VNFs the_vnf(it->getId(), it->getName(), it->getGroups(), it->getVnfTemplate(), ports_needed_by_diff);
+#endif
 					diff->addVNF(the_vnf);
 				}
 
@@ -913,41 +930,48 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	//Update the network functions ports
 	highlevel::Graph::t_nfs_ports_list networkFunctions = other->getNetworkFunctionsPorts();
 	//networkFunctions maps, for each network function, its name with the list of port IDs
+	//TODO: consider the case in which a VNF has new ports
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
 	{
 		this->addNetworkFunction(nf->first);
-#ifndef UNIFY_NFFG
 		list<unsigned int>& nfPorts = nf->second;
 		for(list<unsigned int>::iterator p = nfPorts.begin(); p != nfPorts.end(); p++)
 		{
 			this->updateNetworkFunction(nf->first, *p);
 		}
-#endif
 	}
 
 	//Update the network functions
 	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
-	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = other->getNetworkFunctionsConfiguration();
+	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = other->getNetworkFunctionsConfiguration(); //This contains only the configuration for the new ports
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
 	map<string, list<string> > new_nfs_env_variables = other->getNetworkFunctionsEnvironmentVariables();
 #endif
+	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
 	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
 	{
 		string vnfname = vtba->getName();
-		this->addVNF(*vtba);
+		addvnf_t status = this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
+		assert(status != NOTHING);
 		if(new_nfs_ports_configuration.count(vnfname) != 0)
+			//Add the configuration for the new ports
 			this->addNetworkFunctionPortConfiguration(vtba->getName(),new_nfs_ports_configuration[vnfname]);
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		//We have to consider the configuration of this network function
-		list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
-		for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
-			this->addNetworkFunctionControlPort(vtba->getName(), *cp);
+		if(status == ADDED)
+		{
+			//If a VNF has been updated, the control ports and the environment variables are not considered in the updated
 
-		//We have to consider the environment variables of this network function
-		list<string> environment_variables = new_nfs_env_variables[vnfname];
-		for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
-			this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
+			//We have to consider the configuration of this network function
+			list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
+			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
+				this->addNetworkFunctionControlPort(vtba->getName(), *cp);
+
+			//We have to consider the environment variables of this network function
+			list<string> environment_variables = new_nfs_env_variables[vnfname];
+			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
+				this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
+		}
 #endif
 	}
 

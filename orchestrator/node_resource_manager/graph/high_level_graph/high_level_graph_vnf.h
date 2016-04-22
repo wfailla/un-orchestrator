@@ -76,6 +76,11 @@ public:
 	VNFs(string id, string name, list<string> groups, string vnf_template, list<vector<string> > ports);
 #endif
 
+	/**
+	*	@brief: add a new port to the network function
+	*/
+	bool addPort(vector<string> port);
+
 	string getId();
 	string getName();
 	list<string> getGroups();
@@ -88,6 +93,9 @@ public:
 
 	~VNFs();
 
+	/**
+	*	Check if two VNFs are the same. Note that they are the same if they have the same name.
+	**/
 	bool operator==(const VNFs &other) const;
 
 	Object toJSON();

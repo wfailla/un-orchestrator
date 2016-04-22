@@ -32,6 +32,12 @@ using namespace std;
 namespace highlevel
 {
 
+typedef enum{
+	ADDED,
+	UPDATED,
+	NOTHING
+	}addvnf_t;
+
 /**
 *	@brief: describes the graph as it has been required from the extern, through
 *		the REST API exported by the un-orchestrator
@@ -297,9 +303,11 @@ public:
 	list<EndPointVlan> getEndPointsVlan();
 
 	/**
-	*	@brief: Add a new vnf to the graph
+	*	@brief: Add a new vnf to the graph. In case the VNF is already part of the
+	*			graph but new ports have been specified, the new ports are added to
+	*			the graph.
 	*/
-	bool addVNF(VNFs vnf);
+	addvnf_t addVNF(VNFs vnf);
 
 	/**
 	*	@brief: Return the vnfs of the graph

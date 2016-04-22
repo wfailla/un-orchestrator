@@ -614,6 +614,7 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 
+		//FIXME: not sure that this check is necessary
 		if(computeController->getNFSelectedImplementation(nf->first))
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t* NF \"%s\" is already part of the graph; it is not retrieved again",nf->first.c_str());
