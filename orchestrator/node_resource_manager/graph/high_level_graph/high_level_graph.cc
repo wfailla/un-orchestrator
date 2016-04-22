@@ -434,7 +434,19 @@ Object Graph::toJSON()
 
 bool Graph::stillExistNF(string nf)
 {
+#if 0
 	if(networkFunctions.count(nf) == 0)
+		return false;
+#endif
+
+	list<VNFs>::iterator the_vnfs = vnfs.begin();
+	for(; the_vnfs != vnfs.end(); the_vnfs++)
+	{
+		if(nf == the_vnfs->getName())
+			//The VNF still exist
+			break;
+	}
+	if(the_vnfs == vnfs.end())
 		return false;
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
@@ -460,7 +472,9 @@ bool Graph::stillExistNF(string nf)
 		}
 	}
 
+#if 0
 	networkFunctions.erase(nf);
+#endif
 
 	list<VNFs>::iterator vnf = vnfs.begin();
 	for(; vnf != vnfs.end(); vnf++)

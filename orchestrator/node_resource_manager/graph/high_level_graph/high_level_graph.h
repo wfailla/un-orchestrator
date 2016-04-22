@@ -45,17 +45,24 @@ typedef enum{
 class Graph
 {
 public:
+#if 0
 	typedef map<string, list<unsigned int> > t_nfs_ports_list;
 	typedef map<string, map<unsigned int, port_network_config_t > > t_nfs_configuration;
+#endif
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	typedef map<string, list<port_mapping_t > > t_nfs_control;
+
+#if 0
 	typedef map<string, list<string> > t_nfs_env_variables;
+#endif
+
 #endif
 
 private:
 	//FIXME: this class contains a lot of information already specified in the class VNFs.
 
+#if 0
 	/**
 	*	@brief: for each NF attached to the graph specifies a list of ports. For
 	*		instance, if in the graph there is NF:1 and NF:2,
@@ -68,6 +75,7 @@ private:
 	* 		(mac address, ip address), one for each port
 	*/
 	t_nfs_configuration networkFunctionsConfiguration; //this is a map <nf name, map <port id, port configuration> >
+#endif
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
@@ -76,12 +84,15 @@ private:
 	*/
 	t_nfs_control networkFunctionsControlPorts; //this is a map <nf name, list <control ports> >
 
+#if 0
 	/**
 	*	@brief: for each VNF attached to the graph, specifies a list of environment variables
 	*		to be set to the VNF itself. Each element of the list is in the form "variable=value"
 	*
 	*/
 	t_nfs_env_variables networkFunctionsEnvironmentVariables; //this is a map <nf name, list <env variable> >
+#endif
+
 #endif
 
 	/**
