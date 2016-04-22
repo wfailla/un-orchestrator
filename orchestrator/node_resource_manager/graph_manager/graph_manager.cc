@@ -804,8 +804,12 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		const Description* descr = computeController->getNFSelectedImplementation(nf_name);
 		map<unsigned int, PortType> nf_ports_type = descr->getPortTypes();  // Port types as specified by the retrieved and selected NF implementation
 
-		if (nf_ports_type.size() != nf_ports.size())
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from (%d) graph does not match number of ports from NF description (%d) for \"%s\"",nf_ports.size(),nf_ports_type.size(), nf_name.c_str());
+		if (nf_ports.size() > nf_ports_type.size())
+		{
+			//TODO: when we select the implementation, we should take into account the number of ports supported by the VNF!
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from (%d) graph is greater then the number of ports from NF description (%d) for \"%s\"",nf_ports.size(),nf_ports_type.size(), nf_name.c_str());
+			return false;
+		}
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" selected implementation (type %d) defines type for %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
 		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
@@ -988,15 +992,18 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nfs_ports.size());
 		map<unsigned int, port_network_config >::iterator nd = nfs_ports_configuration.begin();
-		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++, nd++)
+		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++/*, nd++*/)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s -> %d",(n->first).c_str(),nd->first);
-			if(!(nd->second.mac_address).empty())
+					//TODO: restore this!
+//			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s -> %d",(n->first).c_str(),nd->first);
+
+/*			if(!(nd->second.mac_address).empty())
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tMac address -> %s",(nd->second.mac_address).c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 			if(!(nd->second.ip_address).empty())
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tIp address -> %s",(nd->second.ip_address).c_str());
 #endif
+*/
 		}
 	}
 

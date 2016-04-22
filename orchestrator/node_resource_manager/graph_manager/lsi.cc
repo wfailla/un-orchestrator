@@ -24,7 +24,12 @@ LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_p
 #endif
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding network function '%s' to the LSI",nf->getName().c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "It contains the following ports: ");
 		list<unsigned int> nf_ports = nf->getPortsId();
+		for(list<unsigned int>::iterator port = nf_ports.begin(); port != nf_ports.end(); port++)
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*port);
+
 		addNF(nf->getName()/*first*/, /*nf->second*/nf_ports, a_nfs_ports_type[nf->/*first*/getName()]);
 	}
 

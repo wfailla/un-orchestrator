@@ -168,7 +168,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		else
 		{
 			con_info->message[con_info->length] = '\0';
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "++++Method \"%s\" not implemented",method);
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method \"%s\" not implemented",method);
 			struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 			int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
 			MHD_destroy_response (response);

@@ -982,9 +982,10 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		string vnfname = vtba->getName();
 		addvnf_t status = this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
 		assert(status != NOTHING);
+#if 0
 		if(new_nfs_ports_configuration.count(vnfname) != 0)
 			//Add the configuration for the new ports
-#if 0
+
 			this->addNetworkFunctionPortConfiguration(vtba->getName(),new_nfs_ports_configuration[vnfname]);
 #endif
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
@@ -994,16 +995,16 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 
 			//We have to consider the configuration of this network function
 			list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
-#if 0
+/*
 			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
 				this->addNetworkFunctionControlPort(vtba->getName(), *cp);
-#endif
+*/
 			//We have to consider the environment variables of this network function
 			list<string> environment_variables = new_nfs_env_variables[vnfname];
-#if 0
+/*
 			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
 				this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
-#endif
+*/
 		}
 #endif
 	}

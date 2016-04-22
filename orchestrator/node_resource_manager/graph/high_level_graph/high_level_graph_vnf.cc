@@ -12,9 +12,7 @@ VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, lis
 #endif
 {
 	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
-	{
 		this->ports.push_back((*p));
-	}
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	this->control_ports.insert(this->control_ports.end(),control_ports.begin(),control_ports.end());
@@ -80,6 +78,7 @@ list<unsigned int> VNFs::getPortsId()
 	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
 	{
 		string the_id = p->id;
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Extracting ID for port: %s",p->id.c_str());
 		unsigned int id = extract_number_from_id(the_id);
 		ids.push_back(id);
 	}
@@ -161,8 +160,10 @@ unsigned int VNFs::extract_number_from_id(string port_id)
 	char delimiter[] = ":";
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,port_id.c_str());
-	char *pnt=strtok((char*)port_id.c_str(), delimiter);
+	char *pnt=strtok(/*(char*)port_id.c_str()*/tmp, delimiter);
 	unsigned int port = 0;
+
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Extracting ID for port: %s",port_id.c_str());
 
 	int i = 0;
 	while( pnt!= NULL )
@@ -171,13 +172,14 @@ unsigned int VNFs::extract_number_from_id(string port_id)
 		{
 			case 1:
 				sscanf(pnt,"%u",&port);
-				return port;
+				return (port+1);
 			break;
 		}
 
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
+	assert(0); //If the code is here, it means the the port_id was not in the form "string:number"
 	return port;
 }
 
