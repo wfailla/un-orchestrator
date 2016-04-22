@@ -85,6 +85,21 @@ list<unsigned int> VNFs::getPortsId()
 	return ids;
 }
 
+map<unsigned int, port_network_config > VNFs::getPortsID_configuration()
+{
+	map<unsigned int, port_network_config > mapping;
+
+	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
+	{
+		string the_id = p->id;
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Extracting ID for port: %s",p->id.c_str());
+		unsigned int id = extract_number_from_id(the_id);
+		mapping[id] = p->configuration;
+	}
+
+	return mapping;
+}
+
 Object VNFs::toJSON()
 {
 	Object vnf;
@@ -107,11 +122,11 @@ Object VNFs::toJSON()
 
 		pp[_ID] = p->id.c_str();
 		pp[_NAME] = p->name.c_str();
-		if(strlen(p->mac_address.c_str()) != 0)
-			pp[PORT_MAC] = p->mac_address.c_str();
+		if(strlen(p->configuration.mac_address.c_str()) != 0)
+			pp[PORT_MAC] = p->configuration.mac_address.c_str();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		if(strlen(p->ip_address.c_str()) != 0)
-			pp[PORT_IP] = p->ip_address.c_str();
+		if(strlen(p->configuration.ip_address.c_str()) != 0)
+			pp[PORT_IP] = p->configuration.ip_address.c_str();
 #endif
 
 		portS.push_back(pp);
@@ -182,6 +197,5 @@ unsigned int VNFs::extract_number_from_id(string port_id)
 	assert(0); //If the code is here, it means the the port_id was not in the form "string:number"
 	return port;
 }
-
 
 }

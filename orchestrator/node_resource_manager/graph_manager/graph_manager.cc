@@ -748,7 +748,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
 #endif
 	list<highlevel::VNFs> network_functions = graph->getVNFs();
+#if 0
 	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
+#endif
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
 	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
@@ -986,9 +988,12 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		}
 #endif
 
+#if 0
 		map<string,unsigned int> nfs_ports = lsi->getNetworkFunctionsPorts(*it);
 
+
 		map<unsigned int, port_network_config > nfs_ports_configuration = network_functions_ports_configuration[*it];
+
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nfs_ports.size());
 		map<unsigned int, port_network_config >::iterator nd = nfs_ports_configuration.begin();
@@ -1004,6 +1009,27 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tIp address -> %s",(nd->second.ip_address).c_str());
 #endif
 */
+		}
+#endif
+	}
+
+	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tNF %s:",(nf->getName()).c_str());
+		list<highlevel::vnf_port_t> nf_ports = nf->getPorts();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nf_ports.size());
+		
+		for(list<highlevel::vnf_port_t>::iterator n = nf_ports.begin(); n != nf_ports.end(); n++)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s",(n->name).c_str());
+			port_network_config config = n->configuration;
+
+			if(!(config.mac_address).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tMac address -> %s",(config.mac_address).c_str());
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+			if(!(config.ip_address).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tIP address -> %s",(config.ip_address).c_str());
+#endif
 		}
 	}
 
@@ -1137,7 +1163,10 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		thr[i].nf_name = nf->getName(); //first;
 		thr[i].computeController = computeController;
 		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->getName()/*first*/);
+#if 0
 		thr[i].portsConfiguration = network_functions_ports_configuration[nf->getName()/*first*/];
+#endif
+		thr[i].portsConfiguration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		thr[i].controlConfiguration = network_functions_control_configuration[nf->getName()/*first*/];
 		thr[i].environmentVariables = network_functions_environment_variables[nf->getName()/*first*/];
@@ -1649,8 +1678,11 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	{
 		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->getName()/*first*/); //Returns the map <port ID, port name on switch>
 		//TODO: the following information should be retrieved through the highlevel graph
+#if 0
 		map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = diff->getNetworkFunctionsConfiguration();
 		map<unsigned int, port_network_config_t > nfs_ports_configuration = new_nfs_ports_configuration[nf->getName()/*first*/];
+#endif
+		map<unsigned int, port_network_config_t > nfs_ports_configuration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
 		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->getName()/*first*/];

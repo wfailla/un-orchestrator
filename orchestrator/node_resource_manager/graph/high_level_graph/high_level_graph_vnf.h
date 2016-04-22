@@ -4,6 +4,8 @@
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
 
+#include "nf_port_configuration.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -35,10 +37,11 @@ typedef struct
 {
 	string id;
 	string name;
-	string mac_address;
+/*	string mac_address;
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	string ip_address;
-#endif
+#endif*/
+	port_network_config_t configuration;
 }vnf_port_t;
 
 class VNFs
@@ -110,10 +113,17 @@ public:
 	*	@brief: return the list of ports of the VNF
 	*/
 	list<vnf_port_t> getPorts();
+
 	/*
 	*	@brief: only return the list of port ID of the VNF
 	*/
 	list<unsigned int> getPortsId();
+
+	/*
+	*	@brief: return a mapping of port ID - port configuration, for all the
+	*			ports of the VNF
+	*/
+	map<unsigned int, port_network_config > getPortsID_configuration();
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	list<pair<string, string> >  getControlPorts();

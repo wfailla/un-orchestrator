@@ -318,7 +318,9 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 										const Array& ports_array = nf_value.getArray();
 
+#if 0
 										map<unsigned int, port_network_config_t > vnf_port_config;
+#endif
 
 										//Itearate on the ports
 										for( unsigned int ports = 0; ports < ports_array.size(); ++ports )
@@ -335,7 +337,9 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											Object port = ports_array[ports].getObject();
 
 											highlevel::vnf_port_t port_descr;
+#if 0
 											port_network_config_t port_config;
+#endif
 
 											//Parse the port
 											for(Object::const_iterator p = port.begin(); p != port.end(); p++)
@@ -362,9 +366,11 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												else if(p_name == PORT_MAC)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_MAC,p_value.getString().c_str());
-
+#if 0
 													port_config.mac_address = p_value.getString();
 													port_descr.mac_address = port_config.mac_address;
+#endif
+													port_descr.configuration.mac_address = p_value.getString();
 												}
 												else if(p_name == PORT_IP)
 												{
@@ -373,9 +379,11 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													continue;
 #else
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
-
+#if 0
 													port_config.ip_address = p_value.getString();
 													port_descr.ip_address = port_config.ip_address;
+#endif
+													port_descr.configuration.ip_address = p_value.getString();
 #endif
 												}
 												else
@@ -386,8 +394,8 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											}
 
 											//Each VNF port has its own configuration if provided
-											vnf_port_config[ports+1] = port_config;
 #if 0
+											vnf_port_config[ports+1] = port_config;
 											//Add NF ports descriptions
 											if(!graph.addNetworkFunctionPortConfiguration(name, vnf_port_config))
 											{

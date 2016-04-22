@@ -24,7 +24,7 @@ unsigned int MatchParser::nfPort(string name_port)
 	char delimiter[] = ":";
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,name_port.c_str());
-	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+	char *pnt=strtok((char*)/*name_port.c_str()*/tmp, delimiter);
 	unsigned int port = 0;
 
 	int i = 0;
@@ -50,7 +50,7 @@ bool MatchParser::nfIsPort(string name_port)
 	char delimiter[] = ":";
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,name_port.c_str());
-	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+	char *pnt=strtok((char*)/*name_port.c_str()*/tmp, delimiter);
 	unsigned int port = 0;
 
 	int i = 0;
@@ -76,7 +76,7 @@ string MatchParser::epName(string name_port)
 	char delimiter[] = ":";
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,name_port.c_str());
-	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+	char *pnt=strtok((char*)/*name_port.c_str()*/tmp, delimiter);
 
 	int i = 0;
 	while( pnt!= NULL )

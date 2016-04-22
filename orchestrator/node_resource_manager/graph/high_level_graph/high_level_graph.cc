@@ -138,12 +138,12 @@ map<string, list<unsigned int> > Graph::getNetworkFunctionsPorts()
 {
 	return networkFunctions;
 }
-#endif
 
 map<string, map<unsigned int, port_network_config > > Graph::getNetworkFunctionsConfiguration()
 {
 	return networkFunctionsConfiguration;
 }
+#endif
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 map<string, list<port_mapping_t > > Graph::getNetworkFunctionsControlPorts()
@@ -872,6 +872,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is already in the graph",mit->getId().c_str());
 	}
 
+#if 0
 	// f) Handle the configuration of the VNF
 	
 	//Insert only the configuration related to the network functions inserted in "diff"
@@ -888,6 +889,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 #endif
 		}
 	}
+#endif
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > other_NetworkFunctionsControlPorts = other->getNetworkFunctionsControlPorts();
@@ -971,7 +973,10 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 
 	//Update the network functions
 	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
+#if 0
 	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = other->getNetworkFunctionsConfiguration(); //This contains only the configuration for the new ports
+#endif
+
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
 	map<string, list<string> > new_nfs_env_variables = other->getNetworkFunctionsEnvironmentVariables();

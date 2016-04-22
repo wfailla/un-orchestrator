@@ -240,12 +240,12 @@ public:
 	*	@brief: Return the NFs of the graph and the ports they require
 	*/
 	t_nfs_ports_list getNetworkFunctionsPorts();
-#endif
 
 	/**
 	*	@brief: Return the VNFs of the graph and the description of the ports they require
 	*/
 	t_nfs_configuration getNetworkFunctionsConfiguration();
+#endif
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
@@ -329,7 +329,7 @@ public:
 	addvnf_t addVNF(VNFs vnf);
 
 	/**
-	*	@brief: Return the vnfs of the graph
+	*	@brief: Return the VNFs of the graph
 	*/
 	list<VNFs> getVNFs();
 
