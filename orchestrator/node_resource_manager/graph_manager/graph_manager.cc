@@ -82,8 +82,6 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 	vector<VLink> dummy_virtual_links;
 	map<string,nf_t>  nf_types;
 
-	unsigned int i = 0;
-
 	LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort.str(), phyPorts, dummy_network_functions,
 	dummy_endpoints,dummy_virtual_links,dummy_nfs_ports_type);
 
@@ -168,86 +166,93 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 
 	//if control is in band install the default rules on LSI-0 otherwise skip this code
 	if(orchestrator_in_band && !un_interface.empty() && !un_address.empty())
+		handleInBandController(lsi,controller);
+}
+
+void GraphManager::handleInBandController(LSI *lsi, Controller *controller)
+{
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Handling in band controller");
+
+	unsigned int i = 0;
+
+	//remove first " character
+	un_interface.erase(0,1);
+	//remove last " character
+	un_interface.erase(un_interface.size()-1,1);
+
+	//Install the default rules on LSI-0
+	map<string,unsigned int> lsi_ports = lsi->getPhysicalPorts();
+	lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
+	if(lsi_ports.count((char *)un_interface.c_str()) == 0)
 	{
-		//remove first " character
-		un_interface.erase(0,1);
-		//remove last " character
-		un_interface.erase(un_interface.size()-1,1);
-
-		//Install the default rules on LSI-0
-		lowlevel::Match lsi0Match, lsi0Match0, lsi0Match1, lsi0Match2;
-		if(lsi_ports.count((char *)un_interface.c_str()) == 0)
-		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Control interface does not exist in a list of available plysical ports.");
-			throw GraphManagerException();
-		}
-
-		map<string,unsigned int>::iterator translation = lsi_ports.find((char *)un_interface.c_str());
-
-		/* It is necessary to intercept incoming arp requests with IP source equal to un_interface?
-
-		lsi0Match.setArpSpa((char *)un_address.c_str());
-		lsi0Match.setEthType(2054 & 0xFFFF);
-		lsi0Match.setInputPort(translation->second);
-
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule);
-
-		i++;
-		*/
-
-		lsi0Match0.setArpTpa((char *)un_address.c_str());
-		lsi0Match0.setEthType(2054 & 0xFFFF);
-		lsi0Match0.setInputPort(translation->second);
-
-		lsi0Match1.setIpv4Dst((char *)un_address.c_str());
-		lsi0Match1.setEthType(2048 & 0xFFFF);
-		lsi0Match1.setInputPort(translation->second);
-
-		lowlevel::Action lsi0Action(true);
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		stringstream newRuleID;
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule0);
-
-		i++;
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		newRuleID.str("");
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule1);
-
-		i++;
-
-		lowlevel::Match lsi0Match3(true);
-
-		lowlevel::Action lsi0Action1(translation->second);
-
-		//Create the rule and add it to the graph
-		//The rule ID is created as follows DEFAULT-GRAPH_ID
-		newRuleID.str("");
-		newRuleID << DEFAULT_GRAPH << "_" << i;
-		lowlevel::Rule lsi0Rule3(lsi0Match3,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
-		graphLSI0lowLevel.addRule(lsi0Rule3);
-
-		graphLSI0lowLevel.print();
-
-		//Insert new rules into the LSI-0
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
-		controller->installNewRules(graphLSI0lowLevel.getRules());
-
-		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Control interface does not exist in a list of available plysical ports.");
+		throw GraphManagerException();
 	}
 
+	map<string,unsigned int>::iterator translation = lsi_ports.find((char *)un_interface.c_str());
+
+	/* It is necessary to intercept incoming arp requests with IP source equal to un_interface?
+
+	lsi0Match.setArpSpa((char *)un_address.c_str());
+	lsi0Match.setEthType(2054 & 0xFFFF);
+	lsi0Match.setInputPort(translation->second);
+
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule);
+
+	i++;
+	*/
+
+	lsi0Match0.setArpTpa((char *)un_address.c_str());
+	lsi0Match0.setEthType(2054 & 0xFFFF);
+	lsi0Match0.setInputPort(translation->second);
+
+	lsi0Match1.setIpv4Dst((char *)un_address.c_str());
+	lsi0Match1.setEthType(2048 & 0xFFFF);
+	lsi0Match1.setInputPort(translation->second);
+
+	lowlevel::Action lsi0Action(true);
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	stringstream newRuleID;
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule0(lsi0Match0,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule0);
+
+	i++;
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	newRuleID.str("");
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule1(lsi0Match1,lsi0Action,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule1);
+
+	i++;
+
+	lowlevel::Match lsi0Match3(true);
+
+	lowlevel::Action lsi0Action1(translation->second);
+
+	//Create the rule and add it to the graph
+	//The rule ID is created as follows DEFAULT-GRAPH_ID
+	newRuleID.str("");
+	newRuleID << DEFAULT_GRAPH << "_" << i;
+	lowlevel::Rule lsi0Rule3(lsi0Match3,lsi0Action1,newRuleID.str(),HIGH_PRIORITY);
+	graphLSI0lowLevel.addRule(lsi0Rule3);
+
+	graphLSI0lowLevel.print();
+
+	//Insert new rules into the LSI-0
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
+	controller->installNewRules(graphLSI0lowLevel.getRules());
+
+	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 }
 
 GraphManager::~GraphManager()

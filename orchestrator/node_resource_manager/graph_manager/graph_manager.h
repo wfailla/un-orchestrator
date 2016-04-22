@@ -229,6 +229,14 @@ private:
 	*/
 	bool canDeleteFlow(highlevel::Graph *graph, string flowID);
 
+	/**
+	*	@brief: do the operation required to set up an in band control. This requires to set up some rules in the LSI-0.
+	*
+	*	@param: lsi			contains information related to the LSI-0
+	*	@param: controller	Openflow controller used to configure the LSI-0
+	*/
+	void handleInBandController(LSI *lsi, Controller *controller);
+
 public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
