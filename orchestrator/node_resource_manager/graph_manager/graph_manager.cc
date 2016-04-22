@@ -1527,7 +1527,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 					stringstream ss;
         				ss << nf->first << "_" << port_id;
         				string port_name = ss.str();
-					for(list<struct nf_port_info>::iterator lsiPort_it = pi_it->second.begin(); lsiPort_it != pi_it->second.end; ++lsiPort_it)
+					for(list<struct nf_port_info>::iterator lsiPort_it = pi_it->second.begin(); lsiPort_it != pi_it->second.end(); ++lsiPort_it)
 					{
 						struct nf_port_info portData = (*lsiPort_it);
 						if(portData.port_name.compare(port_name) == 0)

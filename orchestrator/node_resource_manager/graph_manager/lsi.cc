@@ -387,15 +387,14 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 	//In that case, this function should be modified so that the nfData (already existing) of the network
 	//function is retrieved and updated. 
 	assert(network_functions.count(nf_name) == 0);
-	
+	nfData nf_data;	
 	if(network_functions.count(nf_name) != 0)
 	{
-		nfData nf_data = network_functions[nf_name];
+		nf_data = network_functions[nf_name];
 		nf_data.nf_ports_id.insert(nf_data.nf_ports_id.end(), ports.begin(), ports.end());
 	}
 	else
 	{
-		nfData nf_data;
 		nf_data.nf_ports_id = ports;
 	}
 
