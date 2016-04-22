@@ -41,7 +41,7 @@ Then execute the following commands:
 
 	replace row 791 of [un-orchestrator]/orchestrator/node_resource_manager/rest_server/match_parser.cc with this "if((sscanf(value.getString().c_str(),"%"SCNd64,&ipv6FLabel) != 1) || (ipv6FLabel > 4294967295UL) )"
 	
-	comments row 152 of [OpenWrt-SDK-15.05-bcm53xx_gcc-4.8-linaro_uClibc-0.9.33.\_eabi.Linux-x86_64]/include/package-ipkg.mk
+	comments row 187 of [OpenWrt-SDK-15.05-bcm53xx_gcc-4.8-linaro_uClibc-0.9.33.\_eabi.Linux-x86_64]/include/package-ipkg.mk
 		
 	make V=99
 
