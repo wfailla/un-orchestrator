@@ -1254,7 +1254,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*		- control connections
 	**/
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s'...",graphID.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' with new 'pieces'...",graphID.c_str());
 
 	assert(tenantLSIs.count(graphID) != 0);
 
@@ -1334,8 +1334,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	set<string> phyPorts = diff->getPorts();
 
 	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctionsPorts();
-//	map<string, vector<string> > tmp_endpoints = diff->getEndPoints();//#ADDED
-	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();//#ADDED
+	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
 
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 
@@ -1684,11 +1683,16 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		throw GraphManagerException();
 	}
 
-	//The new flows have been added to the graph!
+	//The new flows, endpoints and VNFs have been added to the graph!
 
 	delete(diff);
 	diff = NULL;
 	return true;
+}
+
+bool GraphManager::updateGraph_removePieces(string graphID, highlevel::Graph *newGraph)
+{
+
 }
 
 vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph *graph)

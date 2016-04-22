@@ -272,11 +272,14 @@ public:
 	/**
 	*	@brief: add a new piece to an existing graph with
 	*		a specific ID.
-	*
-	*	XXX: note that an existing NF does not change: if a new port is required, the update
-	*	of the graph fails
 	*/
 	bool updateGraph(string graphID, highlevel::Graph *newGraph);
+
+	/**
+	*	@brief: rempve pieces from an existing graph with a
+	*		specific ID.
+	*/
+	bool updateGraph_removePieces(string graphID, highlevel::Graph *newGraph)
 
 	/**
 	*	@brief: remove the flow with a specified ID, from a specified graph
