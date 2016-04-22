@@ -137,8 +137,8 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 								//list of environment variables in the form "variable=value"
 								list<string> environmentVariables;
 #endif
-								//list of four element port id, port name, mac address and ip address related by the VNF
-								list<vector<string> > portS;
+								//list of ports of the VNF
+								list<highlevel::vnf_port_t> portS;
 
 								//Parse the network function
 								for(Object::const_iterator nf = network_function.begin(); nf != network_function.end(); nf++)
@@ -328,8 +328,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											//This is a VNF port, with an ID and a name
 											Object port = ports_array[ports].getObject();
 
-											vector<string> port_descr(4);
-
+											highlevel::vnf_port_t port_descr;
 											port_network_config_t port_config;
 
 											//Parse the port
@@ -344,7 +343,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 													port_id = p_value.getString();
 
-													port_descr[0] = port_id;
+													port_descr.id = port_id;
 												}
 												else if(p_name == _NAME)
 												{
@@ -352,14 +351,14 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 													port_name = p_value.getString();
 
-													port_descr[1] = port_name;
+													port_descr.name = port_name;
 												}
 												else if(p_name == PORT_MAC)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_MAC,p_value.getString().c_str());
 
 													port_config.mac_address = p_value.getString();
-													port_descr[2] = port_config.mac_address;
+													port_descr.mac_address = port_config.mac_address;
 												}
 												else if(p_name == PORT_IP)
 												{
@@ -370,7 +369,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
 
 													port_config.ip_address = p_value.getString();
-													port_descr[3] = port_config.ip_address;
+													port_descr.ip_address = port_config.ip_address;
 #endif
 												}
 												else
