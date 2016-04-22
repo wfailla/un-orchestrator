@@ -1344,8 +1344,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	set<string> GREsFromEndPoint = vlVector[5];
 
 	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)
-	unsigned int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size(); //(vlNFs.size() > ((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size())) ? vlNFs.size():((vlPhyPorts.size() > vlEndPointsGre.size()) ? vlPhyPorts.size():vlEndPointsGre.size());
-	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()  + vlEndPointsGre.size();
+	unsigned int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size(); //The same virtual link can be exploited both towards VNFs and towards physical ports
+	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()  + vlEndPointsGre.size(); //TODO: optimize this; in fact, the same virtual link could be exploited both towards GRE endpoints and towards internal endpoints
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d virtual links are required to connect the new part of the LSI with LSI-0",numberOfVLrequired);
 
