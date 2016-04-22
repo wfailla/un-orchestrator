@@ -97,6 +97,7 @@ list<EndPointVlan> Graph::getEndPointsVlan()
 	return endPointsVlan;
 }
 
+//FIXME the return value is probably useless
 addvnf_t Graph::addVNF(VNFs vnf)
 {
 	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end(); v++)
@@ -995,8 +996,8 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = other->getNetworkFunctionsConfiguration(); //This contains only the configuration for the new ports
 #endif
 
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 #if 0
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
 	map<string, list<string> > new_nfs_env_variables = other->getNetworkFunctionsEnvironmentVariables();
 #endif
