@@ -37,10 +37,6 @@ typedef struct
 {
 	string id;
 	string name;
-/*	string mac_address;
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	string ip_address;
-#endif*/
 	port_network_config_t configuration;
 }vnf_port_t;
 

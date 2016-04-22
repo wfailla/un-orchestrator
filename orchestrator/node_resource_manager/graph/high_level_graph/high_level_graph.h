@@ -48,7 +48,7 @@ public:
 #if 0
 	typedef map<string, list<unsigned int> > t_nfs_ports_list;
 	typedef map<string, map<unsigned int, port_network_config_t > > t_nfs_configuration;
-#endif
+
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	typedef map<string, list<port_mapping_t > > t_nfs_control;
@@ -57,6 +57,7 @@ public:
 	typedef map<string, list<string> > t_nfs_env_variables;
 #endif
 
+#endif
 #endif
 
 private:
@@ -77,6 +78,7 @@ private:
 	t_nfs_configuration networkFunctionsConfiguration; //this is a map <nf name, map <port id, port configuration> >
 #endif
 
+#if 0
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
 	*	@brief: for each VNF attached to the graph, specifies a list of pair elements
@@ -84,7 +86,7 @@ private:
 	*/
 	t_nfs_control networkFunctionsControlPorts; //this is a map <nf name, list <control ports> >
 
-#if 0
+
 	/**
 	*	@brief: for each VNF attached to the graph, specifies a list of environment variables
 	*		to be set to the VNF itself. Each element of the list is in the form "variable=value"
