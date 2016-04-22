@@ -1704,7 +1704,7 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 		highlevel::Match match = rule->getMatch();
 		if(action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION)
 		{
-			if(match.matchOnPort() || /*FIXME: match gre -> action NFs requires a virtual link? match.matchOnEndPointGre() ||*/ match.matchOnEndPointInternal())
+			if(match.matchOnPort() || /* match.matchOnEndPointGre() ||*/ match.matchOnEndPointInternal())
 			{
 				highlevel::ActionNetworkFunction *action_nf = (highlevel::ActionNetworkFunction*)action;
 				stringstream ss;

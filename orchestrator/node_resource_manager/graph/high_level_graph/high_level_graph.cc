@@ -930,7 +930,6 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	//Update the network functions ports
 	highlevel::Graph::t_nfs_ports_list networkFunctions = other->getNetworkFunctionsPorts();
 	//networkFunctions maps, for each network function, its name with the list of port IDs
-	//TODO: consider the case in which a VNF has new ports
 	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
 	{
 		this->addNetworkFunction(nf->first);
