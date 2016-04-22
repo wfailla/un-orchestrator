@@ -4,7 +4,7 @@ namespace highlevel
 {
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<pair<string, string> > control_ports, list<string> environment_variables) :
+VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<port_mapping_t> control_ports, list<string> environment_variables) :
 	id(id), name(name), groups(groups), vnf_template(vnf_template)
 #else
 VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports) :
@@ -134,12 +134,12 @@ Object VNFs::toJSON()
 	vnf[VNF_PORTS] = portS;
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
+	for(list<port_mapping_t>::iterator c = control_ports.begin(); c != control_ports.end(); c++)
 	{
 		Object cc;
 
-		cc[HOST_PORT] = atoi((*c).first.c_str());
-		cc[VNF_PORT] = atoi((*c).second.c_str());
+		cc[HOST_PORT] = atoi((*c).host_port.c_str());
+		cc[VNF_PORT] = atoi((*c).guest_port.c_str());
 
 		ctrl_ports.push_back(cc);
 	}
@@ -159,7 +159,7 @@ Object VNFs::toJSON()
 }
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-list<pair<string, string> >  VNFs::getControlPorts()
+list<port_mapping_t> VNFs::getControlPorts()
 {
 	return control_ports;
 }

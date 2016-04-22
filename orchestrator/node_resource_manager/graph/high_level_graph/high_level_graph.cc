@@ -145,13 +145,13 @@ map<string, map<unsigned int, port_network_config > > Graph::getNetworkFunctions
 }
 #endif
 
+#if 0
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 map<string, list<port_mapping_t > > Graph::getNetworkFunctionsControlPorts()
 {
 	return networkFunctionsControlPorts;
 }
 
-#if 0
 map<string, list<string> > Graph::getNetworkFunctionsEnvironmentVariables()
 {
 	return networkFunctionsEnvironmentVariables;
@@ -675,7 +675,6 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	}
 #endif
 	// c) Add the new NFs to "diff"
-	//FIXME: why do we have two different representations for the network functions in a graph?
 
 	//Retrieve the network functions already instantiated (and convert them in a set)
 	list<highlevel::VNFs> vnfs_already_there = this->getVNFs();
@@ -908,6 +907,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	}
 #endif
 
+#if 0
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > other_NetworkFunctionsControlPorts = other->getNetworkFunctionsControlPorts();
 	for(map<string, list<port_mapping_t> >::iterator control = other_NetworkFunctionsControlPorts.begin(); control != other_NetworkFunctionsControlPorts.end(); control++)
@@ -922,8 +922,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 #endif
 		}
 	}
-
-#if 0
+	
 	map<string, list<string> > other_NetworkFunctionsEnvironmentVariables = other->getNetworkFunctionsEnvironmentVariables();
 	for(map<string, list<string> >::iterator envvar = other_NetworkFunctionsEnvironmentVariables.begin(); envvar != other_NetworkFunctionsEnvironmentVariables.end(); envvar++)
 	{
@@ -997,8 +996,8 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 #endif
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
 #if 0
+	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
 	map<string, list<string> > new_nfs_env_variables = other->getNetworkFunctionsEnvironmentVariables();
 #endif
 #endif
@@ -1008,6 +1007,8 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		string vnfname = vtba->getName();
 		addvnf_t status = this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
 		assert(status != NOTHING);
+		
+#if 0
 #if 0
 		if(new_nfs_ports_configuration.count(vnfname) != 0)
 			//Add the configuration for the new ports
@@ -1034,6 +1035,7 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 				this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
 */
 		}
+#endif
 #endif
 	}
 

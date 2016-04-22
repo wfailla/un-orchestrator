@@ -76,7 +76,7 @@ private:
 	/**
 	*	@brief: the list of control ports configuration of the VNF
 	*/
-	list<pair<string, string> > control_ports;
+	list<port_mapping_t> control_ports;
 
 	/**
 	*	@brief: list of environment variables to be set to the VNF.
@@ -94,7 +94,7 @@ private:
 public:
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<pair<string, string> > control_ports, list<string> environment_variables);
+	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<port_mapping_t> control_ports, list<string> environment_variables);
 #else
 	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports);
 #endif
@@ -126,7 +126,10 @@ public:
 	map<unsigned int, port_network_config > getPortsID_configuration();
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	list<pair<string, string> >  getControlPorts();
+	/*
+	*	@brief: return the list of control connections associated with the VNF
+	*/
+	list<port_mapping_t> getControlPorts();
 
 	/*
 	*	@brief: return the list of environment variables associated with the VNF

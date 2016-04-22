@@ -135,7 +135,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 								int vnf_tcp_port = 0, host_tcp_port = 0;
 								//list of pair element "host TCP port" and "VNF TCP port" related by the VNF
-								list<pair<string, string> > controlPorts;
+								list<port_mapping_t> controlPorts;
 								//list of environment variables in the form "variable=value"
 								list<string> environmentVariables;
 #endif
@@ -235,15 +235,22 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											ss << host_tcp_port;
 
 											sss << vnf_tcp_port;
-
+#if 0
 											port_mapping.host_port = ss.str();
 											port_mapping.guest_port = sss.str();
+#endif
 
 #if 0
 											//Add VNF control port description
 											graph.addNetworkFunctionControlPort(name, port_mapping);
 #endif
+											port_mapping_t control_port;
+											control_port.host_port = ss.str();
+											control_port.guest_port = sss.str();
+#if 0
 											controlPorts.push_back(make_pair(ss.str(), sss.str()));
+#endif
+											controlPorts.push_back(control_port);
 										}//end iteration on the control ports
 #endif
 									}

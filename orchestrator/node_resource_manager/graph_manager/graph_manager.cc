@@ -751,12 +751,12 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 #if 0
 	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
 #endif
+#if 0
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
-#if 0
+
 	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
 #endif
-
 #endif
 	list<highlevel::EndPointInternal> endpointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
@@ -961,6 +961,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	for(map<string,unsigned int>::iterator p = lsi_ports.begin(); p != lsi_ports.end(); p++)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %d",(p->first).c_str(),p->second);
 #endif
+#if 0
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network functions (%d):",nfs.size());
 	for(set<string>::iterator it = nfs.begin(); it != nfs.end(); it++)
 	{
@@ -978,7 +979,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
 			}
 		}
-#if 0
+
 		if(network_functions_environment_variables.count(*it) != 0)
 		{
 			list<string> nfs_environment_variables = network_functions_environment_variables[*it];
@@ -1015,8 +1016,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 #endif
 */
 		}
-#endif
 	}
+#endif
 
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
@@ -1044,6 +1045,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tEnvironment variables (%d):",nf_environment_variables.size());
 			for(list<string>::iterator ev = nf_environment_variables.begin(); ev != nf_environment_variables.end(); ev++)
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t* %s",ev->c_str());
+		}
+		
+		list<port_mapping_t> control_ports = nf->getControlPorts();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tControl interfaces (%d):",control_ports.size());
+		for(list<port_mapping_t >::iterator n = control_ports.begin(); n != control_ports.end(); n++)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tHost TCP port -> %s",(n->host_port).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
 		}
 #endif
 	}
@@ -1183,10 +1192,11 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 #endif
 		thr[i].portsConfiguration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		thr[i].controlConfiguration = network_functions_control_configuration[nf->getName()/*first*/];
 #if 0
+		thr[i].controlConfiguration = network_functions_control_configuration[nf->getName()/*first*/];
 		thr[i].environmentVariables = network_functions_environment_variables[nf->getName()/*first*/];
 #endif
+		thr[i].controlConfiguration = nf->getControlPorts();
 		thr[i].environmentVariables = nf->getEnvironmentVariables();
 #endif
 
@@ -1702,12 +1712,13 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 #endif
 		map<unsigned int, port_network_config_t > nfs_ports_configuration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+#if 0
 		map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
 		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->getName()/*first*/];
-#if 0
 		map<string, list<string> > new_nfs_env_variables = diff->getNetworkFunctionsEnvironmentVariables();
 		list<string> environment_variables_tmp = new_nfs_env_variables[nf->getName()/*first*/];
 #endif
+		list<port_mapping_t > nfs_control_configuration = nf->getControlPorts();
 		list<string> environment_variables_tmp = nf->getEnvironmentVariables();
 #endif
 		//TODO: for the hotplug, we may extend the computeController with a call that says if a VNF is already running or not.
