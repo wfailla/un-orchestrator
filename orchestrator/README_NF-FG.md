@@ -21,7 +21,7 @@ VNF.
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"interface": "eth1"
+		      		"if-name": "eth1"
 		    	}
 		  	},
 		  	{
@@ -29,7 +29,7 @@ VNF.
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"interface": "eth2"
+		      		"if-name": "eth2"
 		    	}
 		  	}
 			],
@@ -86,7 +86,7 @@ function (`firewall:inout:1`) are sent on the network interface `eth2`.
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"interface": "eth1"
+		      		"if-name": "eth1"
 		    	}
 		  	},
 		  	{
@@ -94,7 +94,7 @@ function (`firewall:inout:1`) are sent on the network interface `eth2`.
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"interface": "eth2"
+		      		"if-name": "eth2"
 		    	}
 		  	}
 			],
@@ -199,7 +199,7 @@ Json description of the graph:
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"interface": "eth1"
+		      		"if-name": "eth1"
 		    	}
 		  	},
 		  	{
@@ -207,7 +207,7 @@ Json description of the graph:
 		    	"name": "egress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"interface": "eth2"
+		      		"if-name": "eth2"
 		    	}
 		  	}
 			],
@@ -386,7 +386,7 @@ on the network through the physical port `eth1`, without any VLAN tag.
 		    	"name": "ingress",
 		    	"type": "interface",
 		    	"interface": {
-		      		"interface": "eth1"
+		      		"if-name": "eth1"
 		    	}
 		  	}
 			],
@@ -478,7 +478,7 @@ The `vlan` endpoint is defined as follows:
 		"type": "vlan",
 		"vlan": {
   			"vlan-id": "25",
-  			"interface": "eth1"
+  			"if-name": "eth1"
 		}
 	}
 
@@ -521,7 +521,7 @@ UN through the physical interface `eth1` and then again tagged with the VLAN ID 
 		    	"type": "vlan",
 		    	"vlan": {
 		      		"vlan-id": "25",
-		      		"interface": "eth1"
+		      		"if-name": "eth1"
 		    	}
 		  	}
 			],

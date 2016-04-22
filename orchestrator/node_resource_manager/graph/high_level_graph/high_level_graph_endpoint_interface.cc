@@ -53,14 +53,14 @@ Object EndPointInterface::toJSON()
 
 	EndPointInterface[_ID] = id.c_str();
 	EndPointInterface[_NAME] = name.c_str();
-	EndPointInterface[EP_TYPE] = IFACE;
+	EndPointInterface[EP_TYPE] = EP_IFACE;
 
 	iface[NODE_ID] = node_id.c_str();
 	if(strcmp(sw_id.c_str(), "") != 0)
 		iface[SW_ID] = sw_id.c_str();
-	iface[IFACE] = interface.c_str();
+	iface[IF_NAME] = interface.c_str();
 
-	EndPointInterface[IFACE] = iface;
+	EndPointInterface[EP_IFACE] = iface;
 
 	return EndPointInterface;
 }

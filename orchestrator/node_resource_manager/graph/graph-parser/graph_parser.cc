@@ -522,14 +522,14 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 										//XXX: currently, this information is ignored
 									}
 									//identify interface end-points
-									else if(ep_name == IFACE)
+									else if(ep_name == EP_IFACE)
 									{
 										try
 										{
 											ep_value.getObject();
 										} catch(exception& e)
 										{
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", IFACE);
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", EP_IFACE);
 											return false;
 										}
 
@@ -543,23 +543,28 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 											if(epi_name == NODE_ID)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,NODE_ID,epi_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE,NODE_ID,epi_value.getString().c_str());
 												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,NODE_ID);
 												node_id = epi_value.getString();
 											}
 											else if(epi_name == SW_ID)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,SW_ID,epi_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE,SW_ID,epi_value.getString().c_str());
 												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,SW_ID);
 												sw_id = epi_value.getString();
 											}
-											else if(epi_name == IFACE)
+											else if(epi_name == IF_NAME)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",IFACE,IFACE,epi_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE,IF_NAME,epi_value.getString().c_str());
 
 												interface = epi_value.getString();
 												iface_id[id] = epi_value.getString();
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\"",id.c_str(), iface_id[id].c_str());
+											}
+											else
+											{
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" inside \"%s\"",epi_name.c_str(),EP_IFACE);
+												return false;
 											}
 										}
 									}
@@ -624,9 +629,9 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,VLAN_ID,epi_value.getString().c_str());
 												v_id = epi_value.getString();
 											}
-											else if(epi_name == IFACE)
+											else if(epi_name == IF_NAME)
 											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,IFACE,epi_value.getString().c_str());
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,IF_NAME,epi_value.getString().c_str());
 												interface = epi_value.getString();
 											}
 											else if(epi_name == SW_ID)

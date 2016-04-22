@@ -64,7 +64,7 @@ Object EndPointVlan::toJSON()
 	vlan[NODE_ID] = node_id.c_str();
 	if(strcmp(sw_id.c_str(), "") != 0)
 		vlan[SW_ID] = sw_id.c_str();
-	vlan[IFACE] = interface.c_str();
+	vlan[IF_NAME] = interface.c_str();
 
 	EndPointVlan[VLAN] = vlan;
 
