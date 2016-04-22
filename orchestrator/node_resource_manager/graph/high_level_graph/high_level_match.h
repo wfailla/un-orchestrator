@@ -183,11 +183,6 @@ public:
 	char *getInputEndpoint();
 
 	/**
-	*	@brief: print the match in a json like style
-	*/
-	void print();
-
-	/**
 	*	@brief: transform the match into a json
 	*/
 	Object toJSON();

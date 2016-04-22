@@ -49,7 +49,6 @@ public:
 
 	bool operator==(const EndPointInternal &other) const;
 
-	void print();
 	Object toJSON();
 };
 

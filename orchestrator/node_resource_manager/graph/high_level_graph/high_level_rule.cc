@@ -37,18 +37,6 @@ Action *Rule::getAction()
 	return action;
 }
 
-void Rule::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\trule " << flowID << ": " << endl << "\t{" << endl;
-		cout << "\t\tpriority : " << priority << endl;
-		match.print();
-		action->print();
-		cout << "\t}" << endl;
-	}
-}
-
 Object Rule::toJSON()
 {
 	Object rule;

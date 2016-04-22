@@ -33,7 +33,6 @@ public:
 	action_t getType();
 	virtual string getInfo() = 0;
 
-	virtual void print() = 0;
 	virtual Object toJSON() = 0;
 	virtual string toString() = 0;
 

@@ -47,21 +47,6 @@ string EndPointInterface::getInterface()
 	return interface;
 }
 
-void EndPointInterface::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tid:" << id << endl;
-		cout << "\t\t\tname: " << name << endl;
-		cout << "\t\ttype:" << IFACE << endl;
-		cout << "\t\t\tinterface: " << endl << "\t\t{" << endl;
-		cout << "\t\t\tnode-id: " << node_id << endl;
-		cout << "\t\t\tsw-id: " << sw_id << endl;
-		cout << "\t\tinterface:" << interface << endl;
-		cout << "\t\t}" << endl;
-	}
-}
-
 Object EndPointInterface::toJSON()
 {
 	Object EndPointInterface, iface;

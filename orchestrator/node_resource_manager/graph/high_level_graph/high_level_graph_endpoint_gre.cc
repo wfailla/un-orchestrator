@@ -57,23 +57,6 @@ bool EndPointGre::isSafe()
 	return is_safe;
 }
 
-void EndPointGre::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tid:" << id << endl;
-		cout << "\t\t\tname: " << name << endl;
-		cout << "\t\ttype:" << IFACE << endl;
-		cout << "\t\t\tgre-tunnel: " << endl << "\t\t{" << endl;
-		cout << "\t\t\tlocal-ip: " << local_ip << endl;
-		cout << "\t\t\tremote-ip: " << remote_ip << endl;
-		cout << "\t\t\tgre-key: " << gre_key << endl;
-		cout << "\t\tttl:" << ttl << endl;
-		cout << "\t\tis_safe:" << is_safe << endl;
-		cout << "\t\t}" << endl;
-	}
-}
-
 Object EndPointGre::toJSON()
 {
 	Object EndPointGre, iface;

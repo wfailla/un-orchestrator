@@ -350,10 +350,11 @@ void Graph::print()
 {
 	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
 	{
-		cout << "Graph :" << endl << "{" << endl;
-		for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
-			r->print();
-		cout << "}" << endl;
+		Object json_diff = this->toJSON();
+		stringstream ssj;
+		write_formatted(json_diff, ssj );
+		string sssj = ssj.str();
+		cout << sssj.c_str();
 	}
 }
 

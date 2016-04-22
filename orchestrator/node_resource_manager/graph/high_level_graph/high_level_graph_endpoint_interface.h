@@ -61,7 +61,6 @@ public:
 
 	bool operator==(const EndPointInterface &other) const;
 
-	void print();
 	Object toJSON();
 };
 

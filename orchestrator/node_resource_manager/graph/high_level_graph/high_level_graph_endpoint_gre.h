@@ -72,7 +72,6 @@ public:
 
 	bool operator==(const EndPointGre &other) const;
 
-	void print();
 	Object toJSON();
 };
 

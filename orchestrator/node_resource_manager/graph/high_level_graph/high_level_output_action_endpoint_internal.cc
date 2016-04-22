@@ -66,18 +66,6 @@ string ActionEndPointInternal::toString()
 	return ss.str();
 }
 
-void ActionEndPointInternal::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tAction:" << endl << "\t\t{" << endl;
-		cout << "\t\t\toutput_to_port: " << input_endpoint << endl;
-		for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
-			(*ga)->print();
-		cout << "\t\t}" << endl;
-	}
-}
-
 Object ActionEndPointInternal::toJSON()
 {
 	Object action;

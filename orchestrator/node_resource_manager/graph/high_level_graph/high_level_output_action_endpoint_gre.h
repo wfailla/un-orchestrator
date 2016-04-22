@@ -36,7 +36,6 @@ public:
 
 	bool operator==(const ActionEndPointGre &other) const;
 
-	void print();
 	Object toJSON();
 };
 

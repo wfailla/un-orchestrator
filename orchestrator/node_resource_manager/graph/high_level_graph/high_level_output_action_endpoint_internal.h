@@ -38,8 +38,7 @@ public:
 	string toString();
 	
 	bool operator==(const ActionEndPointInternal &other) const;
-	
-	void print();
+
 	Object toJSON();
 };
 

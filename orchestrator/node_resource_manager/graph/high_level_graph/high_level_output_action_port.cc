@@ -32,18 +32,6 @@ string ActionPort::toString()
 	return port;
 }
 
-void ActionPort::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tAction:" << endl << "\t\t{" << endl;
-		cout << "\t\t\toutput_to_port: " << port << endl;
-		for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
-			(*ga)->print();
-		cout << "\t\t}" << endl;
-	}
-}
-
 Object ActionPort::toJSON()
 {
 	Object action;

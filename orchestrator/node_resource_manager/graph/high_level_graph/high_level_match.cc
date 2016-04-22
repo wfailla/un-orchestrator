@@ -168,23 +168,6 @@ char *Match::getInputEndpoint()
 	return (char *)str.c_str();
 }
 
-void Match::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tmatch:" << endl << "\t\t{" << endl;
-
-		if(type == MATCH_PORT || type == MATCH_ENDPOINT_GRE || type == MATCH_ENDPOINT_INTERNAL)
-			cout << "\t\t\tport_in: " << input << endl;
-		else if(type == MATCH_NF)
-			cout << "\t\t\tport_in: " << input << ":" << nf_port << endl;
-
-		graph::Match::print();
-
-		cout << "\t\t}" << endl;
-	}
-}
-
 Object Match::toJSON()
 {
 	Object match;

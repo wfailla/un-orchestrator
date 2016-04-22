@@ -60,40 +60,6 @@ list <vector<string> > VNFs::getPorts()
 	return ports;
 }
 
-void VNFs::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tid:" << id << endl;
-		cout << "\t\t\tname: " << name << endl;
-		cout << "\t\t\tvnf_template: " << vnf_template << endl;
-		cout << "\t\t\tgroups: " << endl << "\t\t{" << endl;
-		for(list<string>::iterator it = groups.begin(); it != groups.end(); it++)
-			cout << "\t\t\t" << *it << endl;
-		cout << "\t\t}" << endl;
-		cout << "\t\t\tports: " << endl << "\t\t{" << endl;
-		for(list<vector<string> >::iterator p = ports.begin(); p != ports.end(); p++)
-		{
-			cout << "\t\t\tid: " << (*p)[0] << endl;
-			cout << "\t\t\tname: " << (*p)[1] << endl;
-			if(!(*p)[2].empty())
-				cout << "\t\t\tmac: " << (*p)[2] << endl;
-			if(!(*p)[3].empty())
-				cout << "\t\t\tip: " << (*p)[3] << endl;
-		}
-		cout << "\t\t}" << endl;
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		cout << "\t\t\tunify-control: " << endl << "\t\t{" << endl;
-		for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
-		{
-			cout << "\t\t\thost-tcp-port: " << (*c).first << endl;
-			cout << "\t\t\tvnf-tcp-port: " << (*c).second << endl;
-		}
-		cout << "\t\t}" << endl;
-#endif
-	}
-}
-
 Object VNFs::toJSON()
 {
 	Object vnf;

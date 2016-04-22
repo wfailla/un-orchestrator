@@ -66,7 +66,6 @@ public:
 
 	bool operator==(const EndPointVlan &other) const;
 
-	void print();
 	Object toJSON();
 };
 
