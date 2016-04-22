@@ -253,10 +253,12 @@ public:
 	*/
 	t_nfs_control getNetworkFunctionsControlPorts();
 
+#if 0
 	/**
 	*	@brief: Return the VNFs of the graph and the environment variables they require
 	*/
 	t_nfs_env_variables getNetworkFunctionsEnvironmentVariables();
+#endif
 #endif
 
 	/**

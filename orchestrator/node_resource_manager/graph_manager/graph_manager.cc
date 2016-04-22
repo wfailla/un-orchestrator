@@ -753,7 +753,10 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 #endif
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
+#if 0
 	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
+#endif
+
 #endif
 	list<highlevel::EndPointInternal> endpointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
@@ -975,7 +978,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
 			}
 		}
-
+#if 0
 		if(network_functions_environment_variables.count(*it) != 0)
 		{
 			list<string> nfs_environment_variables = network_functions_environment_variables[*it];
@@ -986,6 +989,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s",ev->c_str());
 			}
 		}
+#endif
+
 #endif
 
 #if 0
@@ -1031,6 +1036,16 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t\tIP address -> %s",(config.ip_address).c_str());
 #endif
 		}
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		list<string> nf_environment_variables = nf->getEnvironmentVariables();
+		if(nf_environment_variables.size() != 0)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tEnvironment variables (%d):",nf_environment_variables.size());
+			for(list<string>::iterator ev = nf_environment_variables.begin(); ev != nf_environment_variables.end(); ev++)
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t* %s",ev->c_str());
+		}
+#endif
 	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoints (%d):",eps.size());
@@ -1169,7 +1184,10 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		thr[i].portsConfiguration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		thr[i].controlConfiguration = network_functions_control_configuration[nf->getName()/*first*/];
+#if 0
 		thr[i].environmentVariables = network_functions_environment_variables[nf->getName()/*first*/];
+#endif
+		thr[i].environmentVariables = nf->getEnvironmentVariables();
 #endif
 
 #ifdef STARTVNF_SINGLE_THREAD
@@ -1686,8 +1704,11 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 		map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
 		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->getName()/*first*/];
+#if 0
 		map<string, list<string> > new_nfs_env_variables = diff->getNetworkFunctionsEnvironmentVariables();
 		list<string> environment_variables_tmp = new_nfs_env_variables[nf->getName()/*first*/];
+#endif
+		list<string> environment_variables_tmp = nf->getEnvironmentVariables();
 #endif
 		//TODO: for the hotplug, we may extend the computeController with a call that says if a VNF is already running or not.
 		//If not, startNF should then be called; if yes, o new function must be called

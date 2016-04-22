@@ -127,6 +127,10 @@ public:
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	list<pair<string, string> >  getControlPorts();
+
+	/*
+	*	@brief: return the list of environment variables associated with the VNF
+	*/
 	list<string> getEnvironmentVariables();
 #endif
 

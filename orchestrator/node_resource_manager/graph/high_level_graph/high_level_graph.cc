@@ -151,10 +151,13 @@ map<string, list<port_mapping_t > > Graph::getNetworkFunctionsControlPorts()
 	return networkFunctionsControlPorts;
 }
 
+#if 0
 map<string, list<string> > Graph::getNetworkFunctionsEnvironmentVariables()
 {
 	return networkFunctionsEnvironmentVariables;
 }
+#endif
+
 #endif
 
 list<Rule> Graph::getRules()
@@ -905,7 +908,8 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 #endif
 		}
 	}
-	
+
+#if 0
 	map<string, list<string> > other_NetworkFunctionsEnvironmentVariables = other->getNetworkFunctionsEnvironmentVariables();
 	for(map<string, list<string> >::iterator envvar = other_NetworkFunctionsEnvironmentVariables.begin(); envvar != other_NetworkFunctionsEnvironmentVariables.end(); envvar++)
 	{
@@ -919,6 +923,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 #endif
 		}
 	}
+#endif
 #endif
 
 	return diff;
@@ -979,7 +984,9 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
+#if 0
 	map<string, list<string> > new_nfs_env_variables = other->getNetworkFunctionsEnvironmentVariables();
+#endif
 #endif
 	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
 	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
@@ -1004,8 +1011,10 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
 				this->addNetworkFunctionControlPort(vtba->getName(), *cp);
 */
+#if 0
 			//We have to consider the environment variables of this network function
 			list<string> environment_variables = new_nfs_env_variables[vnfname];
+#endif
 /*
 			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
 				this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
