@@ -1515,9 +1515,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			map<string, list<struct nf_port_info> >::iterator pi_it = pi_map.find(nf->first); //select the info related to the network function currently considered
 			//TODO: when the hotplug will be introduced, pi_it->second will also contain the old ports of the VNF. Then a further skimming will be required
 			assert(pi_it != pi_map.end());
+			AddNFportsIn anpi;
 
 			if(pi_it->second.size() == nf->second.size()) //check if the nf is a new one or some ports are already plugged
-				AddNFportsIn anpi(dpid, nf->first, computeController->getNFType(nf->first), pi_it->second); //prepare the input for the switch manager
+				anpi(dpid, nf->first, computeController->getNFType(nf->first), pi_it->second); //prepare the input for the switch manager
 			else
 			{
 				list<struct nf_port_info> newPortList;
@@ -1537,7 +1538,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 						}
 					}
 				}
-				AddNFportsIn anpi(dpid, nf->first, computeController->getNFType(nf->first), newPortList); //prepare the input for the switch manager
+				anpi(dpid, nf->first, computeController->getNFType(nf->first), newPortList); //prepare the input for the switch manager
 			}
 
 			//We add, with a single call, all the ports of a single network function
