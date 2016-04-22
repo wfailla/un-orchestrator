@@ -1243,11 +1243,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*	- only used to add new parts to the graph, and not to remove parts
 	*		- new VNFs
 	*		- new endpoints (interface, GRE, vlan, internal)
-	*	- it is not possible to update a VNF, then the following parameters cannot be updated:
-	*		- number of ports
-	*		- ports configuration
+	*	- only new ports (and the related configuration) can be added to VNFs
+	*	  It is instead not possible to add new:
 	*		- environment variables
-	*		- control connection
+	*		- control connections
 	**/
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s'...",graphID.c_str());
