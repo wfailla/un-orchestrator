@@ -542,7 +542,7 @@ string Graph::getEndpointInvolved(string flowID)
 	return "";
 }
 
-list<highlevel::Rule> Graph::calculateNewRules(Graph *other)
+list<highlevel::Rule> Graph::calculateDiffRules(Graph *other)
 {
 	list<highlevel::Rule> new_rules;
 
@@ -573,14 +573,10 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	// a) Add the new rules to "diff"
 	
 	//Extract the new rules to be instantiated
-	list<highlevel::Rule> newrules = this->calculateNewRules(other); //FIXME: put this function directly here?
-	//XXX: a similar procedur can be defined to extract the rules to be removed
+	list<highlevel::Rule> newrules = this->calculateDiffRules(other);
 
 	for(list<highlevel::Rule>::iterator rule = newrules.begin(); rule != newrules.end(); rule++)
 		diff->addRule(*rule);
-
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New rules required: ");
-	diff->print();
 
 	// b) Add the new NFs to "diff"
 
@@ -997,6 +993,11 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		this->addEndPointVlan(*ep);
 	}
 
+	return true;
+}
+
+bool Graph::removeGraphFromGraph(highlevel::Graph *other)
+{
 	return true;
 }
 

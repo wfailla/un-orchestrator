@@ -1304,7 +1304,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 
 	graph->addGraphToGraph(diff);
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
 	graph->print();
 
 	/**
@@ -1685,6 +1685,54 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 bool GraphManager::updateGraph_removePieces(string graphID, highlevel::Graph *newGraph)
 {
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' by removing 'pieces'...",graphID.c_str());
+
+	assert(tenantLSIs.count(graphID) != 0);
+
+	//Retrieve the information already stored for the graph (i.e., retrieve the as it is
+	//currently implemented, without the update)
+	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
+//	ComputeController *computeController = graphInfo.getComputeController();
+	highlevel::Graph *graph = graphInfo.getGraph();
+//	LSI *lsi = graphInfo.getLSI();
+//	Controller *tenantController = graphInfo.getController();
+
+//	uint64_t dpid = lsi->getDpid();
+
+	/**
+	*	Outline:
+	*
+	*	0) calculate the diff with respect to the graph already deployed (and check its validity)
+	*	1) update the high level graph
+	*/
+
+	/**
+	*	The three following variables will be used in the following and that contain
+	*	an high level graph:
+	*		* graph -> the original graph to be updated
+	*		* newGraph -> graph containing the update
+	*		* diff -> graph that will contain the parts in "graph" and that are not in "newGraph",
+	*				and then that must be removed from "newGraph"
+	*/
+
+	/**
+	*	0) Calculate the diff
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the pieces to be removed from the graph");
+	highlevel::Graph *diff = newGraph->calculateDiff(graph, graphID);
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The diff graph is:");
+	diff->print();
+
+	/**
+	*	1) Update the high level graph
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
+
+	graph->removeGraphFromGraph(diff);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
+	graph->print();
+
 	return true;
 }
 
