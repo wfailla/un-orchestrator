@@ -1,0 +1,78 @@
+
+What it is
+==========
+
+The Revised OpenFlow Library (ROFL) helps you adding OpenFlow support to your software to build control applications, controller frameworks and/or datapath elements.
+
+ROFL-common is a C++ library that helps on writing OpenFlow endpoints (OF agents), for controllers, proxy controllers and datapaths.
+
+Requirements
+============
+
+- A modern GNU build-system (autoconf, automake, libtool, ...)
+- pkg-config
+- GNU/Linux and libc development headers (linux-libc-dev and libc6-dev package in Debian/Ubuntu systems)
+- [optional] if you want to run automatic tests (make check), libcunit and libcppunit are required (in libcunit1-dev and libcppunit-dev packages in Debian-like systems).
+- [optional] Doxygen to generate the documentation.
+
+How to build
+============
+
+Install the dependencies and run:
+
+	sh# ./autogen.sh  
+	sh# cd build  
+	sh# ../configure  
+	sh# make  
+	sh# make install  
+
+Optionally you can 'make check' for consistency checks.
+
+Optional ../configure parameters
+================================
+
+	--enable-debug: Compile with debug symbols (-g) and debug output (warning, it may affect performance)  
+	--enable-verbose: Increase the level of debug (useless without --enable-debug)  
+	--disable-silent-rules: Enable verbose compilation mode (AM_SILENT_RULES disabled)
+
+Doxygen documentation
+================================
+Documentation can be compiled via `make doc`. Documentation is generated in build/doc/ folder
+
+Known issues
+================================
+
+* Certain GCC 4.8.X family versions are buggy and don't properly compile ROFL with -O3 optimizations. Please use GCC 4.8.3 or higher, or another version family.
+
+FAQ
+===
+
+Some distributions, in particular Red Hat based, do not include by default /usr/local/lib on the search path of ldconfig, not allowing to link against -lrofl and -lrofl_pipeline. In this case, you might have to add /usr/local/lib/ into /etc/ld.so.conf and re-run ldconfig.
+
+More information, documentation and support
+===========================================
+
+You can have a look on: 
+
+* https://bisdn.github.io/rofl-core/rofl-common/index.html
+* https://bisdn.github.io/rofl-core/rofl-common/modules.html
+* http://www.roflibs.org/
+* http://www.roflibs.org/doc/
+
+Documentation can be compiled via `make doc`. Documentation is generated in build/doc/ folder
+
+For getting support or participate in the discussions, join the mailing list rofl-devel@roflibs.org at https://lists.roflibs.org/mailman
+
+Authorship
+==========
+
+(c) Copyright BISDN GmbH 2013
+
+Andreas Koepsel<andreas.koepsel (at) bisdn.de>  
+Tobias Jungel<tobias.jungel (at) bisdn.de>  
+Marc Sune<marc.sune (at) bisdn.de>  
+Victor Alvarez<victor.alvarez (at) bisdn.de>  
+
+And others.
+
+[![Build Status](https://travis-ci.org/bisdn/rofl-common.svg?branch=stable)](https://travis-ci.org/bisdn/rofl-common)
