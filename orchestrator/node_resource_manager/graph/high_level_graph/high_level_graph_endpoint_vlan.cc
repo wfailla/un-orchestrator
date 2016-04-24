@@ -52,22 +52,6 @@ string EndPointVlan::getInterface()
 	return interface;
 }
 
-void EndPointVlan::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tid:" << id << endl;
-		cout << "\t\t\tname: " << name << endl;
-		cout << "\t\ttype:" << VLAN << endl;
-		cout << "\t\t\tvlan: " << endl << "\t\t{" << endl;
-		cout << "\t\t\tvlan-id: " << vlan_id << endl;
-		cout << "\t\t\tnode-id: " << node_id << endl;
-		cout << "\t\tswitch-id:" << sw_id << endl;
-		cout << "\t\t\tinterface: " << interface << endl;
-		cout << "\t\t}" << endl;
-	}
-}
-
 Object EndPointVlan::toJSON()
 {
 	Object EndPointVlan, vlan;
@@ -80,7 +64,7 @@ Object EndPointVlan::toJSON()
 	vlan[NODE_ID] = node_id.c_str();
 	if(strcmp(sw_id.c_str(), "") != 0)
 		vlan[SW_ID] = sw_id.c_str();
-	vlan[IFACE] = interface.c_str();
+	vlan[IF_NAME] = interface.c_str();
 
 	EndPointVlan[VLAN] = vlan;
 

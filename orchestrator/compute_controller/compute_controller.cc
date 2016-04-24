@@ -651,7 +651,6 @@ bool ComputeController::selectImplementation()
 	 */
 	checkSupportedDescriptions();
 
-
 	/**
 	 * Select an implementation of the NF
 	 */

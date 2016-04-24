@@ -47,7 +47,6 @@ private:
 public:
 	Rule(Match match, Action *action,string flowID, uint64_t priority);
 
-	void print();
 	Object toJSON();
 
 	string getFlowID();

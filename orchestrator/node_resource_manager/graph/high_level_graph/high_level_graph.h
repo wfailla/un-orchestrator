@@ -32,6 +32,12 @@ using namespace std;
 namespace highlevel
 {
 
+typedef enum{
+	ADDED,
+	UPDATED,
+	NOTHING
+	}addvnf_t;
+
 /**
 *	@brief: describes the graph as it has been required from the extern, through
 *		the REST API exported by the un-orchestrator
@@ -55,27 +61,27 @@ private:
 	*		instance, if in the graph there is NF:1 and NF:2,
 	*		an element of the map is <NF, <1,2> >
 	*/
-	t_nfs_ports_list networkFunctions;
+	t_nfs_ports_list networkFunctions; //This is a map of <nf name, list <port id> >
 
 	/**
 	*	@brief: for each NF attached to the graph specifies a list of pair elements
 	* 		(mac address, ip address), one for each port
 	*/
-	t_nfs_configuration networkFunctionsConfiguration;
+	t_nfs_configuration networkFunctionsConfiguration; //this is a map <nf name, map <port id, port configuration> >
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
 	*	@brief: for each VNF attached to the graph, specifies a list of pair elements
 	* 		(host TCP port, VNF TCP port), which are the control connections for the VNF
 	*/
-	t_nfs_control networkFunctionsControlPorts;
+	t_nfs_control networkFunctionsControlPorts; //this is a map <nf name, list <control ports> >
 
 	/**
 	*	@brief: for each VNF attached to the graph, specifies a list of environment variables
 	*		to be set to the VNF itself. Each element of the list is in the form "variable=value"
 	*
 	*/
-	t_nfs_env_variables networkFunctionsEnvironmentVariables;
+	t_nfs_env_variables networkFunctionsEnvironmentVariables; //this is a map <nf name, list <env variable> >
 #endif
 
 	/**
@@ -135,7 +141,7 @@ private:
 	*
 	*	@param: other	Graph from which the new rules must be extracted
 	*/
-	list<Rule> calculateNewRules(Graph *other);
+	list<Rule> calculateDiffRules(Graph *other);
 
 public:
 
@@ -181,9 +187,18 @@ public:
 	highlevel::Graph *calculateDiff(highlevel::Graph *other, string graphID);
 
 	/**
-	*	@brief: Given a graph, add its component to the called graph
-	*/	
+	*	@brief: Given a graph, add its components to the called graph
+	*
+	*	@param: other	graph with the components to be added
+	*/
 	bool addGraphToGraph(highlevel::Graph *other);
+
+	/**
+	*	@brief: Given a graph, rome its components from the called graph
+	*
+	*	@param: other	graph with the components to be removed
+	*/
+	bool removeGraphFromGraph(highlevel::Graph *other);
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
@@ -291,9 +306,11 @@ public:
 	list<EndPointVlan> getEndPointsVlan();
 
 	/**
-	*	@brief: Add a new vnf to the graph
+	*	@brief: Add a new vnf to the graph. In case the VNF is already part of the
+	*			graph but new ports have been specified, the new ports are added to
+	*			the graph.
 	*/
-	bool addVNF(VNFs vnf);
+	addvnf_t addVNF(VNFs vnf);
 
 	/**
 	*	@brief: Return the vnfs of the graph

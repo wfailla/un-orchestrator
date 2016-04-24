@@ -39,7 +39,6 @@ public:
 
 	bool operator==(const ActionNetworkFunction &other) const;
 
-	void print();
 	Object toJSON();
 };
 

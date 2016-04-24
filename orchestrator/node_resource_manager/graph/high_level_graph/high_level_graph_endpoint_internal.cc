@@ -37,19 +37,6 @@ string EndPointInternal::getGroup()
 	return group;
 }
 
-void EndPointInternal::print()
-{
-	if(LOGGING_LEVEL <= ORCH_DEBUG_INFO)
-	{
-		cout << "\t\tid:" << id << endl;
-		cout << "\t\t\tname: " << name << endl;
-		cout << "\t\ttype:" << EP_INTERNAL << endl;
-		cout << "\t\t\tinternal: " << endl << "\t\t{" << endl;
-		cout << "\t\t\tinternal-group: " << group << endl;
-		cout << "\t\t}" << endl;
-	}
-}
-
 Object EndPointInternal::toJSON()
 {
 	Object EndPointInternal, internal;

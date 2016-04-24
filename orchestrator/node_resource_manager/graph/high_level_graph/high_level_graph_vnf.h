@@ -20,6 +20,27 @@ using namespace std;
 namespace highlevel
 {
 
+/**
+*	This structure represents a VNF port as described in the NF-FG
+*
+*	{
+*		"id": "inout:0",
+*		"name": "data-port"
+*		"mac": "aa:bb:cc:dd:ee:ff",
+*		"unify-ip": "192.168.0.1"
+*	}
+*
+**/
+typedef struct
+{
+	string id;
+	string name;
+	string mac_address;
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	string ip_address;
+#endif
+}vnf_port_t;
+
 class VNFs
 {
 private:
@@ -44,9 +65,9 @@ private:
 	string vnf_template;
 
 	/**
-	*	@brief: the list of ports configuration of the VNF
+	*	@brief: the list of ports  of the VNF
 	*/
-	list<vector<string> > ports;
+	list<vnf_port_t> ports;
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	/**
@@ -64,22 +85,33 @@ private:
 public:
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	VNFs(string id, string name, list<string> groups, string vnf_template, list<vector<string> > ports, list<pair<string, string> > control_ports, list<string> environment_variables);
+	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<pair<string, string> > control_ports, list<string> environment_variables);
 #else
-	VNFs(string id, string name, list<string> groups, string vnf_template, list<vector<string> > ports);
+	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports);
 #endif
+
+	/**
+	*	@brief: add a new port to the network function
+	*/
+	bool addPort(vnf_port_t port);
 
 	string getId();
 	string getName();
 	list<string> getGroups();
 	string getVnfTemplate();
-	list<vector<string> > getPorts();
+	list<vnf_port_t> getPorts();
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+	list<pair<string, string> >  getControlPorts();
+	list<string> getEnvironmentVariables();
+#endif
 
 	~VNFs();
 
+	/**
+	*	Check if two VNFs are the same. Note that they are the same if they have the same name.
+	**/
 	bool operator==(const VNFs &other) const;
 
-	void print();
 	Object toJSON();
 };
 

@@ -26,7 +26,6 @@ public:
 
 	bool operator==(const ActionPort &other) const;
 
-	void print();
 	Object toJSON();
 };
 

@@ -249,16 +249,12 @@ private:
 	string findEndPointTowardsNF(highlevel::Graph *graph, string nf);
 
 	/**
-	*	@brief: check if a specific flow can be removed from a graph. The flow cannot be removed if it defines
-	*		an endpoint currently used by other graphs.
+	*	@brief: do the operation required to set up an in band control. This requires to set up some rules in the LSI-0.
 	*
-	*	@param: graph	Graph containing the flow to be removed
-	*	@param: flowID	Identifier of the flow to be removed
-	*
-	*	FIXME: this function could be improved as follows: if the flow defines an endpoint in a match, it could
-	*	be removed if it is not used in actions of other graphs.
+	*	@param: lsi			contains information related to the LSI-0
+	*	@param: controller	Openflow controller used to configure the LSI-0
 	*/
-	bool canDeleteFlow(highlevel::Graph *graph, string flowID);
+	void handleInBandController(LSI *lsi, Controller *controller);
 
 public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
@@ -295,11 +291,14 @@ public:
 	/**
 	*	@brief: add a new piece to an existing graph with
 	*		a specific ID.
-	*
-	*	XXX: note that an existing NF does not change: if a new port is required, the update
-	*	of the graph fails
 	*/
 	bool updateGraph(string graphID, highlevel::Graph *newGraph);
+
+	/**
+	*	@brief: rempve pieces from an existing graph with a
+	*		specific ID.
+	*/
+	bool updateGraph_removePieces(string graphID, highlevel::Graph *newGraph);
 
 	/**
 	*	@brief: remove the flow with a specified ID, from a specified graph
