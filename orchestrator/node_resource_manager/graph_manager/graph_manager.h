@@ -71,12 +71,12 @@ private:
 	static uint32_t nextControllerPort;
 
 	/**
-	*	This structure contains all the graph end points which are not
+	*	This structure contains all the internal end points which are not
 	*	ports, but that must be used to connect many graphs together
 	*
-	*	map<graph ID, counter>
-	*	where graph ID is the identifier of the graph defining the end
-	*	points, while counter indicates how many times the endpoint is
+	*	map<internal group, counter>
+	*	where internal group is the identifier of the internal end point,
+	*	while counter indicates how many times the end point is
 	*	used by other graphs
 	*/
 	map<string, unsigned int > availableEndPoints;
@@ -91,7 +91,7 @@ private:
 	*	ep originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
 	*	the current LSI (e.g., 2). This structure contains the entry: <ep, 1>
 	*/
-	map<string, unsigned int> endPointsDefinedInActions;
+	map<string, list<unsigned int> > endPointsDefinedInActions;
 
 	/**
 	*	This structure contains the port ID, in the LSI-0, to be used to connect
@@ -105,7 +105,38 @@ private:
 	*	nf:1 originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
 	*	the current LSI (e.g.. 2). This structure contains the entry: <ep, 1>
 	*/
-	map<string, unsigned int> endPointsDefinedInMatches;
+	map<string, list<unsigned int> > endPointsDefinedInMatches;
+
+	/**
+	*	This structure contains all the internal end points which are not
+	*	ports, but that must be used to connect many graphs together
+	*
+	*	map<internal group, created>
+	*	where internal group is the identifier of the internal end point,
+	*	while created indicates if the internal LSI has been created yet
+	*/
+	map<string, bool > internalLSIs;
+
+	/**
+	*	This structure contains all the internal end points which are not
+	*	ports, but that must be used to connect many graphs together
+	*
+	*	map<internal group, pair<controller, controller name>>
+	*	where internal group is the identifier of the internal end point,
+	*	controller indicates the openflow controller of the internal LSI
+	*	and controller name indicated the name of the openflow controller
+	*/
+	map<string, pair<Controller *, string> > internalLSIController;
+
+	/**
+	*	This structure contains all the internal end points which are not
+	*	ports, but that must be used to connect many graphs together
+	*
+	*	map<internal group, lsi>
+	*	where internal group is the identifier of the internal end point,
+	*	while lsi indicates the LSI description of the internal LSI
+	*/
+	map<string, LSI * > internalLSIsDescription;
 
 	/**
 	*	The LSI in common with all the tenants, which

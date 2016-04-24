@@ -18,7 +18,6 @@ friend class GraphManager;
 	*	the graph into lowlevel descriptions to be provided (as flowmod messages) respectively to the
 	*	LSI-0 and to the tenant-LSI
 	*/
-
 protected:
 
 	/**
@@ -84,7 +83,7 @@ protected:
 	*		endpoint gre -> NF:
 	*			This rule does not appear in LSI-0
 	*/
-	static lowlevel::Graph lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int> endPointsDefinedInMatches, map<string, unsigned int> endPointsDefinedInActions,map<string, unsigned int > &availableEndPoints, string un_interface, bool orchestrator_in_band = true, bool creating = true);
+	static lowlevel::Graph lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, list<unsigned int> > endPointsDefinedInMatches, map<string, list<unsigned int> > endPointsDefinedInActions,map<string, unsigned int > &availableEndPoints, string un_interface, bool orchestrator_in_band = true, bool creating = true);
 
 	/**
 	*	@brief: translate an high level graph into a rules to be sent to

@@ -235,12 +235,6 @@ public:
 #endif
 
 	/**
-	*	@brief: given a graph endpoint (in the form graphID:epID), return true if it is defined
-	*		in this graph
-	*/
-	bool isDefinedHere(string endpoint);
-
-	/**
 	*	@brief: Return the ID of the graph
 	*/
 	string getID();
