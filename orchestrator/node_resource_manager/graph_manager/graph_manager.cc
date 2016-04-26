@@ -76,9 +76,6 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating the LSI-0...");
 
 	//The three following structures are empty. No NF and no virtual link is attached.
-#if 0
-	map<string, list<unsigned int> > dummy_network_functions;
-#endif
 	list<highlevel::VNFs> dummy_network_functions;
 	map<string, map<unsigned int, PortType> > dummy_nfs_ports_type;
 	list<highlevel::EndPointGre> dummy_endpoints;

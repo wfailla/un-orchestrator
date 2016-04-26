@@ -10,7 +10,7 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 	return ss.str();
 }
 
-LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_ports, /*map<string, list<unsigned int> > nf_ports*/ list<highlevel::VNFs> network_functions,
+LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_ports, list<highlevel::VNFs> network_functions,
 	list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
@@ -19,9 +19,6 @@ LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_p
 		this->physical_ports[*p] = 0;
 
 	//create NF ports (and give them names)
-#if 0
-	for(map<string, list< unsigned int> >::iterator nf = nf_ports.begin(); nf != nf_ports.end(); nf++)
-#endif
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding network function '%s' to the LSI",nf->getName().c_str());
@@ -30,7 +27,7 @@ LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_p
 		for(list<unsigned int>::iterator port = nf_ports.begin(); port != nf_ports.end(); port++)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*port);
 
-		addNF(nf->getName()/*first*/, /*nf->second*/nf_ports, a_nfs_ports_type[nf->/*first*/getName()]);
+		addNF(nf->getName(), nf_ports, a_nfs_ports_type[nf->getName()]);
 	}
 
 	//fill the list of gre endpoints

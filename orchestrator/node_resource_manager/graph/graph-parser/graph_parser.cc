@@ -2,10 +2,6 @@
 
 bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph, GraphManager *gm)
 {
-#if 0
-	//for each NF, contains the set of ports it requires
-	map<string,set<unsigned int> > nfs_ports_found;
-#endif
 	//for each NF, contains the id
 	map<string, string> nfs_id;
 	//for each endpoint (interface), contains the id
@@ -54,9 +50,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 				for(Object::const_iterator fg = forwarding_graph.begin(); fg != forwarding_graph.end(); fg++)
 				{
 					bool e_if = false, e_vlan = false, e_internal = false;
-#if 0
-					bool e_if_out = false
-#endif
 
 					string id, v_id, node, iface, e_name, ep_id, interface, in_group;
 
@@ -152,13 +145,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,_NAME,nf_value.getString().c_str());
 										foundName = true;
-#if 0
-										if(!graph.addNetworkFunction(nf_value.getString()))
-										{
-											logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
-											return false;
-										}
-#endif
 										name = nf_value.getString();
 
 										nfs_id[id] = nf_value.getString();
@@ -235,21 +221,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											ss << host_tcp_port;
 
 											sss << vnf_tcp_port;
-#if 0
-											port_mapping.host_port = ss.str();
-											port_mapping.guest_port = sss.str();
-#endif
 
-#if 0
-											//Add VNF control port description
-											graph.addNetworkFunctionControlPort(name, port_mapping);
-#endif
 											port_mapping_t control_port;
 											control_port.host_port = ss.str();
 											control_port.guest_port = sss.str();
-#if 0
-											controlPorts.push_back(make_pair(ss.str(), sss.str()));
-#endif
 											controlPorts.push_back(control_port);
 										}//end iteration on the control ports
 #endif
@@ -304,10 +279,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													return false;
 												}
 											}
-#if 0
-											//Add an environment variable for the VNF
-											graph.addNetworkFunctionEnvironmentVariable(name, theEnvVar.str());
-#endif
 											environmentVariables.push_back(theEnvVar.str());
 										}//end iteration on the environment variables
 
@@ -325,10 +296,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 										const Array& ports_array = nf_value.getArray();
 
-#if 0
-										map<unsigned int, port_network_config_t > vnf_port_config;
-#endif
-
 										//Itearate on the ports
 										for( unsigned int ports = 0; ports < ports_array.size(); ++ports )
 										{
@@ -344,10 +311,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											Object port = ports_array[ports].getObject();
 
 											highlevel::vnf_port_t port_descr;
-#if 0
-											port_network_config_t port_config;
-#endif
-
 											//Parse the port
 											for(Object::const_iterator p = port.begin(); p != port.end(); p++)
 											{
@@ -373,10 +336,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												else if(p_name == PORT_MAC)
 												{
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_MAC,p_value.getString().c_str());
-#if 0
-													port_config.mac_address = p_value.getString();
-													port_descr.mac_address = port_config.mac_address;
-#endif
 													port_descr.configuration.mac_address = p_value.getString();
 												}
 												else if(p_name == PORT_IP)
@@ -386,10 +345,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 													continue;
 #else
 													logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNF_PORTS,PORT_IP,p_value.getString().c_str());
-#if 0
-													port_config.ip_address = p_value.getString();
-													port_descr.ip_address = port_config.ip_address;
-#endif
 													port_descr.configuration.ip_address = p_value.getString();
 #endif
 												}
@@ -401,15 +356,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											}
 
 											//Each VNF port has its own configuration if provided
-#if 0
-											vnf_port_config[ports+1] = port_config;
-											//Add NF ports descriptions
-											if(!graph.addNetworkFunctionPortConfiguration(name, vnf_port_config))
-											{
-												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Two VNFs with the same name \"%s\" in \"%s\"",nf_value.getString().c_str(),VNFS);
-												return false;
-											}
-#endif
 											portS.push_back(port_descr);
 										}
 									}
@@ -1020,14 +966,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 															port++;
 
 															action = new highlevel::ActionNetworkFunction(name, string(port_in_name_tmp), port);
-
-#if 0
-															set<unsigned int> ports_found;
-															if(nfs_ports_found.count(name) != 0)
-																ports_found = nfs_ports_found[name];
-															ports_found.insert(port);
-															nfs_ports_found[name] = ports_found;
-#endif
 														}
 														//end-points port type
 														else if(p_type == EP_PORT_TYPE)
@@ -1072,9 +1010,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 															if(iface_found)
 															{
 																	action = new highlevel::ActionPort(realName, string(s_a_value));
-#if 0
-																	graph.addPort(realName);
-#endif
 															}
 															else if(internal_found)
 															{
@@ -1097,9 +1032,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 																/*add "output_port" action*/
 																action = new highlevel::ActionPort(vlan_id[eP].second, string(s_a_value));
-#if 0
-																graph.addPort(vlan_id[eP].second);
-#endif
 																/*add "push_vlan" action*/
 																GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
 																action->addGenericAction(ga);
@@ -1349,45 +1281,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: %s",e.what());
 		return false;
 	}
-
-#if 0
-	//FIXME The number of ports is provided by the name resolver, and should not depend on the flows inserted. In fact,
-	//it should be possible to start VNFs without setting flows related to such a function!
-	//FIXME (21/04/16) actually the number is indicated in the NF-FG
-    for(map<string,set<unsigned int> >::iterator it = nfs_ports_found.begin(); it != nfs_ports_found.end(); it++)
-	{
-		set<unsigned int> ports = it->second;
-		assert(ports.size() != 0);
-#if 0
-		for(set<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
-		{
-			if(!graph.updateNetworkFunction(it->first,*p))
-			{
-				if(newGraph)
-					return false;
-				else
-				{
-					//The message does not describe the current NF into the section "VNFs". However, this NF could be
-					//already part of the graph, and in this case the match/action using it is valid. On the contrary,
-					//if the NF is no longer part of the graph, there is an error, and the graph cannot be updated.
-					if(gm->graphContainsNF(graph.getID(),it->first))
-					{
-#if 0
-						graph.addNetworkFunction(it->first);
-#endif
-						graph.updateNetworkFunction(it->first,*p);
-					}
-					else
-						return false;
-				}
-			}
-		}
-#endif
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" requires ports:",it->first.c_str());
-		for(set<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
-	}
-#endif
 
 	return true;
 }

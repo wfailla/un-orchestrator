@@ -174,13 +174,6 @@ list<VNFs> Graph::getVNFs()
 	return vnfs;
 }
 
-#if 0
-set<string> Graph::getPorts()
-{
-	return ports;
-}
-#endif
-
 
 list<Rule> Graph::getRules()
 {
@@ -388,10 +381,6 @@ Object Graph::toJSON()
 
 bool Graph::stillExistNF(string nf)
 {
-#if 0
-	if(networkFunctions.count(nf) == 0)
-		return false;
-#endif
 
 	list<VNFs>::iterator the_vnfs = vnfs.begin();
 	for(; the_vnfs != vnfs.end(); the_vnfs++)
@@ -425,10 +414,6 @@ bool Graph::stillExistNF(string nf)
 				return true;
 		}
 	}
-
-#if 0
-	networkFunctions.erase(nf);
-#endif
 
 	list<VNFs>::iterator vnf = vnfs.begin();
 	for(; vnf != vnfs.end(); vnf++)

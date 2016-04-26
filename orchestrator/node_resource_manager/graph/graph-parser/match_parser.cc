@@ -269,13 +269,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 				match.setNFport(nf_name,port);
 
-#if 0
-				set<unsigned int> ports;
-				if(nfs.count(nf_name) != 0)
-					ports = nfs[nf_name];
-				ports.insert(port);
-				nfs[nf_name] = ports;
-#endif
 			}
 			//end-points port type
 			else if(p_type == EP_PORT_TYPE)
@@ -317,9 +310,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				if(iface_found)
 				{
 					match.setInputPort(realName);
-#if 0
-					graph.addPort(realName);
-#endif
 				}
 				else if(internal_found)
 				{
@@ -349,9 +339,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 					/*add match on "port_in"*/
 					match.setInputPort(vlan_id[eP].second);
-#if 0
-					graph.addPort(vlan_id[eP].second);
-#endif
 
 					/*add "pop_vlan" action*/
 					GenericAction *ga = new VlanAction(actionType,string(""),vlanID);
