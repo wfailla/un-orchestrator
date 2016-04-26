@@ -296,17 +296,6 @@ bool GraphManager::graphExists(string graphID)
 	return true;
 }
 
-bool GraphManager::graphContainsNF(string graphID,string nf)
-{
-	if(!graphExists(graphID))
-		return false;
-
-	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
-	highlevel::Graph *graph = graphInfo.getGraph();
-
-	return graph->stillExistNF(nf);
-}
-
 bool GraphManager::flowExists(string graphID, string flowID)
 {
 	assert(tenantLSIs.count(graphID) != 0);
@@ -2502,7 +2491,10 @@ next2:
 	//Remove NFs, if they no longer appear in the graph
 	for(list<string>::iterator nf = rri.nfs.begin(); nf != rri.nfs.end(); nf++)
 	{
+#if 0 
+		//IVANO: this check has been moved in highlevel graph, in the function that removes pieces from the graph
 		if(!graph->stillExistNF(*nf))
+#endif
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The NF '%s' is no longer part of the graph",(*nf).c_str());
 

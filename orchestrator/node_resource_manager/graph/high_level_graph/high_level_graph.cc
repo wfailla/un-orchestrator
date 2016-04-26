@@ -379,18 +379,20 @@ Object Graph::toJSON()
 	return forwarding_graph;
 }
 
-bool Graph::stillExistNF(string nf)
+bool Graph::stillUsedVNF(VNFs vnf)
 {
-
 	list<VNFs>::iterator the_vnfs = vnfs.begin();
 	for(; the_vnfs != vnfs.end(); the_vnfs++)
 	{
-		if(nf == the_vnfs->getName())
-			//The VNF still exist
+		if(vnf == (*the_vnfs))
 			break;
 	}
 	if(the_vnfs == vnfs.end())
+	{
+		//This situation shouldn't happen
+		assert(0);
 		return false;
+	}
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 	{
@@ -402,30 +404,20 @@ bool Graph::stillExistNF(string nf)
 
 		if(matchOnNF)
 		{
-			if(match.getNF() == nf)
-				//The NF still exists into the graph
+			if(match.getNF() == vnf.getName())
+				//The VNF is still used into the graph
 				return true;
 		}
 
 		if(actionType == ACTION_ON_NETWORK_FUNCTION)
 		{
-			if(((ActionNetworkFunction*)action)->getInfo() == nf)
-				//The NF still exist into the graph
+			if(((ActionNetworkFunction*)action)->getInfo() == vnf.getName())
+				//The VNF is still used into the graph
 				return true;
 		}
 	}
 
-	list<VNFs>::iterator vnf = vnfs.begin();
-	for(; vnf != vnfs.end(); vnf++)
-	{
-		if(nf == vnf->getName())
-		{
-			vnfs.erase(vnf);
-			break;
-		}
-	}
-
-	assert(vnf != vnfs.end());
+	//The VNF is not longer used into the graph
 
 	return false;
 }
@@ -823,8 +815,11 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 			//The endpoint is no longer used by the graph
 			this->removeEndPointInterface(*ep);
 		else
+		{
+			assert(0);
 			//TODO: how to manage properly this situation?
 			return false;
+		}
 	}
 
 	//Update the gre-tunnel endpoints
@@ -854,15 +849,33 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 		this->removeEndPointVlan(*ep);
 	}
 
-#if 0
 	//Update the network functions
 	list<highlevel::VNFs> vnfs_tobe_removed = other->getVNFs();
 	//Iterates on the VNFs to be removed (i.e., the VNFs that are in "other")
 	for(list<highlevel::VNFs>::iterator vtbr = vnfs_tobe_removed.begin(); vtbr != vnfs_tobe_removed.end(); vtbr++)
 	{
-		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
+		//Here it is important to distinguish the case in which a VNF must be removed and the case in which only the ports of the VNF must be removed.
+		if(!stillUsedVNF(*vtbr))
+		{
+
+			list<VNFs>::iterator vnf = vnfs.begin();
+			for(; vnf != vnfs.end(); vnf++)
+			{
+				if((*vtbr) == (*vnf))
+				{
+					vnfs.erase(vnf);
+					break;
+				}
+			}
+			assert(vnf != vnfs.end());
+		}
+		else
+		{
+			assert(0);
+			//TODO: how to manage properly this situation?
+			return false;
+		}
 	}
-#endif
 
 	return true;
 }

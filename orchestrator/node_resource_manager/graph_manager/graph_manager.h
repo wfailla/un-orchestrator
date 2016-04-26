@@ -346,11 +346,6 @@ public:
 #endif
 
 	/**
-	*	@brief: checks if a specific NF is part of a specific graph
-	*/
-	bool graphContainsNF(string graphID,string nf);
-
-	/**
 	*	@brief: create the JSON representation of the graph with the given ID
 	*/
 	Object toJSON(string graphID);
