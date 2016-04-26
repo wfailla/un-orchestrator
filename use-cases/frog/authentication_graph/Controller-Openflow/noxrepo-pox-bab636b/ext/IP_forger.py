@@ -230,7 +230,7 @@ def my_socket(connection,*args):
                             log.info("For the MAC " + str(port_id)+ " sending data to CP...")
                             #time.sleep(0.5)
                             #Send some data to remote server
-                            data = {'Msg_Type':'Auth_OK_Resp', 'Msg_Content':'','IP_address':switch.infos.sock.getpeername()[0],'MAC':my_dpid_to_str(switch.infos.dpid),'user_MAC':MAC.toStr(),'user_port':str(client.switch_port)}
+                            data = {'Msg_Type':'Auth_OK_Resp', 'Msg_Content':'','IP_address':switch.infos.sock.getpeername()[0],'MAC':my_dpid_to_str(switch.infos.dpid),'user_MAC':MAC.toStr(),'user_port':str(switch.infos.ports[client.switch_port].name)}
                             print(json.dumps(data))
                             try :
                                 #Set the whole string
@@ -425,7 +425,7 @@ class IPForger (object):
                     log.info("packet.src is not in client_list")
                     lock.acquire()
                     try:
-                        log.info("save host info: IP=" + str(ipv4_hdr.srcip) + ", MAC=" + str(packet.src) + ", INGRESS_SWITCH_PORT=" + str(event.port))
+                        log.info("save host info: IP=" + str(ipv4_hdr.srcip) + ", MAC=" + str(packet.src) + ", INGRESS_SWITCH_PORT=" + str(switch.infos.ports[event.port].name))
                         client_list[packet.src] = host_infos(ipv4_hdr.srcip,packet.src,event.port,0)
                     finally:
                         lock.release() # release lock, no matter what
