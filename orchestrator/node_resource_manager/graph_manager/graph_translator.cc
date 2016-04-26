@@ -160,7 +160,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 				lsi0Graph.addRule(lsi0Rule);
 			}*/
@@ -209,7 +209,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 				lsi0Graph.addRule(lsi0Rule);
 			}
@@ -254,7 +254,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 				lsi0Graph.addRule(lsi0Rule);
 			}
@@ -299,7 +299,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 				lsi0Graph.addRule(lsi0Rule);
 			}
@@ -360,7 +360,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			//Create the rule and add it to the graph
 			//The rule ID is created as follows  highlevelGraphID_hlrID
 			stringstream newRuleID;
-			newRuleID << graph->getID() << "_" << hlr->getFlowID();
+			newRuleID << graph->getID() << "_" << hlr->getRuleID();
 			lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 			lsi0Graph.addRule(lsi0Rule);
 			
@@ -436,7 +436,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 					 //Create the rule and add it to the graph
 					 //The rule ID is created as follows  highlevelGraphID_hlrID
 					 stringstream newRuleID;
-					 newRuleID << graph->getID() << "_" << hlr->getFlowID();
+					 newRuleID << graph->getID() << "_" << hlr->getRuleID();
 					 lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 					 lsi0Graph.addRule(lsi0Rule);
 				 }
@@ -482,7 +482,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 					 //Create the rule and add it to the graph
 					 //The rule ID is created as follows  highlevelGraphID_hlrID
 					 stringstream newRuleID;
-					 newRuleID << graph->getID() << "_" << hlr->getFlowID();
+					 newRuleID << graph->getID() << "_" << hlr->getRuleID();
 					 lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 					 lsi0Graph.addRule(lsi0Rule);
 				 }
@@ -535,7 +535,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 				lsi0Graph.addRule(lsi0Rule);
 			}
@@ -631,7 +631,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				lowlevel::Action tenantAction(e_id);
 
 				//Create the rule and add it to the graph
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getFlowID(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 			else
@@ -689,7 +689,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				//XXX The generic actions has been added to the lsi-0.
 
 				//Create the rule and add it to the graph
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getFlowID(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 		}//end match.matchOnPort
@@ -747,7 +747,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule tenantRule(tenantMatch,tenantAction,newRuleID.str(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
@@ -785,7 +785,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule tenantRule(tenantMatch,tenantAction,newRuleID.str(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
@@ -819,7 +819,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				//Create the rule and add it to the graph
 				//The rule ID is created as follows  highlevelGraphID_hlrID
 				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getFlowID();
+				newRuleID << graph->getID() << "_" << hlr->getRuleID();
 				lowlevel::Rule tenantRule(tenantMatch,tenantAction,newRuleID.str(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
@@ -851,7 +851,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 
 			if(tenantNetworkFunctionsPorts.count(nf_output.str()) == 0)
 			{
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses (at rule %s) a match on \"%s:%d\", which is not attached to the tenant LSI",(hlr->getFlowID()).c_str(),nf.c_str(),nfPort);
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses (at rule %s) a match on \"%s:%d\", which is not attached to the tenant LSI",(hlr->getRuleID()).c_str(),nf.c_str(),nfPort);
 				throw GraphManagerException();
 			}
 
@@ -884,7 +884,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				//The NF must be replaced with the port identifier
 				if(tenantNetworkFunctionsPortsAction.count(nf_port.str()) == 0)
 				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action (at rule %s) on NF \"%s:%d\", which is not attached to LSI-0",(hlr->getFlowID()).c_str(),action_info.c_str(),inputPort);
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses an action (at rule %s) on NF \"%s:%d\", which is not attached to LSI-0",(hlr->getRuleID()).c_str(),action_info.c_str(),inputPort);
 					throw GraphManagerException();
 				}
 				map<string,unsigned int>::iterator translation = tenantNetworkFunctionsPortsAction.find(nf_port.str());
@@ -896,7 +896,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					tenantAction.addGenericAction(*ga);
 
 				//Create the rule and add it to the graph
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getFlowID(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 			else if(action->getType() == highlevel::ACTION_ON_PORT)
@@ -933,7 +933,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					tenantAction.addGenericAction(*ga);
 
 				//Create the rule and add it to the graph
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getFlowID(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 			else if(action->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL)
@@ -974,7 +974,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					tenantAction.addGenericAction(*ga);
 
 				//Create the rule and add it to the graph
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getFlowID(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 			else
@@ -1009,7 +1009,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					tenantAction.addGenericAction(*ga);
 
 				//Create the rule and add it to the graph
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getFlowID(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 		} //end match.matchOnNF

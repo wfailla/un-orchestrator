@@ -244,7 +244,7 @@ bool Graph::ruleExists(string ID)
 {
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 	{
-		if(r->getFlowID() == ID)
+		if(r->getRuleID() == ID)
 			return true;
 	}
 	return false;
@@ -256,7 +256,7 @@ Rule Graph::getRuleFromID(string ID)
 
 	for(; r != rules.end(); r++)
 	{
-		if(r->getFlowID() == ID)
+		if(r->getRuleID() == ID)
 			return *r;
 	}
 
@@ -272,7 +272,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 	{
-		if(r->getFlowID() == ID)
+		if(r->getRuleID() == ID)
 		{
 			Match match = r->getMatch();
 			Action *action = r->getAction();
@@ -349,10 +349,10 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "The graph still contains the rules: ");
 			for(list<Rule>::iterator print = rules.begin(); print != rules.end(); print++)
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t%s",print->getFlowID().c_str());
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t%s",print->getRuleID().c_str());
 
 			return rri;
-		}//end if(r->getFlowID() == ID)
+		}//end if(r->getRuleID() == ID)
 	}
 
 	assert(0);
@@ -939,7 +939,7 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	{
 		if(!this->addRule(*rule))
 		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",rule->getFlowID().c_str());
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",rule->getRuleID().c_str());
 			return false;
 		}
 	}

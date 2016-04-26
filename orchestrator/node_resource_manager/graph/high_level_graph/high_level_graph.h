@@ -368,7 +368,7 @@ public:
 	*	@brief: Remove a rule starting from its ID, and return
 	*		information on the removed rule
 	*
-	*	@param:	ID	Identifier of the graph to be removed
+	*	@param:	ID	Identifier of the rule to be removed
 	*/
 	RuleRemovedInfo removeRuleFromID(string ID);
 
