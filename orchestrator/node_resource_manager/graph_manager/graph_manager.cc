@@ -668,7 +668,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*/
 
 	/**
-	*	Endpoint internal limitation: 
+	*	@Considerations:
+	*		- the number of ports of a VNF described in the graph are immediately created (also those ports not used in any flow)
+	*		- the GRE-tunnel endpoints described in the graph are immediately created (also those not used in any flow)
+	*		- the internal endpoints are immediately described in the graph are immediately created (also those not used in any flow)
+	*/
+
+	/**
+	*	@Endpoint internal limitation: 
 	*		- connection from physical port to internal endpoint is not supported
 	*		- connection from internal endpoint to physical port is not supported
 	*		- problems with unidirectional flows involving endpoints internal
@@ -677,7 +684,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	/**
 	*	0) Check the validity of the graph
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Check the validity of the graph");
 
 	ComputeController *computeController = new ComputeController();
 
@@ -743,22 +749,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Create the LSI");
 
 
-//	set<string> phyPorts = graph->getPorts();
-
-#if 0
-	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
-#endif
 	list<highlevel::VNFs> network_functions = graph->getVNFs();
-#if 0
-	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
-#endif
-#if 0
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
-
-	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
-#endif
-#endif
 	list<highlevel::EndPointInternal> endpointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
 
@@ -796,9 +787,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	map<string, nf_t>  nf_types;
 	map<string, map<unsigned int, PortType> > nfs_ports_type;  // nf_name -> map( port_id -> port_type )
-#if 0
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); nf_it++) 
-#endif
 	for(list<highlevel::VNFs>::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); nf_it++) 
 	{
 		const string& nf_name = nf_it->getName(); //nf_it->first;
@@ -872,9 +860,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		assert(endpoints.size() == endpoints_gre.size());
 
 		map<string,list<string> > netFunctionsPortsName;
-#if 0
-		for(map<string, list<unsigned int> >::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-#endif
 		for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++) 
 		{
 			netFunctionsPortsName[nf->getName()] = lsi->getNetworkFunctionsPortNames(nf->getName());
@@ -956,68 +941,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	vector<VLink> vls = lsi->getVirtualLinks();
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "LSI ID: %d",dpid);
-#if 0
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports (%d):",lsi_ports.size());
-	for(map<string,unsigned int>::iterator p = lsi_ports.begin(); p != lsi_ports.end(); p++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %d",(p->first).c_str(),p->second);
-#endif
-#if 0
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network functions (%d):",nfs.size());
-	for(set<string>::iterator it = nfs.begin(); it != nfs.end(); it++)
-	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tNF %s:",it->c_str());
-
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		if(network_functions_control_configuration.count(*it) != 0)
-		{
-			list<port_mapping_t > nfs_control_configuration = network_functions_control_configuration[*it];
-
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tControl interfaces (%d):",nfs_control_configuration.size());
-			for(list<port_mapping_t >::iterator n = nfs_control_configuration.begin(); n != nfs_control_configuration.end(); n++)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tHost TCP port -> %s",(n->host_port).c_str());
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
-			}
-		}
-
-		if(network_functions_environment_variables.count(*it) != 0)
-		{
-			list<string> nfs_environment_variables = network_functions_environment_variables[*it];
-
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tEnvironment variables (%d):",nfs_environment_variables.size());
-			for(list<string>::iterator ev = nfs_environment_variables.begin(); ev != nfs_environment_variables.end(); ev++)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s",ev->c_str());
-			}
-		}
-#endif
-
-#endif
-
-#if 0
-		map<string,unsigned int> nfs_ports = lsi->getNetworkFunctionsPorts(*it);
-
-
-		map<unsigned int, port_network_config > nfs_ports_configuration = network_functions_ports_configuration[*it];
-
-
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nfs_ports.size());
-		map<unsigned int, port_network_config >::iterator nd = nfs_ports_configuration.begin();
-		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++/*, nd++*/)
-		{
-					//TODO: restore this!
-//			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s -> %d",(n->first).c_str(),nd->first);
-
-/*			if(!(nd->second.mac_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tMac address -> %s",(nd->second.mac_address).c_str());
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-			if(!(nd->second.ip_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tIp address -> %s",(nd->second.ip_address).c_str());
-#endif
-*/
-		}
-	}
-#endif
 
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
@@ -1232,23 +1155,13 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	to_thread_t thr[network_functions.size()];
 	int i = 0;
 
-#if 0
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-#endif
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		thr[i].nf_name = nf->getName(); //first;
 		thr[i].computeController = computeController;
 		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->getName()/*first*/);
-#if 0
-		thr[i].portsConfiguration = network_functions_ports_configuration[nf->getName()/*first*/];
-#endif
 		thr[i].portsConfiguration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-#if 0
-		thr[i].controlConfiguration = network_functions_control_configuration[nf->getName()/*first*/];
-		thr[i].environmentVariables = network_functions_environment_variables[nf->getName()/*first*/];
-#endif
 		thr[i].controlConfiguration = nf->getControlPorts();
 		thr[i].environmentVariables = nf->getEnvironmentVariables();
 #endif
@@ -1281,9 +1194,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	if(!ok)
 	{
-#if 0
-		for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-#endif 
 		for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 			computeController->stopNF(nf->getName() /*first*/);
 
@@ -1372,9 +1282,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				//through virtual links, and to network functions through virtual ports
 				set<string> dummyPhyPorts;
 
-#if 0
-				map<string, list<unsigned int> > network_functions;
-#endif
 				list<highlevel::VNFs> network_functions;
 
 				map<string, vector<string> > endpoints;
@@ -1591,9 +1498,6 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	} catch (SwitchManagerException e)
 	{
 #ifdef RUN_NFS
-#if 0
-		for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-#endif
 		for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++) 
 			computeController->stopNF(nf->getName() /*first*/);
 #endif
@@ -1712,13 +1616,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints are required)");
 
-//	set<string> phyPorts = diff->getPorts();
-
-#if 0
-	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctionsPorts();
-#endif
 	list<highlevel::VNFs> network_functions = diff->getVNFs();
-	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
 
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 
@@ -1894,9 +1792,6 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 	//Itarate on all the new network functions
 	//TODO: when the hotplug will be introduced, here we will also iterate on the network functions to be updated
-#if 0
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-#endif
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		AddNFportsOut *anpo = NULL;
@@ -1943,6 +1838,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		}
 	}
 
+	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
 	for(list<highlevel::EndPointGre>::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
 #ifdef VSWITCH_IMPLEMENTATION_OVSDB
@@ -1990,6 +1886,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 #endif
 	}
 
+	//TODO: manage the internal endpoint
+
 	/**
 	*	4) Start the new NFs
 	*/
@@ -1999,25 +1897,12 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 	computeController->setLsiID(dpid);
 
-#if 0
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-#endif
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->getName()/*first*/); //Returns the map <port ID, port name on switch>
 		//TODO: the following information should be retrieved through the highlevel graph
-#if 0
-		map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = diff->getNetworkFunctionsConfiguration();
-		map<unsigned int, port_network_config_t > nfs_ports_configuration = new_nfs_ports_configuration[nf->getName()/*first*/];
-#endif
 		map<unsigned int, port_network_config_t > nfs_ports_configuration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-#if 0
-		map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
-		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->getName()/*first*/];
-		map<string, list<string> > new_nfs_env_variables = diff->getNetworkFunctionsEnvironmentVariables();
-		list<string> environment_variables_tmp = new_nfs_env_variables[nf->getName()/*first*/];
-#endif
 		list<port_mapping_t > nfs_control_configuration = nf->getControlPorts();
 		list<string> environment_variables_tmp = nf->getEnvironmentVariables();
 #endif
@@ -2649,12 +2534,15 @@ next2:
 		}
 	}
 
+#if 0 
+	//IVANO: moved in highlevelgraph, in the function that removes pieces from the graph
 	//Remove physical ports, if they no longer appear in the graph
 	for(list<string>::iterator p = rri.ports.begin(); p != rri.ports.end(); p++)
 	{
 		if(!graph->stillExistPort(*p))
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The port '%s' is no longer part of the graph",(*p).c_str());
 	}
+#endif
 
 	//Remove the internal endpoint, if it no longer appear in the graph
 	if((rri.endpointInternal != "") && (!graph->stillExistEndpoint(rri.endpointInternal)))

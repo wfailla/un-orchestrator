@@ -74,6 +74,19 @@ list<EndPointInternal> Graph::getEndPointsInternal()
 	return endPointsInternal;
 }
 
+void Graph::removeEndPointInternal(EndPointInternal endpoint)
+{
+	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end(); e++)
+	{
+		if(*e == endpoint)
+		{
+			endPointsInternal.erase(e);
+			return;
+		}
+	}
+	assert(0);
+}
+
 bool Graph::addEndPointGre(EndPointGre endpoint)
 {
 	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
@@ -92,6 +105,19 @@ list<EndPointGre> Graph::getEndPointsGre()
 	return endPointsGre;
 }
 
+void Graph::removeEndPointGre(EndPointGre endpoint)
+{
+	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
+	{
+		if(*e == endpoint)
+		{
+			endPointsGre.erase(e);
+			return;
+		}
+	}
+	assert(0);
+}
+
 bool Graph::addEndPointVlan(EndPointVlan endpoint)
 {
 	for(list<EndPointVlan>::iterator e = endPointsVlan.begin(); e != endPointsVlan.end(); e++)
@@ -108,6 +134,19 @@ bool Graph::addEndPointVlan(EndPointVlan endpoint)
 list<EndPointVlan> Graph::getEndPointsVlan()
 {
 	return endPointsVlan;
+}
+
+void Graph::removeEndPointVlan(EndPointVlan endpoint)
+{
+	for(list<EndPointVlan>::iterator e = endPointsVlan.begin(); e != endPointsVlan.end(); e++)
+	{
+		if(*e == endpoint)
+		{
+			endPointsVlan.erase(e);
+			return;
+		}
+	}
+	assert(0);
 }
 
 void Graph::addVNF(VNFs vnf)
@@ -427,20 +466,20 @@ bool Graph::stillExistEndpointGre(string endpoint)
 	return false;
 }
 
-bool Graph::stillExistPort(string port)
+bool Graph::stillUsedEndpointInterface(EndPointInterface endpoint)
 {
-#if 0
-	if(ports.count(port) == 0)
-		return false;
-#endif
 	list<EndPointInterface>::iterator interface = endPointsInterface.begin();
 	for(; interface != endPointsInterface.end(); interface++)
 	{
-		if(interface->getInterface() == port)
+		if((*interface) == endpoint)
 			break;
 	}
 	if(interface == endPointsInterface.end())
+	{
+		//This situation shouldn't happen
+		assert(0);
 		return false;
+	}
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 	{
@@ -452,24 +491,21 @@ bool Graph::stillExistPort(string port)
 
 		if(matchOnPort)
 		{
-			if(match.getPhysicalPort() == port)
-				//The port still exists into the graph
+			if(match.getPhysicalPort() == endpoint.getInterface())
+				//The endpoint is still used into the graph
 				return true;
 		}
 
 		if(actionType == ACTION_ON_PORT)
 		{
-			if(((ActionPort*)action)->getInfo() == port)
-				//The port still exist into the graph
+			if(((ActionPort*)action)->getInfo() == endpoint.getInterface())
+				//The endpoint is still used into the graph
 				return true;
 		}
 	}
 
-	//FIXME: what do we have to do now that the internal structure is changed?
-#if 0
-	ports.erase(port);
-#endif
-
+	//The endpoint is no longer used into the graph
+	
 	return false;
 }
 
@@ -748,15 +784,6 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		this->addEndPointInterface(*ep);
 	}
 
-	//Update the network functions
-	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
-	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
-	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
-	{
-		string vnfname = vtba->getName();
-		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
-	}
-
 	//Update the gre endpoints
 	list<highlevel::EndPointGre> nepp = other->getEndPointsGre();
 	for(list<highlevel::EndPointGre>::iterator ep = nepp.begin(); ep != nepp.end(); ep++)
@@ -780,12 +807,20 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		this->addEndPointVlan(*ep);
 	}
 
+	//Update the network functions
+	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
+	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
+	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
+	{
+		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
+	}
+
 	return true;
 }
 
 bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 {
-	list<RuleRemovedInfo> toberemoved;
+	list<RuleRemovedInfo> toberemoved; //this information will be used to destroy the virtual links on the LSI
 
 	//Update the rules
 	list<highlevel::Rule> oldRules = other->getRules();
@@ -795,47 +830,55 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 		toberemoved.push_back(rule_removed_info);
 	}
 
-	//Update the interface endpoints. If an interface endpoint is still used in a rule, it cannot
-	//be removed! In this case the update is not valid!
+	//Update the interface endpoints
 	list<highlevel::EndPointInterface> iep = other->getEndPointsInterface();
 	for(list<highlevel::EndPointInterface>::iterator ep = iep.begin(); ep != iep.end(); ep++)
 	{
-		this->removeEndPointInterface(*ep);
+		if(!stillUsedEndpointInterface(*ep))
+			//The endpoint is no longer used by the graph
+			this->removeEndPointInterface(*ep);
+		else
+			//TODO: how to manage properly this situation?
+			return false;
 	}
 
-#if 0
-	//Update the network functions
-	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
-	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
-	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
-	{
-		string vnfname = vtba->getName();
-		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
-	}
-
-	//Update the gre endpoints
+	//Update the gre-tunnel endpoints
 	list<highlevel::EndPointGre> nepp = other->getEndPointsGre();
 	for(list<highlevel::EndPointGre>::iterator ep = nepp.begin(); ep != nepp.end(); ep++)
 	{
-		//The gre endpoint is not part of the graph
-		this->addEndPointGre(*ep);
+		//TODO If a gre-tunnel endpoint is still used in a rule, it cannot
+		//be removed! In this case the update is not valid!
+		this->removeEndPointGre(*ep);
 	}
 
 	//Update the internal endpoints
 	list<highlevel::EndPointInternal> inep = other->getEndPointsInternal();
 	for(list<highlevel::EndPointInternal>::iterator ep = inep.begin(); ep != inep.end(); ep++)
 	{
-		//The internal endpoint is not part of the graph
-		this->addEndPointInternal(*ep);
+		//TODO If an internal endpoint is still used in a rule, it cannot
+		//be removed! In this case the update is not valid!
+		this->removeEndPointInternal(*ep);
 	}
 
 	//Update the vlan endpoints
 	list<highlevel::EndPointVlan> vep = other->getEndPointsVlan();
 	for(list<highlevel::EndPointVlan>::iterator ep = vep.begin(); ep != vep.end(); ep++)
 	{
-		this->addEndPointVlan(*ep);
+		//TODO If a vlan endpoint is still used in a rule, it cannot
+		//be removed! In this case the update is not valid!
+		this->removeEndPointVlan(*ep);
+	}
+
+#if 0
+	//Update the network functions
+	list<highlevel::VNFs> vnfs_tobe_removed = other->getVNFs();
+	//Iterates on the VNFs to be removed (i.e., the VNFs that are in "other")
+	for(list<highlevel::VNFs>::iterator vtbr = vnfs_tobe_removed.begin(); vtbr != vnfs_tobe_removed.end(); vtbr++)
+	{
+		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
 	}
 #endif
+
 	return true;
 }
 

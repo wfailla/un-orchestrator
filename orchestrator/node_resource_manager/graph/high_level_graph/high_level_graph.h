@@ -40,6 +40,7 @@ class Graph
 {
 private:
 
+	//FIXME: what is this?
 	/**
 	*	@brief: for each end point of the graph, the following structure specifies if that end
 	*		point is defined in this graph or not
@@ -94,6 +95,11 @@ private:
 	*/
 	list<Rule> calculateDiffRules(Graph *other);
 
+	/**
+	*	@brief: Check if an endpoint interface is still used in the graph.
+	*/
+	bool stillUsedEndpointInterface(EndPointInterface endpoint);
+
 public:
 
 	/**
@@ -102,6 +108,25 @@ public:
 	*	@param: ID	identifier of the graph
 	*/
 	Graph(string ID);
+
+	/**
+	*	@brief: Return the ID of the graph
+	*/
+	string getID();
+
+	/**
+	*	@brief: Set the name of the graph
+	*/
+	void setName(string name);
+
+	/**
+	*	@brief: Return the name of the graph
+	*/
+	string getName();
+
+	/**
+	*	Function that does operations on graphs (diff, sum, subtraction)
+	*/
 
 	/**
 	*	@brief: Given a graph, calculate the things (e.g., NFs) that are in such a graph and not in the
@@ -124,19 +149,8 @@ public:
 	bool removeGraphFromGraph(highlevel::Graph *other);
 
 	/**
-	*	@brief: Return the ID of the graph
+	*	Functions to manage the "interface" endpoints
 	*/
-	string getID();
-
-	/**
-	*	@brief: Set the name of the graph
-	*/
-	void setName(string name);
-
-	/**
-	*	@brief: Return the name of the graph
-	*/
-	string getName();
 
 	/**
 	*	@brief: Add a new "interface" endpoint to the graph
@@ -149,9 +163,13 @@ public:
 	list<EndPointInterface> getEndPointsInterface();
 
 	/**
-	*	@brief: Remove an endpoint interface from the graph
+	*	@brief: Remove an endpoint "interface" from the graph
 	*/
 	void removeEndPointInterface(EndPointInterface endpoint);
+
+	/**
+	*	Functions to manage the "internal" endpoints
+	*/
 
 	/**
 	*	@brief: Add a new "internal" endpoint to the graph
@@ -164,14 +182,32 @@ public:
 	list<EndPointInternal> getEndPointsInternal();
 
 	/**
-	*	@brief: Add a new "GRE" endpoint to the graph
+	*	@brief: Remove an endpoint "internal" from the graph
+	*/
+	void removeEndPointInternal(EndPointInternal endpoint);
+
+	/**
+	*	Functions to manage the "gre-tunnel" endpoints
+	*/
+
+	/**
+	*	@brief: Add a new "gre-tunnel" endpoint to the graph
 	*/
 	bool addEndPointGre(EndPointGre endpoint);
 
 	/**
-	*	@brief: Return the "GRE" endpoints of the graph
+	*	@brief: Return the "gre-tunnel" endpoints of the graph
 	*/
 	list<EndPointGre> getEndPointsGre();
+
+	/**
+	*	@brief: Remove an endpoint "gre-tunnel" from the graph
+	*/
+	void removeEndPointGre(EndPointGre endpoint);
+
+	/**
+	*	Functions to manage the "vlan" endpoints
+	*/
 
 	/**
 	*	@brief: Add a new "vlan" endpoint to the graph
@@ -182,6 +218,15 @@ public:
 	*	@brief: Return the "vlan" endpoints of the graph
 	*/
 	list<EndPointVlan> getEndPointsVlan();
+	
+	/**
+	*	@brief: Remove an endpoint "internal" from the graph
+	*/
+	void removeEndPointVlan(EndPointVlan endpoint);
+
+	/**
+	*	Functions to manage the VNFs
+	*/
 
 	/**
 	*	@brief: Add a new vnf to the graph. In case the VNF is already part of the
@@ -194,6 +239,10 @@ public:
 	*	@brief: Return the VNFs of the graph
 	*/
 	list<VNFs> getVNFs();
+
+	/**
+	*	Functions to manage the rules
+	*/
 
 	/**
 	*	@brief: Return the rules of the graph
@@ -231,6 +280,24 @@ public:
 	RuleRemovedInfo removeRuleFromID(string ID);
 
 	/**
+	*	Functions to get the description of the graph
+	*/
+
+	/**
+	*	@brief: Return the number of rules in the graph
+	*/
+	int getNumberOfRules();
+
+	/**
+	*	@brief: Create a JSON representation of the graph
+	*/
+	Object toJSON();
+
+	void print();
+
+/********************************************************************************************************************/
+
+	/**
 	*	@brief: Checks if a NF still exist in the graph. If it is no longer used
 	*		in any rule, but it is still part of the "networkFunctions" map,
 	*		it is removed from this map as well.
@@ -238,15 +305,6 @@ public:
 	*	@param:	nf	Name of a network function
 	*/
 	bool stillExistNF(string nf);
-
-	/**
-	*	@brief: Checks if a physical port still exist in the graph. If it is no
-	*		longer used in any rule, but it is part of the "ports" set, it
-	*		is removed from this set as well.
-	*
-	*	@param:	port	Name of a physical port
-	*/
-	bool stillExistPort(string port);
 
 	/**
 	*	@brief: Checks if an endpoint port still exist in the graph. If it is no
@@ -287,18 +345,6 @@ public:
 	*	@param: endpoint	Idenfier of the endpoint to be checked
 	*/
 	bool endpointIsUsedInMatch(string endpoint);
-
-	/**
-	*	@brief: Return the number of flows in the graph
-	*/
-	int getNumberOfRules();
-
-	/**
-	*	@brief: Create a JSON representation of the graph
-	*/
-	Object toJSON();
-
-	void print();
 };
 
 }
