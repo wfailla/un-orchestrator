@@ -51,8 +51,6 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 	//Create the openflow controller for the lsi-0
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating the openflow controller for LSI-0...");
 
-	//lowlevel::Graph graph;
-
 	rofl::openflow::cofhello_elem_versionbitmap versionbitmap;
 	switch(OFP_VERSION)
 	{
@@ -668,7 +666,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	@Considerations:
 	*		- the number of ports of a VNF described in the graph are immediately created (also those ports not used in any flow)
 	*		- the GRE-tunnel endpoints described in the graph are immediately created (also those not used in any flow)
-	*		- the internal endpoints are immediately described in the graph are immediately created (also those not used in any flow)
+	*		- the internal endpoints described in the graph are immediately created (also those not used in any flow)
 	*/
 
 	/**
