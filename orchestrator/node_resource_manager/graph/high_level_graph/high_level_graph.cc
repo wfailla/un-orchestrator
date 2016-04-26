@@ -546,11 +546,6 @@ bool Graph::stillExistPort(string port)
 	return false;
 }
 
-bool Graph::isDefinedHere(string endpoint)
-{
-	return endpoints[endpoint];
-}
-
 string Graph::getEndpointInvolved(string flowID)
 {
 	highlevel::Rule r = getRuleFromID(flowID);

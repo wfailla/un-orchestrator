@@ -1,6 +1,6 @@
 #include "graph_translator.h"
 
-lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int> endPointsDefinedInMatches, map<string, unsigned int> endPointsDefinedInActions, map<string, unsigned int > &availableEndPoints, string un_interface, bool orchestrator_in_band, bool creating)
+lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, list<unsigned int> > endPointsDefinedInMatches, map<string, list<unsigned int> > endPointsDefinedInActions, map<string, unsigned int > &availableEndPoints, string un_interface, bool orchestrator_in_band, bool creating)
 {
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating rules for LSI-0");
 
@@ -80,16 +80,27 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		if( (match.matchOnNF() || match.matchOnEndPointGre()) && (action->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL) )
 		{
 			/**
-			*	NF -> internal endpoint
-			*	Gre -> internal endpoint
+			*	NF -> internal end point
+			*	Gre -> internal end point
 			*/
-			if(/*graph->isDefinedHere(action->toString())*/endPointsDefinedInActions.count(action->toString()) == 0)
+			/*if(availableEndPoints.count(action->toString()) <= 1)
+			{*/
+			/**
+			*	the rule is not inserted in the LSI-0
+			*/
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tThe rule is not inserted in the LSI-0");
+
+			if(creating/* && endPointsDefinedInMatches.count(action->toString()) == 0*/)
 			{
-				/**
-				*	the rule is not included in case the internal endpoint is defined by the graph itself
-				*/
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tRule with action expressed on internal endpoint \"%s\" defined in this graph. The rule is not inserted in the LSI-0",action->toString().c_str());
+				availableEndPoints[action->toString()]++;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "internal end point \"%s\" used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
 			}
+			else
+			{
+				availableEndPoints[action->toString()]--;
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal end point \"%s\" still used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
+			}
+			/*}
 			else
 			{
 				assert(endPointsDefinedInMatches.count(action->toString()) != 0);
@@ -97,29 +108,29 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				if(creating)
 				{
 					availableEndPoints[action->toString()]++;
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal endpoint \"%s\" used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "internal end point \"%s\" used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
 				}
 				else
 				{
 					availableEndPoints[action->toString()]--;
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal endpoint \"%s\" still used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
+					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal end point \"%s\" still used %d times",action->toString().c_str(), availableEndPoints[action->toString()]);
 				}
-
+			 	 */
 				/**
-				*	The entire match must be replaced with the virtual link associated with the internal endpoint
+				*	The entire match must be replaced with the virtual link associated with the internal end point
 				*	expressed in the action.
-				*	The internal endpoint in the action must be replaced with the port identifier defined into the graph defining
-				*	the internal endpoint itself (hence expressed in endPointsDefinedInMatches)
+				*	The internal end point in the action must be replaced with the port identifier defined into the graph defining
+				*	the internal end point itself (hence expressed in endPointsDefinedInMatches)
 				*/
 
-				string action_info = action->getInfo();
+				/*string action_info = action->getInfo();
 				if(match.matchOnNF())
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on NF \"%s\", action is on endpoint \"%s\"",match.getNF().c_str(),action->toString().c_str());
+					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on NF \"%s\", action is on end point \"%s\"",match.getNF().c_str(),action->toString().c_str());
 				else
 				{
 					stringstream ss;
 					ss << match.getEndPoint();
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on gre endpoint \"%s\", action is on endpoint \"%s\"",ss.str().c_str(),action->toString().c_str());
+					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on gre end point \"%s\", action is on end point \"%s\"",ss.str().c_str(),action->toString().c_str());
 				}
 
 				//Translate the match
@@ -152,7 +163,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				newRuleID << graph->getID() << "_" << hlr->getFlowID();
 				lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 				lsi0Graph.addRule(lsi0Rule);
-			}
+			}*/
 			continue;
 		}
 
@@ -361,25 +372,28 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			 stringstream ss;
 			 ss << match.getEndPoint();
 
-			 if(/*graph->isDefinedHere(ss.str())*/endPointsDefinedInMatches.count(ss.str()) == 0)
+			 /*if(availableEndPoints.count(ss.str()) <= 1)
+			 {*/
+			 /**
+				*	the rule is not inserted in the LSI-0
+				*/
+			 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tThe rule is not inserted in the LSI-0");
+
+			 if(creating && endPointsDefinedInActions.count(ss.str()) == 0)
 			 {
-				 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tRule with match expressed on internal endpoint \"%s\" defined in this graph. The rule is not inserted in the LSI-0",ss.str().c_str());
+				 availableEndPoints[ss.str()]++;
+				 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal end point \"%s\" used %d times",ss.str().c_str(), availableEndPoints[ss.str()]);
 			 }
 			 else
 			 {
-				 if(creating)
-				 {
-					 availableEndPoints[ss.str()]++;
-					 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" used %d times",ss.str().c_str(), availableEndPoints[ss.str()]);
-				 }
-				 else
-				 {
-					 availableEndPoints[ss.str()]--;
-					 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" still used %d times",ss.str().c_str(), availableEndPoints[ss.str()]);
-				 }
-
+				 availableEndPoints[ss.str()]--;
+				 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "internal end point \"%s\" still used %d times",ss.str().c_str(), availableEndPoints[ss.str()]);
+			 }
+			 /*}
+			 else
+			 {*/
 				 //Translate the match
-				 lowlevel::Match lsi0Match;
+				 /*lowlevel::Match lsi0Match;
 				 lsi0Match.setAllCommonFields(match);
 				 lsi0Match.setInputPort(endPointsDefinedInActions[ss.str()]);
 
@@ -392,7 +406,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 					 stringstream action_port;
 					 string action_info = action->getInfo();
 					 action_port << action_info << "_" << action_nf->getPort();
-					 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the internal endpoint \"%s\", and the action is \"%s:%d\"",ss.str().c_str(),action_info.c_str(),action_nf->getPort());
+					 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the internal end point \"%s\", and the action is \"%s:%d\"",ss.str().c_str(),action_info.c_str(),action_nf->getPort());
 
 					 assert(endPointsDefinedInActions.count(ss.str()) != 0);
 
@@ -472,7 +486,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 					 lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRuleID.str(),priority);
 					 lsi0Graph.addRule(lsi0Rule);
 				 }
-			 }
+			 }*/
 			 continue;
 		 } //end of match.matchOnEndPointInternal()
 		 else
