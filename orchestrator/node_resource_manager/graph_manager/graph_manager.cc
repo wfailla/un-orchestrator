@@ -567,11 +567,12 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 
 	string graphID = graph->getID();
 
+	/**
+	*	Check if the required physical ports are under the control of the un-orchestrator
+	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d new physical ports",phyPorts.size());
-
 	LSI *lsi0 = graphInfoLSI0.getLSI();
 	map<string,unsigned int> physicalPorts = lsi0->getPhysicalPorts();
-
 	for(set<string>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
 	{
 		if((physicalPorts.count(*p)) == 0)
@@ -581,8 +582,10 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		}
 	}
 
+	/**
+	*	Check the validity of the internal endpoint
+	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d internal endpoints (i.e., logical ports to be used to connect two graphs together)",endPointsInternal.size());
-
 	for(list<highlevel::EndPointInternal>::iterator graphEP = endPointsInternal.begin(); graphEP != endPointsInternal.end(); graphEP++)
 	{
 		if(availableEndPoints.count(graphEP->getGroup()) > 1)
@@ -615,29 +618,31 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		}
 	}
 
+	/**
+	*	No check is required for a GRE endpoint
+	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d gre endpoints (i.e., gre ports to be used to connect two nodes together)",endPointsGre.size());
 
+	/**
+	*	No check is required for a VLAN endpoint
+	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d vlan endpoints",endPointsVlan.size());
 
-#if 0
-	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
-#endif
+	/**
+	*	Check if the required network functions are available
+	*/
 	list<highlevel::VNFs> network_functions = graph->getVNFs();
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires to retrieve %d new NFs",network_functions.size());
-
 	//The description must be actually retrieved only for new VNFs, and not for VNFs whose number of ports is changed
 	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-
 		//FIXME: not sure that this check is necessary
 		if(computeController->getNFSelectedImplementation(nf->getName()))
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t* NF \"%s\" is already part of the graph; it is not retrieved again",nf->getName().c_str());
 			continue;
 		}
-
 		nf_manager_ret_t retVal = computeController->retrieveDescription(nf->getName());
-
 		if(retVal == NFManager_NO_NF)
 		{
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" cannot be retrieved",nf->getName().c_str());
@@ -649,6 +654,9 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		}
 	}
 
+	/**
+	*	The graph is valid!
+	*/
 	return true;
 }
 
@@ -685,6 +693,13 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*		5) start the NFs
 	*		6) download the rules in LSI-0, tenant-LSI
 	*		7) create the internal LSI, with the proper vlinks and download the rules in internal-LSIs
+	*/
+
+	/**
+	*	Endpoint internal limitation: 
+	*		- connection from physical port to internal endpoint is not supported
+	*		- connection from internal endpoint to physical port is not supported
+	*		- problems with unidirectional flows involving endpoints internal
 	*/
 
 	/**
@@ -1633,9 +1648,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*		- new VNFs
 	*		- new endpoints (interface, GRE, vlan, internal)
 	*	- only new ports (and the related configuration) can be added to VNFs
-	*	  It is instead not possible to add new:
+	*		It is instead not possible to add new:
 	*		- environment variables
 	*		- control connections
+	*	- internal endpoints not supported
 	**/
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' with new 'pieces'...",graphID.c_str());
