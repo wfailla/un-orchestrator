@@ -592,42 +592,6 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	}
 
 	/**
-	*	Check the validity of the internal endpoint
-	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d internal endpoints (i.e., logical ports to be used to connect two graphs together)",endPointsInternal.size());
-	for(list<highlevel::EndPointInternal>::iterator graphEP = endPointsInternal.begin(); graphEP != endPointsInternal.end(); graphEP++)
-	{
-		if(availableEndPoints.count(graphEP->getGroup()) > 1)
-		{
-			//since this internal endpoint is defined into another graph, that internal endpoint must already exist
-			if(availableEndPoints.count(graphEP->getGroup()) == 0)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" does not exist yet",graphEP->getGroup().c_str());
-				return false;
-			}
-
-			if(graph->endpointIsUsedInMatch(graphEP->getGroup()))
-			{
-				//Another graph must have been defined it in an action
-				if(endPointsDefinedInActions.count(graphEP->getGroup()) == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in a match of the current graph, but it was not defined in an action of another graph",graphEP->getGroup().c_str());
-					return false;
-				}
-			}
-			if(graph->endpointIsUsedInAction(graphEP->getGroup()))
-			{
-				//Another graph must have been defined it in a match
-				if(endPointsDefinedInMatches.count(graphEP->getGroup()) == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in an action of the current graph, but it was not defined in a match of another graph",graphEP->getGroup().c_str());
-					return false;
-				}
-			}
-		}
-	}
-
-	/**
 	*	No check is required for a GRE endpoint
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d gre endpoints (i.e., gre ports to be used to connect two nodes together)",endPointsGre.size());
