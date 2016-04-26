@@ -1,0 +1,47 @@
+{
+   "tools":{
+      "ratemon":{
+         "version":0,
+         "label":"ratemon",
+         "parameters":{
+            "interface":"string"
+         },
+         "results": {
+           "rate.rx":"float",
+           "rate.tx":"float",
+           "overload.risk.rx":"float",
+           "overload.risk.tx":"float"
+
+         }
+      },
+      "ping-aggregate":{
+         "version":0,
+         "label":"ping-aggregate",
+         "parameters":{
+            "source.ip4":"ip4",
+            "destination.ip4":"ip4",
+            "count":"int",
+            "interval":"int"
+         },
+         "results": {
+           "delay.twoway.icmp.us.min":"float",
+           "delay.twoway.icmp.us.mean":"float",
+           "delay.twoway.icmp.us.50pct":"float",
+           "delay.twoway.icmp.us.max":"float",
+           "delay.twoway.icmp.count":"int"
+         }
+      },
+      "ping-singletons":{
+         "version":0,
+         "label":"ping-singletons",
+         "parameters":{
+            "source.ip4":"<IPv4>",
+            "destination.ip4":"<IPv4>"
+         },
+         "results":[
+            "delay.twoway.icmp.us",
+            "time"
+         ]
+      }
+   }
+}

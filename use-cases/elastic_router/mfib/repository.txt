@@ -1,0 +1,51 @@
+Repository.py
+
+- Stores schemas in JSON format (repo.json)
+- Connects to the bus as a PUBLIC client (reachable from other PUBLIC clients and any customer)
+- Expects JSON formatted requests about Tools (ping-aggregate, ping-singleton, ratemon, etc.)
+  - Returns list of Tools, or Tool information (what results it will deliver, which parameters it has)
+- Expects JSON formatted requests about Results (delay.twoway.icmp.count,delay.twoway.icmp.us.min
+  - Returns list of Results, or which Tool(s) provides which results
+
+
+
+getTool/getTools
+----------------
+send public.measure-schema {"command":"getTool", "args":["ping"], "xid":"avd"}
+ -- INFO:Got message from b'public.measure-schema': b'{"result": "ok", "code": "[]", "xid": "avd"}'
+
+send public.measure-schema {"command":"getTool", "args":["ping-singletons"], "xid":"avd"}
+INFO:Got message from b'public.measure-schema': b'{"xid": "avd", "result": "ok", "data": {"results": ["delay.twoway.icmp.us", "time"], "parameters": {"source.ip4": "<IPv4>", "destination.ip4": "<IPv4>"}, "version": 0, "label": "ping-singletons"}}'
+
+send public.measure-schema {"command":"getTool", "args":["ping-aggregate"], "xid":"avd"}
+INFO:Got message from b'public.measure-schema': b'{"xid": "avd", "result": "ok", "data": {"results": ["delay.twoway.icmp.us.min", "delay.twoway.icmp.us.mean", "delay.twoway.icmp.us.50pct", "delay.twoway.icmp.us.max", "delay.twoway.icmp.count"], "parameters": {"interval": "<ms>", "source.ip4": "<IPv4>", "count": "<num>", "destination.ip4": "<IPv4>"}, "version": 0, "label": "ping-aggregate"}}'
+
+send public.measure-schema {"command":"getTools", "args":[], "xid":"avd"}    
+INFO:Got message from b'public.measure-schema': b'{"xid": "avd", "result": "ok", "data": ["ping-aggregate", "ping-singletons"]}'
+send public.measure-schema {"command":"getTools",  "xid":"avd"}    
+INFO:Got message from b'public.measure-schema': b'{"xid": "avd", "result": "ok", "data": ["ping-aggregate", "ping-singletons"]}'
+
+send public.measure-schema {"command":"getTools"}    
+INFO:Got message from b'public.measure-schema': b'{"result": "error", "data": "Misformed JSON, \'xid\' missing", "xid": "-1"}'
+
+send public.measure-schema {"command":"getTools",safd90}    
+INFO:Got message from b'public.measure-schema': b'{"xid": "-1", "result": "error", "data": "Misformed JSON, could not parse!"}'
+
+
+getResult/getResults
+--------------------
+send public.measure-schema {"command":"getResults",  "xid":"avd"}
+INFO:Got message from b'public.measure-schema': b'{"result": "ok", "data": ["delay.twoway.icmp.count", "delay.twoway.icmp.us.50pct", "delay.twoway.icmp.us.max", "delay.twoway.icmp.us", "time", "delay.twoway.icmp.us.min", "delay.twoway.icmp.us.mean"], "xid": "avd"}'
+
+send public.measure-schema {"command":"getResult", "args":[","], "xid":"avd"}
+INFO:Got message from b'public.measure-schema': b'{"result": "ok", "data": ["ping-aggregate"], "xid": "avd"}'
+
+send public.measure-schema {"command":"getResult", "args":["delay.twoway.icmp.us.count"], "xid":"avd"}
+INFO:Got message from b'public.measure-schema': b'{"result": "ok", "data": [], "xid": "avd"}'
+
+send public.measure-schema {"command":"getResult", "args":["delay.twoway.icmp.us.max"], "xid":"avd"}
+INFO:Got message from b'public.measure-schema': b'{"data": ["ping-singletons", "ping-aggregate"], "xid": "avd", "result": "ok"}'
+
+
+
+
