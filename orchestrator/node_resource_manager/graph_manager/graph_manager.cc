@@ -510,21 +510,12 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		return deleteGraph(graphID);
 	}
 
-<<<<<<< HEAD
-	/**
-	*	The flow can be removed only if does not define an endpoint used by some other graph
-	*/
 #if 0
-	if(!canDeleteFlow(graph,flowID))
-		return false;
-#endif
-	/*string endpointInvolved = graph->getEndpointInvolved(flowID);
-=======
 	string endpointInvolved = graph->getEndpointInvolved(flowID);
->>>>>>> e4cf11f832e881f4482b721eb1e0d8803cdd5ce5
 	bool definedHere = false;
 	if(endpointInvolved != "")
 		definedHere = graph->isDefinedHere(endpointInvolved);*/
+#endif
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Removing the flow from the LSI-0 graph");
 	Controller *lsi0Controller = graphInfoLSI0.getController();
@@ -1330,7 +1321,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	/**
 	*	6) Create the rules and download them in LSI-0, tenant-LSI
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "7) Create the rules and download them in LSI-0, tenant-LSI and internal-LSIs");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "6) Create the rules and download them in LSI-0, tenant-LSI and internal-LSIs");
 	try
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
@@ -1382,7 +1373,10 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				//through virtual links, and to network functions through virtual ports
 				set<string> dummyPhyPorts;
 
+#if 0
 				map<string, list<unsigned int> > network_functions;
+#endif
+				list<highlevel::VNFs> network_functions;
 
 				map<string, vector<string> > endpoints;
 				list<highlevel::EndPointGre> endpointsGre;
