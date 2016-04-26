@@ -39,10 +39,21 @@ private:
 	string interface;
 
 public:
-
 	EndPointInterface(string id, string name, string interface);
+	
+	/**
+	*	@brief: return the ID of the endpoint
+	*/
 	string getId();
+	
+	/**
+	*	@brief: return the name of the endpoint
+	*/
 	string getName();
+	
+	/**
+	*	@brief: return the physical interface corresponding to the endpoint
+	*/
 	string getInterface();
 
 	~EndPointInterface();

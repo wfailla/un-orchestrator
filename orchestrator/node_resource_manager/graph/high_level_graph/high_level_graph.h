@@ -38,58 +38,7 @@ namespace highlevel
 */
 class Graph
 {
-public:
-#if 0
-	typedef map<string, list<unsigned int> > t_nfs_ports_list;
-	typedef map<string, map<unsigned int, port_network_config_t > > t_nfs_configuration;
-
-
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	typedef map<string, list<port_mapping_t > > t_nfs_control;
-
-#if 0
-	typedef map<string, list<string> > t_nfs_env_variables;
-#endif
-
-#endif
-#endif
-
 private:
-	//FIXME: this class contains a lot of information already specified in the class VNFs.
-
-#if 0
-	/**
-	*	@brief: for each NF attached to the graph specifies a list of ports. For
-	*		instance, if in the graph there is NF:1 and NF:2,
-	*		an element of the map is <NF, <1,2> >
-	*/
-	t_nfs_ports_list networkFunctions; //This is a map of <nf name, list <port id> >
-
-	/**
-	*	@brief: for each NF attached to the graph specifies a list of pair elements
-	* 		(mac address, ip address), one for each port
-	*/
-	t_nfs_configuration networkFunctionsConfiguration; //this is a map <nf name, map <port id, port configuration> >
-#endif
-
-#if 0
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	/**
-	*	@brief: for each VNF attached to the graph, specifies a list of pair elements
-	* 		(host TCP port, VNF TCP port), which are the control connections for the VNF
-	*/
-	t_nfs_control networkFunctionsControlPorts; //this is a map <nf name, list <control ports> >
-
-
-	/**
-	*	@brief: for each VNF attached to the graph, specifies a list of environment variables
-	*		to be set to the VNF itself. Each element of the list is in the form "variable=value"
-	*
-	*/
-	t_nfs_env_variables networkFunctionsEnvironmentVariables; //this is a map <nf name, list <env variable> >
-#endif
-
-#endif
 
 	/**
 	*	@brief: for each end point of the graph, the following structure specifies if that end
@@ -97,10 +46,12 @@ private:
 	*/
 	map<string, bool > endpoints;
 
+#if 0
 	/**
 	*	@brief: physical ports to be attached to the graph
 	*/
 	set<string> ports;
+#endif
 
 	/**
 	*	@brief: List of rules describing the graph
@@ -159,6 +110,7 @@ public:
 	*/
 	Graph(string ID);
 
+#if 0
 	/**
 	*	@brief: Add a physical port to the graph
 	*
@@ -170,25 +122,6 @@ public:
 	*	@brief: Return the physical ports of the graph
 	*/
 	set<string> getPorts();
-
-#if 0
-	/**
-	*	@brief: Add a NF to the graph
-	*
-	*	@param:	nf	Name of the network function to be added
-	*/
-	bool addNetworkFunction(string nf);
-#endif
-
-#if 0
-	/**
-	*	@brief: Add a NF port description to the graph
-	*
-	*	@param:	nf	Name of the network function to be added
-	*	@param: description a pair of value <mac address, ip address>
-	*/
-	//FIXME: is the return value useful?
-	bool addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > description);
 #endif
 
 	/**
@@ -210,64 +143,6 @@ public:
 	*	@param: other	graph with the components to be removed
 	*/
 	bool removeGraphFromGraph(highlevel::Graph *other);
-
-#if 0
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	/**
-	*	@brief: Add a VNF control port to the graph
-	*
-	*	@param:	nf	Name of the network function to be added
-	*	@param: control_port. It is a pair of value <vnf_tcp_port, host_tcp_port>
-	*/
-	void addNetworkFunctionControlPort(string nf, port_mapping_t control_port);
-
-	/**
-	*	@brief: Add an environment variable for a specific VNF
-	*
-	*	@param:	nf	Name of the network function to be added
-	*	@param: env_vairiable. Environment variable in the for "variable=value"
-	*/
-	void addNetworkFunctionEnvironmentVariable(string nf, string env_variable);
-#endif
-#endif
-
-#if 0
-	/**
-	*	@brief: Update a NF by adding a port
-	*	//FIXME: is this useful?
-	*
-	*	@param: nf		Name of the network function to be updated
-	*	@param: port	Identifier of the port of the network function
-	*/
-	bool updateNetworkFunction(string nf, unsigned port);
-#endif
-
-#if 0
-	/**
-	*	@brief: Return the NFs of the graph and the ports they require
-	*/
-	t_nfs_ports_list getNetworkFunctionsPorts();
-
-	/**
-	*	@brief: Return the VNFs of the graph and the description of the ports they require
-	*/
-	t_nfs_configuration getNetworkFunctionsConfiguration();
-#endif
-
-#if 0
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	/**
-	*	@brief: Return the VNFs of the graph and the control ports they require
-	*/
-	t_nfs_control getNetworkFunctionsControlPorts();
-
-
-	/**
-	*	@brief: Return the VNFs of the graph and the environment variables they require
-	*/
-	t_nfs_env_variables getNetworkFunctionsEnvironmentVariables();
-#endif
-#endif
 
 	/**
 	*	@brief: Return the ID of the graph
@@ -292,8 +167,12 @@ public:
 	/**
 	*	@brief: Return the "interface" endpoints of the graph
 	*/
-	//XXX: this functions is not used. 
 	list<EndPointInterface> getEndPointsInterface();
+
+	/**
+	*	@brief: Remove an endpoint interface from the graph
+	*/
+	void removeEndPointInterface(EndPointInterface endpoint);
 
 	/**
 	*	@brief: Add a new "internal" endpoint to the graph

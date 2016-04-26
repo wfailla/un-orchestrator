@@ -317,7 +317,9 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				if(iface_found)
 				{
 					match.setInputPort(realName);
+#if 0
 					graph.addPort(realName);
+#endif
 				}
 				else if(internal_found)
 				{
@@ -347,7 +349,9 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 					/*add match on "port_in"*/
 					match.setInputPort(vlan_id[eP].second);
+#if 0
 					graph.addPort(vlan_id[eP].second);
+#endif
 
 					/*add "pop_vlan" action*/
 					GenericAction *ga = new VlanAction(actionType,string(""),vlanID);

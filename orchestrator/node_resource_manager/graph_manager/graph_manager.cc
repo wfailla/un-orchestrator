@@ -496,6 +496,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
 	highlevel::Graph *graph = graphInfo.getGraph();
 
+	//Check if the rule to be removed exists
 	if(!graph->ruleExists(flowID))
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow \"%s\" does not exist in graph \"%s\"",flowID.c_str(),graphID.c_str());
@@ -560,7 +561,10 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 
 bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController *computeController)
 {
+#if 0
 	set<string> phyPorts = graph->getPorts();
+#endif
+	list<highlevel::EndPointInterface> phyPorts = graph->getEndPointsInterface();
 	list<highlevel::EndPointInternal> endPointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endPointsGre = graph->getEndPointsGre();
 	list<highlevel::EndPointVlan> endPointsVlan = graph->getEndPointsVlan();
@@ -573,11 +577,16 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d new physical ports",phyPorts.size());
 	LSI *lsi0 = graphInfoLSI0.getLSI();
 	map<string,unsigned int> physicalPorts = lsi0->getPhysicalPorts();
+#if 0
 	for(set<string>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
+#endif
+	for(list<highlevel::EndPointInterface>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
 	{
-		if((physicalPorts.count(*p)) == 0)
+		string interfaceName = p->getInterface();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "* %s",interfaceName.c_str());
+		if((physicalPorts.count(interfaceName)) == 0)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Physical port \"%s\" does not exist",(*p).c_str());
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Physical port \"%s\" does not exist",interfaceName.c_str());
 			return false;
 		}
 	}
@@ -670,9 +679,9 @@ void *startNF(void *arguments)
 	    , args->controlConfiguration, args->environmentVariables
 #endif
 	))
-    	return (void*) 0;
-    else
-    	return (void*) 1;
+		return (void*) 0;
+	else
+		return (void*) 1;
 }
 
 
@@ -770,7 +779,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Create the LSI");
 
-	set<string> phyPorts = graph->getPorts();
+
+//	set<string> phyPorts = graph->getPorts();
 
 #if 0
 	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
@@ -1341,8 +1351,10 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
 		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(),endPointsDefinedInMatches,endPointsDefinedInActions,availableEndPoints,un_interface,orchestrator_in_band);
-
 		graphLSI0lowLevel.addRules(graphLSI0.getRules());
+		list<lowlevel::Rule> llrules = graphLSI0.getRules();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph for LSI-0 (%d new rules added):",llrules.size());
+		graphLSI0.print();
 
 		lowlevel::Graph graphTenant =  GraphTranslator::lowerGraphToTenantLSI(graph,lsi,graphInfoLSI0.getLSI());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph for tenant LSI:");
@@ -1731,7 +1743,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints are required)");
 
-	set<string> phyPorts = diff->getPorts();
+//	set<string> phyPorts = diff->getPorts();
 
 #if 0
 	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctionsPorts();
@@ -2586,7 +2598,6 @@ next:
 
 next2:
 
-#ifndef UNIFY_NFFG
 	if(rri.isEndpointInternal)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the internal endpoint '%s' must be removed (if this vlink exists)",rri.endpointInternal.c_str());
 
@@ -2635,7 +2646,6 @@ next2:
 			}
 		}
 	}
-#endif
 
 	//Remove NFs, if they no longer appear in the graph
 	for(list<string>::iterator nf = rri.nfs.begin(); nf != rri.nfs.end(); nf++)
@@ -2677,11 +2687,9 @@ next2:
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The port '%s' is no longer part of the graph",(*p).c_str());
 	}
 
-#ifndef UNIFY_NFFG
 	//Remove the internal endpoint, if it no longer appear in the graph
 	if((rri.endpointInternal != "") && (!graph->stillExistEndpoint(rri.endpointInternal)))
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint '%s' is no longer part of the graph",rri.endpointInternal.c_str());
-#endif
 
 	//Remove the gre endpoint, if it no longer appear in the graph
 	if((rri.endpointGre != "") && (!graph->stillExistEndpointGre(rri.endpointGre)))

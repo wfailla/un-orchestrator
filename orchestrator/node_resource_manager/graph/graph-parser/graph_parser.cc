@@ -1072,7 +1072,9 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 															if(iface_found)
 															{
 																	action = new highlevel::ActionPort(realName, string(s_a_value));
+#if 0
 																	graph.addPort(realName);
+#endif
 															}
 															else if(internal_found)
 															{
@@ -1095,8 +1097,9 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 																/*add "output_port" action*/
 																action = new highlevel::ActionPort(vlan_id[eP].second, string(s_a_value));
+#if 0
 																graph.addPort(vlan_id[eP].second);
-
+#endif
 																/*add "push_vlan" action*/
 																GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
 																action->addGenericAction(ga);
