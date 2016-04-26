@@ -1521,12 +1521,15 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 {
+	if(!updateGraph_add(graphID,newGraph))
+		return false;
+	return updateGraph_remove(graphID,newGraph);
+}
+
+bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
+{
 	/**
 	*	Limitations:
-	*
-	*	- only used to add new parts to the graph, and not to remove parts
-	*		- new VNFs
-	*		- new endpoints (interface, GRE, vlan, internal)
 	*	- only new ports (and the related configuration) can be added to VNFs
 	*		It is instead not possible to add new:
 	*		- environment variables
@@ -1968,7 +1971,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	return true;
 }
 
-bool GraphManager::updateGraph_removePieces(string graphID, highlevel::Graph *newGraph)
+bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph)
 {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' by removing 'pieces'...",graphID.c_str());
 

@@ -257,6 +257,19 @@ private:
 	*/
 	void handleInBandController(LSI *lsi, Controller *controller);
 
+	/**
+	*	@brief: add a new piece to an existing graph with
+	*		a specific ID.
+	*/
+	bool updateGraph_add(string graphID, highlevel::Graph *newGraph);
+
+	/**
+	*	@brief: remove pieces from an existing graph with a
+	*		specific ID.
+	*/
+	bool updateGraph_remove(string graphID, highlevel::Graph *newGraph);
+
+
 public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
@@ -290,16 +303,9 @@ public:
 	bool deleteGraph(string graphID, bool shutdown = false);
 
 	/**
-	*	@brief: add a new piece to an existing graph with
-	*		a specific ID.
+	*	@brief: update an existing graph
 	*/
 	bool updateGraph(string graphID, highlevel::Graph *newGraph);
-
-	/**
-	*	@brief: rempve pieces from an existing graph with a
-	*		specific ID.
-	*/
-	bool updateGraph_removePieces(string graphID, highlevel::Graph *newGraph);
 
 	/**
 	*	@brief: remove the flow with a specified ID, from a specified graph
