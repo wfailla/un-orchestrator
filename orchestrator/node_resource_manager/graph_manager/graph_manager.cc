@@ -507,7 +507,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		return deleteGraph(graphID);
 	}
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
 	/**
 	*	The flow can be removed only if does not define an endpoint used by some other graph
 	*/
@@ -1250,6 +1250,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
 		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph,lsi,graphInfoLSI0.getLSI(),endPointsDefinedInMatches,endPointsDefinedInActions,availableEndPoints,un_interface,orchestrator_in_band);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New graph for LSI-0:");
+		graphLSI0.print();
 
 		graphLSI0lowLevel.addRules(graphLSI0.getRules());
 
@@ -1269,6 +1271,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		tenantLSIs[graph->getID()] = graphInfoTenantLSI;
 
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Tenant LSI (ID: %s) and its controller are created",graph->getID().c_str());
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
+		(graphInfoLSI0.getController())->installNewRules(graphLSI0.getRules());
 
 		/**
 		 * 7) create the internal LSI, with the proper vlinks and create the rules and download them in internal-LSIs
