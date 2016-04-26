@@ -32,12 +32,6 @@ using namespace std;
 namespace highlevel
 {
 
-typedef enum{
-	ADDED,
-	UPDATED,
-	NOTHING
-	}addvnf_t;
-
 /**
 *	@brief: describes the graph as it has been required from the extern, through
 *		the REST API exported by the un-orchestrator
@@ -336,7 +330,7 @@ public:
 	*			graph but new ports have been specified, the new ports are added to
 	*			the graph.
 	*/
-	addvnf_t addVNF(VNFs vnf);
+	void addVNF(VNFs vnf);
 
 	/**
 	*	@brief: Return the VNFs of the graph
