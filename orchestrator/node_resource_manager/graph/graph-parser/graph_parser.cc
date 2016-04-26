@@ -58,7 +58,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 					bool e_if_out = false
 #endif
 
-					string id, v_id, node, iface, e_name, node_id, sw_id, ep_id, interface, in_group;
+					string id, v_id, node, iface, e_name, ep_id, interface, in_group;
 
 					const string& fg_name  = fg->first;
 					const Value&  fg_value = fg->second;
@@ -529,18 +529,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_TYPE,ep_value.getString().c_str());
 										string type = ep_value.getString();
 									}
-									else if(ep_name == EP_REM)
-									{
-										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_REM,ep_value.getString().c_str());
-										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_REM,MODULE_NAME);
-										//XXX: currently, this information is ignored
-									}
-									else if(ep_name == EP_PR)
-									{
-										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",END_POINTS,EP_PR,ep_value.getString().c_str());
-										logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,MODULE_NAME);
-										//XXX: currently, this information is ignored
-									}
 									//identify interface end-points
 									else if(ep_name == EP_IFACE)
 									{
@@ -564,14 +552,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											if(epi_name == NODE_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE,NODE_ID,epi_value.getString().c_str());
-												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,NODE_ID);
-												node_id = epi_value.getString();
-											}
-											else if(epi_name == SW_ID)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_IFACE,SW_ID,epi_value.getString().c_str());
-												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", EP_PR,SW_ID);
-												sw_id = epi_value.getString();
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", NODE_ID,EP_IFACE);
 											}
 											else if(epi_name == IF_NAME)
 											{
@@ -654,15 +635,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,IF_NAME,epi_value.getString().c_str());
 												interface = epi_value.getString();
 											}
-											else if(epi_name == SW_ID)
-											{
-												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,SW_ID,epi_value.getString().c_str());
-												sw_id = epi_value.getString();
-											}
 											else if(epi_name == NODE_ID)
 											{
 												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VLAN,NODE_ID,epi_value.getString().c_str());
-												node_id = epi_value.getString();
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Element \"%s\" is ignored by the current implementation of the %s", NODE_ID,VLAN);
 											}
 										}
 
@@ -773,8 +749,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 								if(e_if)
 								{
 									//FIXME: are we sure that "interface" has been specified?
-									//FIXME: node_id and sw_id should be ignored
-									highlevel::EndPointInterface ep_if(id, e_name, node_id, sw_id, interface);
+									highlevel::EndPointInterface ep_if(id, e_name, interface);
 									graph.addEndPointInterface(ep_if);
 									e_if = false;
 								}
@@ -790,8 +765,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 								else if(e_vlan)
 								{
 									//FIXME: are we sure that "interface" and "v_id" have been specified?
-									//FIXME: node_id and sw_id should be ignored
-									highlevel::EndPointVlan ep_vlan(id, e_name, v_id, node_id, sw_id, interface);
+									highlevel::EndPointVlan ep_vlan(id, e_name, v_id, interface);
 									graph.addEndPointVlan(ep_vlan);
 									e_vlan = false;
 								}

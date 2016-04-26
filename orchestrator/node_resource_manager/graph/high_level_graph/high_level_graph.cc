@@ -994,6 +994,59 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 
 bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 {
+	//Update the rules
+	list<highlevel::Rule> oldRules = other->getRules();
+	for(list<highlevel::Rule>::iterator rule = oldRules.begin(); rule != oldRules.end(); rule++)
+	{
+		RuleRemovedInfo rule_removed_info = removeRuleFromID(rule->getRuleID());
+	}
+
+#if 0
+	//Update the physical ports
+	set<string> nps = other->getPorts();
+	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
+		this->addPort(*port);
+
+	//Update the interface endpoints
+	list<highlevel::EndPointInterface> iep = other->getEndPointsInterface();
+	for(list<highlevel::EndPointInterface>::iterator ep = iep.begin(); ep != iep.end(); ep++)
+	{
+		//The interface endpoint is not part of the graph
+		this->addEndPointInterface(*ep);
+	}
+
+	//Update the network functions
+	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
+	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
+	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
+	{
+		string vnfname = vtba->getName();
+		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
+	}
+
+	//Update the gre endpoints
+	list<highlevel::EndPointGre> nepp = other->getEndPointsGre();
+	for(list<highlevel::EndPointGre>::iterator ep = nepp.begin(); ep != nepp.end(); ep++)
+	{
+		//The gre endpoint is not part of the graph
+		this->addEndPointGre(*ep);
+	}
+
+	//Update the internal endpoints
+	list<highlevel::EndPointInternal> inep = other->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator ep = inep.begin(); ep != inep.end(); ep++)
+	{
+		//The internal endpoint is not part of the graph
+		this->addEndPointInternal(*ep);
+	}
+
+	//Update the vlan endpoints
+	list<highlevel::EndPointVlan> vep = other->getEndPointsVlan();
+	for(list<highlevel::EndPointVlan>::iterator ep = vep.begin(); ep != vep.end(); ep++)
+	{
+		this->addEndPointVlan(*ep);
+	}
+#endif
 	return true;
 }
 
