@@ -592,27 +592,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		}
 	}//end iteration on the VNFs required by the update
 
-#if 0
-	// c) Add the new physical ports
-
-	//Retrieve the ports already existing in the graph
-	set<string> ports = this->getPorts();
-	//Retrieve the ports required by the update
-	set<string> new_ports = other->getPorts();
-	for(set<string>::iterator it = new_ports.begin(); it != new_ports.end(); it++)
-	{
-		if(ports.count(*it) == 0)
-		{
-			//The update requires a physical port that was not part of the graph
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is added to the graph",(*it).c_str());
-			diff->addPort(*it);
-		}
-		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is already in the graph",(*it).c_str());
-	}
-#endif
-
-	// d) Add the new endpoints - This part is quite complex as it considers all the types of endpoints
+	// c) Add the new endpoints - This part is quite complex as it considers all the types of endpoints
 
 	//Retrieve the interface endpoints already existing in the graph
 	list<highlevel::EndPointInterface> endpointsInterface = this->getEndPointsInterface();
@@ -760,13 +740,6 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		}
 	}
 
-#if 0
-	//Update the physical ports
-	set<string> nps = other->getPorts();
-	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
-		this->addPort(*port);
-#endif
-
 	//Update the interface endpoints
 	list<highlevel::EndPointInterface> iep = other->getEndPointsInterface();
 	for(list<highlevel::EndPointInterface>::iterator ep = iep.begin(); ep != iep.end(); ep++)
@@ -821,13 +794,6 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 		RuleRemovedInfo rule_removed_info = removeRuleFromID(rule->getRuleID());
 		toberemoved.push_back(rule_removed_info);
 	}
-
-#if 0
-	//Update the physical ports
-	set<string> nps = other->getPorts();
-	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
-		this->addPort(*port);
-#endif
 
 	//Update the interface endpoints. If an interface endpoint is still used in a rule, it cannot
 	//be removed! In this case the update is not valid!

@@ -46,13 +46,6 @@ private:
 	*/
 	map<string, bool > endpoints;
 
-#if 0
-	/**
-	*	@brief: physical ports to be attached to the graph
-	*/
-	set<string> ports;
-#endif
-
 	/**
 	*	@brief: List of rules describing the graph
 	*/
@@ -109,20 +102,6 @@ public:
 	*	@param: ID	identifier of the graph
 	*/
 	Graph(string ID);
-
-#if 0
-	/**
-	*	@brief: Add a physical port to the graph
-	*
-	*	@param: port	Name of the physical port to be added
-	*/
-	bool addPort(string port);
-
-	/**
-	*	@brief: Return the physical ports of the graph
-	*/
-	set<string> getPorts();
-#endif
 
 	/**
 	*	@brief: Given a graph, calculate the things (e.g., NFs) that are in such a graph and not in the
@@ -279,7 +258,7 @@ public:
 	bool stillExistEndpoint(string endpoint);
 
 	/**
-	*	@brief: Checks if an endpoint port still exist in the graph. If it is no
+	*	@brief: Checks if an endpoint GRE still exist in the graph. If it is no
 	*		longer used in any rule, but it is part of the "endpoints" set, it
 	*		is removed from this set as well.
 	*
