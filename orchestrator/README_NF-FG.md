@@ -699,9 +699,8 @@ leaves the UN again through the `gre-tunnel` endpoint.
 	
 ### Endpoint type: `internal`
  
-It is possible to connect multiple graphs together through the `internal` endpoint.
-All the `internal` endpoints belonging to the same `internal-group` will be attached 
-together inside the universal node.
+It is possible to connect multiple graphs together through the `internal` endpoint; particularly, 
+the `internal-group` is used to identify all those graphs that must be connected inside the universal node.
 
 The `internal` endpoint is defined as follows:
 	
@@ -718,7 +717,7 @@ The `internal` endpoint is defined as follows:
 As an example, the two following graphs define an `internal` endpoint belonging to
 the `internal-group` `25`, and then they will be connected together. In particular,
 the first graph provides all the traffic coming from the `internal` endpoint to a VNF;
-then, traffic coming from the VNF is sent again through the `internal` endpoint. 
+then, packets coming from the VNF is sent again through the `internal` endpoint. 
 Similarly, in the second graph traffic coming from a `gre-tunnel` endpoint is 
 provided to the `internal` endpoint and vice versa.
 
@@ -832,9 +831,8 @@ provided to the `internal` endpoint and vice versa.
 
 In the UN, each different `internal-group` is implemented with a graph (and then an LSI) that is connected to
 the `LSI-0` with a number of links that is equal to twice the number of times the `internal` endpoint is used
-by other graphs. This graph is not connected to any VNFs; moreover, unlike standardard graphs defined through 
-the NF-FG, it implements the traditional L2 forwarding, hence it forwards packets based on the destianation 
-MAC address.
+by graphs. This graph is not connected to any VNF; moreover, unlike standardard graphs defined through the NF-FG, 
+it implements the traditional L2 forwarding, hence it forwards packets based on the destianation MAC address.
 
 ## Configuration
 
