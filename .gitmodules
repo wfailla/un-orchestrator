@@ -10,3 +10,6 @@
 [submodule "use-cases/elastic_router/MEASURE-MFIB"]
 	path = use-cases/elastic_router/MEASURE-MFIB
 	url = https://github.com/Acreo/MEASURE-MFIB.git
+[submodule "use-cases/elastic_router/MEASURE-Aggregator"]
+	path = use-cases/elastic_router/MEASURE-Aggregator
+	url = https://github.com/Acreo/MEASURE-Aggregator.git
