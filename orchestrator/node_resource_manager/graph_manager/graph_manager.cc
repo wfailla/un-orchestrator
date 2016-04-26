@@ -1351,17 +1351,20 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		*/
 		for(map<string,unsigned int>::iterator ae = availableEndPoints.begin(); ae != availableEndPoints.end(); ae++)
 		{
+			string internal_group = ae->first;
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "7) handling the internal LSI representing the internal-group: \"%s\"", internal_group.c_str());
+
 			//create a new internal LSI if does not exists yet
 			if(!internalLSIs[ae->first])
 			{
-				string internal_group = ae->first;
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Create the internal LSI related to internal-group: \"%s\"", internal_group.c_str());
+
+				
 				unsigned int numberOfVLrequired = ae->second;
 				string strControllerPort = internalLSIController[ae->first].second;
 
 				//set the internal LSI how created
 				internalLSIs[ae->first] = true;
-
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "5) Create the internal LSI related to internal group \"%s\"", internal_group.c_str());
 
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%u virtual links are required to connect the internal LSI with LSI-0",numberOfVLrequired);
 
@@ -1476,6 +1479,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			}
 			else
 			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal LSI related to internal-group \"%s\" already exists", internal_group.c_str());
+				
 				unsigned int numberOfVLrequired = availableEndPoints[ae->first]-internalLSIsDescription[ae->first]->getVirtualLinks().size();
 				AddVirtualLinkOut *avlo = NULL;
 				LSI *internalLSI = internalLSIsDescription[ae->first];
