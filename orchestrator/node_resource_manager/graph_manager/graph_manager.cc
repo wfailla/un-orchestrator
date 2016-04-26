@@ -561,9 +561,6 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 
 bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController *computeController)
 {
-#if 0
-	set<string> phyPorts = graph->getPorts();
-#endif
 	list<highlevel::EndPointInterface> phyPorts = graph->getEndPointsInterface();
 	list<highlevel::EndPointInternal> endPointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endPointsGre = graph->getEndPointsGre();
@@ -572,14 +569,11 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	string graphID = graph->getID();
 
 	/**
-	*	Check if the required physical ports are under the control of the un-orchestrator
+	*	Check if the required interface endpoints (i.e., physical ports) are under the control of the un-orchestrator
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d new physical ports",phyPorts.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d new 'interface' endpoints",phyPorts.size());
 	LSI *lsi0 = graphInfoLSI0.getLSI();
 	map<string,unsigned int> physicalPorts = lsi0->getPhysicalPorts();
-#if 0
-	for(set<string>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
-#endif
 	for(list<highlevel::EndPointInterface>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
 	{
 		string interfaceName = p->getInterface();
@@ -592,14 +586,19 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	}
 
 	/**
+	*	No check is required for an internal endpoint
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'internal' endpoints",endPointsInternal.size());
+
+	/**
 	*	No check is required for a GRE endpoint
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d gre endpoints (i.e., gre ports to be used to connect two nodes together)",endPointsGre.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'gre-tunnel' endpoints",endPointsGre.size());
 
 	/**
 	*	No check is required for a VLAN endpoint
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d vlan endpoints",endPointsVlan.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'vlan' endpoints",endPointsVlan.size());
 
 	/**
 	*	Check if the required network functions are available
