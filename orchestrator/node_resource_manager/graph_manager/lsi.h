@@ -6,6 +6,7 @@
 #include "virtual_link.h"
 #include "../../compute_controller/description.h"
 #include "../graph/high_level_graph/high_level_graph_endpoint_gre.h"
+#include "../graph/high_level_graph/high_level_graph_vnf.h"
 
 #include <map>
 #include <set>
@@ -132,7 +133,7 @@ private:
 
 public:
 
-	LSI(string controllerAddress, string controllerPort, set<string> physical_ports, map<string, list <unsigned int> > network_functions,
+	LSI(string controllerAddress, string controllerPort, set<string> physical_ports, /*map<string, list <unsigned int> >*/list<highlevel::VNFs> network_functions,
 		list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();

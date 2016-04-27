@@ -4,7 +4,7 @@ namespace highlevel
 {
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<pair<string, string> > control_ports, list<string> environment_variables) :
+VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<port_mapping_t> control_ports, list<string> environment_variables) :
 	id(id), name(name), groups(groups), vnf_template(vnf_template)
 #else
 VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports) :
@@ -12,9 +12,7 @@ VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, lis
 #endif
 {
 	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
-	{
 		this->ports.push_back((*p));
-	}
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 	this->control_ports.insert(this->control_ports.end(),control_ports.begin(),control_ports.end());
@@ -74,6 +72,34 @@ list <vnf_port_t> VNFs::getPorts()
 	return ports;
 }
 
+list<unsigned int> VNFs::getPortsId()
+{
+	list<unsigned int> ids;
+	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
+	{
+		string the_id = p->id;
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Extracting ID for port: %s",p->id.c_str());
+		unsigned int id = extract_number_from_id(the_id);
+		ids.push_back(id);
+	}
+	return ids;
+}
+
+map<unsigned int, port_network_config > VNFs::getPortsID_configuration()
+{
+	map<unsigned int, port_network_config > mapping;
+
+	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
+	{
+		string the_id = p->id;
+		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Extracting ID for port: %s",p->id.c_str());
+		unsigned int id = extract_number_from_id(the_id);
+		mapping[id] = p->configuration;
+	}
+
+	return mapping;
+}
+
 Object VNFs::toJSON()
 {
 	Object vnf;
@@ -96,11 +122,11 @@ Object VNFs::toJSON()
 
 		pp[_ID] = p->id.c_str();
 		pp[_NAME] = p->name.c_str();
-		if(strlen(p->mac_address.c_str()) != 0)
-			pp[PORT_MAC] = p->mac_address.c_str();
+		if(strlen(p->configuration.mac_address.c_str()) != 0)
+			pp[PORT_MAC] = p->configuration.mac_address.c_str();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		if(strlen(p->ip_address.c_str()) != 0)
-			pp[PORT_IP] = p->ip_address.c_str();
+		if(strlen(p->configuration.ip_address.c_str()) != 0)
+			pp[PORT_IP] = p->configuration.ip_address.c_str();
 #endif
 
 		portS.push_back(pp);
@@ -108,12 +134,12 @@ Object VNFs::toJSON()
 	vnf[VNF_PORTS] = portS;
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	for(list<pair<string, string> >::iterator c = control_ports.begin(); c != control_ports.end(); c++)
+	for(list<port_mapping_t>::iterator c = control_ports.begin(); c != control_ports.end(); c++)
 	{
 		Object cc;
 
-		cc[HOST_PORT] = atoi((*c).first.c_str());
-		cc[VNF_PORT] = atoi((*c).second.c_str());
+		cc[HOST_PORT] = atoi((*c).host_port.c_str());
+		cc[VNF_PORT] = atoi((*c).guest_port.c_str());
 
 		ctrl_ports.push_back(cc);
 	}
@@ -133,7 +159,7 @@ Object VNFs::toJSON()
 }
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-list<pair<string, string> >  VNFs::getControlPorts()
+list<port_mapping_t> VNFs::getControlPorts()
 {
 	return control_ports;
 }
@@ -143,5 +169,33 @@ list<string> VNFs::getEnvironmentVariables()
 	return environment_variables;
 }
 #endif
+
+unsigned int VNFs::extract_number_from_id(string port_id)
+{
+	char delimiter[] = ":";
+	char tmp[BUFFER_SIZE];
+	strcpy(tmp,port_id.c_str());
+	char *pnt=strtok(/*(char*)port_id.c_str()*/tmp, delimiter);
+	unsigned int port = 0;
+
+	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Extracting ID for port: %s",port_id.c_str());
+
+	int i = 0;
+	while( pnt!= NULL )
+	{
+		switch(i)
+		{
+			case 1:
+				sscanf(pnt,"%u",&port);
+				return (port+1);
+			break;
+		}
+
+		pnt = strtok( NULL, delimiter );
+		i++;
+	}
+	assert(0); //If the code is here, it means the the port_id was not in the form "string:number"
+	return port;
+}
 
 }

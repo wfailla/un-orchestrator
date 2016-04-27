@@ -41,6 +41,19 @@ list<EndPointInterface> Graph::getEndPointsInterface()
 	return endPointsInterface;
 }
 
+void Graph::removeEndPointInterface(EndPointInterface endpoint)
+{
+	for(list<EndPointInterface>::iterator e = endPointsInterface.begin(); e != endPointsInterface.end(); e++)
+	{
+		if(*e == endpoint)
+		{
+			endPointsInterface.erase(e);
+			return;
+		}
+	}
+	assert(0);
+}
+
 bool Graph::addEndPointInternal(EndPointInternal endpoint)
 {
 	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end(); e++)
@@ -61,6 +74,19 @@ list<EndPointInternal> Graph::getEndPointsInternal()
 	return endPointsInternal;
 }
 
+void Graph::removeEndPointInternal(EndPointInternal endpoint)
+{
+	for(list<EndPointInternal>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end(); e++)
+	{
+		if(*e == endpoint)
+		{
+			endPointsInternal.erase(e);
+			return;
+		}
+	}
+	assert(0);
+}
+
 bool Graph::addEndPointGre(EndPointGre endpoint)
 {
 	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
@@ -77,6 +103,19 @@ bool Graph::addEndPointGre(EndPointGre endpoint)
 list<EndPointGre> Graph::getEndPointsGre()
 {
 	return endPointsGre;
+}
+
+void Graph::removeEndPointGre(EndPointGre endpoint)
+{
+	for(list<EndPointGre>::iterator e = endPointsGre.begin(); e != endPointsGre.end(); e++)
+	{
+		if(*e == endpoint)
+		{
+			endPointsGre.erase(e);
+			return;
+		}
+	}
+	assert(0);
 }
 
 bool Graph::addEndPointVlan(EndPointVlan endpoint)
@@ -97,7 +136,20 @@ list<EndPointVlan> Graph::getEndPointsVlan()
 	return endPointsVlan;
 }
 
-addvnf_t Graph::addVNF(VNFs vnf)
+void Graph::removeEndPointVlan(EndPointVlan endpoint)
+{
+	for(list<EndPointVlan>::iterator e = endPointsVlan.begin(); e != endPointsVlan.end(); e++)
+	{
+		if(*e == endpoint)
+		{
+			endPointsVlan.erase(e);
+			return;
+		}
+	}
+	assert(0);
+}
+
+void Graph::addVNF(VNFs vnf)
 {
 	for(list<VNFs>::iterator v = vnfs.begin(); v != vnfs.end(); v++)
 	{
@@ -105,22 +157,16 @@ addvnf_t Graph::addVNF(VNFs vnf)
 		{
 			//The vnf is already part of the graph. But we have to check that also the ports are the same.
 			//In case new ports are specified, the VNF is updated with the new ports
-			bool changes = false;
 			list<vnf_port_t> ports = vnf.getPorts();
 			for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)
-			{
-				if(v->addPort(*p))
-					changes = true;
-			}
-			if(changes)
-				return UPDATED;
-			return NOTHING;
+				v->addPort(*p);	//This function adds the port only if it not part of the VNF yet
+			return;
 		}
 	}
 
 	//The VNF is not yet part of the graph
 	vnfs.push_back(vnf);
-	return ADDED;
+	return;
 }
 
 list<VNFs> Graph::getVNFs()
@@ -128,96 +174,10 @@ list<VNFs> Graph::getVNFs()
 	return vnfs;
 }
 
-set<string> Graph::getPorts()
-{
-	return ports;
-}
-
-map<string, list<unsigned int> > Graph::getNetworkFunctionsPorts()
-{
-	return networkFunctions;
-}
-
-map<string, map<unsigned int, port_network_config > > Graph::getNetworkFunctionsConfiguration()
-{
-	return networkFunctionsConfiguration;
-}
-
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-map<string, list<port_mapping_t > > Graph::getNetworkFunctionsControlPorts()
-{
-	return networkFunctionsControlPorts;
-}
-
-map<string, list<string> > Graph::getNetworkFunctionsEnvironmentVariables()
-{
-	return networkFunctionsEnvironmentVariables;
-}
-#endif
 
 list<Rule> Graph::getRules()
 {
 	return rules;
-}
-
-bool Graph::addPort(string port)
-{
-	if(ports.count(port) != 0)
-		return false;
-
-	ports.insert(port);
-
-	return true;
-}
-
-bool Graph::addNetworkFunction(string nf)
-{
-	logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunction(\"%s\")",nf.c_str());
-
-	if(networkFunctions.count(nf) != 0) {
-		logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "addNetworkFunction(\"%s\") NF already present!",nf.c_str());
-		return false;
-	}
-
-	list<unsigned int> ports;
-	networkFunctions[nf] = ports;
-
-	return true;
-}
-
-bool Graph::addNetworkFunctionPortConfiguration(string nf, map<unsigned int, port_network_config_t > config)
-{
-	networkFunctionsConfiguration[nf] = config;
-
-	return true;
-}
-
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-void Graph::addNetworkFunctionControlPort(string nf, port_mapping_t control)
-{
-	networkFunctionsControlPorts[nf].push_back(control);
-}
-
-void Graph::addNetworkFunctionEnvironmentVariable(string nf, string env_var)
-{
-	networkFunctionsEnvironmentVariables[nf].push_back(env_var);
-}
-#endif
-
-bool Graph::updateNetworkFunction(string nf, unsigned int port)
-{
-	if(networkFunctions.count(nf) == 0)
-	{
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" does not exist",nf.c_str());
-		return false;
-	}
-	list<unsigned int> ports = networkFunctions.find(nf)->second;
-
-	ports.push_back(port);
-
-	networkFunctions[nf] = ports;
-
-	return true;
 }
 
 bool Graph::addRule(Rule rule)
@@ -237,7 +197,7 @@ bool Graph::ruleExists(string ID)
 {
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 	{
-		if(r->getFlowID() == ID)
+		if(r->getRuleID() == ID)
 			return true;
 	}
 	return false;
@@ -249,7 +209,7 @@ Rule Graph::getRuleFromID(string ID)
 
 	for(; r != rules.end(); r++)
 	{
-		if(r->getFlowID() == ID)
+		if(r->getRuleID() == ID)
 			return *r;
 	}
 
@@ -265,7 +225,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 	{
-		if(r->getFlowID() == ID)
+		if(r->getRuleID() == ID)
 		{
 			Match match = r->getMatch();
 			Action *action = r->getAction();
@@ -342,10 +302,10 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 
 			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "The graph still contains the rules: ");
 			for(list<Rule>::iterator print = rules.begin(); print != rules.end(); print++)
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t%s",print->getFlowID().c_str());
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t%s",print->getRuleID().c_str());
 
 			return rri;
-		}//end if(r->getFlowID() == ID)
+		}//end if(r->getRuleID() == ID)
 	}
 
 	assert(0);
@@ -421,7 +381,15 @@ Object Graph::toJSON()
 
 bool Graph::stillExistNF(string nf)
 {
-	if(networkFunctions.count(nf) == 0)
+
+	list<VNFs>::iterator the_vnfs = vnfs.begin();
+	for(; the_vnfs != vnfs.end(); the_vnfs++)
+	{
+		if(nf == the_vnfs->getName())
+			//The VNF still exist
+			break;
+	}
+	if(the_vnfs == vnfs.end())
 		return false;
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
@@ -446,8 +414,6 @@ bool Graph::stillExistNF(string nf)
 				return true;
 		}
 	}
-
-	networkFunctions.erase(nf);
 
 	list<VNFs>::iterator vnf = vnfs.begin();
 	for(; vnf != vnfs.end(); vnf++)
@@ -485,10 +451,20 @@ bool Graph::stillExistEndpointGre(string endpoint)
 	return false;
 }
 
-bool Graph::stillExistPort(string port)
+bool Graph::stillUsedEndpointInterface(EndPointInterface endpoint)
 {
-	if(ports.count(port) == 0)
+	list<EndPointInterface>::iterator interface = endPointsInterface.begin();
+	for(; interface != endPointsInterface.end(); interface++)
+	{
+		if((*interface) == endpoint)
+			break;
+	}
+	if(interface == endPointsInterface.end())
+	{
+		//This situation shouldn't happen
+		assert(0);
 		return false;
+	}
 
 	for(list<Rule>::iterator r = rules.begin(); r != rules.end(); r++)
 	{
@@ -500,27 +476,22 @@ bool Graph::stillExistPort(string port)
 
 		if(matchOnPort)
 		{
-			if(match.getPhysicalPort() == port)
-				//The port still exists into the graph
+			if(match.getPhysicalPort() == endpoint.getInterface())
+				//The endpoint is still used into the graph
 				return true;
 		}
 
 		if(actionType == ACTION_ON_PORT)
 		{
-			if(((ActionPort*)action)->getInfo() == port)
-				//The port still exist into the graph
+			if(((ActionPort*)action)->getInfo() == endpoint.getInterface())
+				//The endpoint is still used into the graph
 				return true;
 		}
 	}
 
-	ports.erase(port);
-
+	//The endpoint is no longer used into the graph
+	
 	return false;
-}
-
-bool Graph::isDefinedHere(string endpoint)
-{
-	return endpoints[endpoint];
 }
 
 string Graph::getEndpointInvolved(string flowID)
@@ -542,7 +513,7 @@ string Graph::getEndpointInvolved(string flowID)
 	return "";
 }
 
-list<highlevel::Rule> Graph::calculateNewRules(Graph *other)
+list<highlevel::Rule> Graph::calculateDiffRules(Graph *other)
 {
 	list<highlevel::Rule> new_rules;
 
@@ -573,77 +544,12 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 	// a) Add the new rules to "diff"
 	
 	//Extract the new rules to be instantiated
-	list<highlevel::Rule> newrules = this->calculateNewRules(other); //FIXME: put this function directly here?
-	//XXX: a similar procedur can be defined to extract the rules to be removed
+	list<highlevel::Rule> newrules = this->calculateDiffRules(other);
 
 	for(list<highlevel::Rule>::iterator rule = newrules.begin(); rule != newrules.end(); rule++)
 		diff->addRule(*rule);
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New rules required: ");
-	diff->print();
-
 	// b) Add the new NFs to "diff"
-
-	//Retrieve the NFs already existing in the graph
-	highlevel::Graph::t_nfs_ports_list nfs = this->getNetworkFunctionsPorts();
-
-	//Retrieve the NFs required by the update (this part is related to the network functions ports)
-	//note that the update may require new ports for a network functions
-	highlevel::Graph::t_nfs_ports_list new_nfs = other->getNetworkFunctionsPorts();
-	for(highlevel::Graph::t_nfs_ports_list::iterator it = new_nfs.begin(); it != new_nfs.end(); it++)
-	{
-		if(nfs.count(it->first) == 0)
-		{
-			//The udpdate requires a NF that was not part of the graph
-			diff->addNetworkFunction(it->first);
-			//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
-			list<unsigned int> ports = it->second;
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The new network function '%s' requires the following ports: ",(it->first).c_str());
-			for(list<unsigned int>::iterator p = ports.begin(); p != ports.end(); p++)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
-				diff->updateNetworkFunction(it->first, *p);
-			}
-		}
-		//XXX The number of ports of a VNF does not depend on the flows described in the NFFG
-		else
-		{
-			//The NF is already part of the graph, but the update may contain new ports
-			list<unsigned int> new_ports = it->second;
-			list<unsigned int> ports = nfs.find(it->first)->second;
-			list<unsigned int> diff_ports;
-			//iterates on the ports specified in the update
-			bool requireNewPorts = false;
-			for(list<unsigned int>::iterator np = new_ports.begin(); np != new_ports.end(); np++)
-			{
-				list<unsigned int>::iterator p = ports.begin();
-				for(; p != ports.end(); p++)
-				{
-					if(*np == *p)
-						break;
-				}
-				if(p == ports.end())
-				{
-					//The update contains new ports
-					requireNewPorts = true;
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "A new port '%d' is required for NF '%s'", *np, it->first.c_str());
-					diff_ports.push_back(*np);
-				}
-			}
-			if(requireNewPorts)
-			{
-				diff->addNetworkFunction(it->first);
-				for(list<unsigned int>::iterator p = diff_ports.begin(); p != diff_ports.end(); p++)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%d",*p);
-					diff->updateNetworkFunction(it->first, *p);
-				}
-			}
-		}
-	}
-
-	// c) Add the new NFs to "diff"
-	//FIXME: why do we have two different representations for the network functions in a graph?
 
 	//Retrieve the network functions already instantiated (and convert them in a set)
 	list<highlevel::VNFs> vnfs_already_there = this->getVNFs();
@@ -706,26 +612,8 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 			new_vnfs_name.insert(it->getName());
 		}
 	}//end iteration on the VNFs required by the update
-	
-	// d) Add the new physical ports
 
-	//Retrieve the ports already existing in the graph
-	set<string> ports = this->getPorts();
-	//Retrieve the ports required by the update
-	set<string> new_ports = other->getPorts();
-	for(set<string>::iterator it = new_ports.begin(); it != new_ports.end(); it++)
-	{
-		if(ports.count(*it) == 0)
-		{
-			//The update requires a physical port that was not part of the graph
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is added to the graph",(*it).c_str());
-			diff->addPort(*it);
-		}
-		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Port %s is already in the graph",(*it).c_str());
-	}
-
-	// e) Add the new endpoints - This part is quite complex as it considers all the types of endpoints
+	// c) Add the new endpoints - This part is quite complex as it considers all the types of endpoints
 
 	//Retrieve the interface endpoints already existing in the graph
 	list<highlevel::EndPointInterface> endpointsInterface = this->getEndPointsInterface();
@@ -857,47 +745,6 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is already in the graph",mit->getId().c_str());
 	}
 
-	// f) Handle the configuration of the VNF
-	
-	//Insert only the configuration related to the network functions inserted in "diff"
-	//t_nfs_configuration is  the following
-	//	< string nf, map<unsigned int, port_network_config_t > >
-	t_nfs_configuration other_networkFunctionsConfiguration = other->getNetworkFunctionsConfiguration();
-	for(t_nfs_configuration::iterator config = other_networkFunctionsConfiguration.begin(); config != other_networkFunctionsConfiguration.end(); config++)
-	{
-		if(new_vnfs_name.count(config->first) != 0)
-		{
-			//This is a new VNF, then we have to add its configuration to "diff"
-			diff->addNetworkFunctionPortConfiguration(config->first,config->second);
-		}
-	}
-
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	map<string, list<port_mapping_t> > other_NetworkFunctionsControlPorts = other->getNetworkFunctionsControlPorts();
-	for(map<string, list<port_mapping_t> >::iterator control = other_NetworkFunctionsControlPorts.begin(); control != other_NetworkFunctionsControlPorts.end(); control++)
-	{
-		if(new_vnfs_name.count(control->first) != 0)
-		{
-			//This is a new VNF, then we have to its control information to "diff"
-			list<port_mapping_t> control_ports = control->second;
-			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
-				diff->addNetworkFunctionControlPort(control->first,*cp);
-		}
-	}
-	
-	map<string, list<string> > other_NetworkFunctionsEnvironmentVariables = other->getNetworkFunctionsEnvironmentVariables();
-	for(map<string, list<string> >::iterator envvar = other_NetworkFunctionsEnvironmentVariables.begin(); envvar != other_NetworkFunctionsEnvironmentVariables.end(); envvar++)
-	{
-		if(new_vnfs_name.count(envvar->first) != 0)
-		{
-			//This is a new VNF, then we have to its control information to "diff"
-			list<string> environment_variables = envvar->second;
-			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
-				diff->addNetworkFunctionEnvironmentVariable(envvar->first,*ev);
-		}
-	}
-#endif
-
 	return diff;
 }
 
@@ -909,15 +756,10 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	{
 		if(!this->addRule(*rule))
 		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",rule->getFlowID().c_str());
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has at least two rules with the same ID: %s",rule->getRuleID().c_str());
 			return false;
 		}
 	}
-
-	//Update the physical ports
-	set<string> nps = other->getPorts();
-	for(set<string>::iterator port = nps.begin(); port != nps.end(); port++)
-		this->addPort(*port);
 
 	//Update the interface endpoints
 	list<highlevel::EndPointInterface> iep = other->getEndPointsInterface();
@@ -925,53 +767,6 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	{
 		//The interface endpoint is not part of the graph
 		this->addEndPointInterface(*ep);
-	}
-
-	//Update the network functions ports
-	highlevel::Graph::t_nfs_ports_list networkFunctions = other->getNetworkFunctionsPorts();
-	//networkFunctions maps, for each network function, its name with the list of port IDs
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = networkFunctions.begin(); nf != networkFunctions.end(); nf++)
-	{
-		this->addNetworkFunction(nf->first);
-		list<unsigned int>& nfPorts = nf->second;
-		for(list<unsigned int>::iterator p = nfPorts.begin(); p != nfPorts.end(); p++)
-		{
-			this->updateNetworkFunction(nf->first, *p);
-		}
-	}
-
-	//Update the network functions
-	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
-	map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = other->getNetworkFunctionsConfiguration(); //This contains only the configuration for the new ports
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	map<string, list<port_mapping_t> > new_nfs_control_ports = other->getNetworkFunctionsControlPorts();
-	map<string, list<string> > new_nfs_env_variables = other->getNetworkFunctionsEnvironmentVariables();
-#endif
-	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
-	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
-	{
-		string vnfname = vtba->getName();
-		addvnf_t status = this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
-		assert(status != NOTHING);
-		if(new_nfs_ports_configuration.count(vnfname) != 0)
-			//Add the configuration for the new ports
-			this->addNetworkFunctionPortConfiguration(vtba->getName(),new_nfs_ports_configuration[vnfname]);
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		if(status == ADDED)
-		{
-			//If a VNF has been updated, the control ports and the environment variables are not considered in the updated
-
-			//We have to consider the configuration of this network function
-			list<port_mapping_t> control_ports = new_nfs_control_ports[vnfname];
-			for(list<port_mapping_t>::iterator cp = control_ports.begin(); cp != control_ports.end(); cp++)
-				this->addNetworkFunctionControlPort(vtba->getName(), *cp);
-
-			//We have to consider the environment variables of this network function
-			list<string> environment_variables = new_nfs_env_variables[vnfname];
-			for(list<string>::iterator ev = environment_variables.begin(); ev != environment_variables.end(); ev++)
-				this->addNetworkFunctionEnvironmentVariable(vtba->getName(), *ev);
-		}
-#endif
 	}
 
 	//Update the gre endpoints
@@ -996,6 +791,78 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	{
 		this->addEndPointVlan(*ep);
 	}
+
+	//Update the network functions
+	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
+	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
+	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
+	{
+		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
+	}
+
+	return true;
+}
+
+bool Graph::removeGraphFromGraph(highlevel::Graph *other)
+{
+	list<RuleRemovedInfo> toberemoved; //this information will be used to destroy the virtual links on the LSI
+
+	//Update the rules
+	list<highlevel::Rule> oldRules = other->getRules();
+	for(list<highlevel::Rule>::iterator rule = oldRules.begin(); rule != oldRules.end(); rule++)
+	{
+		RuleRemovedInfo rule_removed_info = removeRuleFromID(rule->getRuleID());
+		toberemoved.push_back(rule_removed_info);
+	}
+
+	//Update the interface endpoints
+	list<highlevel::EndPointInterface> iep = other->getEndPointsInterface();
+	for(list<highlevel::EndPointInterface>::iterator ep = iep.begin(); ep != iep.end(); ep++)
+	{
+		if(!stillUsedEndpointInterface(*ep))
+			//The endpoint is no longer used by the graph
+			this->removeEndPointInterface(*ep);
+		else
+			//TODO: how to manage properly this situation?
+			return false;
+	}
+
+	//Update the gre-tunnel endpoints
+	list<highlevel::EndPointGre> nepp = other->getEndPointsGre();
+	for(list<highlevel::EndPointGre>::iterator ep = nepp.begin(); ep != nepp.end(); ep++)
+	{
+		//TODO If a gre-tunnel endpoint is still used in a rule, it cannot
+		//be removed! In this case the update is not valid!
+		this->removeEndPointGre(*ep);
+	}
+
+	//Update the internal endpoints
+	list<highlevel::EndPointInternal> inep = other->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator ep = inep.begin(); ep != inep.end(); ep++)
+	{
+		//TODO If an internal endpoint is still used in a rule, it cannot
+		//be removed! In this case the update is not valid!
+		this->removeEndPointInternal(*ep);
+	}
+
+	//Update the vlan endpoints
+	list<highlevel::EndPointVlan> vep = other->getEndPointsVlan();
+	for(list<highlevel::EndPointVlan>::iterator ep = vep.begin(); ep != vep.end(); ep++)
+	{
+		//TODO If a vlan endpoint is still used in a rule, it cannot
+		//be removed! In this case the update is not valid!
+		this->removeEndPointVlan(*ep);
+	}
+
+#if 0
+	//Update the network functions
+	list<highlevel::VNFs> vnfs_tobe_removed = other->getVNFs();
+	//Iterates on the VNFs to be removed (i.e., the VNFs that are in "other")
+	for(list<highlevel::VNFs>::iterator vtbr = vnfs_tobe_removed.begin(); vtbr != vnfs_tobe_removed.end(); vtbr++)
+	{
+		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
+	}
+#endif
 
 	return true;
 }

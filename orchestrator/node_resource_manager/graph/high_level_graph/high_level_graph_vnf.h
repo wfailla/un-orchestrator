@@ -4,6 +4,8 @@
 #include "../../../utils/logger.h"
 #include "../../../utils/constants.h"
 
+#include "nf_port_configuration.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -35,10 +37,7 @@ typedef struct
 {
 	string id;
 	string name;
-	string mac_address;
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	string ip_address;
-#endif
+	port_network_config_t configuration;
 }vnf_port_t;
 
 class VNFs
@@ -73,7 +72,7 @@ private:
 	/**
 	*	@brief: the list of control ports configuration of the VNF
 	*/
-	list<pair<string, string> > control_ports;
+	list<port_mapping_t> control_ports;
 
 	/**
 	*	@brief: list of environment variables to be set to the VNF.
@@ -82,10 +81,16 @@ private:
 	list<string> environment_variables;
 #endif
 
+	/**
+	*	@brief: starting from the ID of a VNF port, return its index (i.e., the
+	*			number of at the end of the ID)
+	*/
+	unsigned int extract_number_from_id(string port_id);
+
 public:
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<pair<string, string> > control_ports, list<string> environment_variables);
+	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<port_mapping_t> control_ports, list<string> environment_variables);
 #else
 	VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports);
 #endif
@@ -99,9 +104,32 @@ public:
 	string getName();
 	list<string> getGroups();
 	string getVnfTemplate();
+
+	/*
+	*	@brief: return the list of ports of the VNF
+	*/
 	list<vnf_port_t> getPorts();
+
+	/*
+	*	@brief: only return the list of port ID of the VNF
+	*/
+	list<unsigned int> getPortsId();
+
+	/*
+	*	@brief: return a mapping of port ID - port configuration, for all the
+	*			ports of the VNF
+	*/
+	map<unsigned int, port_network_config > getPortsID_configuration();
+
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	list<pair<string, string> >  getControlPorts();
+	/*
+	*	@brief: return the list of control connections associated with the VNF
+	*/
+	list<port_mapping_t> getControlPorts();
+
+	/*
+	*	@brief: return the list of environment variables associated with the VNF
+	*/
 	list<string> getEnvironmentVariables();
 #endif
 
@@ -112,6 +140,9 @@ public:
 	**/
 	bool operator==(const VNFs &other) const;
 
+	/**
+	*	Create the json representing the VNF, according to the NF-FG formalism
+	**/
 	Object toJSON();
 };
 
