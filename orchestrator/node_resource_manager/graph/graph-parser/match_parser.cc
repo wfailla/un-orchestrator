@@ -24,7 +24,7 @@ unsigned int MatchParser::nfPort(string name_port)
 	char delimiter[] = ":";
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,name_port.c_str());
-	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+	char *pnt=strtok((char*)/*name_port.c_str()*/tmp, delimiter);
 	unsigned int port = 0;
 
 	int i = 0;
@@ -50,7 +50,7 @@ bool MatchParser::nfIsPort(string name_port)
 	char delimiter[] = ":";
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,name_port.c_str());
-	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+	char *pnt=strtok((char*)/*name_port.c_str()*/tmp, delimiter);
 	unsigned int port = 0;
 
 	int i = 0;
@@ -76,7 +76,7 @@ string MatchParser::epName(string name_port)
 	char delimiter[] = ":";
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,name_port.c_str());
-	char *pnt=strtok((char*)name_port.c_str(), delimiter);
+	char *pnt=strtok((char*)/*name_port.c_str()*/tmp, delimiter);
 
 	int i = 0;
 	while( pnt!= NULL )
@@ -170,7 +170,7 @@ bool MatchParser::validateIpv4Netmask(const string &netmask)
 	return true;
 }
 
-bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, map<string,set<unsigned int> > &nfs, map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string> &internal_id, map<string,pair<string,string> > &vlan_id, map<string,string> &gre_id, highlevel::Graph &graph)
+bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::Action &action, /*map<string,set<unsigned int> > &nfs,*/ map<string,string > &nfs_id, map<string,string > &iface_id, map<string,string> &internal_id, map<string,pair<string,string> > &vlan_id, map<string,string> &gre_id, highlevel::Graph &graph)
 {
 	bool foundOne = false;
 	bool foundEndPointID = false, foundProtocolField = false, definedInCurrentGraph = false;
@@ -264,16 +264,11 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network function \"%s\" is not valid. It must be in the form \"name:port\"",vnf_name_tmp);
 					return false;
 				}
-				/*nf port starts from 0*/
+				/*nf port starts from 0 - here we want that the ID starts from 1*/
 				port++;
 
 				match.setNFport(nf_name,port);
 
-				set<unsigned int> ports;
-				if(nfs.count(nf_name) != 0)
-					ports = nfs[nf_name];
-				ports.insert(port);
-				nfs[nf_name] = ports;
 			}
 			//end-points port type
 			else if(p_type == EP_PORT_TYPE)
@@ -315,7 +310,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				if(iface_found)
 				{
 					match.setInputPort(realName);
-					graph.addPort(realName);
 				}
 				else if(internal_found)
 				{
@@ -345,7 +339,6 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 
 					/*add match on "port_in"*/
 					match.setInputPort(vlan_id[eP].second);
-					graph.addPort(vlan_id[eP].second);
 
 					/*add "pop_vlan" action*/
 					GenericAction *ga = new VlanAction(actionType,string(""),vlanID);

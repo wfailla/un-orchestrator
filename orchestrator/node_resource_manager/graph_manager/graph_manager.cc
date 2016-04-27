@@ -51,8 +51,6 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 	//Create the openflow controller for the lsi-0
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating the openflow controller for LSI-0...");
 
-	//lowlevel::Graph graph;
-
 	rofl::openflow::cofhello_elem_versionbitmap versionbitmap;
 	switch(OFP_VERSION)
 	{
@@ -76,7 +74,7 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Creating the LSI-0...");
 
 	//The three following structures are empty. No NF and no virtual link is attached.
-	map<string, list<unsigned int> > dummy_network_functions;
+	list<highlevel::VNFs> dummy_network_functions;
 	map<string, map<unsigned int, PortType> > dummy_nfs_ports_type;
 	list<highlevel::EndPointGre> dummy_endpoints;
 	vector<VLink> dummy_virtual_links;
@@ -93,8 +91,8 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 		{
 			for(list<highlevel::EndPointGre>::iterator e = lsi->getEndpointsPorts().begin(); e != lsi->getEndpointsPorts().end(); e++)
 			{
-				endpoints[e->getId()][0] = e->getGreKey();
-				endpoints[e->getId()][1] = e->getLocalIp();
+				endpoints[e->getId()][0] = e->getLocalIp();
+				endpoints[e->getId()][1] = e->getGreKey();
 				endpoints[e->getId()][2] = e->getRemoteIp();
 				endpoints[e->getId()][3] = un_interface;
 			}
@@ -363,7 +361,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*		2) stop the NFs
 	*		3) delete the LSI, the virtual links and the
 	*			ports related to NFs
-	*		4) delete the endpoints defined by the graph
+	*		4) delete the internal end points used by the graph
 	*/
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting graph '%s'...",graphID.c_str());
@@ -379,11 +377,11 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 		list<highlevel::EndPointInternal> endpointsInternal = highLevelGraph->getEndPointsInternal();
 		for(list<highlevel::EndPointInternal>::iterator ep = endpointsInternal.begin(); ep != endpointsInternal.end(); ep++)
 		{
-			if(highLevelGraph->isDefinedHere(ep->getGroup()))
+			if(availableEndPoints.count(ep->getGroup()) <= 1)
 			{
-				if(availableEndPoints.find(ep->getGroup())->second !=0)
+				if(availableEndPoints.find(ep->getGroup())->second != 0)
 				{
-					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph cannot be deleted. It defines the endpoint \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep->getGroup().c_str(),availableEndPoints.find(ep->getGroup())->second);
+					logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph cannot be deleted. It uses the internal end point \"%s\" that is used %d times in other graphs; first remove the rules in those graphs.",ep->getGroup().c_str(),availableEndPoints.find(ep->getGroup())->second);
 					return false;
 				}
 			}
@@ -413,14 +411,23 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 #endif
 
 	/**
-	*		3) delete the LSI, the virtual links, the
+	*		3) delete the LSI, the internal LSIs, the virtual links, the
 	*			ports related to NFs and the ports related to GRE tunnel
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Delete the LSI, the vlinks, and the ports used by NFs");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Delete the LSI, the internal LSIs, the vlinks, and the ports used by NFs");
 
 	try
 	{
+		//delete the LSI
 		switchManager.destroyLsi(tenantLSI->getDpid());
+
+		//delete the internal LSIs
+		for(map<string,unsigned int>::iterator ae = availableEndPoints.begin(); ae != availableEndPoints.end(); ae++)
+		{
+			LSI *internalLSI = internalLSIsDescription[ae->first];
+
+			switchManager.destroyLsi(internalLSI->getDpid());
+		}
 	} catch (SwitchManagerException e)
 	{
 		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
@@ -435,9 +442,9 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 		list<highlevel::EndPointInternal> endpointsInternal = highLevelGraph->getEndPointsInternal();
 		for(list<highlevel::EndPointInternal>::iterator ep = endpointsInternal.begin(); ep != endpointsInternal.end();)
 		{
-			if(highLevelGraph->isDefinedHere(ep->getGroup()))
+			if(availableEndPoints.count(ep->getGroup()) <= 1)
 			{
-				assert(availableEndPoints.find(ep->getGroup())->second ==0);
+				assert(availableEndPoints.find(ep->getGroup())->second == 0);
 				assert(endPointsDefinedInMatches.count(ep->getGroup()) != 0 || endPointsDefinedInActions.count(ep->getGroup()) != 0);
 
 				list<highlevel::EndPointInternal>::iterator tmp = ep;
@@ -484,6 +491,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
 	highlevel::Graph *graph = graphInfo.getGraph();
 
+	//Check if the rule to be removed exists
 	if(!graph->ruleExists(flowID))
 	{
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow \"%s\" does not exist in graph \"%s\"",flowID.c_str(),graphID.c_str());
@@ -498,10 +506,12 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		return deleteGraph(graphID);
 	}
 
+#if 0
 	string endpointInvolved = graph->getEndpointInvolved(flowID);
 	bool definedHere = false;
 	if(endpointInvolved != "")
-		definedHere = graph->isDefinedHere(endpointInvolved);
+		definedHere = graph->isDefinedHere(endpointInvolved);*/
+#endif
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Removing the flow from the LSI-0 graph");
 	Controller *lsi0Controller = graphInfoLSI0.getController();
@@ -522,7 +532,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 
 	removeUselessPorts_NFs_Endpoints_VirtualLinks(rri,nfs_manager,graph,lsi);
 
-	if(endpointInvolved != "")
+	/*if(endpointInvolved != "")
 	{
 		if(definedHere)
 		{
@@ -535,9 +545,9 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		else
 		{
 			availableEndPoints[endpointInvolved]--;
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "endpoint \"%s\" still used %d times",endpointInvolved.c_str(), availableEndPoints[endpointInvolved]);
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "internal end point \"%s\" still used %d times",endpointInvolved.c_str(), availableEndPoints[endpointInvolved]);
 		}
-	}
+	}*/
 
 	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 
@@ -546,84 +556,63 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 
 bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController *computeController)
 {
-	set<string> phyPorts = graph->getPorts();
+	list<highlevel::EndPointInterface> phyPorts = graph->getEndPointsInterface();
 	list<highlevel::EndPointInternal> endPointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endPointsGre = graph->getEndPointsGre();
 	list<highlevel::EndPointVlan> endPointsVlan = graph->getEndPointsVlan();
 
 	string graphID = graph->getID();
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d new physical ports",phyPorts.size());
-
+	/**
+	*	Check if the required interface endpoints (i.e., physical ports) are under the control of the un-orchestrator
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d new 'interface' endpoints",phyPorts.size());
 	LSI *lsi0 = graphInfoLSI0.getLSI();
 	map<string,unsigned int> physicalPorts = lsi0->getPhysicalPorts();
-
-	for(set<string>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
+	for(list<highlevel::EndPointInterface>::iterator p = phyPorts.begin(); p != phyPorts.end(); p++)
 	{
-		if((physicalPorts.count(*p)) == 0)
+		string interfaceName = p->getInterface();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "* %s",interfaceName.c_str());
+		if((physicalPorts.count(interfaceName)) == 0)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Physical port \"%s\" does not exist",(*p).c_str());
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Physical port \"%s\" does not exist",interfaceName.c_str());
 			return false;
 		}
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d internal endpoints (i.e., logical ports to be used to connect two graphs together)",endPointsInternal.size());
+	/**
+	*	No check is required for an internal endpoint
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'internal' endpoints",endPointsInternal.size());
 
-	for(list<highlevel::EndPointInternal>::iterator graphEP = endPointsInternal.begin(); graphEP != endPointsInternal.end(); graphEP++)
-	{
-		if(!graph->isDefinedHere(graphEP->getGroup()))
-		{
-			//since this internal endpoint is defined into another graph, that internal endpoint must already exist
-			if(availableEndPoints.count(graphEP->getGroup()) == 0)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is not defined by the current graph, and it does not exist yet",graphEP->getGroup().c_str());
-				return false;
-			}
+	/**
+	*	No check is required for a GRE endpoint
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'gre-tunnel' endpoints",endPointsGre.size());
 
-			if(graph->endpointIsUsedInMatch(graphEP->getGroup()))
-			{
-				//Another graph must have been defined it in an action
-				if(endPointsDefinedInActions.count(graphEP->getGroup()) == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in a match of the current graph, but it was not defined in an action of another graph",graphEP->getGroup().c_str());
-					return false;
-				}
-			}
-			if(graph->endpointIsUsedInAction(graphEP->getGroup()))
-			{
-				//Another graph must have been defined it in a match
-				if(endPointsDefinedInMatches.count(graphEP->getGroup()) == 0)
-				{
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint \"%s\" is used in an action of the current graph, but it was not defined in a match of another graph",graphEP->getGroup().c_str());
-					return false;
-				}
-			}
-		}
-	}
+	/**
+	*	No check is required for a VLAN endpoint
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'vlan' endpoints",endPointsVlan.size());
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d gre endpoints (i.e., gre ports to be used to connect two nodes together)",endPointsGre.size());
-
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d vlan endpoints",endPointsVlan.size());
-
-	map<string,list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
+	/**
+	*	Check if the required network functions are available
+	*/
+	list<highlevel::VNFs> network_functions = graph->getVNFs();
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires to retrieve %d new NFs",network_functions.size());
-
 	//The description must be actually retrieved only for new VNFs, and not for VNFs whose number of ports is changed
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
+	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-
 		//FIXME: not sure that this check is necessary
-		if(computeController->getNFSelectedImplementation(nf->first))
+		if(computeController->getNFSelectedImplementation(nf->getName()))
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t* NF \"%s\" is already part of the graph; it is not retrieved again",nf->first.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t* NF \"%s\" is already part of the graph; it is not retrieved again",nf->getName().c_str());
 			continue;
 		}
-
-		nf_manager_ret_t retVal = computeController->retrieveDescription(nf->first);
-
+		nf_manager_ret_t retVal = computeController->retrieveDescription(nf->getName());
 		if(retVal == NFManager_NO_NF)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" cannot be retrieved",nf->first.c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" cannot be retrieved",nf->getName().c_str());
 			return false;
 		}
 		else if(retVal == NFManager_SERVER_ERROR)
@@ -632,6 +621,9 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		}
 	}
 
+	/**
+	*	The graph is valid!
+	*/
 	return true;
 }
 
@@ -645,9 +637,9 @@ void *startNF(void *arguments)
 	    , args->controlConfiguration, args->environmentVariables
 #endif
 	))
-    	return (void*) 0;
-    else
-    	return (void*) 1;
+		return (void*) 0;
+	else
+		return (void*) 1;
 }
 
 
@@ -664,14 +656,29 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*		1) create the Openflow controller for the tenant LSI
 	*		2) select an implementation for each NF of the graph
 	*		3) create the LSI, with the proper ports
-	*		4) start the NFs
-	*		5) download the rules in LSI-0 and tenant-LSI
+	*		4) create the OpenFlow controller for the internal LSIs
+	*		5) start the NFs
+	*		6) download the rules in LSI-0, tenant-LSI
+	*		7) create the internal LSI, with the proper vlinks and download the rules in internal-LSIs
+	*/
+
+	/**
+	*	@Considerations:
+	*		- the number of ports of a VNF described in the graph are immediately created (also those ports not used in any flow)
+	*		- the GRE-tunnel endpoints described in the graph are immediately created (also those not used in any flow)
+	*		- the internal endpoints described in the graph are immediately created (also those not used in any flow)
+	*/
+
+	/**
+	*	@Endpoint internal limitation: 
+	*		- connection from physical port to internal endpoint is not supported
+	*		- connection from internal endpoint to physical port is not supported
+	*		- problems with unidirectional flows involving endpoints internal
 	*/
 
 	/**
 	*	0) Check the validity of the graph
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Check the validity of the graph");
 
 	ComputeController *computeController = new ComputeController();
 
@@ -736,14 +743,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Create the LSI");
 
-	set<string> phyPorts = graph->getPorts();
 
-	map<string, list<unsigned int> > network_functions = graph->getNetworkFunctionsPorts();
-	map<string, map<unsigned int, port_network_config > > network_functions_ports_configuration = graph->getNetworkFunctionsConfiguration();
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-	map<string, list<port_mapping_t> > network_functions_control_configuration = graph->getNetworkFunctionsControlPorts();
-	map<string, list<string> > network_functions_environment_variables = graph->getNetworkFunctionsEnvironmentVariables();
-#endif
+	list<highlevel::VNFs> network_functions = graph->getVNFs();
 	list<highlevel::EndPointInternal> endpointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
 
@@ -781,9 +782,10 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	map<string, nf_t>  nf_types;
 	map<string, map<unsigned int, PortType> > nfs_ports_type;  // nf_name -> map( port_id -> port_type )
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); nf_it++) {
-		const string& nf_name = nf_it->first;
-		list<unsigned int>& nf_ports = nf_it->second;
+	for(list<highlevel::VNFs>::iterator nf_it = network_functions.begin(); nf_it != network_functions.end(); nf_it++) 
+	{
+		const string& nf_name = nf_it->getName(); //nf_it->first;
+		list<unsigned int> nf_ports = nf_it->getPortsId(); // nf_it->second;
 
 		nf_types[nf_name] = computeController->getNFType(nf_name);
 
@@ -791,8 +793,12 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		const Description* descr = computeController->getNFSelectedImplementation(nf_name);
 		map<unsigned int, PortType> nf_ports_type = descr->getPortTypes();  // Port types as specified by the retrieved and selected NF implementation
 
-		if (nf_ports_type.size() != nf_ports.size())
-			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from (%d) graph does not match number of ports from NF description (%d) for \"%s\"",nf_ports.size(),nf_ports_type.size(), nf_name.c_str());
+		if (nf_ports.size() > nf_ports_type.size())
+		{
+			//TODO: when we select the implementation, we should take into account the number of ports supported by the VNF!
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Number of ports from (%d) graph is greater then the number of ports from NF description (%d) for \"%s\"",nf_ports.size(),nf_ports_type.size(), nf_name.c_str());
+			return false;
+		}
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" selected implementation (type %d) defines type for %d ports", nf_name.c_str(), nf_types[nf_name], nf_ports_type.size());
 		// Fill in incomplete port type specifications (unless we make it mandatory input from name-resolver)
@@ -823,7 +829,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		//Create a new tenant-LSI
 		map<string, vector<string> > endpoints;
 		list<highlevel::EndPointGre> endpoints_gre = lsi->getEndpointsPorts();
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d GRE endpoints must be created",endpoints_gre.size());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%d Gre endpoints must be created",endpoints_gre.size());
 		if(endpoints_gre.size() != 0)
 		{
 			vector<string> v_ep(5);
@@ -844,15 +850,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 				
 				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tkey: %s - local IP: %s - remote IP: %s - iface: %s",(e->getGreKey()).c_str(),(e->getLocalIp()).c_str(),(e->getRemoteIp()).c_str(),iface.c_str());
 			}
-
 		}
 
 		assert(endpoints.size() == endpoints_gre.size());
 
 		map<string,list<string> > netFunctionsPortsName;
-		for(map<string, list<unsigned int> >::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
+		for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++) 
 		{
-			netFunctionsPortsName[nf->first] = lsi->getNetworkFunctionsPortNames(nf->first);
+			netFunctionsPortsName[nf->getName()] = lsi->getNetworkFunctionsPortNames(nf->getName());
 		}
 		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), endpoints, lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS), this->ipsec_certificate);
 
@@ -885,7 +890,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		{
 			if(!lsi->setEndpointPortID(ep->first,ep->second))
 			{
-				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required endpoint port \"%s\" has been attached to the tenant-lsi",ep->first.c_str());
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required gre end point port \"%s\" has been attached to the tenant-lsi",ep->first.c_str());
 				delete(clo);
 				throw GraphManagerException();
 			}
@@ -931,60 +936,46 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	vector<VLink> vls = lsi->getVirtualLinks();
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "LSI ID: %d",dpid);
-#if 0
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Ports (%d):",lsi_ports.size());
-	for(map<string,unsigned int>::iterator p = lsi_ports.begin(); p != lsi_ports.end(); p++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s -> %d",(p->first).c_str(),p->second);
-#endif
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Network functions (%d):",nfs.size());
-	for(set<string>::iterator it = nfs.begin(); it != nfs.end(); it++)
+
+	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tNF %s:",it->c_str());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\tNF %s:",(nf->getName()).c_str());
+		list<highlevel::vnf_port_t> nf_ports = nf->getPorts();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nf_ports.size());
+		
+		for(list<highlevel::vnf_port_t>::iterator n = nf_ports.begin(); n != nf_ports.end(); n++)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t* %s - %s",(n->name).c_str(),(n->id).c_str());
+			port_network_config config = n->configuration;
 
+			if(!(config.mac_address).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t\tMac address -> %s",(config.mac_address).c_str());
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		if(network_functions_control_configuration.count(*it) != 0)
-		{
-			list<port_mapping_t > nfs_control_configuration = network_functions_control_configuration[*it];
-
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tControl interfaces (%d):",nfs_control_configuration.size());
-			for(list<port_mapping_t >::iterator n = nfs_control_configuration.begin(); n != nfs_control_configuration.end(); n++)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tHost TCP port -> %s",(n->host_port).c_str());
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
-			}
-		}
-
-		if(network_functions_environment_variables.count(*it) != 0)
-		{
-			list<string> nfs_environment_variables = network_functions_environment_variables[*it];
-
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tEnvironment variables (%d):",nfs_environment_variables.size());
-			for(list<string>::iterator ev = nfs_environment_variables.begin(); ev != nfs_environment_variables.end(); ev++)
-			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s",ev->c_str());
-			}
-		}
-#endif
-
-		map<string,unsigned int> nfs_ports = lsi->getNetworkFunctionsPorts(*it);
-
-		map<unsigned int, port_network_config > nfs_ports_configuration = network_functions_ports_configuration[*it];
-
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tPorts (%d):",nfs_ports.size());
-		map<unsigned int, port_network_config >::iterator nd = nfs_ports_configuration.begin();
-		for(map<string,unsigned int>::iterator n = nfs_ports.begin(); n != nfs_ports.end(); n++, nd++)
-		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t%s -> %d",(n->first).c_str(),nd->first);
-			if(!(nd->second.mac_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tMac address -> %s",(nd->second.mac_address).c_str());
-#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-			if(!(nd->second.ip_address).empty())
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tIp address -> %s",(nd->second.ip_address).c_str());
+			if(!(config.ip_address).empty())
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t\tIP address -> %s",(config.ip_address).c_str());
 #endif
 		}
+
+#ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
+		list<string> nf_environment_variables = nf->getEnvironmentVariables();
+		if(nf_environment_variables.size() != 0)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tEnvironment variables (%d):",nf_environment_variables.size());
+			for(list<string>::iterator ev = nf_environment_variables.begin(); ev != nf_environment_variables.end(); ev++)
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\t* %s",ev->c_str());
+		}
+		
+		list<port_mapping_t> control_ports = nf->getControlPorts();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\tControl interfaces (%d):",control_ports.size());
+		for(list<port_mapping_t >::iterator n = control_ports.begin(); n != control_ports.end(); n++)
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tHost TCP port -> %s",(n->host_port).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t\t\tVNF TCP port -> %s",(n->guest_port).c_str());
+		}
+#endif
 	}
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoints (%d):",eps.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre end points (%d):",eps.size());
 	for(list<highlevel::EndPointGre>::iterator it = eps.begin(); it != eps.end(); it++){
 		int id = 0;
 		sscanf(it->getId().c_str(), "%d", &id);
@@ -1012,14 +1003,14 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 			if(NFsFromEndPoint.count(*nf) != 0)
 			{
-				//since this rule has a graph endpoint in the match that is defined in this
-				//graph, we save the port of the vlink of the NF in LSI-0, so that other graphs can use this endpoint
+				//since this rule has an internal end point in the match that is used by this
+				//graph, we save the port of the vlink of the NF in LSI-0, so that other graphs can connect to this internal end point
 				string ep = findEndPointTowardsNF(graph,*nf);
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint \"%s\" is defined in a match of the current Graph. Other graphs can use it expressing an action on the port %d of the LSI-0",ep.c_str(),vl1->getRemoteID());
-				endPointsDefinedInMatches[ep] = vl1->getRemoteID();
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal end point \"%s\" is used in a match of the current Graph. Other graphs can connect to it expressing an action on the port %d of the LSI-0",ep.c_str(),vl1->getRemoteID());
+				endPointsDefinedInMatches[ep].push_back(vl1->getRemoteID());
 
-				//This endpoint is currently not used in any other graph, since it is defined in the current graph
-				availableEndPoints[ep] = 0;
+				//This internal end point is currently only used in the current graph
+				//availableEndPoints[ep]++;
 			}
 		}
 
@@ -1035,7 +1026,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		}
 		lsi->setPortsVLinks(ports_vlinks);
 
-		//associate the vlinks to the GRE endpoints
+		//associate the vlinks to the gre end points
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint is virtual link ID:");
 		map<string, uint64_t> endpoints_vlinks;
 		vector<VLink>::iterator vl3 = vls.begin();
@@ -1047,20 +1038,20 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 			if(GREsFromEndPoint.count(*ep) != 0)
 			{
-				//since this rule has an internal endpoint in the match that is defined in this
-				//graph, we save the port of the vlink of the GRE in LSI-0, so that other graphs can use this endpoint
+				//since this rule has an internal endpoint in the match that is used in this
+				//graph, we save the port of the vlink of the GRE in LSI-0, so that other graphs can connect to this internal end point
 				string epp = findEndPointTowardsGRE(graph,*ep);
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint \"%s\" is defined in a match of the current Graph. Other graphs can use it expressing an action on the port %d of the LSI-0",epp.c_str(),vl3->getRemoteID());
-				endPointsDefinedInMatches[epp] = vl3->getRemoteID();
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal end point \"%s\" is used in a match of the current Graph. Other graphs can use it expressing an action on the port %d of the LSI-0",epp.c_str(),vl3->getRemoteID());
+				endPointsDefinedInMatches[epp].push_back(vl3->getRemoteID());
 
-				//This endpoint is currently not used in any other graph, since it is defined in the current graph
-				availableEndPoints[epp] = 0;
+				//This internal end point is currently only used in the current graph
+				//availableEndPoints[epp]++;
 			}
 		}
 		lsi->setEndPointsGreVLinks(endpoints_vlinks);
 
-		//associate the vlinks to the graph endpoints
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint is virtual link ID:");
+		//associate the vlinks to the internal end points
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal end point is virtual link ID:");
 		map<string, uint64_t> endpoints_internal_vlinks;
 		vector<VLink>::iterator vl4 = vls.begin();
 
@@ -1077,27 +1068,80 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		{
 			endpoints_internal_vlinks[*ep] = vl4->getID();
 
+			//increment the number of available "internal" end points
+			availableEndPoints[*ep]++;
+
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*ep).c_str(),vl4->getID());
-			if(/*graph->isDefinedHere(*ep)*/endPointsDefinedInActions.count(*ep) == 0)
-			{
-				//since this endpoint is in an action (hence it requires a virtual link), and it is defined in this
-				//graph, we save the port of the vlink in LSI-0, so that other graphs can use this endpoint
+			/*if(endPointsDefinedInActions.count(*ep) == 0)
+			{*/
+				//since this end point is in an action (hence it requires a virtual link)
+				//we save the port of the vlink in LSI-0
 
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint \"%s\" is defined in an action of the current Graph. Other graph can use it expressing a match on the port %d of the LSI-0",(*ep).c_str(),vl4->getRemoteID());
-				endPointsDefinedInActions[*ep] = vl4->getRemoteID();
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal end point \"%s\" is defined in an action of the current Graph. Other graph can use it expressing a match on the port %d of the LSI-0",(*ep).c_str(),vl4->getRemoteID());
+				endPointsDefinedInActions[*ep].push_back(vl4->getRemoteID());
 
-				//This endpoint is currently not used in any other graph, since it is defined in the current graph
-				availableEndPoints[*ep] = 0;
-			}
+				//This internal end point is currently only used in the current graph
+				//availableEndPoints[*ep]++;
+			//}
 		}
 		lsi->setEndPointsVLinks(endpoints_internal_vlinks);
 	}
 
 	/**
-	*	4) Start the network functions
+	*	4) Create the Openflow controller for each internal LSI
+	*/
+	if(availableEndPoints.size() != 0)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "4) Create the Openflow controller for the internal LSIs");
+
+		for(map<string,unsigned int>::iterator ae = availableEndPoints.begin(); ae != availableEndPoints.end(); ae++)
+		{
+			string internal_group = ae->first;
+
+			pthread_mutex_lock(&graph_manager_mutex);
+			uint32_t controllerPort = nextControllerPort;
+			nextControllerPort++;
+			pthread_mutex_unlock(&graph_manager_mutex);
+
+			ostringstream strControllerPort;
+			strControllerPort << controllerPort;
+
+			rofl::openflow::cofhello_elem_versionbitmap versionbitmap;
+			switch(OFP_VERSION)
+			{
+				case OFP_10:
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tUsing Openflow 1.0");
+					versionbitmap.add_ofp_version(rofl::openflow10::OFP_VERSION);
+					break;
+				case OFP_12:
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tUsing Openflow 1.2");
+					versionbitmap.add_ofp_version(rofl::openflow12::OFP_VERSION);
+					break;
+				case OFP_13:
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\tUsing Openflow 1.3");
+					versionbitmap.add_ofp_version(rofl::openflow13::OFP_VERSION);
+					break;
+			}
+
+			//if the internal LSI related to the internal-group has not been created yet
+			if(!internalLSIs[internal_group])
+			{
+				//create a new OF controller associated with the internal LSI
+				lowlevel::Graph graphTmp ;
+				Controller *controller = new Controller(versionbitmap,graphTmp,strControllerPort.str());
+				controller->start();
+
+				//store the information related to the OpenFlow controller associated with the internal LSI
+				internalLSIController[internal_group] = make_pair(controller, strControllerPort.str());
+			}
+		}
+	}
+
+	/**
+	*	5) Start the network functions
 	*/
 #ifdef RUN_NFS
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "4) start the network functions");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "6) start the network functions");
 
 	computeController->setLsiID(dpid);
 	#ifndef STARTVNF_SINGLE_THREAD
@@ -1106,16 +1150,15 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	to_thread_t thr[network_functions.size()];
 	int i = 0;
 
-
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
+	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		thr[i].nf_name = nf->first;
+		thr[i].nf_name = nf->getName(); //first;
 		thr[i].computeController = computeController;
-		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first);
-		thr[i].portsConfiguration = network_functions_ports_configuration[nf->first];
+		thr[i].namesOfPortsOnTheSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->getName()/*first*/);
+		thr[i].portsConfiguration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		thr[i].controlConfiguration = network_functions_control_configuration[nf->first];
-		thr[i].environmentVariables = network_functions_environment_variables[nf->first];
+		thr[i].controlConfiguration = nf->getControlPorts();
+		thr[i].environmentVariables = nf->getEnvironmentVariables();
 #endif
 
 #ifdef STARTVNF_SINGLE_THREAD
@@ -1146,8 +1189,8 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 	if(!ok)
 	{
-		for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-			computeController->stopNF(nf->first);
+		for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
+			computeController->stopNF(nf->getName() /*first*/);
 
 		switchManager.destroyLsi(lsi->getDpid());
 
@@ -1169,9 +1212,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 #endif
 
 	/**
-	*	5) Create the rules and download them in LSI-0 and tenant-LSI
+	*	6) Create the rules and download them in LSI-0, tenant-LSI
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "5) Create the rules and download them in LSI-0 and tenant-LSI");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "6) Create the rules and download them in LSI-0, tenant-LSI and internal-LSIs");
 	try
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
@@ -1180,6 +1223,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		graphLSI0.print();
 
 		graphLSI0lowLevel.addRules(graphLSI0.getRules());
+		list<lowlevel::Rule> llrules = graphLSI0.getRules();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph for LSI-0 (%d new rules added):",llrules.size());
+		graphLSI0.print();
 
 		lowlevel::Graph graphTenant =  GraphTranslator::lowerGraphToTenantLSI(graph,lsi,graphInfoLSI0.getLSI());
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph for tenant LSI:");
@@ -1196,19 +1242,259 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 		//Save the graph information
 		tenantLSIs[graph->getID()] = graphInfoTenantLSI;
 
-		//Insert new rules into the LSI-0
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Tenant LSI (ID: %s) and its controller are created",graph->getID().c_str());
+
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
 		(graphInfoLSI0.getController())->installNewRules(graphLSI0.getRules());
 
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Tenant LSI (ID: %s) and its controller are created",graph->getID().c_str());
+		/**
+		 * 7) create the internal LSI, with the proper vlinks and create the rules and download them in internal-LSIs
+		*/
+		for(map<string,unsigned int>::iterator ae = availableEndPoints.begin(); ae != availableEndPoints.end(); ae++)
+		{
+			string internal_group = ae->first;
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "7) handling the internal LSI representing the internal-group: \"%s\"", internal_group.c_str());
 
-		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+			//create a new internal LSI if does not exists yet
+			if(!internalLSIs[ae->first])
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Create the internal LSI related to internal-group: \"%s\"", internal_group.c_str());
 
+				
+				unsigned int numberOfVLrequired = ae->second;
+				string strControllerPort = internalLSIController[ae->first].second;
+
+				//set the internal LSI how created
+				internalLSIs[ae->first] = true;
+
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "%u virtual links are required to connect the internal LSI with LSI-0",numberOfVLrequired);
+
+				vector<VLink> virtual_links;
+				for(unsigned int i = 0; i < numberOfVLrequired; i++)
+					virtual_links.push_back(VLink(dpid0));
+
+				//The tenant-LSI is not connected to physical ports, but just the LSI-0
+				//through virtual links, and to network functions through virtual ports
+				set<string> dummyPhyPorts;
+
+				list<highlevel::VNFs> network_functions;
+
+				map<string, vector<string> > endpoints;
+				list<highlevel::EndPointGre> endpointsGre;
+
+				map<string, map<unsigned int, PortType> > nfs_ports_type;
+
+				//Prepare the structure representing the new internal-LSI
+				LSI *lsi = new LSI(string(OF_CONTROLLER_ADDRESS), strControllerPort, dummyPhyPorts, network_functions,
+					endpointsGre,virtual_links,nfs_ports_type);
+
+				CreateLsiOut *clo = NULL;
+				try
+				{
+					//Create a new internal-LSI
+					CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort, lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), endpoints, lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS), this->ipsec_certificate);
+
+					clo = switchManager.createLsi(cli);
+
+					lsi->setDpid(clo->getDpid());
+
+					map<string,unsigned int> physicalPorts = clo->getPhysicalPorts();
+					if(physicalPorts.size() > 0)
+					{
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Non required physical ports have been attached to the internal-lsi");
+						delete(clo);
+						throw GraphManagerException();
+					}
+
+					map<string,map<string, unsigned int> > nfsports = clo->getNetworkFunctionsPorts();
+					//TODO: check if the number of vnfs and ports is the same required
+					if(nfsports.size() > 1)
+					{
+							logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required network function has been attached to the internal-lsi");
+							delete(clo);
+							throw GraphManagerException();
+					}
+
+					map<string,unsigned int > epsports = clo->getEndpointsPorts();
+					if(epsports.size() > 1)
+					{
+						logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required gre end point has been attached to the tenant-lsi");
+						delete(clo);
+						throw GraphManagerException();
+					}
+
+					list<pair<unsigned int, unsigned int> > vl = clo->getVirtualLinks();
+					//TODO: check if the number of vlinks is the same required
+					unsigned int currentTranslation = 0;
+					for(list<pair<unsigned int, unsigned int> >::iterator it = vl.begin(); it != vl.end(); it++)
+					{
+						lsi->setVLinkIDs(currentTranslation,it->first,it->second);
+						currentTranslation++;
+					}
+
+					delete(clo);
+				} catch (SwitchManagerException e)
+				{
+					logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+					switchManager.destroyLsi(lsi->getDpid());
+					if(clo != NULL)
+						delete(clo);
+					delete(graph);
+					delete(lsi);
+					delete(computeController);
+					delete(controller);
+					graph = NULL;
+					lsi = NULL;
+					computeController = NULL;
+					controller = NULL;
+					throw GraphManagerException();
+				}
+
+				uint64_t dpid = lsi->getDpid();
+
+				vector<VLink> vls = lsi->getVirtualLinks();
+
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "LSI ID: %d",dpid);
+
+				if(vls.size() != 0)
+				{
+					//associate the vlinks to the internal end points
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal end point is virtual link ID:");
+					map<string, uint64_t> endpoints_internal_vlinks;
+					vector<VLink>::iterator vl4 = vls.begin();
+
+					for(set<string>::iterator ep = vlEndPointsInternal.begin(); ep != vlEndPointsInternal.end(); ep++, vl4++)
+					{
+						endpoints_internal_vlinks[*ep] = vl4->getID();
+
+						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*ep).c_str(),vl4->getID());
+					}
+					lsi->setEndPointsVLinks(endpoints_internal_vlinks);
+				}
+
+				//store the information related to LSI * of the internal LSI
+				internalLSIsDescription[ae->first] = lsi;
+			}
+			else
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal LSI related to internal-group \"%s\" already exists", internal_group.c_str());
+				
+				unsigned int numberOfVLrequired = availableEndPoints[ae->first]-internalLSIsDescription[ae->first]->getVirtualLinks().size();
+				AddVirtualLinkOut *avlo = NULL;
+				LSI *internalLSI = internalLSIsDescription[ae->first];
+				for(unsigned int i = 0;i < numberOfVLrequired; i++)
+				{
+					//add the virtual links related to the new internal end points
+					AddVirtualLinkIn avli(internalLSIsDescription[ae->first]->getDpid(), graphInfoLSI0.getLSI()->getDpid());
+					avlo = switchManager.addVirtualLink(avli);
+
+					assert(avlo != NULL);
+
+					VLink newLink(graphInfoLSI0.getLSI()->getDpid());
+					int vlinkPosition = internalLSI->addVlink(newLink);
+
+					internalLSI->setVLinkIDs(vlinkPosition,avlo->getIdA(),avlo->getIdB());
+				}
+
+				//store the information related to LSI * of the internal LSI
+				internalLSIsDescription.erase(ae->first);
+				internalLSIsDescription[ae->first] = internalLSI;
+
+				delete avlo;
+			}
+		}
+
+		//creates the rules for the internal-LSI
+		for(map<string,unsigned int>::iterator ae = availableEndPoints.begin(); ae != availableEndPoints.end(); ae++)
+		{
+			unsigned int i = 0, j = 0;
+			string internal_group = ae->first;
+			list<unsigned int>::iterator intEPInMatches_id = endPointsDefinedInMatches[internal_group].begin();
+			list<unsigned int>::iterator intEPInActions_id = endPointsDefinedInActions[internal_group].begin();
+			GraphInfo graphInfoInternalLSI;
+			LSI *internalLSI = internalLSIsDescription[internal_group];
+			Controller *OFcontroller = internalLSIController[internal_group].first;
+			vector<VLink> virtual_links = internalLSI->getVirtualLinks();
+
+			lowlevel::Graph internalLSIlowLevel;
+
+			graphInfoInternalLSI.setLSI(internalLSI);
+			graphInfoInternalLSI.setController(OFcontroller);
+
+			//Install the rules on internal-LSI
+			for(vector<VLink>::iterator vl = virtual_links.begin(); vl != virtual_links.end(); vl++, intEPInMatches_id++, intEPInActions_id++)
+			{
+				lowlevel::Match lsiMatch, lsi0Match, lsi0Match0;
+				unsigned int vlink_local_id = vl->getLocalID(), vlink_remote_id = vl->getRemoteID();
+
+				lsiMatch.setInputPort(vlink_local_id);
+
+				lowlevel::Action lsiAction(false, true);
+
+				//Create the rule and add it to the graph
+				//The rule ID is created as follows INTERNAL-GRAPH-INTERNAL_GROUP_ID
+				stringstream newRuleID;
+				newRuleID << "INTERNAL-GRAPH" << "-" << internal_group << "_" << i;
+				lowlevel::Rule lsiRule(lsiMatch,lsiAction,newRuleID.str(),HIGH_PRIORITY);
+				internalLSIlowLevel.addRule(lsiRule);
+
+				lsi0Match.setInputPort(vlink_remote_id);
+
+				if(*intEPInMatches_id != 0)
+				{
+					lowlevel::Action lsi0Action(*intEPInMatches_id);
+
+					//Create the rule and add it to the graph
+					//The rule ID is created as follows INTERNAL-GRAPH-INTERNAL_GROUP_ID
+					stringstream newRule0ID;
+					newRule0ID << "INTERNAL-GRAPH" << "-" << internal_group << "_" << j;
+					lowlevel::Rule lsi0Rule(lsi0Match,lsi0Action,newRule0ID.str(),HIGH_PRIORITY);
+					graphLSI0.addRule(lsi0Rule);
+
+					j++;
+				}
+
+				if(*intEPInActions_id != 0)
+				{
+					lsi0Match0.setInputPort(*intEPInActions_id);
+
+					lowlevel::Action lsi0Action0(vlink_remote_id);
+
+					//Create the rule and add it to the graph
+					//The rule ID is created as follows INTERNAL-GRAPH-INTERNAL_GROUP_ID
+					stringstream newRule1ID;
+					newRule1ID << "INTERNAL-GRAPH" << "-" << internal_group << "_" << j;
+					lowlevel::Rule lsi1Rule(lsi0Match0,lsi0Action0,newRule1ID.str(),HIGH_PRIORITY);
+					graphLSI0.addRule(lsi1Rule);
+
+					j++;
+				}
+				i++;
+			}
+
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Graph for internal LSI related to internal group \"%s\":", ae->first.c_str());
+			internalLSIlowLevel.print();
+
+			//Insert new rules into the internal-LSI
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the internal-LSI");
+			OFcontroller->installNewRules(internalLSIlowLevel.getRules());
+
+			printInfo(true);
+
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New graph for LSI-0:");
+			graphLSI0.print();
+
+			//Insert new rules into the LSI-0
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
+			(graphInfoLSI0.getController())->installNewRules(graphLSI0.getRules());
+
+			printInfo(graphLSI0,graphInfoLSI0.getLSI());
+		}
 	} catch (SwitchManagerException e)
 	{
 #ifdef RUN_NFS
-		for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
-			computeController->stopNF(nf->first);
+		for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++) 
+			computeController->stopNF(nf->getName() /*first*/);
 #endif
 
 		switchManager.destroyLsi(lsi->getDpid());
@@ -1242,9 +1528,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*		- new VNFs
 	*		- new endpoints (interface, GRE, vlan, internal)
 	*	- only new ports (and the related configuration) can be added to VNFs
-	*	  It is instead not possible to add new:
+	*		It is instead not possible to add new:
 	*		- environment variables
 	*		- control connections
+	*	- internal endpoints not supported
 	**/
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' with new 'pieces'...",graphID.c_str());
@@ -1304,7 +1591,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 
 	graph->addGraphToGraph(diff);
- 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
 	graph->print();
 
 	/**
@@ -1324,10 +1611,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints are required)");
 
-	set<string> phyPorts = diff->getPorts();
-
-	map<string, list<unsigned int> > network_functions = diff->getNetworkFunctionsPorts();
-	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
+	list<highlevel::VNFs> network_functions = diff->getVNFs();
 
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 
@@ -1455,7 +1739,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			lsi->addEndpointvlink(*ep,vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint '%s' uses the vlink '%x'",(*ep).c_str(),vlink.getID());
 
-			if(graph->isDefinedHere(*ep))
+			if(availableEndPoints.count(*ep) <= 1)
 			{
 				//since this endpoint is in an action (hence it requires a virtual link), and it is defined in this
 				//graph, we save the port of the vlink in LSI-0, so that other graphs can use this endpoint
@@ -1463,9 +1747,9 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 				//of the graph.
 
 				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint \"%s\" is defined in an action of the current Graph. Other graph can use it expressing a match on the port %d of the LSI-0",(*ep).c_str(),vlink.getRemoteID());
-				endPointsDefinedInActions[*ep] = vlink.getRemoteID();
+				endPointsDefinedInActions[*ep].push_back(vlink.getRemoteID());
 
-				//This endpoint is currently not used in any other graph, since it is defined in the current graph
+				//This internal end point is currently only used in the current graph
 				availableEndPoints[*ep] = 0;
 			}
 		}catch(SwitchManagerException e)
@@ -1495,24 +1779,25 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		VLink vlink = lsi->getVirtualLink(nfs_vlinks.find(*nf)->second);
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint \"%s\" is defined in a match of the current Graph. Other graphs can use it expressing an action on the port %d of the LSI-0",ep.c_str(),vlink.getRemoteID());
-		endPointsDefinedInMatches[ep] = vlink.getRemoteID();
+		endPointsDefinedInMatches[ep].push_back(vlink.getRemoteID());
 
-		//This endpoint is currently not used in any other graph, since it is defined in the current graph
+		//This internal end point is currently only used in the current graph
 		availableEndPoints[ep] = 0;
 	}
 
 	//Itarate on all the new network functions
 	//TODO: when the hotplug will be introduced, here we will also iterate on the network functions to be updated
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
+	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
 		AddNFportsOut *anpo = NULL;
 		try
 		{
 			//TODO: for the hotplug, modify lsi->addNF as suggested into the function itself.
-			lsi->addNF(nf->first, nf->second, computeController->getNFSelectedImplementation(nf->first)->getPortTypes());
+			list<unsigned int> nf_ports = nf->getPortsId(); // nf_it->second;
+			lsi->addNF(nf->getName()/*first*/, /*nf->second*/ nf_ports, computeController->getNFSelectedImplementation(nf->getName()/*first*/)->getPortTypes());
 
 			map<string, list<struct nf_port_info> >pi_map = lsi->getNetworkFunctionsPortsInfo();//for each network function, retrieve a list of "port name, port type"
-			map<string, list<struct nf_port_info> >::iterator pi_it = pi_map.find(nf->first); //select the info related to the network function currently considered
+			map<string, list<struct nf_port_info> >::iterator pi_it = pi_map.find(nf->getName()/*first*/); //select the info related to the network function currently considered
 			//TODO: when the hotplug will be introduced, pi_it->second will also contain the old ports of the VNF. Then a further skimming will be required
 			assert(pi_it != pi_map.end());
 			
@@ -1547,8 +1832,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			//anpo->getPorts() returns the map "ports name, identifier within the lsi"
 			if(!lsi->setNfSwitchPortsID(anpo->getNFname(), anpo->getPorts()))
 			{
-				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required network function port related to the network function \"%s\" has been attached to the tenant-lsi",nf->first.c_str());
-				lsi->removeNF(nf->first);
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "A non-required network function port related to the network function \"%s\" has been attached to the tenant-lsi",nf->getName().c_str()/*first.c_str()*/);
+				lsi->removeNF(nf->getName()/*first*/);
 				delete(anpo);
 				throw GraphManagerException();
 			}
@@ -1563,7 +1848,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		}catch(SwitchManagerException e)
 		{
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
-			lsi->removeNF(nf->first);
+			lsi->removeNF(nf->getName()/*first*/);
 			if(anpo != NULL)
 				delete(anpo);
 			delete(diff);
@@ -1572,6 +1857,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		}
 	}
 
+	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
 	for(list<highlevel::EndPointGre>::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
 #ifdef VSWITCH_IMPLEMENTATION_OVSDB
@@ -1619,6 +1905,8 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 #endif
 	}
 
+	//TODO: manage the internal endpoint
+
 	/**
 	*	4) Start the new NFs
 	*/
@@ -1628,21 +1916,18 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 	computeController->setLsiID(dpid);
 
-	for(highlevel::Graph::t_nfs_ports_list::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
+	for(list<highlevel::VNFs>::iterator nf = network_functions.begin(); nf != network_functions.end(); nf++)
 	{
-		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->first); //Returns the map <port ID, port name on switch>
+		map<unsigned int, string> nfPortIdToNameOnSwitch = lsi->getNetworkFunctionsPortsNameOnSwitchMap(nf->getName()/*first*/); //Returns the map <port ID, port name on switch>
 		//TODO: the following information should be retrieved through the highlevel graph
-		map<string, map<unsigned int, port_network_config > > new_nfs_ports_configuration = diff->getNetworkFunctionsConfiguration();
-		map<unsigned int, port_network_config_t > nfs_ports_configuration = new_nfs_ports_configuration[nf->first];
+		map<unsigned int, port_network_config_t > nfs_ports_configuration = nf->getPortsID_configuration();
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
-		map<string, list<port_mapping_t> > new_nfs_control_ports = diff->getNetworkFunctionsControlPorts();
-		list<port_mapping_t > nfs_control_configuration = new_nfs_control_ports[nf->first];
-		map<string, list<string> > new_nfs_env_variables = diff->getNetworkFunctionsEnvironmentVariables();
-		list<string> environment_variables_tmp = new_nfs_env_variables[nf->first];
+		list<port_mapping_t > nfs_control_configuration = nf->getControlPorts();
+		list<string> environment_variables_tmp = nf->getEnvironmentVariables();
 #endif
 		//TODO: for the hotplug, we may extend the computeController with a call that says if a VNF is already running or not.
 		//If not, startNF should then be called; if yes, o new function must be called
-		if(!computeController->startNF(nf->first, nfPortIdToNameOnSwitch, nfs_ports_configuration
+		if(!computeController->startNF(nf->getName()/*first*/, nfPortIdToNameOnSwitch, nfs_ports_configuration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 			, nfs_control_configuration, environment_variables_tmp
 #endif
@@ -1709,6 +1994,54 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 
 bool GraphManager::updateGraph_removePieces(string graphID, highlevel::Graph *newGraph)
 {
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' by removing 'pieces'...",graphID.c_str());
+
+	assert(tenantLSIs.count(graphID) != 0);
+
+	//Retrieve the information already stored for the graph (i.e., retrieve the as it is
+	//currently implemented, without the update)
+	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
+//	ComputeController *computeController = graphInfo.getComputeController();
+	highlevel::Graph *graph = graphInfo.getGraph();
+//	LSI *lsi = graphInfo.getLSI();
+//	Controller *tenantController = graphInfo.getController();
+
+//	uint64_t dpid = lsi->getDpid();
+
+	/**
+	*	Outline:
+	*
+	*	0) calculate the diff with respect to the graph already deployed (and check its validity)
+	*	1) update the high level graph
+	*/
+
+	/**
+	*	The three following variables will be used in the following and that contain
+	*	an high level graph:
+	*		* graph -> the original graph to be updated
+	*		* newGraph -> graph containing the update
+	*		* diff -> graph that will contain the parts in "graph" and that are not in "newGraph",
+	*				and then that must be removed from "newGraph"
+	*/
+
+	/**
+	*	0) Calculate the diff
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the pieces to be removed from the graph");
+	highlevel::Graph *diff = newGraph->calculateDiff(graph, graphID);
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The diff graph is:");
+	diff->print();
+
+	/**
+	*	1) Update the high level graph
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
+
+	graph->removeGraphFromGraph(diff);
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
+	graph->print();
+
 	return true;
 }
 
@@ -1740,7 +2073,7 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 				{
 					stringstream ssm;
 					ssm << match.getEndPoint();
-					if(/*graph->isDefinedHere(ssm.str())*/endPointsDefinedInMatches.count(ssm.str()) == 0)
+					//if(/*graph->isDefinedHere(ssm.str())*/endPointsDefinedInMatches.count(ssm.str()) == 0)
 						NFsFromEndPoint.insert(ss.str());
 				}
 			}
@@ -1756,7 +2089,7 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 				{
 					stringstream ssm;
 					ssm << match.getEndPoint();
-					if(/*graph->isDefinedHere(ssm.str())*/endPointsDefinedInMatches.count(ssm.str()) == 0)
+					//if(/*graph->isDefinedHere(ssm.str())*/endPointsDefinedInMatches.count(ssm.str()) == 0)
 						GREsFromEndPoint.insert(action_ep->toString());
 				}
 			}
@@ -2138,7 +2471,6 @@ next:
 
 next2:
 
-#ifndef UNIFY_NFFG
 	if(rri.isEndpointInternal)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the internal endpoint '%s' must be removed (if this vlink exists)",rri.endpointInternal.c_str());
 
@@ -2187,7 +2519,6 @@ next2:
 			}
 		}
 	}
-#endif
 
 	//Remove NFs, if they no longer appear in the graph
 	for(list<string>::iterator nf = rri.nfs.begin(); nf != rri.nfs.end(); nf++)
@@ -2222,18 +2553,19 @@ next2:
 		}
 	}
 
+#if 0 
+	//IVANO: moved in highlevelgraph, in the function that removes pieces from the graph
 	//Remove physical ports, if they no longer appear in the graph
 	for(list<string>::iterator p = rri.ports.begin(); p != rri.ports.end(); p++)
 	{
 		if(!graph->stillExistPort(*p))
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The port '%s' is no longer part of the graph",(*p).c_str());
 	}
+#endif
 
-#ifndef UNIFY_NFFG
 	//Remove the internal endpoint, if it no longer appear in the graph
 	if((rri.endpointInternal != "") && (!graph->stillExistEndpoint(rri.endpointInternal)))
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint '%s' is no longer part of the graph",rri.endpointInternal.c_str());
-#endif
 
 	//Remove the gre endpoint, if it no longer appear in the graph
 	if((rri.endpointGre != "") && (!graph->stillExistEndpointGre(rri.endpointGre)))

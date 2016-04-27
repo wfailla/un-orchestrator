@@ -4,7 +4,7 @@
 #pragma once
 
 /**
-*	@brief: class containing information on NFs and virtual links to be removed from the graph
+*	@brief: class containing information on VNFs and virtual links to be removed from the graph
 */
 
 class RuleRemovedInfo

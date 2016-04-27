@@ -168,7 +168,7 @@ int RestServer::answer_to_connection (void *cls, struct MHD_Connection *connecti
 		else
 		{
 			con_info->message[con_info->length] = '\0';
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "++++Method \"%s\" not implemented",method);
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method \"%s\" not implemented",method);
 			struct MHD_Response *response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 			int ret = MHD_queue_response (connection, MHD_HTTP_NOT_IMPLEMENTED, response);
 			MHD_destroy_response (response);
@@ -536,6 +536,7 @@ put_malformed_url:
 		else
 		{
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
+			//As a first step, let's add the new pieces
 			if(!gm->updateGraph(graphID,graph))
 			{
 				delete(graph);
@@ -545,6 +546,17 @@ put_malformed_url:
 				MHD_destroy_response (response);
 				return ret;
 			}
+			//Now let's remove the pieces that should not be longer part of the graph
+			if(!gm->updateGraph_removePieces(graphID,graph))
+			{
+				delete(graph);
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+				MHD_destroy_response (response);
+				return ret;
+			}
+			delete(graph);
 		}
 	}catch (...)
 	{

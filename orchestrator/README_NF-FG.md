@@ -699,22 +699,27 @@ leaves the UN again through the `gre-tunnel` endpoint.
 	
 ### Endpoint type: `internal`
  
-It is possible to connect multiple graphs together by using this endpoint.
-An `internal` endpoint is always in the form "graph_id:endpoint:endpoint_id_in_the_graph", where "graph_id"
-is the graph that defines the `internal` endpoint.
-A graph that want to use an `internal` endpoint defined by another graph, can do it only if that
-`internal` endpoint has been specified by that graph.
+It is possible to connect multiple graphs together through the `internal` endpoint; particularly, 
+the `internal-group` is used to identify all those graphs that must be connected inside the universal node.
 
 The `internal` endpoint is defined as follows:
 	
 	{
 		"id": "00000002",
 		"name": "egress",
-		"type": "internal"
+		"type": "internal",
+		"internal":
+		{
+			"internal-group": "25"
+		}
 	}
 
-As an example, the following command defines an endpoint "myGraph:endpoint:00000001", while the second
-command uses that endpoint.
+As an example, the two following graphs define an `internal` endpoint belonging to
+the `internal-group` `25`, and then they will be connected together. In particular,
+the first graph provides all the traffic coming from the `internal` endpoint to a VNF;
+then, packets coming from the VNF is sent again through the `internal` endpoint. 
+Similarly, in the second graph traffic coming from a `gre-tunnel` endpoint is 
+provided to the `internal` endpoint and vice versa.
 
 	{
 	  "forwarding-graph": {
@@ -724,7 +729,11 @@ command uses that endpoint.
 	      {
 		"id": "00000004",
 		"name": "ingress",
-		"type": "internal"
+		"type": "internal",
+		"internal":
+		{
+			"internal-group" : "25"
+		}
 	      }
 	    ],
 	    "VNFs": [
@@ -746,7 +755,7 @@ command uses that endpoint.
 		  "id": "000000001",
 		  "priority": 1,
 		  "match": {
-		    "port_in": "myGraph:endpoint:00000004"
+		    "port_in": "endpoint:00000004"
 		  },
 		  "actions": [
 		    {
@@ -762,7 +771,7 @@ command uses that endpoint.
 		  },
 		  "actions": [
 		    {
-		      "output_to_port": "myGraph:endpoint:00000004"
+		      "output_to_port": "endpoint:00000004"
 		    }
 		  ]
 		}
@@ -793,7 +802,7 @@ command uses that endpoint.
 		  "id": "000000001",
 		  "priority": 1,
 		  "match": {
-		    "port_in": "myGraph:endpoint:00000004"
+		    "port_in": "endpoint:00000004"
 		  },
 		  "actions": [
 		    {
@@ -809,7 +818,7 @@ command uses that endpoint.
 		  },
 		  "actions": [
 		    {
-		      "output_to_port": "myGraph:endpoint:00000004"
+		      "output_to_port": "endpoint:00000004"
 		    }
 		  ]
 		}
@@ -817,6 +826,13 @@ command uses that endpoint.
 	    }
 	  }
 	}
+	
+#### How this endpoint is implemented by the un-orchestrator
+
+In the UN, each different `internal-group` is implemented with a graph (and then an LSI) that is connected to
+the `LSI-0` with a number of links that is equal to twice the number of times the `internal` endpoint is used
+by graphs. This graph is not connected to any VNF; moreover, unlike standardard graphs defined through the NF-FG, 
+it implements the traditional L2 forwarding, hence it forwards packets based on the destianation MAC address.
 
 ## Configuration
 
