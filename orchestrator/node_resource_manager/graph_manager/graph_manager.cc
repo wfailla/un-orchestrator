@@ -573,6 +573,11 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	*	No check is required for an internal endpoint
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'internal' endpoints",endPointsInternal.size());
+	for(list<highlevel::EndPointInternal>::iterator i = endPointsInternal.begin(); i != endPointsInternal.end(); i++)
+	{
+		string group = i->getGroup();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "* group: %s",group.c_str());
+	}
 
 	/**
 	*	No check is required for a GRE endpoint
@@ -668,7 +673,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	/**
 	*	0) Check the validity of the graph
 	*/
-
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Checking the validity of the graph");
 	ComputeController *computeController = new ComputeController();
 
 	if(!checkGraphValidity(graph,computeController))

@@ -530,8 +530,6 @@ list<highlevel::Rule> Graph::calculateDiffRules(Graph *other)
 Graph *Graph::calculateDiff(Graph *other, string graphID)
 {
 	Graph *diff = new Graph(graphID);
-	
-	set<string> new_vnfs_name;
 
 	// a) Add the new rules to "diff"
 	
@@ -601,7 +599,6 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		{
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new VNF is required - ID: '%s' - name: '%s'", (it->getId()).c_str(),(it->getName()).c_str());
 			diff->addVNF(*it);
-			new_vnfs_name.insert(it->getName());
 		}
 	}//end iteration on the VNFs required by the update
 
@@ -854,10 +851,9 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 	//Iterates on the VNFs to be removed (i.e., the VNFs that are in "other")
 	for(list<highlevel::VNFs>::iterator vtbr = vnfs_tobe_removed.begin(); vtbr != vnfs_tobe_removed.end(); vtbr++)
 	{
-		//Here it is important to distinguish the case in which a VNF must be removed and the case in which only the ports of the VNF must be removed.
+		//TODO: Here it is important to distinguish the case in which a VNF must be removed and the case in which only the ports of the VNF must be removed.
 		if(!stillUsedVNF(*vtbr))
 		{
-
 			list<VNFs>::iterator vnf = vnfs.begin();
 			for(; vnf != vnfs.end(); vnf++)
 			{
