@@ -679,8 +679,6 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 
 		if(!found)
 		{
-			//TODO: this is not implemented yet
-			assert(0 && "The graph update with require new internal endpoints is not supported yet!");
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is added to the graph",(new_internal->getGroup()).c_str());
 			diff->addEndPointInternal(*new_internal);
 		}
@@ -739,7 +737,7 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 		this->addEndPointInterface(*ep);
 	}
 
-	//Update the gre endpoints
+	//Update the gre-tunnel endpoints
 	list<highlevel::EndPointGre> nepp = other->getEndPointsGre();
 	for(list<highlevel::EndPointGre>::iterator ep = nepp.begin(); ep != nepp.end(); ep++)
 	{
@@ -766,9 +764,7 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	list<highlevel::VNFs> vnfs_tobe_added = other->getVNFs();
 	//Iterates on the VNFs to be added (i.e., the VNFs that are in "other")
 	for(list<highlevel::VNFs>::iterator vtba = vnfs_tobe_added.begin(); vtba != vnfs_tobe_added.end(); vtba++)
-	{
 		this->addVNF(*vtba); //In case the VNF is already in the graph but now it has new ports, the new ports are added to the graph
-	}
 
 	return true;
 }

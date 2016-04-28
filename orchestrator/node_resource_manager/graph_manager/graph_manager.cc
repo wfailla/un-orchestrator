@@ -1547,7 +1547,7 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	*	0) calculate the diff with respect to the graph already deployed (and check its validity)
 	*	1) update the high level graph
 	*	2) select an implementation for the new NFs
-	*	3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints/vlan endpoints are required)
+	*	3) update the lsi (in case of new interface/NFs/gre/vlan endpoints are required)
 	*	4) start the new NFs
 	*	5) download the new rules in LSI-0 and tenant-LSI
 	*/
@@ -1600,11 +1600,16 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	}
 
 	/**
-	*	3) Update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints are required)
+	*	3) Update the lsi (in case of new interface/VNFs/gre/vlan endpoints are required)
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) update the lsi (in case of new ports/NFs/gre endpoints/internal endpoints are required)");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) update the lsi (in case of new ports/VNFs/gre/vlan endpoints are required)");
 
 	list<highlevel::VNFs> network_functions = diff->getVNFs();
+
+	/**
+	*	3-a) condider the virtual links
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-a) considering the new virtual links");
 
 	//Since the NFs cannot specify new ports, new virtual links can be required only by the new NFs and the physical ports
 
@@ -1613,10 +1618,9 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	set<string> vlPhyPorts = vlVector[1];
 	set<string> vlEndPointsGre = vlVector[2];
 	set<string> vlEndPointsInternal = vlVector[3];
-	set<string> NFsFromEndPoint = vlVector[4];
-	set<string> GREsFromEndPoint = vlVector[5];
 
 	//TODO: check if a virtual link is already available and can be used (because it is currently used only in one direction)
+	//FIXME: I think the part that calculates the number of vlink required should be rewritten. It should be based on the code of new graph, which is very optimized
 	unsigned int numberOfVLrequiredBeforeEndPoints = (vlNFs.size() > vlPhyPorts.size())? vlNFs.size() : vlPhyPorts.size(); //The same virtual link can be exploited both towards VNFs and towards physical ports
 	unsigned int numberOfVLrequired = numberOfVLrequiredBeforeEndPoints + vlEndPointsInternal.size()  + vlEndPointsGre.size(); //TODO: optimize this; in fact, the same virtual link could be exploited both towards GRE endpoints and towards internal endpoints
 
@@ -1708,8 +1712,13 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		}
 	}
 
+
 	for(set<string>::iterator ep = vlEndPointsInternal.begin(); ep != vlEndPointsInternal.end(); ep++)
 	{
+		//TODO: this is not implemented yet
+		assert(0 && "The graph update with require new internal endpoints is not supported yet!");
+
+#if 0
 		//FIXME: here I am referring to a vlink through its position. It would be really better to use its ID
 		AddVirtualLinkOut *avlo = NULL;
 		try
@@ -1753,28 +1762,13 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 			diff = NULL;
 			throw GraphManagerException();
 		}
-
+#endif
 	}
 
-	for(set<string>::iterator nf = NFsFromEndPoint.begin(); nf != NFsFromEndPoint.end(); nf++)
-	{
-		//XXX: this works because I'm assuming that a graph cannot use twice the same endpoint in matches, if this
-		//endpoint is defined by the graph itself.
-
-		//since this rule has a graph endpoint in the match that is defined in this
-		//graph, we save the port of the vlink of the NF in LSI-0, so that other graphs can use this endpoint
-		string ep = findEndPointTowardsNF(diff,*nf);
-
-		map<string, uint64_t> nfs_vlinks = lsi->getNFsVlinks();
-		assert(nfs_vlinks.count(*nf) != 0);
-
-		VLink vlink = lsi->getVirtualLink(nfs_vlinks.find(*nf)->second);
-
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint \"%s\" is defined in a match of the current Graph. Other graphs can use it expressing an action on the port %d of the LSI-0",ep.c_str(),vlink.getRemoteID());
-		
-		//This internal end point is currently only used in the current graph
-		timesUsedEndPointsInternal[ep] = 0;
-	}
+	/**
+	*	3-b) condider the virtual network functions
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-a) considering the new virtual network functions");
 
 	//Itarate on all the new network functions
 	//TODO: when the hotplug will be introduced, here we will also iterate on the network functions to be updated
@@ -1824,6 +1818,11 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		}
 	}
 
+	/**
+	*	3-c) condider the gre-tunnel endpoints
+	*/
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-a) considering the new virtual links");
+
 	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
 	for(list<highlevel::EndPointGre>::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
@@ -1867,12 +1866,10 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 			throw GraphManagerException();
 		}
 #else
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable");
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable with the selected virtual switch");
 		throw GraphManagerException();
 #endif
 	}
-
-	//TODO: manage the internal endpoint
 
 	/**
 	*	4) Start the new NFs
@@ -2132,10 +2129,7 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 	set<string> phyPorts;
 	set<string> endPointsGre;
 	set<string> endPointsInternal;
-
-	set<string> NFsFromEndPoint;
-	set<string> GREsFromEndPoint;
-
+	
 	list<highlevel::Rule> rules = newPiece->getRules();
 	for(list<highlevel::Rule>::iterator rule = rules.begin(); rule != rules.end(); rule++)
 	{
@@ -2147,7 +2141,7 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 			{
 				highlevel::ActionNetworkFunction *action_nf = (highlevel::ActionNetworkFunction*)action;
 
-				//Check if a vlink is required for this NF port
+				//Check if a vlink is required for this network function port
 				map<string, uint64_t> nfs_vlinks = lsi->getNFsVlinks();
 				stringstream ss;
 				ss << action->getInfo() << "_" << action_nf->getPort();
@@ -2155,34 +2149,38 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 					NFs.insert(ss.str());
 			}
 		}
-		else if(action->getType() == highlevel::ACTION_ON_PORT)
-		{
-			//check if a vlink is required for this physical port
-			map<string, uint64_t> ports_vlinks = lsi->getPortsVlinks();
-			highlevel::ActionPort *action_port = (highlevel::ActionPort*)action;
-			if(ports_vlinks.count(action_port->getInfo()) == 0)
-				phyPorts.insert(action_port->getInfo());
-		}
 		else if(action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE)
 		{
 			if(match.matchOnPort() || match.matchOnEndPointInternal())
 			{
-				//check if a vlink is required for this endpoint
+				//check if a vlink is required for this gre-tunnel endpoint
 				map<string, uint64_t> endpoints_vlinks = lsi->getEndPointsGreVlinks();
 				highlevel::ActionEndPointGre *action_ep = (highlevel::ActionEndPointGre*)action;
 				if(endpoints_vlinks.count(action_ep->toString()) == 0)
 					endPointsGre.insert(action_ep->toString());
 			}
 		}
+		else if(action->getType() == highlevel::ACTION_ON_PORT)
+		{
+			if(match.matchOnNF() || match.matchOnEndPointGre())
+			{
+				//check if a vlink is required for this physical port (i.e., interface endpoint)
+				map<string, uint64_t> ports_vlinks = lsi->getPortsVlinks();
+				highlevel::ActionPort *action_port = (highlevel::ActionPort*)action;
+				if(ports_vlinks.count(action_port->getInfo()) == 0)
+					phyPorts.insert(action_port->getInfo());
+			}
+		}
 		else if(action->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL)
 		{
-			assert(match.matchOnNF() || match.matchOnEndPointGre());
-
-			//check if a vlink is required for this endpoint
-			map<string, uint64_t> endpoints_vlinks = lsi->getEndPointsVlinks();
-			highlevel::ActionEndPointInternal *action_ep = (highlevel::ActionEndPointInternal*)action;
-			if(endpoints_vlinks.count(action_ep->toString()) == 0)
-				endPointsInternal.insert(action_ep->toString());
+			if(!match.matchOnPort() && !match.matchOnEndPointInternal())
+			{
+				//check if a vlink is required for this internal endpoint
+				map<string, uint64_t> endpoints_vlinks = lsi->getEndPointsVlinks();
+				highlevel::ActionEndPointInternal *action_ep = (highlevel::ActionEndPointInternal*)action;
+				if(endpoints_vlinks.count(action_ep->toString()) == 0)
+					endPointsInternal.insert(action_ep->toString());
+			}
 		}
 	}
 
@@ -2198,12 +2196,6 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoints requiring a virtual link:");
 	for(set<string>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end(); e++)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*e).c_str());
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NFs reached from an internal endpoint defined in this graph:");
-	for(set<string>::iterator nfe = NFsFromEndPoint.begin(); nfe != NFsFromEndPoint.end(); nfe++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*nfe).c_str());
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoints reached from an internal endpoint defined in this graph:");
-	for(set<string>::iterator ep = GREsFromEndPoint.begin(); ep != GREsFromEndPoint.end(); ep++)
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*ep).c_str());
 
 	//prepare the return value
 	vector<set<string> > retval;
@@ -2216,10 +2208,6 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 	retval.insert(rv,endPointsGre);
 	rv = retval.end();
 	retval.insert(rv,endPointsInternal);
-	rv = retval.end();
-	retval.insert(rv,NFsFromEndPoint);
-	rv = retval.end();
-	retval.insert(rv,GREsFromEndPoint);
 
 	return retval;
 }
