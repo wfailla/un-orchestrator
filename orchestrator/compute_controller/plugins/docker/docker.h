@@ -29,7 +29,7 @@ public:
 	bool isSupported(Description&);
 
 	bool startNF(StartNFIn sni);
-	bool UpdateNF(UpdateNFIn uni);
+	bool updateNF(UpdateNFIn uni);
 	bool stopNF(StopNFIn sni);
 };
 

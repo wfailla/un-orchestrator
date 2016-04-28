@@ -1926,7 +1926,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 		//If not, startNF should then be called; if yes, o new function must be called
 		if(nfPortIdToNameOnSwitch.size() != nf->getPortsId().size())
 		{
-			if(!computeController->updateNF(nf->getName(), nfPortIdToNameOnSwitch, nfs_ports_configuration, nf->getPortsId())
+			if(!computeController->updateNF(nf->getName(), nfPortIdToNameOnSwitch, nfs_ports_configuration, nf->getPortsId()))
 			{
 				//TODO: no idea on what I have to do at this point
 				assert(0);
