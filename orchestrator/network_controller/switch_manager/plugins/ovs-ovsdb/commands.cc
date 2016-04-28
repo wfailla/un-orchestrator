@@ -931,7 +931,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 		throw commandsException();
 	}
 
-    	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
+	r = sock_recv(s, read_buf, sizeof(read_buf), SOCK_RECEIVEALL_NO, 0/*no timeout*/, ErrBuf, sizeof(ErrBuf));
 	if (r == sockFAILURE)
 	{
 		logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Error reading data: %s", ErrBuf);
@@ -2272,9 +2272,9 @@ void commands::cmd_destroyVirtualLink(DestroyVirtualLinkIn dvli, int s){
 
 void commands::cmd_delete_virtual_link(uint64_t dpi, uint64_t idp, int s)
 {
-	logger(ORCH_ERROR, OVSDB_MODULE_NAME, __FILE__, __LINE__, "cmd_delete_virtual_link(dpi=%d, ipd=%d)",dpi,idp);
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "cmd_delete_virtual_link(dpi=%d, ipd=%d)",dpi,idp);
 
-    	ssize_t nwritten;
+	ssize_t nwritten;
 
 	char read_buf[4096] = "";
 
