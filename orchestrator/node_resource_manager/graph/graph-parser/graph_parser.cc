@@ -770,14 +770,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 							const Array& flow_rules_array = bs_value.getArray();
 
-#ifndef UNIFY_NFFG
-							//FIXME: put the flowrules optional also in case of "standard| nffg?
-							if(flow_rules_array.size() == 0)
-							{
-								logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Key \"%s\" without rules",FLOW_RULES);
-								return false;
-							}
-#endif
 							//Itearate on the flow rules
 							for( unsigned int fr = 0; fr < flow_rules_array.size(); ++fr )
 							{
