@@ -195,6 +195,7 @@ private:
 	*/
 	void removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo tbr, ComputeController *computeController,highlevel::Graph *graph, LSI * lsi);
 
+#if 0
 	/**
 	*	@brief: given a NF of the graph (in the form NF_port), return the endpoint expressed in the match of a rule
 	*		whose action is expressed on the function.
@@ -203,6 +204,7 @@ private:
 	*	@param: ep		Involved gre endpoint
 	*/
 	string findEndPointTowardsGRE(highlevel::Graph *graph, string ep);
+#endif
 
 	/**
 	*	@brief: given a NF of the graph (in the form NF_port), return the endpoint expressed in the match of a rule
@@ -229,7 +231,7 @@ private:
 	*/
 	void handleControllerForInternalEndpoint(highlevel::Graph *graph);
 	
-	bool handleGraphForInternalEndpoint(highlevel::Graph *graph);
+	void handleGraphForInternalEndpoint(highlevel::Graph *graph);
 
 	/**
 	*	@brief: add a new piece to an existing graph with
