@@ -504,6 +504,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
 	highlevel::Graph *graph = graphInfo.getGraph();
 
+#if 0
 	//Check if the rule to be removed exists
 	if(!graph->ruleExists(flowID))
 	{
@@ -518,6 +519,7 @@ bool GraphManager::deleteFlow(string graphID, string flowID)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph \"%s\" has only one flow. Then the entire graph will be removed",graphID.c_str());
 		return deleteGraph(graphID);
 	}
+#endif
 
 #if 0
 	string endpointInvolved = graph->getEndpointInvolved(flowID);
@@ -1768,7 +1770,7 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	/**
 	*	3-b) condider the virtual network functions
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-a) considering the new virtual network functions");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-b) considering the new virtual network functions (%d)",network_functions.size());
 
 	//Itarate on all the new network functions
 	//TODO: when the hotplug will be introduced, here we will also iterate on the network functions to be updated
@@ -1821,9 +1823,9 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	/**
 	*	3-c) condider the gre-tunnel endpoints
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-a) considering the new virtual links");
-
 	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-c) considering the new gre-tunnel endpoints (%d)",tmp_endpoints.size());
+
 	for(list<highlevel::EndPointGre>::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
 	{
 #ifdef VSWITCH_IMPLEMENTATION_OVSDB
@@ -1977,7 +1979,18 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	*
 	*	0) calculate the diff with respect to the graph already deployed (and check its validity)
 	*	1) update the high level graph
+	*	3) remove the rules from LSI-0 and tenant-LSI
 	*/
+	
+	/**
+	*	Limitations:
+	*	- only ports (and the related configuration) can be removed from VNFs
+	*		It is instead not possible to remove:
+	*		- environment variables
+	*		- control connections
+	*	- internal endpoints not supported
+	**/
+
 
 	/**
 	*	The three following variables will be used in the following and that contain
@@ -2002,9 +2015,46 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 
-	graph->removeGraphFromGraph(diff);
+	list<RuleRemovedInfo> removeRule = graph->removeGraphFromGraph(diff);
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
 	graph->print();
+	
+	/**
+	*	The following things must be done
+	*	- delete the flowrules
+	*	- delete the VNFs and the vlinks required by its ports 
+	*	- delete the gre-tunnel ports and the vlinks required by them
+	*	- delete the interface endpoints (i.e., physical ports) and the vlinks required by them
+	*/
+
+	/**
+	*	3) Remove the rules from LSI-0 and tenant-LSI
+	*/
+
+//	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
+//	highlevel::Graph *graph = graphInfo.getGraph();
+
+	Controller *lsi0Controller = graphInfoLSI0.getController();
+
+	list<highlevel::Rule> rulesToBeRemoved = diff->getRules();
+	for(list<highlevel::Rule>::iterator rule = rulesToBeRemoved.begin(); rule != rulesToBeRemoved.end(); rule++)
+	{
+		string ruleID = rule->getRuleID();
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Removing the flow rule with id '%s'",ruleID.c_str());
+
+		// Considering the LSI-0
+		stringstream lsi0RuleID;
+		lsi0RuleID << graph->getID() << "_" << ruleID;
+		lsi0Controller->removeRuleFromID(lsi0RuleID.str());
+		graphLSI0lowLevel.removeRuleFromID(lsi0RuleID.str());
+
+		// Considering the tenant-LSI
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Removing the flow from the tenant-LSI graph");
+		Controller *tenantController = graphInfo.getController();
+		tenantController->removeRuleFromID(ruleID);
+	}
+
+	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 
 	return true;
 }
