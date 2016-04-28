@@ -29,8 +29,6 @@ protected:
 	*	@param: tenantLSI					Information related to the LSI of the tenant
 	*	@param: lsi0						Information related to the LSI-0
 	*										in the LSI-0 to be used to send packets on that endpoint
-	*	@param: availableEndPoints			Indicates the number of time each available endpoint is used
-	*										by graphs not defining the endpoint itself
 	*	@param: creating					Indicates if the translation is needed to create or to detroy
 	*										a graph
 	*
@@ -80,7 +78,7 @@ protected:
 	*		endpoint gre -> NF:
 	*			This rule does not appear in LSI-0
 	*/
-	static lowlevel::Graph lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int > &availableEndPoints, string un_interface, map<string, map <string, unsigned int> > internalLSIsConnections, bool orchestrator_in_band = true, bool creating = true);
+	static lowlevel::Graph lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, string un_interface, map<string, map <string, unsigned int> > internalLSIsConnections, bool orchestrator_in_band = true, bool creating = true);
 
 	/**
 	*	@brief: translate an high level graph into a rules to be sent to

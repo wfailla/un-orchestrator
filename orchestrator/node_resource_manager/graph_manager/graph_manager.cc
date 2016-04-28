@@ -374,7 +374,7 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Remove the rules from the LSI-0");
 
-	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),availableEndPointsInternal,un_interface,internalLSIsConnections,orchestrator_in_band,false);
+	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),un_interface,internalLSIsConnections,orchestrator_in_band,false);
 	graphLSI0lowLevel.removeRules(graphLSI0.getRules());
 
 	//Remove rules from the LSI-0
@@ -395,75 +395,74 @@ bool GraphManager::deleteGraph(string graphID, bool shutdown)
 	*		3) delete the LSI, the internal LSIs, the virtual links, the
 	*			ports related to NFs and the ports related to GRE tunnel
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Delete the LSI, the internal LSIs, the vlinks, and the ports used by NFs");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Delete the LSI, the vlinks, and the ports used by NFs");
 
 	try
 	{
 		//delete the LSI
 		switchManager.destroyLsi(tenantLSI->getDpid());
-
-		//delete the internal LSIs
-		//[ivanofrancesco] //TODO: check if no one still needs the internal graph. If so, delete it
-		/*
-		for(map<string,unsigned int>::iterator ae = availableEndPoints.begin(); ae != availableEndPoints.end(); ae++)
-		{
-			
-			LSI *internalLSI = internalLSIsDescription[ae->first];
-
-			
-			//switchManager.destroyLsi(internalLSI->getDpid());
-		}
-		*/
 	} catch (SwitchManagerException e)
 	{
 		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
 		throw GraphManagerException();
 	}
 
-	/**
-	*		4) delete the endpoints defined by the graph
-	*/
-	//[ivanofrancesco] understand what do to in this case
-	/*
-	if(!shutdown)
-	{
-		list<highlevel::EndPointInternal> endpointsInternal = highLevelGraph->getEndPointsInternal();
-		for(list<highlevel::EndPointInternal>::iterator ep = endpointsInternal.begin(); ep != endpointsInternal.end();)
-		{
-			if(availableEndPointsInternal.count(ep->getGroup()) <= 1)
-			{
-				assert(availableEndPointsInternal.find(ep->getGroup())->second == 0);
-				assert(endPointsDefinedInMatches.count(ep->getGroup()) != 0 || endPointsDefinedInActions.count(ep->getGroup()) != 0);
-
-				list<highlevel::EndPointInternal>::iterator tmp = ep;
-				ep++;
-
-				availableEndPointsInternal.erase(tmp->getGroup());
-				if(endPointsDefinedInActions.count(tmp->getGroup()) != 0)
-					endPointsDefinedInActions.erase(tmp->getGroup());
-				if(endPointsDefinedInMatches.count(tmp->getGroup()) != 0)
-					endPointsDefinedInMatches.erase(tmp->getGroup());
-
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The endpoint \"%s\" is no longer available",tmp->getGroup().c_str());
-			}
-			else
-				ep++;
-		}
-	}
-	*/
-
 	tenantLSIs.erase(tenantLSIs.find(highLevelGraph->getID()));
 
-	delete(highLevelGraph);
 	delete(tenantLSI);
 	delete(computeController);
-
-	highLevelGraph = NULL;
+	
 	tenantLSI = NULL;
 	computeController = NULL;
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Tenant LSI (ID: %s) and its controller have been destroyed!",graphID.c_str());
 	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+
+	/**
+	* 	4) If no other graph is still connected to an internal graph, such an internal graph can be deleted.
+	*	Otherwise, only the flow and the virtual link related to the current graph are deleted.
+	*/
+	list<highlevel::EndPointInternal> internalEndpoints = highLevelGraph->getEndPointsInternal();
+	for(list<highlevel::EndPointInternal>::iterator iep = internalEndpoints.begin(); iep != internalEndpoints.end(); iep++)
+	{
+		string internal_group(iep->getGroup());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "4) Considering the internal graph associated with the internal group '%s'",internal_group.c_str());
+
+		if(availableEndPointsInternal[internal_group] == 1)
+		{
+			//The internal graph representing this internal endpoint can be removed. In fact to other graph is connected with it :)
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal graph associated with the internal group '%s' must be deleted",internal_group.c_str());
+
+			LSI *internalLSI = (internalLSIs.find(internal_group))->second.getLSI();
+
+			try
+			{
+			//delete the LSI
+				switchManager.destroyLsi(internalLSI->getDpid());
+			} catch (SwitchManagerException e)
+			{
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+				throw GraphManagerException();
+			}
+
+			internalLSIs.erase(internalLSIs.find(internal_group));
+			internalLSIsConnections.erase(internalLSIsConnections.find(internal_group));
+
+			delete(internalLSI);
+			internalLSI = NULL;
+			
+			internalLSIsCreated[internal_group] = false;
+		}
+		else
+		{
+			//In this case, only the parts related to the current graph (i.e., a flow and a virtual link) must be deleted.
+		}
+
+		availableEndPointsInternal[internal_group]--;
+	}
+
+	delete(highLevelGraph);
+	highLevelGraph = NULL;
 
 	return true;
 }
@@ -1145,7 +1144,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	try
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph, lsi, graphInfoLSI0.getLSI(), availableEndPointsInternal, un_interface, internalLSIsConnections, orchestrator_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph, lsi, graphInfoLSI0.getLSI(), un_interface, internalLSIsConnections, orchestrator_in_band);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New graph for LSI-0:");
 		graphLSI0.print();
 
@@ -1897,7 +1896,7 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	{
 		//creates the new rules for LSI-0 and for the tenant-LSI
 
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(diff,lsi,graphInfoLSI0.getLSI(),availableEndPointsInternal,un_interface,internalLSIsConnections,orchestrator_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(diff,lsi,graphInfoLSI0.getLSI(),un_interface,internalLSIsConnections,orchestrator_in_band);
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
 		graphLSI0.print();
