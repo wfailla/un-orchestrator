@@ -383,7 +383,8 @@ void LSI::removeEndPointGrevlink(string endpoint)
 		return;
 	}
 
-	map<string,uint64_t>::iterator it = endpoints_vlinks.find(endpoint);
+	map<string,uint64_t>::iterator it = endpoints_gre_vlinks.find(endpoint);
+	assert(it != endpoints_vlinks.end());
 	endpoints_gre_vlinks.erase(it);
 }
 
