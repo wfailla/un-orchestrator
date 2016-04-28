@@ -16,7 +16,7 @@ EndPointVlan::~EndPointVlan()
 
 bool EndPointVlan::operator==(const EndPointVlan &other) const
 {
-	if(id == other.id && name == other.name)
+	if(id == other.id && name == other.name && interface == other.interface && vlan_id == other.vlan_id)
 		return true;
 
 	return false;

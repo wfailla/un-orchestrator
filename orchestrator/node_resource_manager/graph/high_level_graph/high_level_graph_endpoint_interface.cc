@@ -14,7 +14,7 @@ EndPointInterface::~EndPointInterface()
 
 bool EndPointInterface::operator==(const EndPointInterface &other) const
 {
-	if(id == other.id && name == other.name)
+	if(id == other.id && name == other.name && interface == other.interface)
 		return true;
 
 	return false;

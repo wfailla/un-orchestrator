@@ -16,7 +16,7 @@ EndPointGre::~EndPointGre()
 
 bool EndPointGre::operator==(const EndPointGre &other) const
 {
-	if(id == other.id && name == other.name)
+	if(id == other.id && name == other.name && local_ip == other.local_ip && remote_ip == other.remote_ip && gre_key == other.gre_key)
 		return true;
 
 	return false;

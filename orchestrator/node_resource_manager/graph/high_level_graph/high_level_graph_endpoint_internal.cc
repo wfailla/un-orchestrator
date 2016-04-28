@@ -16,7 +16,7 @@ EndPointInternal::~EndPointInternal()
 
 bool EndPointInternal::operator==(const EndPointInternal &other) const
 {
-	if(group == other.group)
+	if(id == other.id && name == other.name && group == other.group)
 		return true;
 
 	return false;

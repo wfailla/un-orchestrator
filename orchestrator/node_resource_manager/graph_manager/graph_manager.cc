@@ -1509,6 +1509,8 @@ void GraphManager::handleGraphForInternalEndpoint(highlevel::Graph *graph)
 
 bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 {
+	//The update of the graph is split in two parts. In the first, new pieces are added to the graph;
+	//in the second, the proper parts are removed
 	if(!updateGraph_add(graphID,newGraph))
 		return false;
 	return updateGraph_remove(graphID,newGraph);
