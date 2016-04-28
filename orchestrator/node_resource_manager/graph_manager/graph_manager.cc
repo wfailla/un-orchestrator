@@ -1969,7 +1969,7 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
 //	ComputeController *computeController = graphInfo.getComputeController();
 	highlevel::Graph *graph = graphInfo.getGraph();
-//	LSI *lsi = graphInfo.getLSI();
+	LSI *lsi = graphInfo.getLSI();
 //	Controller *tenantController = graphInfo.getController();
 
 //	uint64_t dpid = lsi->getDpid();
@@ -1979,7 +1979,8 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	*
 	*	0) calculate the diff with respect to the graph already deployed (and check its validity)
 	*	1) update the high level graph
-	*	3) remove the rules from LSI-0 and tenant-LSI
+	*	2) remove the rules from LSI-0 and tenant-LSI
+	*	3) remove the virtual links that are no longer used
 	*/
 	
 	/**
@@ -2015,25 +2016,24 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 
-	list<RuleRemovedInfo> removeRule = graph->removeGraphFromGraph(diff);
+	list<RuleRemovedInfo> removeRuleInfo = graph->removeGraphFromGraph(diff);
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
 	graph->print();
 	
 	/**
 	*	The following things must be done
-	*	- delete the flowrules
-	*	- delete the VNFs and the vlinks required by its ports 
-	*	- delete the gre-tunnel ports and the vlinks required by them
-	*	- delete the interface endpoints (i.e., physical ports) and the vlinks required by them
+	*	- 2) delete the flowrules
+	*	- 3) delete the virtual links no longer used. We support virtual link related to each type of endpoint
+	*	- 4) delete the interface endpoints (i.e., physical ports) and the vlinks required by them
+	*	- 5) delete the VNFs
+	*	- 6) delete the gre-tunnel ports
 	*/
 
 	/**
-	*	3) Remove the rules from LSI-0 and tenant-LSI
+	*	2) Remove the rules from LSI-0 and tenant-LSI
 	*/
 
-//	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
-//	highlevel::Graph *graph = graphInfo.getGraph();
-
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "2) Removing the flow rules");
 	Controller *lsi0Controller = graphInfoLSI0.getController();
 
 	list<highlevel::Rule> rulesToBeRemoved = diff->getRules();
@@ -2056,7 +2056,390 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 
 	printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
 
+	/**
+	*	3)	Remove the virtual links that are no longer used.
+	*		The fact that such endpoints (of whatever type) are removed or not from the graph is not important; in fact, the vlink are created/destroyed depending on the rules.
+	*/
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Removing the virtual links");
+
+	assert(removeRuleInfo.size() == rulesToBeRemoved.size());
+	for(list<RuleRemovedInfo>::iterator tbr = removeRuleInfo.begin(); tbr != removeRuleInfo.end(); tbr++)
+		removeUselessVlinks(*tbr,graph,lsi);
+		//removeUselessPorts_NFs_Endpoints_VirtualLinks(rri,nfs_manager,graph,lsi);
+
 	return true;
+}
+
+void GraphManager::removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *graph, LSI *lsi)
+{
+
+	map<string, uint64_t> nfs_vlinks = lsi->getNFsVlinks();
+	map<string, uint64_t> ports_vlinks = lsi->getPortsVlinks();
+	map<string, uint64_t> endpoints_internal_vlinks = lsi->getEndPointsVlinks();
+	map<string, uint64_t> endpoints_gre_vlinks = lsi->getEndPointsGreVlinks();
+
+	list<highlevel::Rule> rules = graph->getRules();
+
+	/**
+	*	Consider the network function ports
+	*/
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Checking if ports, network functions, endpoints and virtual links can be removed...");
+	if(rri.isNFport)
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the NF port '%s' must be removed (if this vlink exists)",rri.nf_port.c_str());
+
+	if(rri.isNFport && nfs_vlinks.count(rri.nf_port) != 0)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The NF port '%s' is associated with a vlink",rri.nf_port.c_str());
+
+		/**
+		*	In case NF:port does not appear in other actions, and it is not use for any physical port or internal endpoint, then the vlink must be removed
+		*/
+		for(list<highlevel::Rule>::iterator again = rules.begin(); again != rules.end(); again++)
+		{
+			highlevel::Action *a = again->getAction();
+			highlevel::Match m = again->getMatch();
+			
+			if(a->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION && (m.matchOnEndPointInternal() || m.matchOnPort() ))
+			{
+				//The network function port can still be used in an action, but the match should be on something not requiring the vlink: another VNF port or a gre tunnel
+
+				stringstream nf_port;
+				nf_port << ((highlevel::ActionNetworkFunction*)a)->getInfo() << "_" << ((highlevel::ActionNetworkFunction*)a)->getPort();
+				string nf_port_string = nf_port.str();
+
+				if(nf_port_string == rri.nf_port)
+				{
+					//The action is on the same VNF port of the removed one, hence the vlink must not be removed
+					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The vlink cannot be removed, since there are other actions expressed on the NF port '%s'",rri.nf_port.c_str());
+					return;
+				}
+			}
+		}//end of again iterator on the rules of the graph
+
+		//We just know that the vlink is no longer used for a NF port. However, it might be used in the opposite
+		//direction: for a physical port or for an internal endpoint
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link no longer required for NF port: %s",rri.nf_port.c_str());
+		uint64_t tobeRemovedID = nfs_vlinks.find(rri.nf_port)->second;
+
+		//The virtual link is no longer associated with the network function port
+		lsi->removeNFvlink(rri.nf_port);
+
+		for(map<string, uint64_t>::iterator pvl = ports_vlinks.begin(); pvl != ports_vlinks.end(); pvl++)
+		{
+			if(pvl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the interface: %s",pvl->first.c_str());
+				return;
+			}
+		}
+
+		for(map<string, uint64_t>::iterator ivl = endpoints_internal_vlinks.begin(); ivl != endpoints_internal_vlinks.end(); ivl++)
+		{
+			if(ivl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the internal endpoint: %s",ivl->first.c_str());
+				return;
+			}
+		}
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link must be removed");
+
+		try
+		{
+			VLink toBeRemoved = lsi->getVirtualLink(tobeRemovedID);
+			DestroyVirtualLinkIn dvli(lsi->getDpid(), toBeRemoved.getLocalID(), toBeRemoved.getRemoteDpid(), toBeRemoved.getRemoteID());
+			switchManager.destroyVirtualLink(dvli);
+			lsi->removeVlink(tobeRemovedID);
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}
+		return;
+	}//end if(rri.isNFport && nfs_vlinks.count(rri.nf_port) != 0)
+
+	/**
+	*	Consider the gre-tunnel endpoints
+	*/
+
+	if(rri.isEndpointGre)
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the gre endpoint '%s' must be removed (if this vlink exists)",rri.endpointGre.c_str());
+
+	if(rri.isEndpointGre && endpoints_gre_vlinks.count(rri.endpointGre) != 0)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The gre endpoint '%s' is associated with a vlink",rri.endpointGre.c_str());
+
+		/**
+		*	In case the gre endpoint does not appear in other actions, and it is not use for any physical port or internal endpoint, then the vlink must be removed
+		*/
+		for(list<highlevel::Rule>::iterator again = rules.begin(); again != rules.end(); again++)
+		{
+			highlevel::Action *a = again->getAction();
+			highlevel::Match m = again->getMatch();
+
+			if(a->getType() == highlevel::ACTION_ON_ENDPOINT_GRE && (m.matchOnEndPointInternal() || m.matchOnPort()))
+			{
+				if(((highlevel::ActionEndPointGre*)a)->toString() == rri.endpointGre)
+				{
+					//The action is on the same gre endpoint of the removed one, hence the vlink must not be removed
+					return;
+				}
+			}
+
+		}//end of again iterator on the rules of the graph
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link no longer required for the gre endpoint: %s",rri.endpointGre.c_str());
+
+		uint64_t tobeRemovedID = endpoints_gre_vlinks.find(rri.endpointGre)->second;
+		lsi->removeEndPointGrevlink(rri.endpointGre);
+
+		for(map<string, uint64_t>::iterator pvl = ports_vlinks.begin(); pvl != ports_vlinks.end(); pvl++)
+		{
+			if(pvl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the port: %s",pvl->first.c_str());
+				return;
+			}
+		}
+
+		for(map<string, uint64_t>::iterator ivl = endpoints_internal_vlinks.begin(); ivl != endpoints_internal_vlinks.end(); ivl++)
+		{
+			if(ivl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the internal endpoint: %s",ivl->first.c_str());
+				return;
+			}
+		}
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link must be removed");
+
+		try
+		{
+			VLink toBeRemoved = lsi->getVirtualLink(tobeRemovedID);
+			DestroyVirtualLinkIn dvli(lsi->getDpid(), toBeRemoved.getLocalID(), toBeRemoved.getRemoteDpid(), toBeRemoved.getRemoteID());
+			switchManager.destroyVirtualLink(dvli);
+			lsi->removeVlink(tobeRemovedID);
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}
+		return;
+	}//end if(rri.isEndpointGre && endpoints_gre_vlinks.count(rri.endpointGre) != 0)
+
+	/**
+	*	Consider the interface endpoints (i.e., physical ports)
+	*/
+
+	if(rri.isPort)
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check of the vlink associated with the port '%s' must be removed (if this vlink exists)",rri.port.c_str());
+
+	if(rri.isPort && ports_vlinks.count(rri.port) != 0)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The port '%s' is associated with a vlink",rri.port.c_str());
+		/**
+		*	In case port does not appear in other actions, and it is not use for any gre-tunnel or VNF port, then the vlink must be removed
+		*/
+		for(list<highlevel::Rule>::iterator again = rules.begin(); again != rules.end(); again++)
+		{
+			highlevel::Action *a = again->getAction();
+			highlevel::Match m = again->getMatch();
+
+			if(a->getType() == highlevel::ACTION_ON_PORT && (m.matchOnEndPointGre() || m.matchOnNF()))
+			{
+				if(((highlevel::ActionPort*)a)->getInfo() == rri.port)
+				{
+					//The action are the same, hence no vlink must be removed
+					return;
+				}
+			}
+
+		}//end of again iterator on the rules of the graph
+
+		//We just know that the vlink is no longer used for a port. However, it might used in the opposite
+		//direction, for a NF port or for a gre-tunnel endpoint
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link no longer required for port: %s",rri.port.c_str());
+		uint64_t tobeRemovedID = ports_vlinks.find(rri.port)->second;
+
+		lsi->removePortvlink(rri.port);
+
+		for(map<string, uint64_t>::iterator nfvl = nfs_vlinks.begin(); nfvl != nfs_vlinks.end(); nfvl++)
+		{
+			if(nfvl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the NF port: %s",nfvl->first.c_str());
+				return;
+			}
+		}
+
+		for(map<string, uint64_t>::iterator gvl = endpoints_gre_vlinks.begin(); gvl != endpoints_gre_vlinks.end(); gvl++)
+		{
+			if(gvl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the NF port: %s",gvl->first.c_str());
+				return;
+			}
+		}
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link must be removed");
+		try
+		{
+			VLink toBeRemoved = lsi->getVirtualLink(tobeRemovedID);
+			DestroyVirtualLinkIn dvli(lsi->getDpid(), toBeRemoved.getLocalID(), toBeRemoved.getRemoteDpid(), toBeRemoved.getRemoteID());
+			switchManager.destroyVirtualLink(dvli);
+			lsi->removeVlink(tobeRemovedID);
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}
+	}
+
+	/**
+	*	Consider the internal endpoints
+	*/
+
+	if(rri.isEndpointInternal)
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the internal endpoint '%s' must be removed (if this vlink exists)",rri.endpointInternal.c_str());
+
+	if(rri.isEndpointInternal && endpoints_internal_vlinks.count(rri.endpointInternal) != 0)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint '%s' is associated with a vlink",rri.endpointInternal.c_str());
+
+		/**
+		*	In case the internal endpoint does not appear in other actions, and it is not use for any gre-tunnel or VNF port, then the vlink must be removed
+		*/
+		for(list<highlevel::Rule>::iterator again = rules.begin(); again != rules.end(); again++)
+		{
+			highlevel::Action *a = again->getAction();
+			highlevel::Match m = again->getMatch();
+
+			if(a->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL  && (m.matchOnEndPointGre() || m.matchOnNF()))
+			{
+				if(((highlevel::ActionEndPointInternal*)a)->toString() == rri.endpointInternal)
+				{
+					//The action is on the same endpoint of the removed one, hence the vlink must not be removed
+					return;
+				}
+			}
+
+		}//end of again iterator on the rules of the graph
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link no longer required for the internal endpoint: %s",rri.endpointInternal.c_str());
+
+		uint64_t tobeRemovedID = endpoints_internal_vlinks.find(rri.endpointInternal)->second;
+		lsi->removeEndPointvlink(rri.endpointInternal);
+
+		for(map<string, uint64_t>::iterator nfvl = nfs_vlinks.begin(); nfvl != nfs_vlinks.end(); nfvl++)
+		{
+			if(nfvl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the NF port: %s",nfvl->first.c_str());
+				return;
+			}
+		}
+
+		for(map<string, uint64_t>::iterator gvl = endpoints_gre_vlinks.begin(); gvl != endpoints_gre_vlinks.end(); gvl++)
+		{
+			if(gvl->second == tobeRemovedID)
+			{
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the NF port: %s",gvl->first.c_str());
+				return;
+			}
+		}
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link must be removed");
+
+		try
+		{
+			VLink toBeRemoved = lsi->getVirtualLink(tobeRemovedID);
+			DestroyVirtualLinkIn dvli(lsi->getDpid(), toBeRemoved.getLocalID(), toBeRemoved.getRemoteDpid(), toBeRemoved.getRemoteID());
+			switchManager.destroyVirtualLink(dvli);
+			lsi->removeVlink(tobeRemovedID);
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}
+
+	}
+
+
+#if 0
+	//Remove NFs, if they no longer appear in the graph
+	for(list<string>::iterator nf = rri.nfs.begin(); nf != rri.nfs.end(); nf++)
+	{
+#if 0 
+		//IVANO: this check has been moved in highlevel graph, in the function that removes pieces from the graph
+		if(!graph->stillExistNF(*nf))
+#endif
+		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The NF '%s' is no longer part of the graph",(*nf).c_str());
+
+			//Stop the NF
+#ifdef RUN_NFS
+			computeController->stopNF(*nf);
+#else
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Flag RUN_NFS disabled. No NF to be stopped");
+#endif
+
+			set<string> nf_ports;
+			map<unsigned int, string>lsi_nf_ports = lsi->getNetworkFunctionsPortsNameOnSwitchMap(*nf);
+			for (map<unsigned int,string>::iterator lsi_nfp_it = lsi_nf_ports.begin(); lsi_nfp_it != lsi_nf_ports.end(); ++lsi_nfp_it) {
+				nf_ports.insert(lsi_nfp_it->second);
+			}
+
+			try
+			{
+				DestroyNFportsIn dnpi(lsi->getDpid(), *nf, nf_ports);
+				switchManager.destroyNFPorts(dnpi);
+				lsi->removeNF(*nf);
+			} catch (SwitchManagerException e)
+			{
+				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+				throw GraphManagerException();
+			}
+		}
+	}
+
+#if 0 
+	//IVANO: moved in highlevelgraph, in the function that removes pieces from the graph
+	//Remove physical ports, if they no longer appear in the graph
+	for(list<string>::iterator p = rri.ports.begin(); p != rri.ports.end(); p++)
+	{
+		if(!graph->stillExistPort(*p))
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The port '%s' is no longer part of the graph",(*p).c_str());
+	}
+#endif
+
+	//Remove the internal endpoint, if it no longer appear in the graph
+	if((rri.endpointInternal != "") && (!graph->stillExistEndpoint(rri.endpointInternal)))
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint '%s' is no longer part of the graph",rri.endpointInternal.c_str());
+
+	//Remove the gre endpoint, if it no longer appear in the graph
+	if((rri.endpointGre != "") && (!graph->stillExistEndpointGre(rri.endpointGre)))
+	{
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The gre endpoint '%s' is no longer part of the graph",rri.endpointGre.c_str());
+
+		try
+		{
+			DestroyEndpointIn depi(lsi->getDpid(),rri.endpointGre);
+			switchManager.destroyEndpoint(depi);
+			lsi->removeEndpoint(rri.endpointGre);
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}
+#else
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable");
+#endif
+	}
+#endif
 }
 
 vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph *graph)

@@ -281,6 +281,8 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				rri.isEndpointGre = false;
 			}
 
+			//TODO: understand what is this thing	- IVANO
+
 			if(matchOnNF)
 				//Potentially, the NF is useless in the graph
 				rri.nfs.push_back(match.getNF());
