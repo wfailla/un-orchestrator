@@ -99,6 +99,11 @@ private:
 	*	@brief: Check if an endpoint interface is still used in the graph.
 	*/
 	bool stillUsedEndpointInterface(EndPointInterface endpoint);
+	
+		/**
+	*	@brief: Check if a VNF is still used in the graph.
+	*/
+	bool stillUsedVNF(VNFs vnf);
 
 public:
 
@@ -296,15 +301,6 @@ public:
 	void print();
 
 /********************************************************************************************************************/
-
-	/**
-	*	@brief: Checks if a NF still exist in the graph. If it is no longer used
-	*		in any rule, but it is still part of the "networkFunctions" map,
-	*		it is removed from this map as well.
-	*
-	*	@param:	nf	Name of a network function
-	*/
-	bool stillExistNF(string nf);
 
 	/**
 	*	@brief: Checks if an endpoint port still exist in the graph. If it is no

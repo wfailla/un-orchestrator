@@ -536,18 +536,7 @@ put_malformed_url:
 		else
 		{
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
-			//As a first step, let's add the new pieces
 			if(!gm->updateGraph(graphID,graph))
-			{
-				delete(graph);
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-				MHD_destroy_response (response);
-				return ret;
-			}
-			//Now let's remove the pieces that should not be longer part of the graph
-			if(!gm->updateGraph_removePieces(graphID,graph))
 			{
 				delete(graph);
 				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");

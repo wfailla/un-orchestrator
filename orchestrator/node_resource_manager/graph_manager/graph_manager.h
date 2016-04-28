@@ -72,76 +72,33 @@ private:
 	static uint32_t nextControllerPort;
 
 	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
-	*
-	*	map<internal group, counter>
-	*	where internal group is the identifier of the internal end point,
-	*	while counter indicates how many times the end point is
-	*	used by other graphs
+	*	This structure contains information of the number of graphs that use
+	*	an internal endpoint. The first element is the internal group of the
+	*	internal endpoint, the counter is the number of times it is used
 	*/
-	map<string, unsigned int > availableEndPoints;
+	map<string, unsigned int > timesUsedEndPointsInternal;
 
 	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the action of another graph (hence, the
-	*	"current" graph uses this end point in the match).
-	*
-	*	Example: the graph defining the endpoint "ep" has the rule
-	*		match: nf:1 - action: ep
-	*	ep originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g., 2). This structure contains the entry: <ep, 1>
+	*	This structure says if the LSI represanting an internal endpoint has alrady
+	*	been created or not.
 	*/
-	map<string, list<unsigned int> > endPointsDefinedInActions;
+	map<string, bool > internalLSIsCreated;
 
 	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the match of another graph (hence, the
-	*	"current" graph uses this end point in the action).
-	*	This port ID is the remote part of the vlink connecting the LSI to the NF
-	*	defined in the action of the rule whose match defines the endpoint iself.
-	*
-	*   Example: the graph defining the endpoint "ep" has the rule
-	*		match: ep - action: nf:1
-	*	nf:1 originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g.. 2). This structure contains the entry: <ep, 1>
+	*	Map containing the graph identifier of each internal LSI (i.e., an LSI
+	*	that corresponds to and internal endpoint) and its desciption
 	*/
-	map<string, list<unsigned int> > endPointsDefinedInMatches;
+	map<string, GraphInfo> internalLSIs;
+	
+	/**
+	*	For each internal endpoint identifier, maps the identifier of a graph using such
+	*	an endpoint and the port ID on the LSI-0
+	*/
+	map<string, map <string, unsigned int> > internalLSIsConnections;
 
 	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
-	*
-	*	map<internal group, created>
-	*	where internal group is the identifier of the internal end point,
-	*	while created indicates if the internal LSI has been created yet
-	*/
-	map<string, bool > internalLSIs;
-
-	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
-	*
-	*	map<internal group, pair<controller, controller name>>
-	*	where internal group is the identifier of the internal end point,
-	*	controller indicates the openflow controller of the internal LSI
-	*	and controller name indicated the name of the openflow controller
-	*/
-	map<string, pair<Controller *, string> > internalLSIController;
-
-	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
-	*
-	*	map<internal group, lsi>
-	*	where internal group is the identifier of the internal end point,
-	*	while lsi indicates the LSI description of the internal LSI
-	*/
-	map<string, LSI * > internalLSIsDescription;
-
-	/**
-	*	The LSI in common with all the tenants, which
-	*	access to the physical interfaces
+	*	The LSI-0 is in common with all the tenants, and it is the only one that
+	*	accesses to the physical interfaces
 	*/
 	GraphInfo graphInfoLSI0;
 	uint64_t dpid0;
@@ -231,6 +188,7 @@ private:
 	*/
 	void removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo tbr, ComputeController *computeController,highlevel::Graph *graph, LSI * lsi);
 
+#if 0
 	/**
 	*	@brief: given a NF of the graph (in the form NF_port), return the endpoint expressed in the match of a rule
 	*		whose action is expressed on the function.
@@ -239,6 +197,7 @@ private:
 	*	@param: ep		Involved gre endpoint
 	*/
 	string findEndPointTowardsGRE(highlevel::Graph *graph, string ep);
+#endif
 
 	/**
 	*	@brief: given a NF of the graph (in the form NF_port), return the endpoint expressed in the match of a rule
@@ -256,6 +215,29 @@ private:
 	*	@param: controller	Openflow controller used to configure the LSI-0
 	*/
 	void handleInBandController(LSI *lsi, Controller *controller);
+	
+	/**
+	*	@brief: create the Openflow controller for the LSI representing a specific internal endpoint, in case 
+	*			such a controller does not exist yet
+	*
+	*	@param: graph	graph potentially containing internal endpoints to be handled
+	*/
+	void handleControllerForInternalEndpoint(highlevel::Graph *graph);
+	
+	void handleGraphForInternalEndpoint(highlevel::Graph *graph);
+
+	/**
+	*	@brief: add a new piece to an existing graph with
+	*		a specific ID.
+	*/
+	bool updateGraph_add(string graphID, highlevel::Graph *newGraph);
+
+	/**
+	*	@brief: remove pieces from an existing graph with a
+	*		specific ID.
+	*/
+	bool updateGraph_remove(string graphID, highlevel::Graph *newGraph);
+
 
 public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
@@ -280,26 +262,17 @@ public:
 	bool newGraph(highlevel::Graph *graph);
 
 	/**
-	*	@brief: remove the graph with a specified graph descriptor. The graph cannot be
-	*		removed if it defines endpoints currently used by other graphs and
-	*		shutdown is false.
+	*	@brief: remove the graph with a specified graph descriptor.
 	*
-	*	When the graph is removed, the endpoints it defines are removed as well, and the
-	*	counter for the endpoints it uses are decreased.
+	*	When the graph is removed, in case it uses internal endpoints, such 
+	*	endpoints are removed from the proper internal LSIs.
 	*/
-	bool deleteGraph(string graphID, bool shutdown = false);
+	bool deleteGraph(string graphID);
 
 	/**
-	*	@brief: add a new piece to an existing graph with
-	*		a specific ID.
+	*	@brief: update an existing graph
 	*/
 	bool updateGraph(string graphID, highlevel::Graph *newGraph);
-
-	/**
-	*	@brief: rempve pieces from an existing graph with a
-	*		specific ID.
-	*/
-	bool updateGraph_removePieces(string graphID, highlevel::Graph *newGraph);
 
 	/**
 	*	@brief: remove the flow with a specified ID, from a specified graph
@@ -338,11 +311,6 @@ public:
 	*/
 	bool stopNetworkFunction(string graphID, string nf_name);
 #endif
-
-	/**
-	*	@brief: checks if a specific NF is part of a specific graph
-	*/
-	bool graphContainsNF(string graphID,string nf);
 
 	/**
 	*	@brief: create the JSON representation of the graph with the given ID

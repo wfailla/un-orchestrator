@@ -5,10 +5,10 @@ namespace highlevel
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports, list<port_mapping_t> control_ports, list<string> environment_variables) :
-	id(id), name(name), groups(groups), vnf_template(vnf_template)
+	id(id), name(name), groups(groups), vnf_template(vnf_template), updated(false)
 #else
 VNFs::VNFs(string id, string name, list<string> groups, string vnf_template, list<vnf_port_t> ports) :
-	id(id), name(name), groups(groups), vnf_template(vnf_template)
+	id(id), name(name), groups(groups), vnf_template(vnf_template), updated(false)
 #endif
 {
 	for(list<vnf_port_t>::iterator p = ports.begin(); p != ports.end(); p++)

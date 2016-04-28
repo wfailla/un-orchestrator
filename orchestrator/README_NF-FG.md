@@ -615,7 +615,7 @@ The `gre-tunnel` endpoint is defined as follows:
 		"type": "gre-tunnel",
 		"gre-tunnel": {
 			"local-ip": "10.0.0.1",
-			"remote-ip": "10.0.0.2"
+			"remote-ip": "10.0.0.2",
 			"gre-key" : "1"
 		}
 	}

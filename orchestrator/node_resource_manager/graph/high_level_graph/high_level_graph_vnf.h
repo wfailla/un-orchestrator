@@ -87,6 +87,12 @@ private:
 	*/
 	unsigned int extract_number_from_id(string port_id);
 
+	/**
+	*	@brief: this variable is used during the graph update, and indicates if the VNF has been
+	*			changed as a consequence of the update
+	*/
+	bool updated;
+
 public:
 
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
