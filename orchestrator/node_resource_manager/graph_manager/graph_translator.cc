@@ -664,7 +664,6 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 		}//end match.matchOnPort
 		else if(match.matchOnEndPointGre())
 		{
-			assert(match.matchOnEndPointGre());
 
 			/**
 			*	Each EndPoint is translated into its port ID on tenant-LSI.
@@ -714,10 +713,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					tenantAction.addGenericAction(*ga);
 
 				//Create the rule and add it to the graph
-				//The rule ID is created as follows  highlevelGraphID_hlrID
-				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getRuleID();
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,newRuleID.str(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 			else if(action->getType() == highlevel::ACTION_ON_ENDPOINT_INTERNAL)
@@ -752,10 +748,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					tenantAction.addGenericAction(*ga);
 
 				//Create the rule and add it to the graph
-				//The rule ID is created as follows  highlevelGraphID_hlrID
-				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getRuleID();
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,newRuleID.str(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 			else
@@ -786,10 +779,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					tenantAction.addGenericAction(*ga);
 
 				//Create the rule and add it to the graph
-				//The rule ID is created as follows  highlevelGraphID_hlrID
-				stringstream newRuleID;
-				newRuleID << graph->getID() << "_" << hlr->getRuleID();
-				lowlevel::Rule tenantRule(tenantMatch,tenantAction,newRuleID.str(),priority);
+				lowlevel::Rule tenantRule(tenantMatch,tenantAction,hlr->getRuleID(),priority);
 				tenantGraph.addRule(tenantRule);
 			}
 			continue;
