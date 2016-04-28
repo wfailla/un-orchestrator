@@ -36,7 +36,7 @@ private:
 	map<string,map<string, unsigned int> >  network_functions_ports;
 
 	/**
-	*	@brief: map of endpoint name, identifier on the lsi
+	*	@brief: map of endpoint name, identifier on the lsi //FIXME: this is actually endpoints gre
 	*/
 	map<string,unsigned int >  endpoints_ports;
 

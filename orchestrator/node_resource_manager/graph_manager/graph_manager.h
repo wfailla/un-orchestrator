@@ -72,76 +72,40 @@ private:
 	static uint32_t nextControllerPort;
 
 	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
+	*	This structure contains all the internal endpoints
 	*
 	*	map<internal group, counter>
 	*	where internal group is the identifier of the internal end point,
 	*	while counter indicates how many times the end point is
 	*	used by other graphs
 	*/
-	map<string, unsigned int > availableEndPoints;
+	//TODO: use this variable to understand when an internal graph can be removed
+	map<string, unsigned int > availableEndPointsInternal;
 
 	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the action of another graph (hence, the
-	*	"current" graph uses this end point in the match).
-	*
-	*	Example: the graph defining the endpoint "ep" has the rule
-	*		match: nf:1 - action: ep
-	*	ep originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g., 2). This structure contains the entry: <ep, 1>
-	*/
-	map<string, list<unsigned int> > endPointsDefinedInActions;
-
-	/**
-	*	This structure contains the port ID, in the LSI-0, to be used to connect
-	*	a graph to an end point defined in the match of another graph (hence, the
-	*	"current" graph uses this end point in the action).
-	*	This port ID is the remote part of the vlink connecting the LSI to the NF
-	*	defined in the action of the rule whose match defines the endpoint iself.
-	*
-	*   Example: the graph defining the endpoint "ep" has the rule
-	*		match: ep - action: nf:1
-	*	nf:1 originates a vlink with an ID into the LSI0 (e.g., 1) and an ID into
-	*	the current LSI (e.g.. 2). This structure contains the entry: <ep, 1>
-	*/
-	map<string, list<unsigned int> > endPointsDefinedInMatches;
-
-	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
+	*	This structure contains all the internal end points.
 	*
 	*	map<internal group, created>
 	*	where internal group is the identifier of the internal end point,
 	*	while created indicates if the internal LSI has been created yet
 	*/
-	map<string, bool > internalLSIs;
+	map<string, bool > internalLSIsCreated;
 
 	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
-	*
-	*	map<internal group, pair<controller, controller name>>
-	*	where internal group is the identifier of the internal end point,
-	*	controller indicates the openflow controller of the internal LSI
-	*	and controller name indicated the name of the openflow controller
+	*	Map containing the graph identifier of each internal LSI (i.e., an LSI
+	*	that corresponds to and interna endpoint) and its desciption
 	*/
-	map<string, pair<Controller *, string> > internalLSIController;
-
+	map<string, GraphInfo> internalLSIs;
+	
 	/**
-	*	This structure contains all the internal end points which are not
-	*	ports, but that must be used to connect many graphs together
-	*
-	*	map<internal group, lsi>
-	*	where internal group is the identifier of the internal end point,
-	*	while lsi indicates the LSI description of the internal LSI
+	*	For each internal endpoint identifier, maps the identifier of a graph using such
+	*	an endpoint and the port ID on the LSI-0
 	*/
-	map<string, LSI * > internalLSIsDescription;
+	map<string, map <string, unsigned int> > internalLSIsConnections;
 
 	/**
-	*	The LSI in common with all the tenants, which
-	*	access to the physical interfaces
+	*	The LSI-0 is in common with all the tenants, and it is the only one that
+	*	accesses to the physical interfaces
 	*/
 	GraphInfo graphInfoLSI0;
 	uint64_t dpid0;
@@ -256,6 +220,16 @@ private:
 	*	@param: controller	Openflow controller used to configure the LSI-0
 	*/
 	void handleInBandController(LSI *lsi, Controller *controller);
+	
+	/**
+	*	@brief: create the Openflow controller for the LSI representing a specific internal endpoint, in case 
+	*			such a controller does not exist yet
+	*
+	*	@param: graph	graph potentially containing internal endpoints to be handled
+	*/
+	void handleControllerForInternalEndpoint(highlevel::Graph *graph);
+	
+	bool handleGraphForInternalEndpoint(highlevel::Graph *graph);
 
 	/**
 	*	@brief: add a new piece to an existing graph with

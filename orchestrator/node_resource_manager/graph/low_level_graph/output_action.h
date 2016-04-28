@@ -29,6 +29,10 @@ private:
 	openflow::ofp_action_type type;
 	uint32_t port_id;
 	bool is_local_port;
+	
+	/**
+	*	@brief: it is true if the output port is defined by MAC learning
+	*/
 	bool is_normal;
 
 	/**

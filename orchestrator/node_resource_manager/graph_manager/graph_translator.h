@@ -21,17 +21,14 @@ friend class GraphManager;
 protected:
 
 	/**
+	*	//TODO: update the documentation
 	*	@brief: translate an high level graph into a rules to be sent to
 	*		the LSI-0
 	*
 	*	@param: graph						High level graph to be translated
 	*	@param: tenantLSI					Information related to the LSI of the tenant
 	*	@param: lsi0						Information related to the LSI-0
-	*	@param:	endPointsDefinedInMatches	For each endpoint currently defined, contains the port
 	*										in the LSI-0 to be used to send packets on that endpoint
-	*	@param: endPointsDefinedInActions	For each endpoint currently defined, contains the port
-	*										in the LSI-0 to be used to match packets coming from that
-	*										endpoint
 	*	@param: availableEndPoints			Indicates the number of time each available endpoint is used
 	*										by graphs not defining the endpoint itself
 	*	@param: creating					Indicates if the translation is needed to create or to detroy
@@ -83,7 +80,7 @@ protected:
 	*		endpoint gre -> NF:
 	*			This rule does not appear in LSI-0
 	*/
-	static lowlevel::Graph lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, list<unsigned int> > endPointsDefinedInMatches, map<string, list<unsigned int> > endPointsDefinedInActions,map<string, unsigned int > &availableEndPoints, string un_interface, bool orchestrator_in_band = true, bool creating = true);
+	static lowlevel::Graph lowerGraphToLSI0(highlevel::Graph *graph, LSI *tenantLSI, LSI *lsi0, map<string, unsigned int > &availableEndPoints, string un_interface, map<string, map <string, unsigned int> > internalLSIsConnections, bool orchestrator_in_band = true, bool creating = true);
 
 	/**
 	*	@brief: translate an high level graph into a rules to be sent to

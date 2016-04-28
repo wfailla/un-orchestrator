@@ -133,7 +133,7 @@ private:
 
 public:
 
-	LSI(string controllerAddress, string controllerPort, set<string> physical_ports, /*map<string, list <unsigned int> >*/list<highlevel::VNFs> network_functions,
+	LSI(string controllerAddress, string controllerPort, set<string> physical_ports, list<highlevel::VNFs> network_functions,
 		list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
@@ -160,7 +160,7 @@ public:
 	VLink getVirtualLink(uint64_t ID);
 	map<string, uint64_t> getNFsVlinks();
 	map<string, uint64_t> getPortsVlinks();
-	map<string, uint64_t> getEndPointsVlinks();
+	map<string, uint64_t> getEndPointsVlinks(); //TODO: rename in getEndPointsInternalVlinks
 	map<string, uint64_t> getEndPointsGreVlinks();
 
 	//FIXME: public is not a good choice
