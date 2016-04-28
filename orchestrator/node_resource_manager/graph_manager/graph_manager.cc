@@ -1795,24 +1795,21 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			//TODO: for the hotplug, modify lsi->addNF as suggested into the function itself.
 			list<unsigned int> nf_ports = nf->getPortsId(); // nf_it->second;
 			lsi->addNF(nf->getName()/*first*/, /*nf->second*/ nf_ports, computeController->getNFSelectedImplementation(nf->getName()/*first*/)->getPortTypes());
-
 			map<string, list<struct nf_port_info> >pi_map = lsi->getNetworkFunctionsPortsInfo();//for each network function, retrieve a list of "port name, port type"
 			map<string, list<struct nf_port_info> >::iterator pi_it = pi_map.find(nf->getName()/*first*/); //select the info related to the network function currently considered
 			//TODO: when the hotplug will be introduced, pi_it->second will also contain the old ports of the VNF. Then a further skimming will be required
 			assert(pi_it != pi_map.end());
-			
 			list<struct nf_port_info> newPortList;
-
-			if(pi_it->second.size() == nf->second.size()) //check if the nf is a new one or some ports are already plugged
+			if(pi_it->second.size() == nf_ports.size())
 				newPortList = pi_it->second;
 			else
 			{
-				for(list< unsigned int>::iterator port_it = nf->second.begin(); port_it != nf->second.end(); ++port_it)
+				for(list<unsigned int>::iterator port_it = nf_ports.begin(); port_it != nf_ports.end(); ++port_it)
 				{
 					unsigned int port_id = (*port_it);
 					stringstream ss;
-        				ss << nf->first << "_" << port_id;
-        				string port_name = ss.str();
+					ss << nf->getName() << "_" << port_id;
+					string port_name = ss.str();
 					for(list<struct nf_port_info>::iterator lsiPort_it = pi_it->second.begin(); lsiPort_it != pi_it->second.end(); ++lsiPort_it)
 					{
 						struct nf_port_info portData = (*lsiPort_it);
@@ -1824,11 +1821,10 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 					}
 				}
 			}
-			AddNFportsIn anpi(dpid, nf->first, computeController->getNFType(nf->first), newPortList); //prepare the input for the switch manager
-
+			AddNFportsIn anpi(dpid, nf->getName(), computeController->getNFType(nf->getName()), newPortList); //prepare the input for the switch manager
 			//We add, with a single call, all the ports of a single network function
 			anpo = switchManager.addNFPorts(anpi);
-
+			
 			//anpo->getPorts() returns the map "ports name, identifier within the lsi"
 			if(!lsi->setNfSwitchPortsID(anpo->getNFname(), anpo->getPorts()))
 			{
@@ -1843,6 +1839,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 			//map such names with ports names calculated before (or with the port id). 
 			//I think that it should be done something similar to anpo->getPorts(), which maps the identifier on the switch to the port name.
 			lsi->setNetworkFunctionsPortsNameOnSwitch(anpo->getNFname(),anpo->getPortsNameOnSwitch());
+			
 
 			delete(anpo);
 		}catch(SwitchManagerException e)
@@ -1908,7 +1905,7 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 	//TODO: manage the internal endpoint
 
 	/**
-	*	4) Start the new NFs
+	*	4) Start or update the new NFs
 	*/
 	//TODO: in case of hotplug, the function is already running then a different function on the compute controller should be called.
 #ifdef RUN_NFS
@@ -1927,7 +1924,18 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 #endif
 		//TODO: for the hotplug, we may extend the computeController with a call that says if a VNF is already running or not.
 		//If not, startNF should then be called; if yes, o new function must be called
-		if(!computeController->startNF(nf->getName()/*first*/, nfPortIdToNameOnSwitch, nfs_ports_configuration
+		if(nfPortIdToNameOnSwitch.size() != nf->getPortsId().size())
+		{
+			if(!computeController->updateNF(nf->getName(), nfPortIdToNameOnSwitch, nfs_ports_configuration, nf->getPortsId())
+			{
+				//TODO: no idea on what I have to do at this point
+				assert(0);
+				delete(diff);
+				diff = NULL;
+				throw GraphManagerException();
+			}
+		} 
+		else if(!computeController->startNF(nf->getName()/*first*/, nfPortIdToNameOnSwitch, nfs_ports_configuration
 #ifdef ENABLE_UNIFY_PORTS_CONFIGURATION
 			, nfs_control_configuration, environment_variables_tmp
 #endif

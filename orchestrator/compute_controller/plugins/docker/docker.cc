@@ -19,6 +19,11 @@ bool Docker::isSupported(Description&)
 	return false;
 }
 
+bool Docker::updateNF(UpdateNFIn uni)
+{
+	return true;
+}
+
 bool Docker::startNF(StartNFIn sni)
 {
 	uint64_t lsiID = sni.getLsiID();
