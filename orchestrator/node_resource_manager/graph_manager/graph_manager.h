@@ -72,28 +72,21 @@ private:
 	static uint32_t nextControllerPort;
 
 	/**
-	*	This structure contains all the internal endpoints
-	*
-	*	map<internal group, counter>
-	*	where internal group is the identifier of the internal end point,
-	*	while counter indicates how many times the end point is
-	*	used by other graphs
+	*	This structure contains information of the number of graphs that use
+	*	an internal endpoint. The first element is the internal group of the
+	*	internal endpoint, the counter is the number of times it is used
 	*/
-	//TODO: use this variable to understand when an internal graph can be removed
-	map<string, unsigned int > availableEndPointsInternal;
+	map<string, unsigned int > timesUsedEndPointsInternal;
 
 	/**
-	*	This structure contains all the internal end points.
-	*
-	*	map<internal group, created>
-	*	where internal group is the identifier of the internal end point,
-	*	while created indicates if the internal LSI has been created yet
+	*	This structure says if the LSI represanting an internal endpoint has alrady
+	*	been created or not.
 	*/
 	map<string, bool > internalLSIsCreated;
 
 	/**
 	*	Map containing the graph identifier of each internal LSI (i.e., an LSI
-	*	that corresponds to and interna endpoint) and its desciption
+	*	that corresponds to and internal endpoint) and its desciption
 	*/
 	map<string, GraphInfo> internalLSIs;
 	
@@ -269,14 +262,12 @@ public:
 	bool newGraph(highlevel::Graph *graph);
 
 	/**
-	*	@brief: remove the graph with a specified graph descriptor. The graph cannot be
-	*		removed if it defines endpoints currently used by other graphs and
-	*		shutdown is false.
+	*	@brief: remove the graph with a specified graph descriptor.
 	*
-	*	When the graph is removed, the endpoints it defines are removed as well, and the
-	*	counter for the endpoints it uses are decreased.
+	*	When the graph is removed, in case it uses internal endpoints, such 
+	*	endpoints are removed from the proper internal LSIs.
 	*/
-	bool deleteGraph(string graphID, bool shutdown = false);
+	bool deleteGraph(string graphID);
 
 	/**
 	*	@brief: update an existing graph
