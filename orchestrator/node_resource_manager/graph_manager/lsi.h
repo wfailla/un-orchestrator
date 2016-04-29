@@ -186,7 +186,7 @@ protected:
 	void setVLinkIDs(unsigned int position, unsigned int localID, unsigned int remoteID);
 	bool setEndpointPortID(string ep, uint64_t id);
 
-	void setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names);
+	void setNetworkFunctionsPortsNameOnSwitch(string nf, map<string, unsigned int> names);
 
 	int addVlink(VLink vlink);
 	void removeVlink(uint64_t ID);

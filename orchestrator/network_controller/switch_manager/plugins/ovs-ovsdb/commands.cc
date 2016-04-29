@@ -420,6 +420,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 	/*Create interfaces related to the NFs*/
 	map<string,list<string> > out_nf_ports_name_on_switch;
+	map<string,map<string, unsigned int> > out_nf_ports_name_and_id;
 	if(nfs.size() != 0) {
 
 		/*for each network function port in the list of nfs*/
@@ -427,6 +428,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 		{
 			list<struct nf_port_info> nfs_ports = cli.getNetworkFunctionsPortsInfo(*nf);
 			list<string> port_names_on_switch;
+			map<string, unsigned int> port_names_and_id;
 			map<string,unsigned int> n_ports_1;
 
 			/*for each network function port in the list of nfs_ports*/
@@ -441,13 +443,15 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 
 				/*fill the map ports*/
 				n_ports_1[nfp->port_name] = rnumber-1;
-
 				port_names_on_switch.push_back(name_on_switch);
+				port_names_and_id[name_on_switch] = nfp->port_id;
+				
 			}
 
 			/*fill the network_functions_ports*/
 			network_functions_ports[(*nf)] = n_ports_1;
 			out_nf_ports_name_on_switch[*nf] = port_names_on_switch;
+			out_nf_ports_name_and_id[*nf] = port_names_and_id;
 		}
 	}
 
@@ -605,7 +609,7 @@ CreateLsiOut* commands::cmd_editconfig_lsi (CreateLsiIn cli, int s)
 		}
 	}
 
-    	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links);
+    	clo = new CreateLsiOut(dnumber_new, physical_ports, network_functions_ports, endpoints_ports, out_nf_ports_name_on_switch, virtual_links, out_nf_ports_name_and_id);
 
 	return clo;
 }

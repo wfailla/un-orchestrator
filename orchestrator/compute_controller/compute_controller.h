@@ -179,7 +179,17 @@ public:
 		, list<port_mapping_t > controlConfiguration, list<string> environmentVariables
 #endif
 		);
+	
+	/**
+	*	@brief: Update the NF with a specific name, doing the hotplug of the new ports.
+	*
+	*	@param:	nf_name					Name of the network function to be started
+	*	@param: namesOfPortsOnTheSwitch	Names of ports on the vSwitch that are related to the network function to be started
+	*	@param: portsConfiguration		Ports configuration (mac address, ip address)
+	*	@param: newPortsToAdd			Ports that needs to be added on the NF
 
+	*/
+	bool updateNF(string nf_name, map<unsigned int, string> namesOfPortsOnTheSwitch, map<unsigned int, port_network_config_t > portsConfiguration, list<unsigned int> newPortsToAdd);
 	/**
 	*	@brief: Stop all the running NFs
 	*/

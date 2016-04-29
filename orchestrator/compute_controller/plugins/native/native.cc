@@ -112,6 +112,11 @@ bool Native::isSupported(Description& descr) {
 	}
 	return true;
 }
+bool Native::updateNF(UpdateNFIn uni)
+{
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Update not supported by this type of functions");
+	return false;
+}
 
 bool Native::startNF(StartNFIn sni) {
 

@@ -118,6 +118,7 @@ map<string, list< struct nf_port_info> > LSI::getNetworkFunctionsPortsInfo()
 			struct nf_port_info pi;
 			pi.port_name = port_name;
 			pi.port_type = getNetworkFunctionPortType(nf_name, port_name);
+			pi.port_id = *port_it;
 			pi_list.push_back(pi); //each element contains the port name and the port type
 		}
 		res[nf_name] = pi_list;
@@ -219,16 +220,17 @@ bool LSI::setEndpointPortID(string ep, uint64_t id)
  * This thing is fundamental to implement the hotplug, where the first port created for sure does not
  * have ID equal to 1.
  */
-void LSI::setNetworkFunctionsPortsNameOnSwitch(string nf, list<string> names)
+void LSI::setNetworkFunctionsPortsNameOnSwitch(string nf, map<string, unsigned int> names)
 {
 	if(network_functions.count(nf) == 0)
 		return;  //TODO: ERROR
 
 	struct nfData& nf_data = network_functions[nf];
+	
 
-	int id = 0;
-	for (list<string>::iterator n_it = names.begin(); n_it != names.end(); ++n_it) {
-		nf_data.ports_name_on_switch.insert(map<unsigned int, string>::value_type(++id, *n_it));
+	for (map<string, unsigned int>::iterator n_it = names.begin(); n_it != names.end(); ++n_it) {
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Setting the network names port of %s %d", n_it->first.c_str(), n_it->second);
+		nf_data.ports_name_on_switch.insert(map<unsigned int, string>::value_type(n_it->second, n_it->first));
 	}
 }
 
@@ -393,10 +395,16 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 	//TODO: this assert will not be valid when we will introduce the hotplug.
 	//In that case, this function should be modified so that the nfData (already existing) of the network
 	//function is retrieved and updated. 
-	assert(network_functions.count(nf_name) == 0);
-
-	nfData nf_data;
-	nf_data.nf_ports_id = ports;
+	nfData nf_data;	
+	if(network_functions.count(nf_name) != 0)
+	{
+		nf_data = network_functions[nf_name];
+		nf_data.nf_ports_id.insert(nf_data.nf_ports_id.end(), ports.begin(), ports.end());
+	}
+	else
+	{
+		nf_data.nf_ports_id = ports;
+	}
 
 	for (list< unsigned int>::iterator port_it = ports.begin(); port_it != ports.end(); ++port_it) {
 		unsigned int port_id = (*port_it);  // This is the VNF port id from the NF-FG ("my_vnf:1" -> 1)
@@ -410,7 +418,7 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 			return false;
 		nf_data.ports_type[port_name] = pt_it->second;
 	}
-
+	
 	network_functions[nf_name] = nf_data;
 
 	return true;

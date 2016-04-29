@@ -20,5 +20,11 @@ sleep 10
 
 while true
 do
-	sleep 100
+	sleep 10
+	for i in `ls /sys/class/net`
+        do
+                if [ $i != lo -a $i != 'ovs-system' ]; then
+                    ovs-vsctl --may-exist add-port br-auth $i
+                fi
+        done
 done
