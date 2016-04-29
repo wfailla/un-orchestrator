@@ -1511,21 +1511,85 @@ void GraphManager::handleGraphForInternalEndpoint(highlevel::Graph *graph)
 
 bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 {
-	//The update of the graph is split in two parts. In the first, new pieces are added to the graph;
-	//in the second, the proper parts are removed
-#if 0
-	if(!updateGraph_add(graphID,newGraph))
+	/**
+	*	The update of the graph is split in three parts:
+	*	-	create the new VNFs, VNF ports, gre tunnels and virtual links
+	*	-	deleted the proper VNFs, VNF ports, gre tunnels, rules from the LSI-0 and tenant LSI, as required by the update
+	*	-	insert in the LSI-0 and tenant LSI the proper rules, as required by the update
+	*/
+
+	highlevel::Graph *diff_to_add = NULL;
+	try
+	{
+		diff_to_add = updateGraph_add(graphID,newGraph);
+	}
+	catch(GraphManagerException e)
+	{
+		delete(diff_to_add);
+		diff_to_add = NULL;
 		return false;
-	return updateGraph_remove(graphID,newGraph);
-#endif
+	}
 
 	if(!updateGraph_remove(graphID,newGraph))
+	{
+		delete(diff_to_add);
+		diff_to_add = NULL;
 		return false;
-	return updateGraph_add(graphID,newGraph);
+	}
 
+	return updateGraph_add_rules(graphID,diff_to_add);
 }
 
-bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
+bool GraphManager::updateGraph_add_rules(string graphID, highlevel::Graph *diff)
+{
+	//Retrieve the information already stored for the graph
+	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
+	LSI *lsi = graphInfo.getLSI();
+	Controller *tenantController = graphInfo.getController();
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Create the new rules and download them in LSI-0 and tenant-LSI");
+
+	try
+	{
+		//creates the new rules for LSI-0 and for the tenant-LSI
+
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(diff,lsi,graphInfoLSI0.getLSI(),un_interface,internalLSIsConnections,orchestrator_in_band);
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
+		graphLSI0.print();
+		graphLSI0lowLevel.addRules(graphLSI0.getRules());
+
+		lowlevel::Graph graphTenant =  GraphTranslator::lowerGraphToTenantLSI(diff,lsi,graphInfoLSI0.getLSI());
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for tenant LSI:");
+		graphTenant.print();
+
+		//Insert new rules into the LSI-0
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
+		(graphInfoLSI0.getController())->installNewRules(graphLSI0.getRules());
+
+		//Insert new rules into the tenant-LSI
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the tenant-LSI");
+		tenantController->installNewRules(graphTenant.getRules());
+
+		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
+
+	} catch (SwitchManagerException e)
+	{
+		//TODO: no idea on what I have to do at this point
+		assert(0);
+		delete(diff);
+		diff = NULL;
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+		return false;
+	}
+
+	delete(diff);
+	diff = NULL;
+
+	return true;
+}
+
+highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 {
 	/**
 	*	Limitations:
@@ -1546,7 +1610,6 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	ComputeController *computeController = graphInfo.getComputeController();
 	highlevel::Graph *graph = graphInfo.getGraph();
 	LSI *lsi = graphInfo.getLSI();
-	Controller *tenantController = graphInfo.getController();
 
 	uint64_t dpid = lsi->getDpid();
 
@@ -1558,7 +1621,6 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	*	2) select an implementation for the new NFs
 	*	3) update the lsi (in case of new interface/NFs/gre/vlan endpoints are required)
 	*	4) start the new NFs
-	*	5) download the new rules in LSI-0 and tenant-LSI
 	*/
 
 	/**
@@ -1583,7 +1645,7 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		//This is an error in the request
 		delete(diff);
 		diff = NULL;
-		return false;
+		throw GraphManagerException();
 	}
 	//The required graph update is valid
 
@@ -1747,20 +1809,6 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 			lsi->addEndpointInternalvlink(*ep,vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint '%s' uses the vlink '%x'",(*ep).c_str(),vlink.getID());
 
-#if 0
-			if(timesUsedEndPointsInternal.count(*ep) <= 1)
-			{
-				//since this endpoint is in an action (hence it requires a virtual link), and it is defined in this
-				//graph, we save the port of the vlink in LSI-0, so that other graphs can use this endpoint
-				//Since we are considering this endpoint now, it means that is defined for the first time in this update
-				//of the graph.
-
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint \"%s\" is defined in an action of the current Graph. Other graph can use it expressing a match on the port %d of the LSI-0",(*ep).c_str(),vlink.getRemoteID());
-
-				//This internal end point is currently only used in the current graph
-				timesUsedEndPointsInternal[*ep] = 0;
-			}
-#endif
 		}catch(SwitchManagerException e)
 		{
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
@@ -1927,52 +1975,9 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "4) Flag RUN_NFS disabled. New NFs will not start");
 #endif
 
-	/**
-	*	5) Create the new rules and download them in LSI-0 and tenant-LSI
-	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "5) Create the new rules and download them in LSI-0 and tenant-LSI");
+	//The new endpoints, VNFs, VNF ports and virtual links have been added to the graph!
 
-	try
-	{
-		//creates the new rules for LSI-0 and for the tenant-LSI
-
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(diff,lsi,graphInfoLSI0.getLSI(),un_interface,internalLSIsConnections,orchestrator_in_band);
-
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
-		graphLSI0.print();
-		graphLSI0lowLevel.addRules(graphLSI0.getRules());
-
-		lowlevel::Graph graphTenant =  GraphTranslator::lowerGraphToTenantLSI(diff,lsi,graphInfoLSI0.getLSI());
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for tenant LSI:");
-		graphTenant.print();
-
-		//Insert new rules into the LSI-0
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the LSI-0");
-		(graphInfoLSI0.getController())->installNewRules(graphLSI0.getRules());
-
-		//Insert new rules into the tenant-LSI
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding the new rules to the tenant-LSI");
-		tenantController->installNewRules(graphTenant.getRules());
-
-		printInfo(graphLSI0lowLevel,graphInfoLSI0.getLSI());
-
-	} catch (SwitchManagerException e)
-	{
-		//TODO: no idea on what I have to do at this point
-		assert(0);
-		delete(diff);
-		diff = NULL;
-		throw GraphManagerException();
-
-		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
-		throw GraphManagerException();
-	}
-
-	//The new flows, endpoints and VNFs have been added to the graph!
-
-	delete(diff);
-	diff = NULL;
-	return true;
+	return diff;
 }
 
 bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph)
@@ -1998,6 +2003,7 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	*	1) update the high level graph
 	*	2) remove the rules from LSI-0 and tenant-LSI
 	*	3) remove the virtual links that are no longer used
+	*	4) delete the gre-tunnel endpoints from the LSI, if required by the update
 	*/
 	
 	/**

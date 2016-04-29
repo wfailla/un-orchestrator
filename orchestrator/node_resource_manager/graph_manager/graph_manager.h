@@ -228,16 +228,21 @@ private:
 
 	/**
 	*	@brief: add a new piece to an existing graph with
-	*		a specific ID.
+	*		a specific ID, except the new flowrules.
 	*/
-	bool updateGraph_add(string graphID, highlevel::Graph *newGraph);
+	highlevel::Graph *updateGraph_add(string graphID, highlevel::Graph *newGraph);
+
+	/**
+	*	@brief: add the new rules to the graph. The rules are currently stored in the graph "diff",
+	*			and must be stored in the graph identified by "graphID"
+	*/
+	bool updateGraph_add_rules(string graphID, highlevel::Graph *diff);
 
 	/**
 	*	@brief: remove pieces from an existing graph with a
 	*		specific ID.
 	*/
 	bool updateGraph_remove(string graphID, highlevel::Graph *newGraph);
-
 
 public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
