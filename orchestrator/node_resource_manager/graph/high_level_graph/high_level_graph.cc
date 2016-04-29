@@ -292,12 +292,16 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				rri.ports.push_back(match.getPhysicalPort());
 			else
 			{
-				stringstream ss;
-				ss << match.getEndPoint();
 				if(matchOnEPInternal)
+				{
+					stringstream ss;
+					ss << match.getEndPointInternal();
 					rri.endpointInternal = ss.str();
+				}
 				else
-					rri.endpointGre = ss.str();
+				{
+					rri.endpointGre = match.getEndPointGre();
+				}
 			}
 
 			//finally, remove the rule!
@@ -863,7 +867,7 @@ bool Graph::endpointIsUsedInMatch(string endpoint)
 		if(match.matchOnEndPointInternal())
 		{
 			stringstream ss;
-			ss << match.getGraphID() << ":" << match.getEndPoint();
+			ss << match.getGraphID() << ":" << match.getEndPointInternal();
 			if(ss.str() == endpoint)
 				//The endpoint is used in a match
 				return true;

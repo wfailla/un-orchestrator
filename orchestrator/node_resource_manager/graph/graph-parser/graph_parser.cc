@@ -968,23 +968,23 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 															char *s_a_value = new char[BUFFER_SIZE];
 															strcpy(s_a_value, (char *)a_value.getString().c_str());
-															string eP = MatchParser::epName(a_value.getString());
-															if(eP != "")
+															string epID = MatchParser::epName(a_value.getString());
+															if(epID != "")
 															{
-																map<string,string>::iterator it = iface_id.find(eP);
-																map<string,string>::iterator it1 = internal_id.find(eP);
-																map<string,pair<string,string> >::iterator it2 = vlan_id.find(eP);
-																map<string,string>::iterator it3 = gre_id.find(eP);
+																map<string,string>::iterator it = iface_id.find(epID);
+																map<string,string>::iterator it1 = internal_id.find(epID);
+																map<string,pair<string,string> >::iterator it2 = vlan_id.find(epID);
+																map<string,string>::iterator it3 = gre_id.find(epID);
 																if(it != iface_id.end())
 																{
 																	//physical port
-																	realName.assign(iface_id[eP]);
+																	realName.assign(iface_id[epID]);
 																	iface_found = true;
 																}
 																else if(it1 != internal_id.end())
 																{
 																	//internal
-																	internal_group.assign(internal_id[eP]);
+																	internal_group.assign(internal_id[epID]);
 																	internal_found = true;
 																}
 																else if(it2 != vlan_id.end())
@@ -1020,10 +1020,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 
 																actionType = ACTION_ENDPOINT_VLAN;
 
-																sscanf(vlan_id[eP].first.c_str(),"%u",&vlanID);
+																sscanf(vlan_id[epID].first.c_str(),"%u",&vlanID);
 
 																/*add "output_port" action*/
-																action = new highlevel::ActionPort(vlan_id[eP].second, string(s_a_value));
+																action = new highlevel::ActionPort(vlan_id[epID].second, string(s_a_value));
 																/*add "push_vlan" action*/
 																GenericAction *ga = new VlanAction(actionType,string(s_a_value),vlanID);
 																action->addGenericAction(ga);
@@ -1031,13 +1031,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 															//gre-tunnel endpoint
 															else if(gre_found)
 															{
-																unsigned int endPoint = MatchParser::epPort(string(s_a_value));
-																if(endPoint == 0)
-																{
-																	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint \"%s\" is not valid. It must be in the form \"graphID:endpoint\"",value.getString().c_str());
-																	return false;
-																}
-																action = new highlevel::ActionEndPointGre(endPoint, string(s_a_value));
+																action = new highlevel::ActionEndPointGre(epID, string(s_a_value));
 															}
 														}
 													}//End action == output_to_port

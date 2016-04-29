@@ -163,7 +163,8 @@ void Match::fillFlowmodMessage(rofl::openflow::cofflowmod &message)
 	{
 		unsigned int key = 0;
 
-		sscanf(gre_key, "%u", &key);
+		if(sscanf(gre_key, "%x", &key)!=1)
+			sscanf(gre_key, "%u", &key);
 		message.set_match().set_tunnel_id(key);
 	}
 }

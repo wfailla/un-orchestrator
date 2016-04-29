@@ -57,10 +57,15 @@ private:
 	int nf_port;
 
 	/**
-	*	@brief: this variable represents the endpoint identifier
-	*	within the graph.
+	*	@brief: this variable represents the group of the internal
+	*			endpoint.
 	*/
-	unsigned int endpoint;
+	unsigned int endpointInternalGroup;
+	
+	/**
+	*	@brief: this variable represents the ID of the gre endpoint.
+	*/
+	string endpointGreID;
 
 	/**
 	*	@brief: this attribute can either represent
@@ -109,7 +114,7 @@ public:
 	*
 	*	@param: endpoint	identifier of the endpoint within the graph
 	*/
-	bool setEndPointGre(unsigned int endpoint);
+	bool setEndPointGre(string endpointID);
 
 	/**
 	*	@brief: set a input endpoint
@@ -173,10 +178,15 @@ public:
 	string getGraphID();
 
 	/**
-	*	@brief: get the identifier of the endpoint within the graph defining it (the match must be on an internal endpoint)
+	*	@brief: get the group of the internal endpoint (the match must be on an internal endpoint)
 	*/
-	unsigned int getEndPoint();
+	unsigned int getEndPointInternal();
 
+	/**
+	*	@brief: get the identifier of the endpoint within the graph defining it (the match must be on gre endpoint)
+	*/
+	string getEndPointGre();
+	
 	/**
 	*	@brief: get the full identifier of the endpoint within the graph defining it (the match must be on a graph endpoint)
 	*/

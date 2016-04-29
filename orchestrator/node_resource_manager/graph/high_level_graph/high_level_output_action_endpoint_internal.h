@@ -27,14 +27,14 @@ private:
 	/**
 	*	@brief: the name of the endpoint (e.g., endpoint:00000001)
 	*/
-	string input_endpoint;
+	string endpointName;
 
 public:
 
-	ActionEndPointInternal(string group, string input_endpoint);
+	ActionEndPointInternal(string group, string endpointName);
 	string getInfo();
 	unsigned int getGroup();
-	string getInputEndpoint();
+	string getOutputEndpointID();
 	string toString();
 	
 	bool operator==(const ActionEndPointInternal &other) const;

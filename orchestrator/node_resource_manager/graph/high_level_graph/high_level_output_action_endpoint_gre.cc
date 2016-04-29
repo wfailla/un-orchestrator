@@ -3,14 +3,14 @@
 namespace highlevel
 {
 
-ActionEndPointGre::ActionEndPointGre(unsigned int endpoint, string input_endpoint) :
-	Action(ACTION_ON_ENDPOINT_GRE), endpoint(endpoint), input_endpoint(input_endpoint)
+ActionEndPointGre::ActionEndPointGre(string endpointID, string endpointName) :
+	Action(ACTION_ON_ENDPOINT_GRE), endpointID(endpointID), endpointName(endpointName)
 {
 }
 
 bool ActionEndPointGre::operator==(const ActionEndPointGre &other) const
 {
-	if((endpoint == other.endpoint))
+	if((endpointID == other.endpointID))
 		return true;
 
 	return false;
@@ -25,7 +25,7 @@ string ActionEndPointGre::getInfo()
 	string str;
 
 	char tmp[BUFFER_SIZE];
-	strcpy(tmp,(char *)input_endpoint.c_str());
+	strcpy(tmp,(char *)endpointName.c_str());
 	pnt=strtok(tmp, delimiter);
 	int i = 0;
 
@@ -45,52 +45,20 @@ string ActionEndPointGre::getInfo()
 	return str;
 }
 
-unsigned int ActionEndPointGre::getPort()
+string ActionEndPointGre::getOutputEndpointID()
 {
-	return endpoint;
-}
-
-string ActionEndPointGre::getInputEndpoint()
-{
-	//Check the name of port
-	char delimiter[] = ":";
-	char * pnt;
-
-	string str;
-
-	char tmp[BUFFER_SIZE];
-	strcpy(tmp,(char *)input_endpoint.c_str());
-	pnt=strtok(tmp, delimiter);
-	int i = 0;
-
-	while( pnt!= NULL )
-	{
-		switch(i)
-		{
-			case 1:
-				str = string(pnt);
-				break;
-		}
-
-		pnt = strtok( NULL, delimiter );
-		i++;
-	}
-
-	return str;
+	return endpointID;
 }
 
 string ActionEndPointGre::toString()
 {
-	stringstream ss;
-	ss << endpoint;
-
-	return ss.str();
+	return endpointID;
 }
 
 Object ActionEndPointGre::toJSON()
 {
 	Object action;
-	action[OUTPUT] = input_endpoint.c_str();
+	action[OUTPUT] = endpointName.c_str();
 
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		(*ga)->toJSON(action);

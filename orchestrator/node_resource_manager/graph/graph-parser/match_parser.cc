@@ -347,13 +347,7 @@ bool MatchParser::parseMatch(Object object, highlevel::Match &match, highlevel::
 				/*gre-tunnel endpoint*/
 				else if(gre_found)
 				{
-					unsigned int endPoint = epPort(string(s_value));
-					if(endPoint == 0)
-					{
-						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Gre endpoint \"%s\" is not valid. It must be in the form \"endpoint:id\"",value.getString().c_str());
-						return false;
-					}
-					match.setEndPointGre(endPoint);
+					match.setEndPointGre(eP);
 				}
 			}
 		}
