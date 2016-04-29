@@ -64,6 +64,12 @@ void Libvirt::disconnect()
 	connection = NULL;
 }
 
+bool Libvirt::updateNF(UpdateNFIn uni)
+{
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Update not supported by this type of functions");
+        return false;
+}
+
 bool Libvirt::startNF(StartNFIn sni)
 {
 	virDomainPtr dom = NULL;
