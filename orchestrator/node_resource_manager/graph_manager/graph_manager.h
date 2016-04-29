@@ -326,6 +326,10 @@ public:
 	void printInfo(lowlevel::Graph graphLSI0, LSI *lsi0);
 
 	static void mutexInit();
+
+	//TODO: document this function!
+	void removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *graph, LSI *lsi);
+
 };
 
 

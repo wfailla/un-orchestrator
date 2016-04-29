@@ -151,7 +151,7 @@ public:
 	*
 	*	@param: other	graph with the components to be removed
 	*/
-	bool removeGraphFromGraph(highlevel::Graph *other);
+	list<RuleRemovedInfo> removeGraphFromGraph(highlevel::Graph *other);
 
 	/**
 	*	Functions to manage the "interface" endpoints

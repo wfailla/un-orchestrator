@@ -281,6 +281,8 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				rri.isEndpointGre = false;
 			}
 
+			//TODO: understand what is this thing	- IVANO
+
 			if(matchOnNF)
 				//Potentially, the NF is useless in the graph
 				rri.nfs.push_back(match.getNF());
@@ -769,7 +771,7 @@ bool Graph::addGraphToGraph(highlevel::Graph *other)
 	return true;
 }
 
-bool Graph::removeGraphFromGraph(highlevel::Graph *other)
+list<RuleRemovedInfo> Graph::removeGraphFromGraph(highlevel::Graph *other)
 {
 	list<RuleRemovedInfo> toberemoved; //this information will be used to destroy the virtual links on the LSI
 
@@ -792,7 +794,6 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 		{
 			assert(0);
 			//TODO: how to manage properly this situation?
-			return false;
 		}
 	}
 
@@ -829,6 +830,7 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 	for(list<highlevel::VNFs>::iterator vtbr = vnfs_tobe_removed.begin(); vtbr != vnfs_tobe_removed.end(); vtbr++)
 	{
 		//TODO: Here it is important to distinguish the case in which a VNF must be removed and the case in which only the ports of the VNF must be removed.
+		//Currently I'm only considering the case in which the entire VNF must be removed
 		if(!stillUsedVNF(*vtbr))
 		{
 			list<VNFs>::iterator vnf = vnfs.begin();
@@ -846,11 +848,10 @@ bool Graph::removeGraphFromGraph(highlevel::Graph *other)
 		{
 			assert(0);
 			//TODO: how to manage properly this situation?
-			return false;
 		}
 	}
 
-	return true;
+	return toberemoved;
 }
 
 bool Graph::endpointIsUsedInMatch(string endpoint)

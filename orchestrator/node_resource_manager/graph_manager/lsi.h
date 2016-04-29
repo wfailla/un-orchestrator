@@ -173,9 +173,9 @@ public:
 	void removePortvlink(string port);
 
 	void setEndPointsVLinks(map<string, uint64_t> endpoints_vlinks);
-	void addEndpointvlink(string endpoint, uint64_t vlinkID);
+	void addEndpointInternalvlink(string endpoint, uint64_t vlinkID);
 	void removeEndPointvlink(string endpoint);
-	void setEndPointsGreVLinks(map<string, uint64_t> endpoints_vlinks);
+	void setEndPointsGreVLinks(map<string, uint64_t> gre_endpoints_vlinks);
 	void addEndpointGrevlink(string endpoint, uint64_t vlinkID);
 	void removeEndPointGrevlink(string endpoint);
 

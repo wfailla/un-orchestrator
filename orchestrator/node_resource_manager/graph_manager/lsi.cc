@@ -315,9 +315,9 @@ void LSI::setEndPointsVLinks(map<string, uint64_t> endpoints_vlinks)
 		this->endpoints_vlinks.insert(*it);
 }
 
-void LSI::setEndPointsGreVLinks(map<string, uint64_t> endpoints_vlinks)
+void LSI::setEndPointsGreVLinks(map<string, uint64_t> gre_endpoints_vlinks)
 {
-	for(map<string, uint64_t>::iterator it = endpoints_vlinks.begin(); it != endpoints_vlinks.end(); it++)
+	for(map<string, uint64_t>::iterator it = gre_endpoints_vlinks.begin(); it != gre_endpoints_vlinks.end(); it++)
 		this->endpoints_gre_vlinks.insert(*it);
 }
 
@@ -331,7 +331,7 @@ void LSI::addPortvlink(string port, uint64_t vlinkID)
 	ports_vlinks[port] = vlinkID;
 }
 
-void LSI::addEndpointvlink(string endpoint, uint64_t vlinkID)
+void LSI::addEndpointInternalvlink(string endpoint, uint64_t vlinkID)
 {
 	endpoints_vlinks[endpoint] = vlinkID;
 }
@@ -385,7 +385,8 @@ void LSI::removeEndPointGrevlink(string endpoint)
 		return;
 	}
 
-	map<string,uint64_t>::iterator it = endpoints_vlinks.find(endpoint);
+	map<string,uint64_t>::iterator it = endpoints_gre_vlinks.find(endpoint);
+	assert(it != endpoints_vlinks.end());
 	endpoints_gre_vlinks.erase(it);
 }
 
