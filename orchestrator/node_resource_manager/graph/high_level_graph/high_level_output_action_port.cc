@@ -3,8 +3,8 @@
 namespace highlevel
 {
 
-ActionPort::ActionPort(string port, string input_port) :
-	Action(ACTION_ON_PORT), port(port), input_port(input_port)
+ActionPort::ActionPort(string portName, string endpointName) :
+	Action(ACTION_ON_PORT), portName(portName), endpointName(endpointName)
 {
 
 }
@@ -16,7 +16,7 @@ ActionPort::~ActionPort()
 
 bool ActionPort::operator==(const ActionPort &other) const
 {
-	if(port == other.port && input_port == other.input_port)
+	if(portName == other.portName && endpointName == other.endpointName)
 		return true;
 
 	return false;
@@ -24,18 +24,18 @@ bool ActionPort::operator==(const ActionPort &other) const
 
 string ActionPort::getInfo()
 {
-	return port;
+	return portName;
 }
 
 string ActionPort::toString()
 {
-	return port;
+	return portName;
 }
 
 Object ActionPort::toJSON()
 {
 	Object action;
-	action[OUTPUT] = input_port.c_str();
+	action[OUTPUT] = endpointName.c_str();
 
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		(*ga)->toJSON(action);

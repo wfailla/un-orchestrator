@@ -43,18 +43,18 @@ bool Match::setEndPointInternal(/*string graphID, unsigned int endpoint*/string 
 	strcpy(input,graphID.c_str());*/
 	//this->endpoint = endpoint;
 
-	sscanf(group.c_str(), "%u", &this->endpoint);
+	sscanf(group.c_str(), "%u", &this->endpointInternalGroup);
 	type = MATCH_ENDPOINT_INTERNAL;
 
 	return true;
 }
 
-bool Match::setEndPointGre(unsigned int endpoint)
+bool Match::setEndPointGre(string endpointGreID)
 {
 	if(type != MATCH_GENERIC)
 		return false;
 
-	this->endpoint = endpoint;
+	this->endpointGreID = endpointGreID;
 	type = MATCH_ENDPOINT_GRE;
 
 	return true;
@@ -131,11 +131,18 @@ string Match::getGraphID()
 	return input;
 }
 
-unsigned int Match::getEndPoint()
+string Match::getEndPointGre()
 {
-	assert(type == MATCH_ENDPOINT_INTERNAL || type == MATCH_ENDPOINT_GRE);
+	assert(type == MATCH_ENDPOINT_GRE);
 
-	return endpoint;
+	return endpointGreID;
+}
+
+unsigned int Match::getEndPointInternal()
+{
+	assert(type == MATCH_ENDPOINT_INTERNAL);
+
+	return endpointInternalGroup;
 }
 
 char *Match::getInputEndpoint()

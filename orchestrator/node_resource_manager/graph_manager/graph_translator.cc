@@ -89,11 +89,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			if(match.matchOnNF())
 				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on NF \"%s\", action is on end point \"%s\"",match.getNF().c_str(),action->toString().c_str());
 			else
-			{
-				stringstream ss;
-				ss << match.getEndPoint();
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on gre end point \"%s\", action is on end point \"%s\"",ss.str().c_str(),action->toString().c_str());
-			}
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on gre end point \"%s\", action is on end point \"%s\"",match.getEndPointGre().c_str(),action->toString().c_str());
 
 			//Translate the match
 			lowlevel::Match lsi0Match;
@@ -181,24 +177,23 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 
 				highlevel::ActionEndPointGre *action_ep = (highlevel::ActionEndPointGre*)action;
 
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the port \"%s\", and the action is \"%s:%d\"",port.c_str(),action_info.c_str(),action_ep->getPort());
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the port \"%s\", and the action is \"%s:%s\"",port.c_str(),action_info.c_str(),(action_ep->getOutputEndpointID()).c_str());
 
 				//All the traffic for a endpoint is sent on the same virtual link
 
-				stringstream action_port;
-				action_port << action_ep->getPort();
+				string action_port = action_ep->getOutputEndpointID();
 
 				map<string, uint64_t> ep_vlinks = tenantLSI->getEndPointsGreVlinks();
-				if(ep_vlinks.count(action_port.str()) == 0)
+				if(ep_vlinks.count(action_port) == 0)
 				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a gre endpoint action \"%s:%d\" which has not been translated into a virtual link",action_info.c_str(),action_ep->getPort());
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a gre endpoint action \"%s:%s\" which has not been translated into a virtual link",action_info.c_str(),(action_ep->getOutputEndpointID()).c_str());
 					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tGre endpoint translated to virtual links are the following:");
 					for(map<string, uint64_t>::iterator vl = ep_vlinks.begin(); vl != ep_vlinks.end(); vl++)
 						logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s",(vl->first).c_str());
 					assert(0);
 				}
 
-				uint64_t vlink_id = ep_vlinks.find(action_port.str())->second;
+				uint64_t vlink_id = ep_vlinks.find(action_port)->second;
 				vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
 				for(;vlink != tenantVirtualLinks.end(); vlink++)
 				{
@@ -271,9 +266,6 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		 {
 		 	assert(action->getType() == highlevel::ACTION_ON_PORT);
 
-		 	stringstream ss;
-		 	ss << match.getEndPoint();
-
 			//Translate the match
 			lowlevel::Match lsi0Match;
 			string action_info = action->getInfo();
@@ -301,7 +293,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 				lsi0Match.setInputPort(vlink->getRemoteID());
 			}
 
-			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a gre tunnel \"%s\", and the action is the output to port \"%s\"",ss.str().c_str(),action_info.c_str());
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches a gre tunnel \"%s\", and the action is the output to port \"%s\"",match.getEndPointGre().c_str(),action_info.c_str());
 
 			//The port name must be replaced with the port identifier
 			if(ports_lsi0.count(action_info) == 0)
@@ -332,7 +324,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 			 assert(action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION || action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE);
 
 			 stringstream ss;
-			 ss << match.getEndPoint();
+			 ss << match.getEndPointInternal();
 
 			 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tThe rule is not inserted in the LSI-0");
 			 
@@ -395,24 +387,23 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 
 				 string action_info = action->getInfo();
 
-				 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the endpoint \"%s\", and the action is \"%s:%d\"",ss.str().c_str(),action_info.c_str(),action_ep->getPort());
+				 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the endpoint \"%s\", and the action is \"%s:%s\"",ss.str().c_str(),action_info.c_str(),(action_ep->getOutputEndpointID()).c_str());
 
 				 //All the traffic for a endpoint is sent on the same virtual link
 
-				 stringstream action_port;
-				 action_port << action_ep->getPort();
+				 string action_port = action_ep->getOutputEndpointID();
 
 				 map<string, uint64_t> ep_vlinks = tenantLSI->getEndPointsGreVlinks();
-				 if(ep_vlinks.count(action_port.str()) == 0)
+				 if(ep_vlinks.count(action_port) == 0)
 				 {
-					 logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a endpoint action \"%s:%d\" which has not been translated into a virtual link",action_info.c_str(),action_ep->getPort());
+					 logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses a endpoint action \"%s:%s\" which has not been translated into a virtual link",action_info.c_str(),(action_ep->getOutputEndpointID()).c_str());
 					 logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tEndpoint translated to virtual links are the following:");
 					 for(map<string, uint64_t>::iterator vl = ep_vlinks.begin(); vl != ep_vlinks.end(); vl++)
 						 logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s",(vl->first).c_str());
 					 assert(0);
 				 }
 
-				 uint64_t vlink_id = ep_vlinks.find(action_port.str())->second;
+				 uint64_t vlink_id = ep_vlinks.find(action_port)->second;
 				 vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
 				 for(;vlink != tenantVirtualLinks.end(); vlink++)
 				 {
@@ -564,22 +555,21 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				map<string,unsigned int> tenantEndpointsPorts = tenantLSI->getEndpointsPortsId();
 
 				highlevel::ActionEndPointGre *action_ep = (highlevel::ActionEndPointGre*)action;
-				stringstream ep_port;
-				ep_port << action_ep->getPort();
+				string ep_port = action_ep->getOutputEndpointID();
 
 				if(match.matchOnPort())
-					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on port \"%s\", action is \"%s:%s\"",match.getPhysicalPort().c_str(),action_info.c_str(),ep_port.str().c_str());
+					logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Match on port \"%s\", action is \"%s:%s\"",match.getPhysicalPort().c_str(),action_info.c_str(),ep_port.c_str());
 
 				//Translate the match
 				lowlevel::Match tenantMatch;
 
 				map<string, uint64_t> ep_vlinks = tenantLSI->getEndPointsGreVlinks();
-				if(ep_vlinks.count(ep_port.str()) == 0)
+				if(ep_vlinks.count(ep_port) == 0)
 				{
-					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses the action \"%s:%d\", which has not been translated into a virtual link",action_info.c_str(),ep_port.str().c_str());
+					logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The tenant graph expresses the action \"%s:%s\", which has not been translated into a virtual link",action_info.c_str(),ep_port.c_str());
 				}
-				uint64_t vlink_id = ep_vlinks.find(ep_port.str())->second;
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tThe virtual link related to action \"%s\" has ID: %x",ep_port.str().c_str(),vlink_id);
+				uint64_t vlink_id = ep_vlinks.find(ep_port)->second;
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\t\tThe virtual link related to action \"%s\" has ID: %x",ep_port.c_str(),vlink_id);
 				vector<VLink>::iterator vlink = tenantVirtualLinks.begin();
 				for(;vlink != tenantVirtualLinks.end(); vlink++)
 				{
@@ -593,7 +583,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				unsigned int e_id = 0;
 				map<string, unsigned int > epp = tenantLSI->getEndpointsPortsId();
 				for(map<string, unsigned int >::iterator ep = epp.begin(); ep != epp.end(); ep++){
-					if(strcmp(ep->first.c_str(), action_ep->getInputEndpoint().c_str()) == 0)
+					if(strcmp(ep->first.c_str(), action_ep->getOutputEndpointID().c_str()) == 0)
 						e_id = ep->second;
 				}
 
@@ -947,16 +937,15 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 				*/
 
 				highlevel::ActionEndPointGre *action_ep = (highlevel::ActionEndPointGre*)action;
-				stringstream ep_port;
-				ep_port << action_ep->getPort();
+				string ep_port = action_ep->getOutputEndpointID();
 
-				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the \"%s:%d\", and the action is an output on endpoint \"%s\"",nf.c_str(),nfPort,ep_port.str().c_str());
+				logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\tIt matches the \"%s:%d\", and the action is an output on endpoint \"%s\"",nf.c_str(),nfPort,ep_port.c_str());
 
 				unsigned int e_id = 0;
 				//All the traffic for an endpoint is sent on the same virtual link
 				map<string,unsigned int> tenantEndpointsPorts = tenantLSI->getEndpointsPortsId();
 				for(map<string, unsigned int >::iterator ep = tenantEndpointsPorts.begin(); ep != tenantEndpointsPorts.end(); ep++){
-					if(strcmp(ep->first.c_str(), action_ep->getInputEndpoint().c_str()) == 0)
+					if(strcmp(ep->first.c_str(), action_ep->getOutputEndpointID().c_str()) == 0)
 						e_id = ep->second;
 				}
 

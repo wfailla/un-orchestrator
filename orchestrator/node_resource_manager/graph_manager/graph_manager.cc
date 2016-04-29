@@ -3080,7 +3080,7 @@ string GraphManager::findEndPointTowardsNF(highlevel::Graph *graph, string nf)
 			if(nf == ss.str())
 			{
 				stringstream ssm;
-				ssm << match.getEndPoint();
+				ssm << match.getEndPointInternal();
 				return ssm.str();
 			}
 		}

@@ -3,8 +3,8 @@
 namespace highlevel
 {
 
-ActionEndPointInternal::ActionEndPointInternal(string group, string input_endpoint) :
-	Action(ACTION_ON_ENDPOINT_INTERNAL), group(group), input_endpoint(input_endpoint)
+ActionEndPointInternal::ActionEndPointInternal(string group, string endpointName) :
+	Action(ACTION_ON_ENDPOINT_INTERNAL), group(group), endpointName(endpointName)
 {
 }	
 
@@ -30,7 +30,7 @@ unsigned int ActionEndPointInternal::getGroup()
 	return in_group;
 }
 
-string ActionEndPointInternal::getInputEndpoint()
+string ActionEndPointInternal::getOutputEndpointID()
 {
 	//Check the name of port
 	char delimiter[] = ":";
@@ -39,7 +39,7 @@ string ActionEndPointInternal::getInputEndpoint()
 	string str;
 
 	char tmp[BUFFER_SIZE];
-	strcpy(tmp,(char *)input_endpoint.c_str());
+	strcpy(tmp,(char *)endpointName.c_str());
 	pnt=strtok(tmp, delimiter);
 	int i = 0;
 
@@ -69,10 +69,8 @@ string ActionEndPointInternal::toString()
 Object ActionEndPointInternal::toJSON()
 {
 	Object action;
-	stringstream ss;
-	ss << input_endpoint;
 
-	action[OUTPUT] = ss.str().c_str();
+	action[OUTPUT] = endpointName.c_str();
 	
 	for(list<GenericAction*>::iterator ga = genericActions.begin(); ga != genericActions.end(); ga++)
 		(*ga)->toJSON(action);

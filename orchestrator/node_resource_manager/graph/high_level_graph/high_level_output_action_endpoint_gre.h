@@ -19,19 +19,18 @@ private:
 	/**
 	*	@brief: endpoint identifier
 	*/
-	unsigned int endpoint;
+	string endpointID;
 
 	/**
 	*	@brief: the name of the endpoint (e.g., endpoint:00000001)
 	*/
-	string input_endpoint;
+	string endpointName;
 
 public:
 
-	ActionEndPointGre(unsigned int endpoint, string input_endpoint);
+	ActionEndPointGre(string endpointID, string endpointName);
 	string getInfo();
-	unsigned int getPort();
-	string getInputEndpoint();
+	string getOutputEndpointID();
 	string toString();
 
 	bool operator==(const ActionEndPointGre &other) const;
