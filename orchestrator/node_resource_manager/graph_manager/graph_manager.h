@@ -260,9 +260,9 @@ public:
 
 	static void mutexInit();
 
-	//TODO: document this function!
+	//According to the rules removed from the graph, this function deletes the virtual links that are no
+	//longer used by the flows of the graph.
 	void removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *graph, LSI *lsi);
-
 };
 
 
