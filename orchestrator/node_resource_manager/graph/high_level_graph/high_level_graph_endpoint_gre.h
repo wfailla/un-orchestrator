@@ -60,12 +60,40 @@ private:
 public:
 
 	EndPointGre(string id, string name, string local_ip, string remote_ip, string gre_key, string ttl, bool is_safe);
+
+	/**
+	*	@brief: return the ID of the endpoint
+	*/
 	string getId();
+
+	/**
+	*	@brief: return the name of the endpoint
+	*/
 	string getName();
+
+	/**
+	*	@brief: return the local IP of the endpoint
+	*/
 	string getLocalIp();
+
+	/**
+	*	@brief: return the remote IP of the endpoint
+	*/
 	string getRemoteIp();
+
+	/**
+	*	@brief: return the key of the endpoint
+	*/
 	string getGreKey();
+
+	/**
+	*	@brief: return the TTL of the endpoint
+	*/
 	string getTtl();
+
+	/**
+	*	@brief: return true in case secure GRE is required for this endpoint
+	*/	
 	bool isSafe();
 
 	~EndPointGre();
