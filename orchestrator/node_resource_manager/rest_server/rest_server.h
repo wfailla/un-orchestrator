@@ -81,7 +81,8 @@ private:
 
 	static int doGet(struct MHD_Connection *connection,const char *url);
 	static int doGetGraph(struct MHD_Connection *connection,char *graphID);
-
+	static int doGetStatus(struct MHD_Connection *connection,char *graphID);
+	
 	static int doPost(struct MHD_Connection *connection, const char *url, void **con_cls, bool client_auth);
 	static bool parsePostBody(struct connection_info_struct &con_info,char **user, char **pwd);
 	static bool parseLoginForm(Value value, char **user, char **pwd);
