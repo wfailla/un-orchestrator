@@ -2001,6 +2001,7 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	*	2) remove the rules from LSI-0 and tenant-LSI
 	*	3) remove the virtual links that are no longer used
 	*	4) delete the gre-tunnel endpoints from the LSI, if required by the update
+	*	5) delete the VNFs and the related ports on the LSI, if required by the update
 	*/
 	
 	/**
@@ -2114,7 +2115,44 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 #endif
 	}
 
-	//TODO: remove VNFs, phy ports- add an error in case internal endpoints have to be removed
+	/**
+	*	5) Delete the VNFs and the related ports on the LSI, as required by the diff
+	*/
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "5) Removing the VNFs and the related ports on the LSI");
+
+	ComputeController *computeController = graphInfo.getComputeController();
+	list<highlevel::VNFs> vnfs = diff->getVNFs();
+	for(list<highlevel::VNFs>::iterator vnf = vnfs.begin(); vnf != vnfs.end(); vnf++)
+	{
+
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The VNF '%s' is no longer part of the graph",(vnf->getName()).c_str());
+
+		//Stop the NF
+#ifdef RUN_NFS
+		computeController->stopNF(vnf->getName());
+#else
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Flag RUN_NFS disabled. No NF to be stopped");
+#endif
+
+		set<string> nf_ports;
+		map<unsigned int, string>lsi_nf_ports = lsi->getNetworkFunctionsPortsNameOnSwitchMap(vnf->getName());
+		for (map<unsigned int,string>::iterator lsi_nfp_it = lsi_nf_ports.begin(); lsi_nfp_it != lsi_nf_ports.end(); ++lsi_nfp_it) {
+			nf_ports.insert(lsi_nfp_it->second);
+		}
+		try
+		{
+			DestroyNFportsIn dnpi(lsi->getDpid(), vnf->getName(), nf_ports);
+			switchManager.destroyNFPorts(dnpi);
+			lsi->removeNF(vnf->getName());
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}
+	}
+
+	//TODO: , phy ports- add an error in case internal endpoints have to be removed
 
 	return true;
 }
@@ -2417,41 +2455,6 @@ void GraphManager::removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *gr
 
 
 #if 0
-	//Remove NFs, if they no longer appear in the graph
-	for(list<string>::iterator nf = rri.nfs.begin(); nf != rri.nfs.end(); nf++)
-	{
-#if 0 
-		//IVANO: this check has been moved in highlevel graph, in the function that removes pieces from the graph
-		if(!graph->stillExistNF(*nf))
-#endif
-		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The NF '%s' is no longer part of the graph",(*nf).c_str());
-
-			//Stop the NF
-#ifdef RUN_NFS
-			computeController->stopNF(*nf);
-#else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Flag RUN_NFS disabled. No NF to be stopped");
-#endif
-
-			set<string> nf_ports;
-			map<unsigned int, string>lsi_nf_ports = lsi->getNetworkFunctionsPortsNameOnSwitchMap(*nf);
-			for (map<unsigned int,string>::iterator lsi_nfp_it = lsi_nf_ports.begin(); lsi_nfp_it != lsi_nf_ports.end(); ++lsi_nfp_it) {
-				nf_ports.insert(lsi_nfp_it->second);
-			}
-
-			try
-			{
-				DestroyNFportsIn dnpi(lsi->getDpid(), *nf, nf_ports);
-				switchManager.destroyNFPorts(dnpi);
-				lsi->removeNF(*nf);
-			} catch (SwitchManagerException e)
-			{
-				logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
-				throw GraphManagerException();
-			}
-		}
-	}
 
 #if 0 
 	//IVANO: moved in highlevelgraph, in the function that removes pieces from the graph
