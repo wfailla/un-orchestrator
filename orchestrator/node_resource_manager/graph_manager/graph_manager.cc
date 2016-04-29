@@ -906,9 +906,9 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			}
 		}
 
-		map<string,list<string> > networkFunctionsPortsNameOnSwitch = clo->getNetworkFunctionsPortsNameOnSwitch();
+		map<string,map<string, unsigned int> > networkFunctionsPortsNameOnSwitch = clo->getNetworkFunctionsPortsNameAndID();
 
-		for(map<string,list<string> >::iterator nfpnos = networkFunctionsPortsNameOnSwitch.begin(); nfpnos != networkFunctionsPortsNameOnSwitch.end(); nfpnos++)
+		for(map<string,map<string, unsigned int> >::iterator nfpnos = networkFunctionsPortsNameOnSwitch.begin(); nfpnos != networkFunctionsPortsNameOnSwitch.end(); nfpnos++)
 			lsi->setNetworkFunctionsPortsNameOnSwitch(nfpnos->first, nfpnos->second);
 
 		list<pair<unsigned int, unsigned int> > vl = clo->getVirtualLinks();
@@ -1778,32 +1778,44 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		try
 		{
 			//TODO: for the hotplug, modify lsi->addNF as suggested into the function itself.
-			list<unsigned int> nf_ports = nf->getPortsId(); // nf_it->second;
-			lsi->addNF(nf->getName()/*first*/, /*nf->second*/ nf_ports, computeController->getNFSelectedImplementation(nf->getName()/*first*/)->getPortTypes());
+			list<highlevel::vnf_port_t> nf_ports = nf->getPorts(); // nf_it->second;
+			list<unsigned int> nf_ports_id_list = nf->getPortsId();
+			
+			//before
+			map<string, list<struct nf_port_info> >pi_map_before = lsi->getNetworkFunctionsPortsInfo();
+                        map<string, list<struct nf_port_info> >::iterator pi_it_before = pi_map_before.find(nf->getName()); //pi_it_before==pi_map.end() in case of a new NF
+
+			lsi->addNF(nf->getName()/*first*/, /*nf->second*/ nf_ports_id_list, computeController->getNFSelectedImplementation(nf->getName()/*first*/)->getPortTypes());
+
+			//after
 			map<string, list<struct nf_port_info> >pi_map = lsi->getNetworkFunctionsPortsInfo();//for each network function, retrieve a list of "port name, port type"
 			map<string, list<struct nf_port_info> >::iterator pi_it = pi_map.find(nf->getName()/*first*/); //select the info related to the network function currently considered
 			//TODO: when the hotplug will be introduced, pi_it->second will also contain the old ports of the VNF. Then a further skimming will be required
 			assert(pi_it != pi_map.end());
 			list<struct nf_port_info> newPortList;
 			if(pi_it->second.size() == nf_ports.size())
+			{
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding new ports on the switch to create the NF %s", nf->getName().c_str());
 				newPortList = pi_it->second;
+			}
 			else
 			{
-				for(list<unsigned int>::iterator port_it = nf_ports.begin(); port_it != nf_ports.end(); ++port_it)
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Adding new ports on the switch to update the NF %s", nf->getName().c_str());
+				for(list<struct nf_port_info>::iterator port_it = pi_it->second.begin(); port_it != pi_it->second.end(); ++port_it)
 				{
-					unsigned int port_id = (*port_it);
-					stringstream ss;
-					ss << nf->getName() << "_" << port_id;
-					string port_name = ss.str();
-					for(list<struct nf_port_info>::iterator lsiPort_it = pi_it->second.begin(); lsiPort_it != pi_it->second.end(); ++lsiPort_it)
+					struct nf_port_info port_id = (*port_it);
+					bool find = false;	
+					for(list<struct nf_port_info>::iterator lsiPort_it = pi_it_before->second.begin(); lsiPort_it != pi_it_before->second.end(); ++lsiPort_it)
 					{
 						struct nf_port_info portData = (*lsiPort_it);
-						if(portData.port_name.compare(port_name) == 0)
+						if(portData.port_name.compare(port_id.port_name) == 0)
 						{
-							newPortList.push_back(portData);
+							find = true;
 							break;
 						}
 					}
+					if(!find)
+						newPortList.push_back(port_id);
 				}
 			}
 			AddNFportsIn anpi(dpid, nf->getName(), computeController->getNFType(nf->getName()), newPortList); //prepare the input for the switch manager
@@ -1823,7 +1835,15 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 			//TODO: not sure that this works in case of hotplug. In fact anpo->getPortsNameOnSwitch() returns a list of ports name on the switch, but it does not 
 			//map such names with ports names calculated before (or with the port id). 
 			//I think that it should be done something similar to anpo->getPorts(), which maps the identifier on the switch to the port name.
-			lsi->setNetworkFunctionsPortsNameOnSwitch(anpo->getNFname(),anpo->getPortsNameOnSwitch());
+			uint64_t lsiID = lsi->getDpid();
+			map<string, unsigned int> newPortsNamesAndID;
+			for(list<struct nf_port_info>::iterator port_it = newPortList.begin(); port_it != newPortList.end(); port_it++)
+			{
+				stringstream ss;
+        			ss << lsiID << "_" << port_it->port_name;
+				newPortsNamesAndID[ss.str()] = port_it->port_id;
+			}
+			lsi->setNetworkFunctionsPortsNameOnSwitch(anpo->getNFname(), newPortsNamesAndID);
 			
 
 			delete(anpo);

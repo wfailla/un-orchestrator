@@ -740,6 +740,8 @@ bool ComputeController::updateNF(string nf_name, map<unsigned int, string> names
 {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the NF \"%s\"", nf_name.c_str());
 	
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Number of ports for updating %d", newPortsToAdd.size());
+
 	NF *nf = nfs[nf_name];
 	NFsManager *nfsManager = nf->getSelectedDescription();
 	UpdateNFIn uni(lsiID, nf_name, namesOfPortsOnTheSwitch, portsConfiguration, newPortsToAdd);

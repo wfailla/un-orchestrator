@@ -16,6 +16,7 @@
 
 #include "../graph/high_level_graph/high_level_output_action_endpoint_gre.h"
 #include "../graph/graph-parser/match_parser.h"
+#include "../graph/high_level_graph/high_level_graph_vnf.h"
 
 #ifdef VSWITCH_IMPLEMENTATION_XDPD
 	#include "../../network_controller/switch_manager/plugins/xdpd/xdpd_manager.h"
