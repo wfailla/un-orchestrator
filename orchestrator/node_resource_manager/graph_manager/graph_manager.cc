@@ -1936,6 +1936,7 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 	{
 		//TODO: implement the creation of new internal endpoints
 		assert(0 && "The creation of new internal endpoint in the update is not supported yet!");
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The creation of new internal endpoint in the update is not supported yet!");
 	}
 
 	/**
@@ -1989,12 +1990,8 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	//Retrieve the information already stored for the graph (i.e., retrieve the as it is
 	//currently implemented, without the update)
 	GraphInfo graphInfo = (tenantLSIs.find(graphID))->second;
-//	ComputeController *computeController = graphInfo.getComputeController();
 	highlevel::Graph *graph = graphInfo.getGraph();
 	LSI *lsi = graphInfo.getLSI();
-//	Controller *tenantController = graphInfo.getController();
-
-//	uint64_t dpid = lsi->getDpid();
 
 	/**
 	*	Outline:
@@ -2090,7 +2087,7 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	for(list<RuleRemovedInfo>::iterator tbr = removeRuleInfo.begin(); tbr != removeRuleInfo.end(); tbr++)
 		removeUselessVlinks(*tbr,graph,lsi);
 
-	//TODO: remove VNFs, phy ports and gre tunnels
+	//TODO: remove VNFs, phy ports and gre tunnels - add an error in case internal endpoints have to be removed
 
 	return true;
 }
