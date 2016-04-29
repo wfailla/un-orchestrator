@@ -282,6 +282,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 			}
 
 			//TODO: understand what is this thing	- IVANO
+			//TODO: probably the next statement is useless
 
 			if(matchOnNF)
 				//Potentially, the NF is useless in the graph

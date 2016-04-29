@@ -1513,9 +1513,16 @@ bool GraphManager::updateGraph(string graphID, highlevel::Graph *newGraph)
 {
 	//The update of the graph is split in two parts. In the first, new pieces are added to the graph;
 	//in the second, the proper parts are removed
+#if 0
 	if(!updateGraph_add(graphID,newGraph))
 		return false;
 	return updateGraph_remove(graphID,newGraph);
+#endif
+
+	if(!updateGraph_remove(graphID,newGraph))
+		return false;
+	return updateGraph_add(graphID,newGraph);
+
 }
 
 bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
@@ -1636,7 +1643,7 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		AddVirtualLinkOut *avlo = NULL;
 		try
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Adding vlink required to physical port/VNF port");
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Adding vlink required to a interface endpoint (i.e., physical port) and/or to a VNF port");
 			VLink newLink(dpid0);
 			int vlinkPosition = lsi->addVlink(newLink);
 
@@ -1683,7 +1690,7 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		AddVirtualLinkOut *avlo = NULL;
 		try
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Adding vlink required to GRE tunnel");
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Adding vlink required to a gre-tunnel endpoint");
 		
 			VLink newLink(dpid0);
 			int vlinkPosition = lsi->addVlink(newLink);
@@ -1714,17 +1721,14 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		}
 	}
 
-
 	for(set<string>::iterator ep = vlEndPointsInternal.begin(); ep != vlEndPointsInternal.end(); ep++)
 	{
-		//TODO: this is not implemented yet
-		assert(0 && "The graph update with require new internal endpoints is not supported yet!");
-
-#if 0
 		//FIXME: here I am referring to a vlink through its position. It would be really better to use its ID
 		AddVirtualLinkOut *avlo = NULL;
 		try
 		{
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, " Adding vlink required to an internal endpoint");
+
 			VLink newLink(dpid0);
 			int vlinkPosition = lsi->addVlink(newLink);
 
@@ -1740,9 +1744,10 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 			VLink vlink = lsi->getVirtualLink(vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Virtual link: (ID: %x) %x:%d -> %x:%d",vlink.getID(),dpid,vlink.getLocalID(),vlink.getRemoteDpid(),vlink.getRemoteID());
 
-			lsi->addEndpointvlink(*ep,vlinkID);
+			lsi->addEndpointInternalvlink(*ep,vlinkID);
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint '%s' uses the vlink '%x'",(*ep).c_str(),vlink.getID());
 
+#if 0
 			if(timesUsedEndPointsInternal.count(*ep) <= 1)
 			{
 				//since this endpoint is in an action (hence it requires a virtual link), and it is defined in this
@@ -1755,6 +1760,7 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 				//This internal end point is currently only used in the current graph
 				timesUsedEndPointsInternal[*ep] = 0;
 			}
+#endif
 		}catch(SwitchManagerException e)
 		{
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
@@ -1764,7 +1770,6 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 			diff = NULL;
 			throw GraphManagerException();
 		}
-#endif
 	}
 
 	/**
@@ -1823,10 +1828,10 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 	/**
 	*	3-c) condider the gre-tunnel endpoints
 	*/
-	list<highlevel::EndPointGre> tmp_endpoints = diff->getEndPointsGre();
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-c) considering the new gre-tunnel endpoints (%d)",tmp_endpoints.size());
+	list<highlevel::EndPointGre> tmp_gre_endpoints = diff->getEndPointsGre();
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-c) considering the new gre-tunnel endpoints (%d)",tmp_gre_endpoints.size());
 
-	for(list<highlevel::EndPointGre>::iterator ep = tmp_endpoints.begin(); ep != tmp_endpoints.end(); ep++)
+	for(list<highlevel::EndPointGre>::iterator ep = tmp_gre_endpoints.begin(); ep != tmp_gre_endpoints.end(); ep++)
 	{
 #ifdef VSWITCH_IMPLEMENTATION_OVSDB
 		//fill the vector related to the endpoint params [gre key, local-ip, remote-ip, interface, isSafe]
@@ -1871,6 +1876,18 @@ bool GraphManager::updateGraph_add(string graphID, highlevel::Graph *newGraph)
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable with the selected virtual switch");
 		throw GraphManagerException();
 #endif
+	}
+
+	/**
+	*	3-d) condider the internal endpoints
+	*/
+	list<highlevel::EndPointInternal> tmp_internal_endpoints = diff->getEndPointsInternal();
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-c) considering the new internal endpoints (%d)",tmp_internal_endpoints.size());
+
+	for(list<highlevel::EndPointInternal>::iterator ep = tmp_internal_endpoints.begin(); ep != tmp_internal_endpoints.end(); ep++)
+	{
+		//TODO: implement the creation of new internal endpoints
+		assert(0 && "The creation of new internal endpoint in the update is not supported yet!");
 	}
 
 	/**
@@ -2066,7 +2083,8 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	assert(removeRuleInfo.size() == rulesToBeRemoved.size());
 	for(list<RuleRemovedInfo>::iterator tbr = removeRuleInfo.begin(); tbr != removeRuleInfo.end(); tbr++)
 		removeUselessVlinks(*tbr,graph,lsi);
-		//removeUselessPorts_NFs_Endpoints_VirtualLinks(rri,nfs_manager,graph,lsi);
+
+	//TODO: remove VNFs, phy ports and gre tunnels
 
 	return true;
 }
