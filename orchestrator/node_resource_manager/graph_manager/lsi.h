@@ -85,9 +85,9 @@ private:
 	};
 
 	/**
-	*	@brief: list of gre endpoints connected to the LSI
+	*	@brief: list of gre-tunnel endpoints connected to the LSI
 	*/
-	list<highlevel::EndPointGre> endpoints_ports;
+	list<highlevel::EndPointGre> gre_endpoints_ports;
 
 	/**
 	*	@brief: the pair is <endpoint name, endpoint id>
@@ -134,7 +134,7 @@ private:
 public:
 
 	LSI(string controllerAddress, string controllerPort, set<string> physical_ports, list<highlevel::VNFs> network_functions,
-		list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
+		list<highlevel::EndPointGre> gre_endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int, PortType> > nfs_ports_type);
 
 	string getControllerAddress();
 	string getControllerPort();

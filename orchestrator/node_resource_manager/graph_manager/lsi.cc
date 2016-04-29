@@ -11,7 +11,7 @@ static string nf_port_name(const string& nf_name, unsigned int port_id)
 }
 
 LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_ports, list<highlevel::VNFs> network_functions,
-	list<highlevel::EndPointGre> endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
+	list<highlevel::EndPointGre> gre_endpoints_ports, vector<VLink> virtual_links, map<string, map<unsigned int,PortType> > a_nfs_ports_type) :
 		controllerAddress(controllerAddress), controllerPort(controllerPort),
 		virtual_links(virtual_links.begin(),virtual_links.end())
 {
@@ -31,8 +31,8 @@ LSI::LSI(string controllerAddress, string controllerPort, set<string> physical_p
 	}
 
 	//fill the list of gre endpoints
-	for(list<highlevel::EndPointGre>::iterator ep = endpoints_ports.begin(); ep != endpoints_ports.end(); ep++)
-		this->endpoints_ports.push_back(*ep);
+	for(list<highlevel::EndPointGre>::iterator ep = gre_endpoints_ports.begin(); ep != gre_endpoints_ports.end(); ep++)
+		this->gre_endpoints_ports.push_back(*ep);
 }
 
 string LSI::getControllerAddress()
@@ -68,7 +68,7 @@ set<string> LSI::getNetworkFunctionsName()
 
 list<highlevel::EndPointGre> LSI::getEndpointsPorts()
 {
-	return endpoints_ports;
+	return gre_endpoints_ports;
 }
 
 map<string,unsigned int > LSI::getEndpointsPortsId()
@@ -195,7 +195,7 @@ bool LSI::setEndpointPortID(string ep, uint64_t id)
 {
 	bool found = false;
 
-	for(list<highlevel::EndPointGre>::iterator endp = endpoints_ports.begin(); endp != endpoints_ports.end(); endp++)
+	for(list<highlevel::EndPointGre>::iterator endp = gre_endpoints_ports.begin(); endp != gre_endpoints_ports.end(); endp++)
 		if(endp->getId().compare(ep) == 0)
 			found = true;
 
@@ -418,7 +418,7 @@ bool LSI::addNF(string nf_name, list< unsigned int> ports, const map<unsigned in
 
 void LSI::addEndpoint(highlevel::EndPointGre ep)
 {
-	endpoints_ports.push_back(ep);
+	gre_endpoints_ports.push_back(ep);
 }
 
 int LSI::addVlink(VLink vlink)
@@ -455,11 +455,11 @@ void LSI::removeNF(string nf)
 
 void LSI::removeEndpoint(string ep)
 {
-	for(list<highlevel::EndPointGre>::iterator endp = endpoints_ports.begin(); endp != endpoints_ports.end(); endp++)
+	for(list<highlevel::EndPointGre>::iterator endp = gre_endpoints_ports.begin(); endp != gre_endpoints_ports.end(); endp++)
 	{
 		if(endp->getId().compare(ep) == 0)
 		{
-			endpoints_ports.erase(endp);
+			gre_endpoints_ports.erase(endp);
 			return;
 		}
 	}
