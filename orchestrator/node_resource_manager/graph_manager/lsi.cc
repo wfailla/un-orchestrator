@@ -456,8 +456,13 @@ void LSI::removeNF(string nf)
 void LSI::removeEndpoint(string ep)
 {
 	for(list<highlevel::EndPointGre>::iterator endp = endpoints_ports.begin(); endp != endpoints_ports.end(); endp++)
+	{
 		if(endp->getId().compare(ep) == 0)
+		{
 			endpoints_ports.erase(endp);
-
+			return;
+		}
+	}
+	assert(0);
 	return;
 }
