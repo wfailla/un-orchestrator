@@ -2044,9 +2044,9 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	*	The following things must be done
 	*	- 2) delete the flowrules
 	*	- 3) delete the virtual links no longer used. We support virtual link related to each type of endpoint
-	*	- 4) delete the interface endpoints (i.e., physical ports) and the vlinks required by them
-	*	- 5) delete the VNFs
-	*	- 6) delete the gre-tunnel ports
+	*	- 4) delete the gre-tunnel ports
+	*	- 5) delete the interface endpoints (i.e., physical ports) 
+	*	- 6) delete the VNFs
 	*/
 
 	/**
@@ -2087,7 +2087,34 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	for(list<RuleRemovedInfo>::iterator tbr = removeRuleInfo.begin(); tbr != removeRuleInfo.end(); tbr++)
 		removeUselessVlinks(*tbr,graph,lsi);
 
-	//TODO: remove VNFs, phy ports and gre tunnels - add an error in case internal endpoints have to be removed
+	/**
+	*	4) Delete the gre-tunnel endpoints, as required by the diff
+	*/
+	
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "4) Removing the gre-tunnel endpoints");
+
+	list<highlevel::EndPointGre> greEndpoints = diff->getEndPointsGre();
+	for(list<highlevel::EndPointGre>::iterator gep = greEndpoints.begin(); gep != greEndpoints.end(); gep++)
+	{
+#ifdef VSWITCH_IMPLEMENTATION_OVSDB
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The gre endpoint '%s' is no longer part of the graph",(gep->getId()).c_str());
+
+		try
+		{
+			DestroyEndpointIn depi(lsi->getDpid(),gep->getId());
+			switchManager.destroyEndpoint(depi);
+			lsi->removeEndpoint((gep->getId()));
+		} catch (SwitchManagerException e)
+		{
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
+			throw GraphManagerException();
+		}
+#else
+		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel not supported with the selected virtual switch");
+#endif
+	}
+
+	//TODO: remove VNFs, phy ports- add an error in case internal endpoints have to be removed
 
 	return true;
 }
@@ -2440,26 +2467,6 @@ void GraphManager::removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *gr
 	if((rri.endpointInternal != "") && (!graph->stillExistEndpoint(rri.endpointInternal)))
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The internal endpoint '%s' is no longer part of the graph",rri.endpointInternal.c_str());
 
-	//Remove the gre endpoint, if it no longer appear in the graph
-	if((rri.endpointGre != "") && (!graph->stillExistEndpointGre(rri.endpointGre)))
-	{
-#ifdef VSWITCH_IMPLEMENTATION_OVSDB
-		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The gre endpoint '%s' is no longer part of the graph",rri.endpointGre.c_str());
-
-		try
-		{
-			DestroyEndpointIn depi(lsi->getDpid(),rri.endpointGre);
-			switchManager.destroyEndpoint(depi);
-			lsi->removeEndpoint(rri.endpointGre);
-		} catch (SwitchManagerException e)
-		{
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "%s",e.what());
-			throw GraphManagerException();
-		}
-#else
-		logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "GRE tunnel unavailable");
-#endif
-	}
 #endif
 }
 
