@@ -2279,7 +2279,7 @@ void GraphManager::removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *gr
 		{
 			if(gvl->second == tobeRemovedID)
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the NF port: %s",gvl->first.c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the gre-tunnel endpoint: %s",gvl->first.c_str());
 				return;
 			}
 		}
@@ -2346,7 +2346,7 @@ void GraphManager::removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *gr
 		{
 			if(gvl->second == tobeRemovedID)
 			{
-				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the NF port: %s",gvl->first.c_str());
+				logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The virtual link cannot be removed because it is still used by the gre-tunnel endpoint: %s",gvl->first.c_str());
 				return;
 			}
 		}
