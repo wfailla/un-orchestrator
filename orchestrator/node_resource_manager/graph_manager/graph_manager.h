@@ -176,39 +176,6 @@ private:
 	bool checkGraphValidity(highlevel::Graph *graph, ComputeController *computeController);
 
 	/**
-	*	@brief: check if
-	*		- a NF no longer requires a vlink in a specific graph
-	*		- a physical port no longer requires a vlink in a specific graph
-	*		- a graph endpoint no longer requires a vlink in a specific graph
-	*			(it is not necessary that the endpoint is defined by the graph itself)
-	*		- NFs are no longer used
-	*		- physical ports are no longer used
-	*		- endpoints are no longer used
-	*	and then remove the useles things from the LSI
-	*/
-	void removeUselessPorts_NFs_Endpoints_VirtualLinks(RuleRemovedInfo tbr, ComputeController *computeController,highlevel::Graph *graph, LSI * lsi);
-
-#if 0
-	/**
-	*	@brief: given a NF of the graph (in the form NF_port), return the endpoint expressed in the match of a rule
-	*		whose action is expressed on the function.
-	*
-	*	@param: graph	Graph in which the information must be searched
-	*	@param: ep		Involved gre endpoint
-	*/
-	string findEndPointTowardsGRE(highlevel::Graph *graph, string ep);
-#endif
-
-	/**
-	*	@brief: given a NF of the graph (in the form NF_port), return the endpoint expressed in the match of a rule
-	*		whose action is expressed on the function.
-	*
-	*	@param: graph	Graph in which the information must be searched
-	*	@param: nf		Involved NF
-	*/
-	string findEndPointTowardsNF(highlevel::Graph *graph, string nf);
-
-	/**
 	*	@brief: do the operation required to set up an in band control. This requires to set up some rules in the LSI-0.
 	*
 	*	@param: lsi			contains information related to the LSI-0
@@ -223,7 +190,12 @@ private:
 	*	@param: graph	graph potentially containing internal endpoints to be handled
 	*/
 	void handleControllerForInternalEndpoint(highlevel::Graph *graph);
-	
+
+	/**
+	*	@brief: for each internal endpoint required by the graph, this function:
+	*			- create an new LSI representing such an endpoint, if the LSI does not exist yet
+	*			- update the LSI representing such an endpoint, if the LSI already exists
+	*/
 	void handleGraphForInternalEndpoint(highlevel::Graph *graph);
 
 	/**
@@ -257,11 +229,6 @@ public:
 	bool graphExists(string graphID);
 
 	/**
-	*	@brief: check if a flow exists in a graph
-	*/
-	bool flowExists(string graphID, string flowID);
-
-	/**
 	*	@brief: given a graph description, implement the graph
 	*/
 	bool newGraph(highlevel::Graph *graph);
@@ -278,44 +245,6 @@ public:
 	*	@brief: update an existing graph
 	*/
 	bool updateGraph(string graphID, highlevel::Graph *newGraph);
-
-	/**
-	*	@brief: remove the flow with a specified ID, from a specified graph
-	*
-	*	This method is quite complex, and it works as follows
-	*		* rule: port -> NF:port
-	*			This means that there is a vlink associated with NF:port. In case
-	*			NF:port does not appear in other actions, then the vlink is removed
-	*		* rule: NF:port -> port
-	*			This means that there is vlink associated with port. In case port
-	*			does not appear in other actions, then the vlink is removed
-	*		* rule: NF:port -> port
-	*				port -> NF:port
-	*				NF1:port -> NF2:port
-	*			If NF (NF1, NF2) does not appear in any other rule, the NF is stopped,
-	*			and its ports are destroyed
-	*	In both the LSI-0 and tenant-LSI, a flowmod to remove a flow is sent just in case
-	*	the related (low level) graph does not have other identical rules (the lowering
-	*	of the graph may generate several identical rules in the same low level graph).
-	*	In any case, the rule is removed from the highlevel graph, from the lowlevel graph
-	*	of the tenant-LSI, and from the lowlevel graph of the LSI-0.
-	*
-	*	XXX: note that an existing NF does not change: if a port of that NF is no longer used,
-	*	it does not matter. The port is neither destroyed, nor removed from the virtual switch
-	*
-	*	TODO: describe what happens in case of endpoint
-	*/
-	bool deleteFlow(string graphID, string flowID);
-
-#if 0
-	/**
-	*	@brief: deletes a NF from the graph
-	*
-	*	@param: graphID	Identifier of the graph to which the NF belongs to
-	*	@param: nf_name	Name of the NF to be removed from the graph
-	*/
-	bool stopNetworkFunction(string graphID, string nf_name);
-#endif
 
 	/**
 	*	@brief: create the JSON representation of the graph with the given ID

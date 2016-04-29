@@ -740,8 +740,6 @@ int RestServer::doDelete(struct MHD_Connection *connection, const char *url, voi
  	char * pnt;
 
 	char graphID[BUFFER_SIZE];
-	char flowID[BUFFER_SIZE];
-	bool specificFlow = false;
 
 	char tmp[BUFFER_SIZE];
 	strcpy(tmp,url);
@@ -765,15 +763,12 @@ delete_malformed_url:
 			case 1:
 				strcpy(graphID,pnt);
 				break;
-			case 2:
-				strcpy(flowID,pnt);
-				specificFlow = true;
 		}
 
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	if((i != 2) && (i != 3))
+	if(i != 2)
 	{
 		//the URL is malformed
 		goto delete_malformed_url;
@@ -813,9 +808,9 @@ delete_malformed_url:
 		}
 	}
 
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s/%s",graphID,(specificFlow)?flowID:"");
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Deleting resource: %s",graphID);
 
-	if(!gm->graphExists(graphID) || (specificFlow && !gm->flowExists(graphID,flowID)))
+	if(!gm->graphExists(graphID))
 	{
 		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Method DELETE is not supported for this resource");
 		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
@@ -827,33 +822,17 @@ delete_malformed_url:
 
 	try
 	{
-		if(!specificFlow)
+		//The entire graph must be deleted
+		if(!gm->deleteGraph(graphID))
 		{
-			//The entire graph must be deleted
-			if(!gm->deleteGraph(graphID))
-			{
-				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-				MHD_destroy_response (response);
-				return ret;
-			}
-			else
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
+			response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+			int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
+			MHD_destroy_response (response);
+			return ret;
 		}
 		else
-		{
-			//A specific flow must be deleted
-			if(!gm->deleteFlow(graphID,flowID))
-			{
-				response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
-				int ret = MHD_queue_response (connection, MHD_HTTP_BAD_REQUEST, response);
-				MHD_destroy_response (response);
-				return ret;
-			}
-			else
-				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The flow has been properly deleted!");
-		}
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly deleted!");
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
 
 		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
 		ret = MHD_queue_response (connection, MHD_HTTP_NO_CONTENT, response);
