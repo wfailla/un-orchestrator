@@ -2085,7 +2085,7 @@ void GraphManager::removeUselessVlinks(RuleRemovedInfo rri, highlevel::Graph *gr
 	*	Consider the network function ports
 	*/
 
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Checking if ports, network functions, endpoints and virtual links can be removed...");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Checking if some virtual links can be removed...");
 	if(rri.isNFport)
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Check if the vlink associated with the NF port '%s' must be removed (if this vlink exists)",rri.nf_port.c_str());
 
