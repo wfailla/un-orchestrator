@@ -11,6 +11,7 @@
 
 #define REST_PORT 				8080
 #define BASE_URL_GRAPH			"NF-FG"
+#define URL_STATUS				"status"
 #define BASE_URL_LOGIN			"login"
 #define REST_URL 				"http://localhost"
 #define REQ_SIZE 				2*1024*1024

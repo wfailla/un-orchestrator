@@ -623,7 +623,7 @@ int RestServer::doGet(struct MHD_Connection *connection, const char *url)
 {
 	struct MHD_Response *response;
 	int ret;
-
+	bool getStatusRequired=false;
 
 	//Check the URL
 	char delimiter[] = "/";
@@ -650,13 +650,19 @@ get_malformed_url:
 				}
 				break;
 			case 1:
+				if(strcmp(pnt,URL_STATUS)==0)
+					getStatusRequired=true;
+				else
+					strcpy(graphID,pnt);
+				break;
+			case 2:
 				strcpy(graphID,pnt);
 		}
-
+		
 		pnt = strtok( NULL, delimiter );
 		i++;
 	}
-	if( i != 2) 
+	if( !(i==2 && getStatusRequired==false) && !(i==3 && getStatusRequired==true) ) 
 	{
 		//the URL is malformed
 		goto get_malformed_url;
@@ -685,8 +691,44 @@ get_malformed_url:
 			return ret;
 		}
 	}
+	if(getStatusRequired)
+		return doGetStatus(connection,graphID);
+	else
+		return doGetGraph(connection,graphID);
+}
 
-	return doGetGraph(connection,graphID);
+int RestServer::doGetStatus(struct MHD_Connection *connection,char *graphID)
+{
+	struct MHD_Response *response;
+	int ret;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Required get status for resource: %s",graphID);
+
+	if(!gm->graphExists(graphID))
+	{
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource \"%s\" does not exist", graphID);
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
+
+
+	Object json;
+	json["status"]="complete";
+	json["percentage_completed"]=100;
+	stringstream ssj;
+	write_formatted(json, ssj );
+	string sssj = ssj.str();
+	char *aux = (char*)malloc(sizeof(char) * (sssj.length()+1));
+	strcpy(aux,sssj.c_str());
+	response = MHD_create_response_from_buffer (strlen(aux),(void*) aux, MHD_RESPMEM_PERSISTENT);
+	MHD_add_response_header (response, "Content-Type",JSON_C_TYPE);
+	MHD_add_response_header (response, "Cache-Control",NO_CACHE);
+	ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+	MHD_destroy_response (response);
+	return ret;
+
 }
 
 int RestServer::doGetGraph(struct MHD_Connection *connection,char *graphID)
