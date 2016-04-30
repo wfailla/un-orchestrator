@@ -344,7 +344,7 @@ ENDIF((VSWITCH_IMPLEMENTATION_INDEX EQUAL 2) OR (VSWITCH_IMPLEMENTATION_INDEX EQ
 
 IF(VSWITCH_IMPLEMENTATION_INDEX EQUAL 4)
     SET(SOURCES2
-    ${SOURCES}
+    ${SOURCES1}
 	network_controller/switch_manager/plugins/erfs/manager.h
 	network_controller/switch_manager/plugins/erfs/manager.cc
 	network_controller/switch_manager/plugins/erfs/constants.h
