@@ -62,84 +62,17 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 		}
 	}
 
-The same message used to create a new graph can be used to add "parts" (i.e.,
-network functions, flows and endpoints) to an existing graph. For instance, it is 
-possible to add a new flow `000000002` and a new endpoit `00000002` to the NF-FG 
-called ``myGraph'' as follows (note that the update contains all the things already 
-part of the graph plus the new things to be added - the diff is in fact automatically 
-calculated by the un-orchestrator)
+The same message used to create a new graph can be used to update a creaph, i.e., to
 
-    PUT /NF-FG/myGraph HTTP/1.1
-    Content-Type : application/json
+ * add/remove flow-rules from the big-switch
+ * add/remove virtual network functions
+ * add/remove ports from virtual network functions already deployed
+ * add/remove endpoints (interface, gre-tunnel, vlan, internal)
 
-    {
-		"forwarding-graph": {
-			"id": "00000001",
-			"name": "Forwarding graph",
-			"VNFs": [
-			  {
-				"id": "00000001",
-				"name": "firewall",
-				"ports": [
-				  {
-					"id": "inout:0",
-					"name": "data-port"
-				  },
-				  {
-					"id": "inout:1",
-					"name": "data-port"
-				  }
-				]
-			  }
-			],
-			"end-points": [
-			  {
-				"id": "00000001",
-				"name": "ingress",
-				"type": "interface",
-				"interface": {
-				  "interface": "eth1"
-				}
-			  },
-			  {
-				"id": "00000002",
-				"name": "egress",
-				"type": "interface",
-				"interface": {
-				  "interface": "eth1"
-				}
-			  }
-			],
-			"big-switch": {
-			  "flow-rules": [
-				{
-				  "id": "000000001",
-				  "priority": 1,
-				  "match": {
-					"port_in": "endpoint:00000001"
-				  },
-				  "actions": [
-					{
-					  "output_to_port": "vnf:00000001:inout:0"
-					}
-				  ]
-				},
-				{
-				  "id": "000000002",
-				  "priority": 1,
-				  "match": {
-					"port_in": "vnf:00000001:inout:0"
-				  },
-				  "actions": [
-					{
-					  "output_to_port": "endpoint:00000001"
-					}
-				  ]
-				}
-			  ]
-			}
-		}
-	}
+To update a graph, you have just to send the new version of the graph at the same URL of
+the graph to be updated (e.g., /NF-FG/myGraph); the un-orchestrator will then calculate the
+difference between the new version and that already deployed, and will do all the proper
+operations to update the graph as required.
 
 Retrieve the description of the graph with name "myGraph":
 
@@ -148,10 +81,6 @@ Retrieve the description of the graph with name "myGraph":
 Delete the graph with name "myGraph"
 
 	DELETE /NF-FG/myGraph HTTP/1.1
-
-Delete the flow with ID "flow_id" from the graph with name "myGraph":
-
-	DELETE /NF-FG/myGraph/flow_id HTTP/1.1
 
 ## User authentication
 
