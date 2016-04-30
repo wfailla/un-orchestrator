@@ -78,6 +78,10 @@ Retrieve the description of the graph with name "myGraph":
 
 	GET /NF-FG/myGraph HTTP/1.1
 
+Retrieve the information of the status of the graph with name "myGraph":
+
+	GET /NF-FG/status/myGraph HTTP/1.1
+
 Delete the graph with name "myGraph"
 
 	DELETE /NF-FG/myGraph HTTP/1.1
