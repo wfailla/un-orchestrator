@@ -625,6 +625,8 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "User not authorized to execute %s on %s", method, resource);
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
+		if(strcmp(generic_resource,BASE_URL_GRAPH)==0 && strcmp(resource,URL_STATUS)==0)
+			return doGetStatus(connection,extra_info);
 	}
 	// PUT, POST, DELETE: currently not supported
 	else if(strcmp(method, POST) == 0) {
@@ -700,6 +702,7 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 		}
 
 		if(!secmanager->isAuthenticated(connection, token)) {
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Token: %s",token);
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User not authenticated: request rejected!");
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
@@ -718,7 +721,7 @@ int RestServer::doOperation(struct MHD_Connection *connection, void **con_cls, c
 	if(generic_resource != NULL && resource == NULL && extra == NULL)
 		ret = doOperationOnResource(connection, con_info, usr, method, generic_resource);
 
-	// If operation on a single resource (e.g. /NF-FG/myGraph)
+	// If operation on a single resource (e.g. /NF-FG/myGraph) 
 	else if(generic_resource != NULL && resource != NULL && extra == NULL)
 		ret = doOperationOnResource(connection, con_info, usr, method, generic_resource, resource);
 
@@ -1206,4 +1209,37 @@ int RestServer::deleteUser(struct MHD_Connection *connection, char *username) {
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The user has been properly deleted!");
 
 	return httpResponse(connection, MHD_HTTP_NO_CONTENT);
+}
+
+int RestServer::doGetStatus(struct MHD_Connection *connection,const char *graphID)
+{
+	struct MHD_Response *response;
+	int ret;
+
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Required get status for resource: %s",graphID);
+
+	if(!gm->graphExists(graphID))
+	{
+		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Resource \"%s\" does not exist", graphID);
+		response = MHD_create_response_from_buffer (0,(void*) "", MHD_RESPMEM_PERSISTENT);
+		ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, response);
+		MHD_destroy_response (response);
+		return ret;
+	}
+
+	Object json;
+	json["status"]="complete";
+	json["percentage_completed"]=100;
+	stringstream ssj;
+	write_formatted(json, ssj );
+	string sssj = ssj.str();
+	char *aux = (char*)malloc(sizeof(char) * (sssj.length()+1));
+	strcpy(aux,sssj.c_str());
+	response = MHD_create_response_from_buffer (strlen(aux),(void*) aux, MHD_RESPMEM_PERSISTENT);
+	MHD_add_response_header (response, "Content-Type",JSON_C_TYPE);
+	MHD_add_response_header (response, "Cache-Control",NO_CACHE);
+	ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+	MHD_destroy_response (response);
+	return ret;
+
 }

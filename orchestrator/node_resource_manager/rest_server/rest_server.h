@@ -86,6 +86,8 @@ private:
 
 	static int doOperation(struct MHD_Connection *connection, void **con_cls, const char *method, const char *url);
 
+	static int doGetStatus(struct MHD_Connection *connection,const char *graphID);
+	
 	static int readGraph(struct MHD_Connection *connection, char *graphID);
 	static int readMultipleGraphs(struct MHD_Connection *connection, user_info_t *usr);
 	static int readMultipleUsers(struct MHD_Connection *connection, user_info_t *usr);
