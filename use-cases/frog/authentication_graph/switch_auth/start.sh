@@ -14,13 +14,13 @@ ovsdb-server --remote=punix:/usr/local/var/run/openvswitch/db.sock \
 ovs-vsctl --no-wait init
 ovs-vswitchd --pidfile --detach
 
-sleep 10
+sleep 5
 ./configure_ovs.sh start
 
 
 while true
 do
-	sleep 10
+	sleep 1
 	for i in `ls /sys/class/net`
         do
                 if [ $i != lo -a $i != 'ovs-system' ]; then
