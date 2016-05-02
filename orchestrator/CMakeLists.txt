@@ -316,6 +316,9 @@ SET(SOURCES1
 	node_resource_manager/database_manager/SQLite/INIReader.cpp
 	node_resource_manager/database_manager/SQLite/ini.c
 
+	node_resource_manager/security_manager/security_manager.cc
+	node_resource_manager/security_manager/security_manager.h
+
 	utils/logger.h
 	utils/logger.c
 	utils/constants.h

@@ -286,6 +286,12 @@ bool GraphManager::graphExists(string graphID)
 	return true;
 }
 
+void GraphManager::getGraphsNames(std::list<std::string> *l) 
+{
+	for (std::map<string,GraphInfo>::iterator it=tenantLSIs.begin(); it!=tenantLSIs.end(); ++it)
+	l->push_back(it->first);
+}
+
 Object GraphManager::toJSON(string graphID)
 {
 	if(tenantLSIs.count(graphID) == 0)
