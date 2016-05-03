@@ -661,9 +661,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_port(%s,type=%s)", p.c_str(), portTypeToString(port_type).c_str());
 
 	//connect socket
-    	s = cmd_connect();
+	s = cmd_connect();
 
-    	//Default port name on the switch (may be overriden later for specific port types)
+	//Default port name on the switch (may be overriden later for specific port types)
 	stringstream pnos;
 	pnos << dnumber << "_" << p;
 	string port_name_on_switch = pnos.str();
@@ -1032,7 +1032,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 
 void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, char is_safe[BUF_SIZE])
 {
-    ssize_t nwritten;
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_endpoint(local ip=%s,remote ip=%s,key=%s,port name=%s,iface=%s)",local_ip,remote_ip,key,port_name,ifac);
+
+	ssize_t nwritten;
 
 	char read_buf[BUFFER_SIZE] = "";
 
@@ -1518,6 +1520,7 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s)
 	char safe[BUF_SIZE];
 
 	string id = aepi.getEPname();
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_endpoint(name=%s)",id.c_str());
 
 	/*save the params of gre tunnel*/
 	vector<string> l_param = aepi.getEPparam();
@@ -1757,6 +1760,7 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 	map<string, unsigned int> ports;
 
 	string ep_name = depi.getEPname();
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "endpoint_delete(name=%s)",ep_name.c_str());
 
 	Object root, first_obj, second_obj, row;
 	Array params, iface, iface1, iface2, where, port1, port2, i_array;
@@ -1768,7 +1772,7 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 	Array fourth_object;
 
 	//connect socket
-    	s = cmd_connect();
+	s = cmd_connect();
 
 	if(ep_name.compare("") != 0){
 

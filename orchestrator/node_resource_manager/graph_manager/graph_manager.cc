@@ -1844,6 +1844,8 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 		else
 			ep_param[4] = "false";
 
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(ep->getId()).c_str());
+
 		AddEndpointOut *aepo = NULL;
 		try
 		{
@@ -1881,7 +1883,7 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 	*	3-d) condider the internal endpoints
 	*/
 	list<highlevel::EndPointInternal> tmp_internal_endpoints = diff->getEndPointsInternal();
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-c) considering the new internal endpoints (%d)",tmp_internal_endpoints.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-d) considering the new internal endpoints (%d)",tmp_internal_endpoints.size());
 
 	for(list<highlevel::EndPointInternal>::iterator ep = tmp_internal_endpoints.begin(); ep != tmp_internal_endpoints.end(); ep++)
 	{
