@@ -16,3 +16,6 @@
 [submodule "use-cases/elastic_router/MEASURE-MMP"]
 	path = use-cases/elastic_router/MEASURE-MMP
 	url = https://github.com/Acreo/MEASURE-MMP.git
+[submodule "use-cases/elastic_router/DoubleDecker"]
+	path = use-cases/elastic_router/DoubleDecker
+	url = https://github.com/Acreo/DoubleDecker
