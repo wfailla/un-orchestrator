@@ -1798,17 +1798,20 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 
 		where.clear();
 
-		list<string>::iterator uu = gport_uuid[depi.getDpid()].begin();
+		list<string>::iterator uu = gport_uuid[depi.getDpid()].begin(); //list of uuid related to tunnel GRE
 		assert(gport_uuid.count(depi.getDpid()) != 0);
 //		uu = gport_uuid[depi.getDpid()].begin();
 
 		//should be search in endpoint_l, p....if find it take the index and remove it from the set endpoint-uuid[pi]
 		list<string> ep_l = endpoint_l[depi.getDpid()];
 		assert(endpoint_l.count(depi.getDpid()) != 0);
+		//iterate on all the gre tunnels that are part of this bridge
 		for(list<string>::iterator u = ep_l.begin(); u != ep_l.end(); u++){
 			string s = (*u);
 			if(s.compare(ep_name) == 0){
 				gport_uuid[depi.getDpid()].remove((*uu));
+				ep_l.erase(u);
+				endpoint_l[depi.getDpid()] = ep_l;
 				break;
 			}
 			uu++;
