@@ -1277,11 +1277,11 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 
 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 
 	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 
-	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	Value value;
     	read( read_buf, value );
