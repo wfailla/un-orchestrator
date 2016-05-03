@@ -1277,17 +1277,17 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 		throw commandsException();
 	}
 
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	Value value;
-    	read( read_buf, value );
-    	Object rootNode = value.getObject();
+	read( read_buf, value );
+	Object rootNode = value.getObject();
 
 	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
@@ -1757,7 +1757,7 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 
 	locale loc;
 
-	map<string, unsigned int> ports;
+//	map<string, unsigned int> ports;
 
 	string ep_name = depi.getEPname();
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "endpoint_delete(name=%s)",ep_name.c_str());
@@ -1789,6 +1789,8 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 		fourth_object.push_back("uuid");
 		fourth_object.push_back(switch_uuid[depi.getDpid()].c_str());
 
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "switch_uuid[depi.getDpid()]=%s",switch_uuid[depi.getDpid()].c_str());
+
 		third_object.push_back(fourth_object);
 		where.push_back(third_object);
 
@@ -1797,10 +1799,13 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 		where.clear();
 
 		list<string>::iterator uu = gport_uuid[depi.getDpid()].begin();
+		assert(gport_uuid.count(depi.getDpid()) != 0);
+//		uu = gport_uuid[depi.getDpid()].begin();
 
-		uu = gport_uuid[depi.getDpid()].begin();
 		//should be search in endpoint_l, p....if find it take the index and remove it from the set endpoint-uuid[pi]
-		for(list<string>::iterator u = endpoint_l[depi.getDpid()].begin(); u != endpoint_l[depi.getDpid()].end(); u++){
+		list<string> ep_l = endpoint_l[depi.getDpid()];
+		assert(endpoint_l.count(depi.getDpid()) != 0);
+		for(list<string>::iterator u = ep_l.begin(); u != ep_l.end(); u++){
 			string s = (*u);
 			if(s.compare(ep_name) == 0){
 				gport_uuid[depi.getDpid()].remove((*uu));
@@ -1908,10 +1913,10 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 			throw commandsException();
 		}
 
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 		root.clear();
 		params.clear();
