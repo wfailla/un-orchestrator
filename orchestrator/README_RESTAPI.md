@@ -8,8 +8,7 @@ etc.) are detailed in this document.
 ## REST commands accepted by the un-orchestrator
 
 ### NF-FG API
-Deploy an NF-FG called ``myGraph'' (the NF-FG description must be based on the
-formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
+Deploy an NF-FG called ``myGraph'', according to the graph formalism described in [README_NF-FG.md](README_NF-FG.md))
 
     PUT /NF-FG/myGraph HTTP/1.1
     Content-Type : application/json
@@ -40,7 +39,7 @@ formalism defined in WP5 [README_NF-FG.md](README_NF-FG.md))
 				"name": "ingress",
 				"type": "interface",
 				"interface": {
-				  "interface": "eth1"
+				  "if-name": "eth1"
 				}
 			  }
 			],
