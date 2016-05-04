@@ -8,7 +8,7 @@ etc.) are detailed in this document.
 ## REST commands accepted by the un-orchestrator
 
 ### NF-FG API
-Deploy an NF-FG called ``myGraph'', according to the graph formalism described in [README_NF-FG.md](README_NF-FG.md))
+Deploy an NF-FG called ``myGraph'', according to the graph formalism described in [README_NF-FG.md](README_NF-FG.md):
 
     PUT /NF-FG/myGraph HTTP/1.1
     Content-Type : application/json
