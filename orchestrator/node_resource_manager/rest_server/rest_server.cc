@@ -328,8 +328,8 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
 
-		if(!dbmanager->resourceExists(BASE_URL_GROUP, group)) {
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User creation failed: unknown group!");
+		if(!dbmanager->resourceExists(BASE_URL_GROUP, t_group)) {
+			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User creation failed! The group '%s' cannot be recognized!", t_group);
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
 
