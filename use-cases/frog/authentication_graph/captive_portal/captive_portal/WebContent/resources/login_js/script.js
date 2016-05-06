@@ -32,6 +32,43 @@ function sendLoginRequest() {
     }
 }
 
+function sendLogoutRequest() {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "Logout");
+    xmlhttp.onreadystatechange = logoutStatusManager;
+    xmlhttp.send();
+}
+
+function logoutStatusManager() {
+    var response = JSON.parse(xmlhttp.responseText);
+    var status = response['status'];
+    var accountable = response['accountable'];
+    var reason = response['reason'];
+   
+    if (status == 'success') {
+    	console.log('success');
+        var uri = response['uri'];
+        console.log(uri);
+        window.location.replace(uri); 
+    } else {
+         if(accountable == 'controller openflow'){
+        	var errorBox = document.getElementById("error-msg");
+            errorBox.style.display = 'block';
+            console.log("[01] Error: some problems occurr with the SDN controller");
+            errorBox.innerHTML = "Error: internal error [code: 01].";
+        } else if(accountable == 'orchestrator'){
+        	var errorBox = document.getElementById("error-msg");
+            errorBox.style.display = 'block';
+            console.log("[02] Error: some problems occurr with the orchestrator");
+            errorBox.innerHTML = "Error: internal error [code: 02].";
+        } else {
+            var errorBox = document.getElementById("error-msg");
+            errorBox.style.display = 'block';
+            errorBox.innerHTML = "Error: internal error [code: 03].";
+        }
+    }
+}
+
 function loginStatusManager() {
     var response = JSON.parse(xmlhttp.responseText);
     var status = response['status'];
