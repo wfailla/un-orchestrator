@@ -227,6 +227,7 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 
 		strcpy(tmp, "");
 		strcpy(hash_pwd, "");
+		strcpy(nonce, "");
 
 		for (int i = 0; i < HASH_SIZE; i++) {
 			sprintf(tmp, "%x", hash_token[i]);
