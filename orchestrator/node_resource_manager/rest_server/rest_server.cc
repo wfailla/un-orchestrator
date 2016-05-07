@@ -351,9 +351,9 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 		 * user creation permissions for those users that are
 		 * dynamically created via a POST request
 		 */
-		dbm->insertUserCreationPermission(username, BASE_URL_GRAPH, ALLOW);
-		dbm->insertUserCreationPermission(username, BASE_URL_USER, ALLOW);
-		dbm->insertUserCreationPermission(username, BASE_URL_GROUP, ALLOW);
+		dbmanager->insertUserCreationPermission(username, BASE_URL_GRAPH, ALLOW);
+		dbmanager->insertUserCreationPermission(username, BASE_URL_USER, ALLOW);
+		dbmanager->insertUserCreationPermission(username, BASE_URL_GROUP, ALLOW);
 
 
 		delete t_group;
