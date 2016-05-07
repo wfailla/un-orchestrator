@@ -2085,7 +2085,9 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "5) Removing the VNFs and the related ports on the LSI");
 
+#ifdef RUN_NFS
 	ComputeController *computeController = graphInfo.getComputeController();
+#endif
 	list<highlevel::VNFs> vnfs = diff->getVNFs();
 	for(list<highlevel::VNFs>::iterator vnf = vnfs.begin(); vnf != vnfs.end(); vnf++)
 	{
