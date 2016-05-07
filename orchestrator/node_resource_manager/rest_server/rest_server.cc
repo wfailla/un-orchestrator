@@ -347,6 +347,15 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 
 		dbmanager->insertResource(BASE_URL_USER, username, creator->user);
 
+		/* TODO: This is just a provisional solution for handling
+		 * user creation permissions for those users that are
+		 * dynamically created via a POST request
+		 */
+		dbm->insertUserCreationPermission(username, BASE_URL_GRAPH, ALLOW);
+		dbm->insertUserCreationPermission(username, BASE_URL_USER, ALLOW);
+		dbm->insertUserCreationPermission(username, BASE_URL_GROUP, ALLOW);
+
+
 		delete t_group;
 
 		return httpResponse(connection, MHD_HTTP_ACCEPTED);
