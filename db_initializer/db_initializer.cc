@@ -22,7 +22,7 @@ bool initDB(SQLiteManager *dbm, char *pass)
 	if(dbm->createTables()){
 		strcpy(pwd, pass);
 
-		SHA256((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
+		SHA256((const unsigned char*)pwd, strlen(pwd), hash_token);
 
 		for (int i = 0; i < HASH_SIZE; i++) {
 			sprintf(tmp, "%x", hash_token[i]);

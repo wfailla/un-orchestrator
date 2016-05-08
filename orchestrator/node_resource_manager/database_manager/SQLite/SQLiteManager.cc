@@ -190,9 +190,9 @@ bool SQLiteManager::cleanTables() {
 user_info_t *SQLiteManager::getUserByName(const char *username) {
 
 	int rc = 0, res = 0, idx = 0;
-	char *sql = "select USER, MEMBERSHIP, PWD " \
-				"from USERS " \
-				"where USER = @username;";
+	char *sql = "select u.USER, u.MEMBERSHIP, u.PWD, l.TOKEN  " \
+				"from USERS u, LOGIN l " \
+				"where u.USER = l.USER AND u.USER = @username;";
 
 	sqlite3_stmt *stmt;
 	user_info_t *usr = NULL;
@@ -211,7 +211,7 @@ user_info_t *SQLiteManager::getUserByName(const char *username) {
 			usr->user = (char *) sqlite3_column_text(stmt, 0);
 			usr->group = (char *) sqlite3_column_text(stmt, 1);
 			usr->pwd = (char *) sqlite3_column_text(stmt, 2);
-			usr->token = NULL;
+			usr->token = (char *) sqlite3_column_text(stmt, 3);
 		}
 	}
 

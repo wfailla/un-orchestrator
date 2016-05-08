@@ -223,7 +223,7 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
 
-		SHA256((const unsigned char*) password, sizeof(password) - 1, hash_token);
+		SHA256((const unsigned char*) password, strlen(password), hash_token);
 
 		strcpy(tmp, "");
 		strcpy(hash_pwd, "");
@@ -242,8 +242,19 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 		}
 
 		if(dbmanager->isLogged(user_tmp)) {
-			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Client already logged!");
-			return httpResponse(connection, MHD_HTTP_FORBIDDEN);
+			char *token = NULL;
+			user_info_t *pUI = NULL;
+
+			pUI = dbmanager->getUserByName(user_tmp);
+			token = pUI->token;
+
+			response = MHD_create_response_from_buffer (strlen(token),(void*) token, MHD_RESPMEM_PERSISTENT);
+			MHD_add_response_header (response, "Content-Type",TOKEN_TYPE);
+			MHD_add_response_header (response, "Cache-Control",NO_CACHE);
+			ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+			MHD_destroy_response (response);
+
+			return ret;
 		}
 
 		rc = RAND_bytes(temp, sizeof(temp));
@@ -317,7 +328,7 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 
 		strncpy(pwd, password, strlen(password));
 
-		SHA256((const unsigned char*)pwd, sizeof(pwd) - 1, hash_token);
+		SHA256((const unsigned char*)pwd, strlen(pwd), hash_token);
 
 		for (int i = 0; i < HASH_SIZE; i++) {
 			sprintf(tmp, "%x", hash_token[i]);
@@ -354,7 +365,6 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 		dbmanager->insertUserCreationPermission(username, BASE_URL_GRAPH, ALLOW);
 		dbmanager->insertUserCreationPermission(username, BASE_URL_USER, ALLOW);
 		dbmanager->insertUserCreationPermission(username, BASE_URL_GROUP, ALLOW);
-
 
 		delete t_group;
 
