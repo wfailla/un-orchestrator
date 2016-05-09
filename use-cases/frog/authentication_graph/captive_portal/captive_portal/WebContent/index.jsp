@@ -8,6 +8,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width">
     <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+    <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
     	
     <title>Logging in your FROG network</title>
     
@@ -32,7 +33,7 @@
 				</div>
 				<div id="logout" class="fr inline">
 					<img src="resources/images/icons/logout-icon.png">
-					<p><a onClick="sendLogoutRequest();">logout</a></p>
+					<p><a onClick="sendLogoutRequest();"href="#">logout</a></p>
 				</div> 
 		</div>
 		

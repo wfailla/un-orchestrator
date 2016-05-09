@@ -33,6 +33,17 @@ function sendLoginRequest() {
 }
 
 function sendLogoutRequest() {
+
+	var link = document.getElementById("link");
+	var parent = link.parentNode;
+	var inner = document.createElement("img");
+	inner.setAttribute("src","resources/images/icons/ajax-loader.gif");
+	var outer = document.createElement("div");
+	outer.setAttribute("id","loader");
+	outer.appendChild(inner);
+	link.remove();
+	parent.appendChild(outer);
+
     xmlhttp = new XMLHttpRequest();
     xmlhttp.open("POST", "Logout");
     xmlhttp.onreadystatechange = logoutStatusManager;
