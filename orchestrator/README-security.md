@@ -13,7 +13,7 @@ Security Manager is the component that implements the security features availabl
 ## Authorization
 Once a user requests a Read/Update/Delete operation on a resource, the UN follows the steps depicted below.
 ![create-permissions](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/new_master/images/RUD.PNG)
-Depending on the particular operation, the "Perform operation" may not need to access the database (e.g. read a graph).
+For some operations, the "Perform operation" step may not need to access the UN database (e.g. read a graph).
 
 Authorization handling is more complex when the user asks to create a new resource.
 ![rud-permissions](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/new_master/images/Creation.PNG)
