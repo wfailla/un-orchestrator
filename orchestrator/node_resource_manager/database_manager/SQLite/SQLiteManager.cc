@@ -187,12 +187,43 @@ bool SQLiteManager::cleanTables() {
 	return true;
 }
 
-user_info_t *SQLiteManager::getUserByName(const char *username) {
+user_info_t *SQLiteManager::getLoggedUserByName(const char *username) {
 
 	int rc = 0, res = 0, idx = 0;
 	char *sql = "select u.USER, u.MEMBERSHIP, u.PWD, l.TOKEN  " \
 				"from USERS u, LOGIN l " \
 				"where u.USER = l.USER AND u.USER = @username;";
+
+	sqlite3_stmt *stmt;
+	user_info_t *usr = NULL;
+
+	rc = sqlite3_prepare_v2(this->db, sql, -1, &stmt, 0);
+
+	if (rc == SQLITE_OK) {
+		idx = sqlite3_bind_parameter_index(stmt, "@username");
+		sqlite3_bind_text(stmt, idx, username, strlen(username), 0);
+
+		res = sqlite3_step(stmt);
+
+		if (res == SQLITE_ROW) {
+			usr = (user_info_t *) malloc(sizeof(user_info_t));
+
+			usr->user = (char *) sqlite3_column_text(stmt, 0);
+			usr->group = (char *) sqlite3_column_text(stmt, 1);
+			usr->pwd = (char *) sqlite3_column_text(stmt, 2);
+			usr->token = (char *) sqlite3_column_text(stmt, 3);
+		}
+	}
+
+	return usr;
+}
+
+user_info_t *SQLiteManager::getUserByName(const char *username) {
+
+	int rc = 0, res = 0, idx = 0;
+	char *sql = "select USER, MEMBERSHIP, PWD " \
+				"from USERS " \
+				"where USER = @username;";
 
 	sqlite3_stmt *stmt;
 	user_info_t *usr = NULL;

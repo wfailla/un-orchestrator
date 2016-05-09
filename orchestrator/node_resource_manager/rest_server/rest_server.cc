@@ -245,7 +245,7 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 			char *token = NULL;
 			user_info_t *pUI = NULL;
 
-			pUI = dbmanager->getUserByName(user_tmp);
+			pUI = dbmanager->getLoggedUserByName(user_tmp);
 			token = pUI->token;
 
 			response = MHD_create_response_from_buffer (strlen(token),(void*) token, MHD_RESPMEM_PERSISTENT);
@@ -1061,6 +1061,7 @@ int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connect
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Received request for deploying %s/%s", BASE_URL_GRAPH, resource);
 
 	// If security is required, check whether the graph already exists in the database
+	/* this check prevent updates!
 	if(dbmanager != NULL && dbmanager->resourceExists(BASE_URL_GRAPH, resource)) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: cannot deploy an already existing graph in the database!");
 		return httpResponse(connection, MHD_HTTP_FORBIDDEN);
@@ -1070,7 +1071,7 @@ int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connect
 	if(gm->graphExists(resource)) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Error: cannot deploy an already existing graph in the manager!");
 		return httpResponse(connection, MHD_HTTP_FORBIDDEN);
-	}
+	}*/
 
 	string gID(resource);
 
@@ -1091,14 +1092,21 @@ int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connect
 	graph->print();
 
 	try {
-
-		// Deploy the new graph
-		if (!gm->newGraph(graph)) {
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
-			return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
+		if(gm->graphExists(resource)) {
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "An existing graph must be updated");
+			if (!gm->updateGraph(gID,graph)) {
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+				return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
+			}
+		}else{
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");
+			if (!gm->newGraph(graph)) {
+				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
+				return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
+			}
 		}
-
-	} catch (...) {
+	}
+	catch (...) {
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "An error occurred during the creation of the graph!");
 		return httpResponse(connection, MHD_HTTP_INTERNAL_SERVER_ERROR);
 	}

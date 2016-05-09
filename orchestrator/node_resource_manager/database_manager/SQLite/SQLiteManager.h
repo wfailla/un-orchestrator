@@ -80,7 +80,8 @@ public:
 	user_info_t *getUserByToken(const char *token);
 
 	user_info_t *getUserByName(const char *username);
-
+	user_info_t *getLoggedUserByName(const char *username);
+	
 	char *getGroup(const char *user);
 
 	bool isLogged(char *username);
