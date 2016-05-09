@@ -1,8 +1,8 @@
-# Orchestrator Security Module
+# UN Security Module
 
 ## Overview
 
-Security Manager is the component that implements the security features available in the Universal Node orchestrator. Currently, this module exposes the following features:
+Security Manager is the component that implements the security features available in the Universal Node. Currently, this module exposes the following features:
 - User authentication
 - User authorization (i.e. permissions)
 
@@ -11,5 +11,9 @@ Security Manager is the component that implements the security features availabl
 - It authentication is successful, the server provides the user a token, which must be attached to each request
 
 ## Authorization
-- Once the user sends a request, the server checks the authentication token
-- If it matches the one stored in the database, it checks the permissions for that operation. The procedure followed by the server can vary depending on the particular operation requested by the user
+Once a user requests a Read/Update/Delete operation on a resource, the UN follows the steps depicted below.
+![create-permissions](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/new_master/images/RUD.PNG)
+Depending on the particular operation, the "Perform operation" may not need to access the database (e.g. read a graph).
+
+Authorization handling is more complex when the user asks to create a new resource.
+![rud-permissions](https://raw.githubusercontent.com/netgroup-polito/un-orchestrator/new_master/images/Creation.PNG)
