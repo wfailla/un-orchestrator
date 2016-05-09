@@ -25,7 +25,7 @@ bool initDB(SQLiteManager *dbm, char *pass)
 		SHA256((const unsigned char*)pwd, strlen(pwd), hash_token);
 
 		for (int i = 0; i < HASH_SIZE; i++) {
-			sprintf(tmp, "%x", hash_token[i]);
+			sprintf(tmp, "%.2x", hash_token[i]);
 			strcat(hash_pwd, tmp);
 	    }
 

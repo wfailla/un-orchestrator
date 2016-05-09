@@ -230,7 +230,7 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 		strcpy(nonce, "");
 
 		for (int i = 0; i < HASH_SIZE; i++) {
-			sprintf(tmp, "%x", hash_token[i]);
+			sprintf(tmp, "%.2x", hash_token[i]);
 			strcat(hash_pwd, tmp);
 		}
 
@@ -267,7 +267,7 @@ int RestServer::login(struct MHD_Connection *connection, void **con_cls) {
 		strcpy(hash_pwd, "");
 
 		for (int i = 0; i < HASH_SIZE; i++) {
-			sprintf(tmp, "%x", temp[i]);
+			sprintf(tmp, "%.2x", temp[i]);
 			strcat(nonce, tmp);
 		}
 
@@ -331,7 +331,7 @@ int RestServer::createUser(char *username, struct MHD_Connection *connection, co
 		SHA256((const unsigned char*)pwd, strlen(pwd), hash_token);
 
 		for (int i = 0; i < HASH_SIZE; i++) {
-			sprintf(tmp, "%x", hash_token[i]);
+			sprintf(tmp, "%.2x", hash_token[i]);
 			strcat(hash_pwd, tmp);
 		}
 
