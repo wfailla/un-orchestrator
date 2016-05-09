@@ -11,16 +11,6 @@ class RuleRemovedInfo
 {
 public:
 	/**
-	*	This list contains no more than two NFs.
-	*/
-	list<string> nfs;
-
-	/**
-	*	This list contains no more than two ports.
-	*/
-	list<string> ports;
-
-	/**
 	* If the action to be removed contained a NF port, it is inserted here
 	*/
 	string nf_port;

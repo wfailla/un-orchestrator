@@ -229,11 +229,7 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 		{
 			Match match = r->getMatch();
 			Action *action = r->getAction();
-
 			action_t actionType = action->getType();
-			bool matchOnPort = match.matchOnPort();
-			bool matchOnNF = match.matchOnNF();
-			bool matchOnEPInternal = match.matchOnEndPointInternal();
 
 			if(actionType == ACTION_ON_PORT)
 			{
@@ -243,8 +239,6 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				rri.isPort = true;
 				rri.isEndpointInternal = false;
 				rri.isEndpointGre = false;
-
-				rri.ports.push_back(rri.port);
 			}
 			else if(actionType == ACTION_ON_NETWORK_FUNCTION)
 			{
@@ -252,9 +246,6 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				stringstream nf_port;
 				nf_port << ((ActionNetworkFunction*)action)->getInfo() << "_" << ((ActionNetworkFunction*)action)->getPort();
 				rri.nf_port = nf_port.str();
-
-				//Potentially, the NF is useless in the graph
-				rri.nfs.push_back(((ActionNetworkFunction*)action)->getInfo());
 				rri.isNFport = true;
 				rri.isPort = false;
 				rri.isEndpointInternal = false;
@@ -279,29 +270,6 @@ RuleRemovedInfo Graph::removeRuleFromID(string ID)
 				rri.isPort = false;
 				rri.isEndpointInternal = true;
 				rri.isEndpointGre = false;
-			}
-
-			//TODO: understand what is this thing	- IVANO
-			//TODO: probably the next statement is useless
-
-			if(matchOnNF)
-				//Potentially, the NF is useless in the graph
-				rri.nfs.push_back(match.getNF());
-			else if(matchOnPort)
-				//Potentially, the port is useless in the graph
-				rri.ports.push_back(match.getPhysicalPort());
-			else
-			{
-				if(matchOnEPInternal)
-				{
-					stringstream ss;
-					ss << match.getEndPointInternal();
-					rri.endpointInternal = ss.str();
-				}
-				else
-				{
-					rri.endpointGre = match.getEndPointGre();
-				}
 			}
 
 			//finally, remove the rule!
@@ -604,7 +572,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		}//end itearation on the VNFs already deployed
 		if(!alreadyThere)
 		{
-			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new VNF is required - ID: '%s' - name: '%s'", (it->getId()).c_str(),(it->getName()).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "A new VNF is required - ID: '%s' - name: '%s'", (it->getId()).c_str(),(it->getName()).c_str());
 			diff->addVNF(*it);
 		}
 	}//end iteration on the VNFs required by the update
@@ -633,10 +601,10 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		if(!found)
 		{
 			diff->addEndPointInterface(*new_interface);
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Interface endpoint %s is added the to graph",(new_interface->getInterface()).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Interface endpoint %s is added the to the diff graph",(new_interface->getInterface()).c_str());
 		}
 		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Interface endpoint %s is already in the graph",(new_interface->getInterface()).c_str());
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Interface endpoint %s is already in the graph",(new_interface->getInterface()).c_str());
 	}
 
 	// c-2) gre-tunnel endpoints
@@ -659,11 +627,11 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 
 		if(!found)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is added to the graph",new_gre->getId().c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is added to the diff graph",new_gre->getId().c_str());
 			diff->addEndPointGre(*new_gre);
 		}
 		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is already in the graph",new_gre->getId().c_str());
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "GRE endpoint %s is already in the graph",new_gre->getId().c_str());
 	}
 
 	// c-3) internal endpoints
@@ -686,11 +654,11 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 
 		if(!found)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is added to the graph",(new_internal->getGroup()).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is added to the diff graph",(new_internal->getGroup()).c_str());
 			diff->addEndPointInternal(*new_internal);
 		}
 		else
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",(new_internal->getGroup()).c_str());
+			logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "Internal endpoint %s is already in the graph",(new_internal->getGroup()).c_str());
 	}
 
 	// c-4) vlan endpoints
@@ -714,7 +682,7 @@ Graph *Graph::calculateDiff(Graph *other, string graphID)
 		if(!found)
 		{
 			diff->addEndPointVlan(*new_vlan);
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is added to the graph",(new_vlan->getVlanId()).c_str());
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is added to the diff graph",(new_vlan->getVlanId()).c_str());
 		}
 		else
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Vlan endpoint %s is already in the graph",(new_vlan)->getVlanId().c_str());

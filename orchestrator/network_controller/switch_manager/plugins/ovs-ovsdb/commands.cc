@@ -661,9 +661,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_port(%s,type=%s)", p.c_str(), portTypeToString(port_type).c_str());
 
 	//connect socket
-    	s = cmd_connect();
+	s = cmd_connect();
 
-    	//Default port name on the switch (may be overriden later for specific port types)
+	//Default port name on the switch (may be overriden later for specific port types)
 	stringstream pnos;
 	pnos << dnumber << "_" << p;
 	string port_name_on_switch = pnos.str();
@@ -1032,7 +1032,9 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 
 void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_ip[BUF_SIZE], char key[BUF_SIZE], char port_name[BUF_SIZE], char ifac[BUF_SIZE], int s, char is_safe[BUF_SIZE])
 {
-    ssize_t nwritten;
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_endpoint(local ip=%s,remote ip=%s,key=%s,port name=%s,iface=%s)",local_ip,remote_ip,key,port_name,ifac);
+
+	ssize_t nwritten;
 
 	char read_buf[BUFFER_SIZE] = "";
 
@@ -1275,17 +1277,17 @@ void commands::add_endpoint(uint64_t dpi, char local_ip[BUF_SIZE], char remote_i
 		throw commandsException();
 	}
 
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Result of query: ");
 
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
 
-	logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Response json: ");
 
 	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 	Value value;
-    	read( read_buf, value );
-    	Object rootNode = value.getObject();
+	read( read_buf, value );
+	Object rootNode = value.getObject();
 
 	for (Object::const_iterator it = rootNode.begin(); it != rootNode.end(); ++it)
 	{
@@ -1518,6 +1520,7 @@ AddEndpointOut *commands::cmd_editconfig_endpoint(AddEndpointIn aepi, int s)
 	char safe[BUF_SIZE];
 
 	string id = aepi.getEPname();
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "add_endpoint(name=%s)",id.c_str());
 
 	/*save the params of gre tunnel*/
 	vector<string> l_param = aepi.getEPparam();
@@ -1754,9 +1757,10 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 
 	locale loc;
 
-	map<string, unsigned int> ports;
+//	map<string, unsigned int> ports;
 
 	string ep_name = depi.getEPname();
+	logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "endpoint_delete(name=%s)",ep_name.c_str());
 
 	Object root, first_obj, second_obj, row;
 	Array params, iface, iface1, iface2, where, port1, port2, i_array;
@@ -1768,7 +1772,7 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 	Array fourth_object;
 
 	//connect socket
-    	s = cmd_connect();
+	s = cmd_connect();
 
 	if(ep_name.compare("") != 0){
 
@@ -1785,6 +1789,8 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 		fourth_object.push_back("uuid");
 		fourth_object.push_back(switch_uuid[depi.getDpid()].c_str());
 
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "switch_uuid[depi.getDpid()]=%s",switch_uuid[depi.getDpid()].c_str());
+
 		third_object.push_back(fourth_object);
 		where.push_back(third_object);
 
@@ -1792,14 +1798,20 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 
 		where.clear();
 
-		list<string>::iterator uu = gport_uuid[depi.getDpid()].begin();
+		list<string>::iterator uu = gport_uuid[depi.getDpid()].begin(); //list of uuid related to tunnel GRE
+		assert(gport_uuid.count(depi.getDpid()) != 0);
+//		uu = gport_uuid[depi.getDpid()].begin();
 
-		uu = gport_uuid[depi.getDpid()].begin();
 		//should be search in endpoint_l, p....if find it take the index and remove it from the set endpoint-uuid[pi]
-		for(list<string>::iterator u = endpoint_l[depi.getDpid()].begin(); u != endpoint_l[depi.getDpid()].end(); u++){
+		list<string> ep_l = endpoint_l[depi.getDpid()];
+		assert(endpoint_l.count(depi.getDpid()) != 0);
+		//iterate on all the gre tunnels that are part of this bridge
+		for(list<string>::iterator u = ep_l.begin(); u != ep_l.end(); u++){
 			string s = (*u);
 			if(s.compare(ep_name) == 0){
 				gport_uuid[depi.getDpid()].remove((*uu));
+				ep_l.erase(u);
+				endpoint_l[depi.getDpid()] = ep_l;
 				break;
 			}
 			uu++;
@@ -1904,10 +1916,10 @@ void commands::cmd_editconfig_endpoint_delete(DestroyEndpointIn depi, int s){
 			throw commandsException();
 		}
 
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
-		logger(ORCH_DEBUG, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Message sent to ovs: ");
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, ss.str().c_str());
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Answer: ");
+		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, read_buf);
 
 		root.clear();
 		params.clear();

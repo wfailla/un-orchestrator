@@ -1550,7 +1550,7 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 	/**
 	*	0) Calculate the diff ad check the validity of the update
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the new pieces of the graph");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the new parts of the graph");
 	highlevel::Graph *diff = graph->calculateDiff(newGraph, graphID);
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The diff graph is:");
@@ -1571,7 +1571,7 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "1) Update the high level graph");
 
 	graph->addGraphToGraph(diff);
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The final graph is:");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The deployed graph + the new new parts is:");
 	graph->print();
 
 	/**
@@ -1850,6 +1850,8 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 		else
 			ep_param[4] = "false";
 
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(ep->getId()).c_str());
+
 		AddEndpointOut *aepo = NULL;
 		try
 		{
@@ -1887,7 +1889,7 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 	*	3-d) condider the internal endpoints
 	*/
 	list<highlevel::EndPointInternal> tmp_internal_endpoints = diff->getEndPointsInternal();
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-c) considering the new internal endpoints (%d)",tmp_internal_endpoints.size());
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3-d) considering the new internal endpoints (%d)",tmp_internal_endpoints.size());
 
 	for(list<highlevel::EndPointInternal>::iterator ep = tmp_internal_endpoints.begin(); ep != tmp_internal_endpoints.end(); ep++)
 	{
@@ -1951,7 +1953,7 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 
 bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph)
 {
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' by removing 'pieces'...",graphID.c_str());
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Updating the graph '%s' by removing parts...",graphID.c_str());
 
 	assert(tenantLSIs.count(graphID) != 0);
 
@@ -1994,7 +1996,7 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 	/**
 	*	0) Calculate the diff
 	*/
-	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the pieces to be removed from the graph");
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Calculate the parts to be removed from the graph");
 	highlevel::Graph *diff = newGraph->calculateDiff(graph, graphID);
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The diff graph is:");
@@ -2089,7 +2091,9 @@ bool GraphManager::updateGraph_remove(string graphID, highlevel::Graph *newGraph
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "5) Removing the VNFs and the related ports on the LSI");
 
+#ifdef RUN_NFS
 	ComputeController *computeController = graphInfo.getComputeController();
+#endif
 	list<highlevel::VNFs> vnfs = diff->getVNFs();
 	for(list<highlevel::VNFs>::iterator vnf = vnfs.begin(); vnf != vnfs.end(); vnf++)
 	{

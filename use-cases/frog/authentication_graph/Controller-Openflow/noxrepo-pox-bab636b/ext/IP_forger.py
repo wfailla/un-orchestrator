@@ -230,7 +230,7 @@ def my_socket(connection,*args):
                             log.info("For the MAC " + str(port_id)+ " sending data to CP...")
                             #time.sleep(0.5)
                             #Send some data to remote server
-                            data = {'Msg_Type':'Auth_OK_Resp', 'Msg_Content':'','IP_address':switch.infos.sock.getpeername()[0],'MAC':my_dpid_to_str(switch.infos.dpid),'user_MAC':MAC.toStr(),'user_port':str(client.switch_port)}
+                            data = {'Msg_Type':'Auth_OK_Resp', 'Msg_Content':'','IP_address':switch.infos.sock.getpeername()[0],'MAC':my_dpid_to_str(switch.infos.dpid),'user_MAC':MAC.toStr(),'user_port':str(switch.infos.ports[client.switch_port].name)}
                             print(json.dumps(data))
                             try :
                                 #Set the whole string
@@ -241,34 +241,90 @@ def my_socket(connection,*args):
                                 sys.exit()
                             print ('Message 1 send successfully')
         elif data['Msg_Type'] == 'Deploy_OK':
-                log.warning("returned Deploy_OK from Captive Portal")
-                IP_address = data['IP_address']
-                for swich_id, switch in switchs_info.iteritems():
-                    for port_id, port in switch.ports_info.iteritems():
-                        for MAC, client in port.clients_info.iteritems():
-                            if client.IP == IP_address:
-                                lock.acquire()
-                                try:
-                                    log.warning("Setting flag_auth to 1")
-                                    client.flag_auth = 1
-                                finally:
-                                    lock.release() # release lock, no matter what
-                                log.info("Deploy OK received")
-                                log.info("Reconfigure the switch")
-                                #1) del "port" flows
-                                connection.send( of.ofp_flow_mod( command = of.OFPFC_DELETE,
-                                                    match=of.ofp_match( in_port = port_id, dl_src = client.MAC)))
+            log.warning("returned Deploy_OK from Captive Portal")
+            cptv = server_infos(conf.captive_portal.ip, conf.captive_portal.mac, conf.captive_portal.switch_port,conf.captive_portal.tcp_port)
+            IP_address = data['IP_address']
+            for swich_id, switch in switchs_info.iteritems():
+                for port_id, port in switch.ports_info.iteritems():
+                    for MAC, client in port.clients_info.iteritems():
+                        if client.IP == IP_address:
+                            lock.acquire()
+                            try:
+                                log.warning("Setting flag_auth to 1")
+                                client.flag_auth = 1
+                            finally:
+                                lock.release() # release lock, no matter what
+                            log.info("Deploy OK received")
+                            log.info("Reconfigure the switch")
 
-                                data = {'Msg_Type':'Deploy_OK_Resp', 'Msg_Content':'' }
-                                print(json.dumps(data))
-                                try :
-                                    #Set the whole string
-                                    conn.sendall(json.dumps(data)+"\r\n")
-                                except socket.error:
-                                    #Send failed
-                                    print ('Send failed')
-                                    sys.exit()
-                                print ('Message 2 send successfully')
+                            #1) del "port" flows
+                            connection.send( of.ofp_flow_mod( command = of.OFPFC_DELETE, match=of.ofp_match( in_port = port_id, dl_src = client.MAC)))
+                            #2) new rule to allow authenticated user to reach captive_portal
+                            msg = of.ofp_flow_mod()
+                            msg.priority = 10000
+                            msg.match.dl_type = 0x800
+                            msg.match.dl_src = client.MAC
+                            #msg.match.nw_proto = 6
+                            msg.match.nw_dst = cptv.IP
+                            msg.match.in_port = client.switch_port
+                            msg.actions.append(of.ofp_action_output(port=cptv.switch_port))
+                            connection.send(msg)
+                            # msg = of.ofp_flow_mod()
+                            # msg.priority = 10000
+                            # msg.match.dl_type = 0x806
+                            # msg.match.dl_src = client.MAC
+                            # msg.match.arp_tpa = cptv.IP
+                            # msg.match.in_port = client.switch_port
+                            # msg.actions.append(of.ofp_action_output(port=cptv.switch_port))
+                            # connection.send(msg)
+
+                            data = {'Msg_Type':'Deploy_OK_Resp', 'Msg_Content':'' }
+                            print(json.dumps(data))
+                            try :
+                                #Set the whole string
+                                conn.sendall(json.dumps(data)+"\r\n")
+                            except socket.error:
+                                #Send failed
+                                print ('Send failed')
+                                sys.exit()
+                            print ('Message 2 send successfully')
+
+        elif data['Msg_Type'] == 'Delete_OK':
+            log.warning("returned Delete_OK from Captive Portal")
+            cptv = server_infos(conf.captive_portal.ip, conf.captive_portal.mac, conf.captive_portal.switch_port,
+                                conf.captive_portal.tcp_port)
+            IP_address = data['IP_address']
+            for swich_id, switch in switchs_info.iteritems():
+                for port_id, port in switch.ports_info.iteritems():
+                    for MAC, client in port.clients_info.iteritems():
+                        if client.IP == IP_address:
+                            lock.acquire()
+                            try:
+                                log.warning("Setting flag_auth to 0")
+                                client.flag_auth = 0
+                            finally:
+                                lock.release()  # release lock, no matter what
+                            log.info("Delete OK received")
+                            log.info("Reconfigure the switch")
+
+                            # 1) del "port" flows
+                            connection.send(
+                                of.ofp_flow_mod(command=of.OFPFC_DELETE, match=of.ofp_match(in_port=port_id, dl_src=client.MAC)))
+
+                            data = {'Msg_Type': 'Delete_OK_Resp', 'Msg_Content': ''}
+                            print(json.dumps(data))
+                            try:
+                                # Set the whole string
+                                conn.sendall(json.dumps(data) + "\r\n")
+                            except socket.error:
+                                # Send failed
+                                print ('Send failed')
+                                sys.exit()
+                            print ('Message 2 send successfully')
+
+
+
+
         else:
             log.warning("unknown message returned from Captive Portal")
 
@@ -425,7 +481,7 @@ class IPForger (object):
                     log.info("packet.src is not in client_list")
                     lock.acquire()
                     try:
-                        log.info("save host info: IP=" + str(ipv4_hdr.srcip) + ", MAC=" + str(packet.src) + ", INGRESS_SWITCH_PORT=" + str(event.port))
+                        log.info("save host info: IP=" + str(ipv4_hdr.srcip) + ", MAC=" + str(packet.src) + ", INGRESS_SWITCH_PORT=" + str(switch.infos.ports[event.port].name))
                         client_list[packet.src] = host_infos(ipv4_hdr.srcip,packet.src,event.port,0)
                     finally:
                         lock.release() # release lock, no matter what
@@ -440,7 +496,6 @@ class IPForger (object):
 
                 client = client_list[packet.src]
                 if (client.flag_auth == 0):
-
                     log.info("installing new flow to set destination IP to captive portal IP")
                     msg = of.ofp_flow_mod()
                     msg.priority = 10000
@@ -474,6 +529,7 @@ class IPForger (object):
                     msg.actions.append(of.ofp_action_output(port=event.port))
                     msg.data = event.ofp
                     self.connection.send(msg)
+                '''
                 else:
                     log.warning("Auth user")
                     self.connection.send( of.ofp_flow_mod( command = of.OFPFC_DELETE,
@@ -492,7 +548,7 @@ class IPForger (object):
                     #self.connection.send( of.ofp_flow_mod( action=of.ofp_action_output(port=of.OFPP_NORMAL),
                      #                      priority=1,
                       #                     match=of.ofp_match( in_port = conf.my_infos.my_default_GRE_tunnel)))
-
+                      '''
 class Singleton(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
