@@ -229,7 +229,7 @@ void LSI::setNetworkFunctionsPortsNameOnSwitch(string nf, map<string, unsigned i
 	
 
 	for (map<string, unsigned int>::iterator n_it = names.begin(); n_it != names.end(); ++n_it) {
-		logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "Setting the network names port of %s %d", n_it->first.c_str(), n_it->second);
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Setting the network names port of %s %d", n_it->first.c_str(), n_it->second);
 		nf_data.ports_name_on_switch.insert(map<unsigned int, string>::value_type(n_it->second, n_it->first));
 	}
 }
