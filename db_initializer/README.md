@@ -1,7 +1,7 @@
-#Database Initalizer
+# Database Initalizer
 
 
-##Overview
+## Overview
 
 Database Initializer is the module responsible for creating and populating the database of the Universal Node orchestrator. The tables involved are briefly described below:
 - Users: specifies information about users (e.g. password, group, ...)
@@ -19,4 +19,6 @@ Compile:
 	
 Run: 
 
-	$ sudo ./db_initializer <default-user-password>
+	$ sudo ./db_initializer <default-admin-password>
+
+This will create the user database with minimal data in it, with a standard user 'admin' associated to the password specified in the command line.
