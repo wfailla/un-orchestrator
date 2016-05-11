@@ -27,7 +27,7 @@ some more components are required to run the virtualizer.
 
 	; Install other required libraries 
 	$ sudo apt-get install python-pip
-	$ sudo pip install gunicorn falcon cython enum
+	$ sudo pip install gunicorn falcon cython requests
 
 The virtualizer module relies on the virtualizer library (v5) that is not included in this repository but it can be found on the UNIFY repository.
 
