@@ -345,7 +345,7 @@ bool GraphManager::deleteGraph(string graphID)
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "0) Remove the rules from the LSI-0");
 
-	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),un_interface,internalLSIsConnections,orchestrator_in_band,false);
+	lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(highLevelGraph,tenantLSI,graphInfoLSI0.getLSI(),internalLSIsConnections,false);
 	graphLSI0lowLevel.removeRules(graphLSI0.getRules());
 
 	//Remove rules from the LSI-0
@@ -1087,7 +1087,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	try
 	{
 		//creates the rules for LSI-0 and for the tenant-LSI
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph, lsi, graphInfoLSI0.getLSI(), un_interface, internalLSIsConnections, orchestrator_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(graph, lsi, graphInfoLSI0.getLSI(), internalLSIsConnections);
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New graph for LSI-0:");
 		graphLSI0.print();
 
@@ -1469,7 +1469,7 @@ bool GraphManager::updateGraph_add_rules(string graphID, highlevel::Graph *diff)
 	{
 		//creates the new rules for LSI-0 and for the tenant-LSI
 
-		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(diff,lsi,graphInfoLSI0.getLSI(),un_interface,internalLSIsConnections,orchestrator_in_band);
+		lowlevel::Graph graphLSI0 = GraphTranslator::lowerGraphToLSI0(diff,lsi,graphInfoLSI0.getLSI(),internalLSIsConnections);
 
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "New piece of graph for LSI-0:");
 		graphLSI0.print();
