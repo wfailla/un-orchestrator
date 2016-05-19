@@ -117,7 +117,7 @@ bool Native::updateNF(UpdateNFIn uni)
 	uint64_t lsiID = uni.getLsiID();
 	std::string nf_name = uni.getNfName();
 	map<unsigned int, string> namesOfPortsOnTheSwitch = uni.getNamesOfPortsOnTheSwitch();
-	list<unsigned int> newPorts = uni.newPortsToAdd();
+	list<unsigned int> newPorts = uni.getNewPortsToAdd();
 	unsigned int n_ports = newPorts.size();
 
 	std::stringstream uri;
@@ -141,7 +141,7 @@ bool Native::updateNF(UpdateNFIn uni)
 	for(list<unsigned int>::iterator pn = newPorts.begin(); pn != newPorts.end(); pn++)
 	{
 		assert(namesOfPortsOnTheSwitch.find(*pn)!=namesOfPortsOnTheSwitch.end());
-		command << " " << namesOfPortsOnTheSwitch[(*it)];
+		command << " " << namesOfPortsOnTheSwitch[(*pn)];
 	}
 
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"",command.str().c_str());
