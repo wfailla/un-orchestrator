@@ -48,7 +48,7 @@ using namespace std;
 
 typedef struct
 	{
-		string nf_name;
+		string nf_id;
 		unsigned int number_of_ports;
 		ComputeController *computeController;
 

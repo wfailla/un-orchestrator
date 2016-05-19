@@ -1,4 +1,5 @@
 #include "rest_server.h"
+#include "../database_manager/SQLite/SQLiteManager.h"
 
 GraphManager *RestServer::gm = NULL;
 SQLiteManager *dbmanager = NULL;
@@ -595,11 +596,10 @@ int RestServer::doOperationOnResource(struct MHD_Connection *connection, struct 
 			logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "User not authorized to execute %s on %s", method, resource);
 			return httpResponse(connection, MHD_HTTP_UNAUTHORIZED);
 		}
-
 		if(strcmp(generic_resource, BASE_URL_GRAPH) == 0)
-			return deployNewGraph(connection, con_info, (char *) resource, usr->user);
+			return deployNewGraph(connection, con_info, (char *) resource, usr);
 		else if(strcmp(generic_resource, BASE_URL_GROUP) == 0)
-			return createGroup(connection, con_info, (char *) resource, usr->user);;
+			return createGroup(connection, con_info, (char *) resource, usr);;
 
 	// DELETE: for single resource, it can be only deletion... at the moment!
 	} else if(strcmp(method, DELETE) == 0) {
@@ -1017,7 +1017,7 @@ int RestServer::readMultipleGraphs(struct MHD_Connection *connection, user_info_
 	}
 }
 
-int RestServer::createGroup(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner) {
+int RestServer::createGroup(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, user_info_t *usr) {
 
 	assert(dbmanager != NULL);
 
@@ -1037,7 +1037,7 @@ int RestServer::createGroup(struct MHD_Connection *connection, struct connection
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "%s", con_info->message);
 
 	// Update database
-	dbmanager->insertResource(BASE_URL_GROUP, resource, owner);
+	dbmanager->insertResource(BASE_URL_GROUP, resource, usr->user);
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The group has been properly created!");
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
@@ -1053,7 +1053,7 @@ int RestServer::createGroup(struct MHD_Connection *connection, struct connection
 	return ret;
 }
 
-int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner) {
+int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, user_info_t *usr) {
 
 	int ret = 0;
 	struct MHD_Response *response;
@@ -1113,7 +1113,7 @@ int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connect
 
 	// If security is required, update database
 	if(dbmanager != NULL)
-		dbmanager->insertResource(BASE_URL_GRAPH, resource, owner);
+		dbmanager->insertResource(BASE_URL_GRAPH, resource, usr->user);
 
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly created!");
 	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");

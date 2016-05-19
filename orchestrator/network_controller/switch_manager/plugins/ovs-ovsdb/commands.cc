@@ -1504,7 +1504,7 @@ AddNFportsOut *commands::cmd_editconfig_NFPorts(AddNFportsIn anpi, int socketNum
 		logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Port '%s' has name '%s' on the switch.",(pinfo->port_name).c_str(),nameOnSwitch.c_str());
 	}
 
-	AddNFportsOut *anf = new AddNFportsOut(anpi.getNFname(), ports, ports_name_on_switch);
+	AddNFportsOut *anf = new AddNFportsOut(anpi.getNfId(), ports, ports_name_on_switch);
 
 	return anf;
 }

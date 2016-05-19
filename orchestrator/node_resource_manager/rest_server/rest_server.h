@@ -114,9 +114,9 @@ private:
 
 	static bool isLoginRequest(const char *method, const char *url);
 
-	static int deployNewGraph(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner);
+	static int deployNewGraph(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, user_info_t *usr);
 
-	static int createGroup(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, char *owner);
+	static int createGroup(struct MHD_Connection *connection, struct connection_info_struct *con_info, char *resource, user_info_t *usr);
 
 	static int deleteGraph(struct MHD_Connection *connection, char *resource);
 	static int deleteUser(struct MHD_Connection *connection, char *username);
