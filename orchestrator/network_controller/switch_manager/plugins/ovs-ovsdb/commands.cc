@@ -741,7 +741,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 		{
 			//In this case the veth pair needs to be created! The pair of names is stored; this information will be used when the VNF will be destroyed
 			stringstream peer_port_name;
-			peer_port_name << port_name << ".lxc";
+			peer_port_name << port_name << ".d";
 			stringstream cmd_create_veth_pair;
 			cmd_create_veth_pair << CREATE_VETH_PAIR << " " << port_name << " " << peer_port_name.str();
 			logger(ORCH_DEBUG_INFO, OVSDB_MODULE_NAME, __FILE__, __LINE__, "Executing command \"%s\"", cmd_create_veth_pair.str().c_str());
@@ -754,7 +754,7 @@ string commands::add_port(string p, uint64_t dnumber, bool is_nf_port, int s, Po
 			}
 
 			//	The veth pair peer given to the container is the one with the port_name as derived from the NF-FG.
-			//	As a result, the veth pair peer we add to OVS is the one with the decorated name: port_name.lxc
+			//	As a result, the veth pair peer we add to OVS is the one with the decorated name: port_name.d
 			peersNames[port_name] = peer_port_name.str();
 
 			port_name = peer_port_name.str();
