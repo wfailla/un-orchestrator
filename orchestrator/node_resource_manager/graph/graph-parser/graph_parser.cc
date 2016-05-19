@@ -154,7 +154,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									else if(nf_name == _ID)
 									{
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",VNFS,_ID,nf_value.getString().c_str());
-										string forDebug =  nf_value.getString();
 										//store value of VNF id
 										id.assign(nf_value.getString().c_str());
 									}

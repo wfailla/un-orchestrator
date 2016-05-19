@@ -1098,12 +1098,16 @@ int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connect
 				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
 				return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
 			}
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly updated!");
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
 		}else{
 			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "A new graph must be created");
 			if (!gm->newGraph(graph)) {
 				logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph description is not valid!");
 				return httpResponse(connection, MHD_HTTP_BAD_REQUEST);
 			}
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly created!");
+			logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
 		}
 	}
 	catch (...) {
@@ -1114,9 +1118,6 @@ int RestServer::deployNewGraph(struct MHD_Connection *connection, struct connect
 	// If security is required, update database
 	if(dbmanager != NULL)
 		dbmanager->insertResource(BASE_URL_GRAPH, resource, usr->user);
-
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "The graph has been properly created!");
-	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__, "");
 
 	//TODO: put the proper content in the answer
 	response = MHD_create_response_from_buffer(0, (void*) "", MHD_RESPMEM_PERSISTENT);
