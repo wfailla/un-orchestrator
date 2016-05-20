@@ -1,7 +1,5 @@
 # POX Controller - IP_forger module
 
-The source code is a mirror of the POX code repository located at https://github.com/noxrepo/pox
-
 The source files of the implemented module are located in the "ext" directory. In particular
   - ext/IP_forger.py: is the main module
   - ext/Config.py: is a utily class used for read configuration paramenters
