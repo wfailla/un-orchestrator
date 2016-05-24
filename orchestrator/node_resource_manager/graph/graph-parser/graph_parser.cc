@@ -11,7 +11,6 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 	//for each endpoint (vlan), contains the pair vlan id, interface
 	map<string, pair<string, string> > vlan_id; //XXX: currently, this information is ignored
 
-
 	/**
 	*	The graph is defined according to this schema:
 	*		https://github.com/netgroup-polito/nffg-library/blob/master/schema.json
@@ -680,6 +679,52 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The \"%s\" element does not respect the JSON syntax: \"%s\"", EP_GRE, e.what());
 											return false;
 										}
+									}
+									else if(ep_name == EP_MANAGEMENT)
+									{
+										try
+										{
+											ep_value.getObject();
+										} catch(exception& e)
+										{
+											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", EP_MANAGEMENT);
+											return false;
+										}
+
+										Object ep_management = ep_value.getObject();
+										bool isStatic;
+										string ipAddress;
+										string netmask;
+
+										for(Object::const_iterator epm = ep_management.begin(); epm != ep_management.end(); epm++)
+										{
+											const string& epm_name  = epm->first;
+											const Value&  epm_value = epm->second;
+
+
+											if(epm_name == STATIC_ADDRESS)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_MANAGEMENT,STATIC_ADDRESS,epm_value.getBool());
+												isStatic=epm_value.getBool();
+											}
+											else if(epm_name == IP_ADDRESS)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_MANAGEMENT,IP_ADDRESS,epm_value.getString().c_str());
+												ipAddress=epm_value.getString();
+											}
+											else if(epm_name == NETMASK)
+											{
+												logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",EP_MANAGEMENT,NETMASK,epm_value.getString().c_str());
+												netmask=epm_value.getString();
+											}
+											else
+											{
+												logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "Invalid key \"%s\" inside \"%s\"",epm_name.c_str(),EP_MANAGEMENT);
+												return false;
+											}
+										}
+										highlevel::EndPointManagement ep_mng(id, e_name, isStatic, ipAddress, netmask);
+										graph.addEndPointManagement(ep_mng);
 									}
 									else
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());

@@ -71,7 +71,10 @@
 			#define SAFE			"secure"
 		#define VLAN			"vlan"
 			#define V_ID			"vlan-id"
-
+		#define EP_MANAGEMENT	"management"
+			#define STATIC_ADDRESS	"static-address"
+			#define IP_ADDRESS		"ip-address"
+			#define NETMASK			"netmask"
 	#define BIG_SWITCH		"big-switch"
 		#define FLOW_RULES		"flow-rules"
 			#define _ID				"id"
