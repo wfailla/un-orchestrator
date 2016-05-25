@@ -29,9 +29,9 @@ The ryu application starts a REST API wsgi server.
 Port 5000 is used by the ryu application. This port needs to be exposed from the docker container if to reach this REST API from outside the container.
 It is possible to trigger a scaling action via this interface like this (assuming port 5000 is exposed and mapped):
 
-* `curl -X GET localhost:5000/scale/out` triggers a scale out action and scales the elastic router to 4 data path containers instead of one.
+* `curl -X GET localhost:5000/scale/out` triggers a scale out action and scales the elastic router from a single data path to a separate data path container for each port.
 
-* `curl -x GET localhost:5000/scale/in` triggers a scale in action and deploys again one data path container.
+* `curl -x GET localhost:5000/scale/in` triggers a scale in action and shifts again one data path container for all ports.
 
 ### SSH access
 The deployed container starts an SSH server on port 22 inside the ctrl_app container.

@@ -114,7 +114,7 @@ class ElasticRouterMonitor:
 
         if len(scaling_out_ports) > 0:
             self.scaling_lock.acquire()
-            logging.info('scaling out: {0} ports: {1}'.format(this_DP.name,scaling_out_ports ))
+            logging.info('scaling out: {0} ports: {1}'.format(this_DP.name, scaling_out_ports))
 
         return scaling_out_ports
 
