@@ -52,8 +52,8 @@ You can check the flow-tables of the deployed ovs container via remotely ssh log
     docker exec -it 2_ovs1 ovs-ofctl dump-flows ovs1
     
 The Orchestrator of the UN has now deployed a Control App (`ctrl` container) and a Data Path (`ovs` container).
-The elastic router control app deployed in the `ctrl` container has a rest api exposed at port 9000, which can be used to manually trigger a scale action via the Cf-Or interfac eof the UN orchestrator:
+The elastic router control app deployed in the `ctrl` container has a rest api exposed at port 9000, which can be used to manually trigger a scale action via the Cf-Or interface of the UN orchestrator:
 
-* `curl -X GET localhost:9000/scale/out` triggers a scale out action and scales the elasticr router to 4 data path containers instead of one.
+* `curl -X GET localhost:9000/scale/out` triggers a scale out action and scales the elastic router to 4 data path containers instead of one.
 
 * `curl -x GET localhost:9000/scale/in` triggers a scale in action and deploys again one data path container.

@@ -24,17 +24,24 @@ The script start.sh is executed at startup and starts:
 
 IP address, Cf-Or interface address, are imported from the nffg.
 
-### SSH access
-The deployed containers expose a SSH login port to the public ip of the UN where they are deployed.
-Port 9000 is forwarded to port 22 inside the ctrl_app container.
+### REST API
+The ryu application starts a REST API wsgi server.
+Port 5000 is used by the ryu application. This port needs to be exposed from the docker container if to reach this REST API from outside the container.
+It is possible to trigger a scaling action via this interface like this (assuming port 5000 is exposed and mapped):
 
-SSH login can be done via `ssh root@localhost -p 9000` (to reach ctrl1 container via exposed port 9000)
+* `curl -X GET localhost:5000/scale/out` triggers a scale out action and scales the elastic router to 4 data path containers instead of one.
+
+* `curl -x GET localhost:5000/scale/in` triggers a scale in action and deploys again one data path container.
+
+### SSH access
+The deployed container starts an SSH server on port 22 inside the ctrl_app container.
+
+SSH login can be done via `ssh root@localhost -p <mapped_port_to_22>` (to reach the ctrl container via exposed port)
 SSH login credentials for the VNF containers:
 * user: root
 * password: root
 
-
 To avoid password entering, a public key can be added to the `authorized_keys` file.
 The fingerprint of the container changes on each build. SSH login complains about this because the fingerprint stored in  .ssh/known_hosts has changed after a new build. (This can be a man-in-the-middle attack).
 
-To avoid this error, the  fingerprint of the container can be removed from .ssh/known_hosts or this command can be used to login via ssh: `ssh -o StrictHostKeyChecking=no root@localhost -p 9000`
+To avoid this error, the  fingerprint of the container can be removed from .ssh/known_hosts or this command can be used to login via ssh: `ssh -o StrictHostKeyChecking=no root@localhost -p <mapped_port_to_22>`
