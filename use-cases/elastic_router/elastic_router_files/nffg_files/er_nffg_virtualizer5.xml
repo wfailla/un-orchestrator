@@ -121,7 +121,7 @@
 									UN orchestrator should translate this to an env variable:
 									"variable": "CFOR=<escape ip>:8889"
 								-->
-								<orchestrator>http://<escape ip>:8889/</orchestrator>
+								<orchestrator>http://"escape ip":8889/</orchestrator>
 							</control>
 							<addresses>
 								<!-- 
@@ -133,7 +133,7 @@
 								<!-- request public port to be forwarded to VNF port 22 (for ssh login/configuration interface) -->
 								<l4>{'tcp/22'}</l4>
 								<!-- reply: (UN) orchestrator fills the actual ip address+port -->
-								<l4>{'tcp/22': ('<UN ip>', '9000')}</l4>
+								<l4>{'tcp/22': ('UN ip', '9000')}</l4>
 							</addresses>
 						</port>
 						<port>
@@ -183,7 +183,7 @@
 								<!-- request public port to be forwarded to VNF port 22 (for ssh access) -->
 								<l4>{'tcp/22'}</l4>
 								<!-- (UN) orchestrator fills the actual ip address+port -->
-								<l4>{'tcp/22': ('<UN ip>', '9001')}</l4>
+								<l4>{'tcp/22': ('UN ip', '9001')}</l4>
 							</addresses>
 						</port>
 						<!-- control port with private ip -->

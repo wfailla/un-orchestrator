@@ -1,7 +1,7 @@
 FROM      ubuntu
 MAINTAINER iMinds
 
-RUN apt-get update
+RUN apt-get update --fix-missing
 RUN apt-get install -y openvswitch-switch openvswitch-common openssh-server
 
 RUN echo 'root:root' | chpasswd
