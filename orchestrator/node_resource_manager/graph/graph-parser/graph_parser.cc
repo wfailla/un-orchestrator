@@ -10,6 +10,8 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 	map<string, string> gre_id;
 	//for each endpoint (vlan), contains the pair vlan id, interface
 	map<string, pair<string, string> > vlan_id; //XXX: currently, this information is ignored
+	//contains the id of managment endpoint (if exist)
+	string management_id;
 
 	/**
 	*	The graph is defined according to this schema:
@@ -723,8 +725,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 												return false;
 											}
 										}
-										highlevel::EndPointManagement ep_mng(id, e_name, isStatic, ipAddress, netmask);
+
+										highlevel::EndPointManagement *ep_mng = new highlevel::EndPointManagement(id, e_name, isStatic, ipAddress, netmask);
 										graph.addEndPointManagement(ep_mng);
+										management_id = id;
 									}
 									else
 										logger(ORCH_DEBUG, MODULE_NAME, __FILE__, __LINE__, "\"%s\"->\"%s\": \"%s\"",ACTIONS,END_POINTS,ep_value.getString().c_str());
@@ -850,7 +854,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 									{
 										try{
 											foundMatch = true;
-											if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action)/*,nfs_ports_found*/,iface_id,internal_id,vlan_id,gre_id,graph))
+											if(!MatchParser::parseMatch(fr_value.getObject(),match,(*action)/*,nfs_ports_found*/,iface_id,internal_id,vlan_id,gre_id,management_id,graph))
 											{
 												return false;
 											}
@@ -1003,7 +1007,7 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 														{
 															//This is an output action referred to an endpoint
 
-															bool iface_found = false, internal_found = false, vlan_found = false, gre_found=false;
+															bool iface_found = false, internal_found = false, vlan_found = false, gre_found=false, management_found=false;
 
 															char *s_a_value = new char[BUFFER_SIZE];
 															strcpy(s_a_value, (char *)a_value.getString().c_str());
@@ -1035,6 +1039,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 																{
 																	//gre
 																	gre_found = true;
+																}
+																else if(epID == management_id)
+																{
+																	management_found = true;
 																}
 															}
 															//physical endpoint
@@ -1071,6 +1079,10 @@ bool GraphParser::parseGraph(Value value, highlevel::Graph &graph, bool newGraph
 															else if(gre_found)
 															{
 																action = new highlevel::ActionEndPointGre(epID, string(s_a_value));
+															}
+															else if(management_found)
+															{
+																action = new highlevel::ActionEndPointManagement(epID, string(s_a_value));
 															}
 														}
 													}//End action == output_to_port

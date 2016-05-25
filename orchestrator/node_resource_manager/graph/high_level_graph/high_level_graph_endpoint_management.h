@@ -76,6 +76,7 @@ public:
 	bool operator==(const EndPointManagement &other) const;
 
 	Object toJSON();
+
 };
 
 }

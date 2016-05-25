@@ -88,7 +88,6 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 		assert(lsi->getEndpointsPorts().size() == 0);
 		map<string,nf_t>  nf_types;
 		map<string,list<nf_port_info> > netFunctionsPortsInfo;
-
 		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,gre_endpoints,lsi->getVirtualLinksRemoteLSI(), this->un_address, this->ipsec_certificate);
 
 		CreateLsiOut *clo = switchManager.createLsi(cli);
@@ -491,6 +490,7 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 	list<highlevel::EndPointInternal> endPointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endPointsGre = graph->getEndPointsGre();
 	list<highlevel::EndPointVlan> endPointsVlan = graph->getEndPointsVlan();
+	int requiredEpManagement = graph->getEndPointManagement()==NULL? 0:1;
 
 	string graphID = graph->getID();
 
@@ -520,6 +520,8 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		string group = i->getGroup();
 		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "* group: %s",group.c_str());
 	}
+
+	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The command requires %d 'management' endpoints",requiredEpManagement);
 
 	/**
 	*	No check is required for a GRE endpoint
@@ -677,24 +679,29 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	3) Create the LSI
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Create the LSI");
-
-
+	string tenantAddress;
 	list<highlevel::VNFs> network_functions = graph->getVNFs();
 	list<highlevel::EndPointInternal> endpointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
+	highlevel::EndPointManagement *endpointManagement = graph->getEndPointManagement();
+
+	if(endpointManagement!=NULL)
+		tenantAddress=endpointManagement->getIpAddress();
 
 	vector<set<string> > vlVector = identifyVirtualLinksRequired(graph);
 	set<string> vlNFs = vlVector[0];
 	set<string> vlPhyPorts = vlVector[1];
 	set<string> vlEndPointsGre = vlVector[2];
 	set<string> vlEndPointsInternal = vlVector[3];
+	set<string> vlEndPointsManagement = vlVector[4];
 
+	assert(vlEndPointsManagement.size()<=1); //a graph can not contains more then one management endpoint!
 	/**
 	*	A virtual link can be used in two direction, hence it can be shared between a NF port and a physical port.
 	*	In principle a virtual link could also be shared between a NF port and an endpoint but, for simplicity, we
 	*	use separated virtual links in case of endpoint.
 	*/
-	unsigned int toUp = vlNFs.size() + vlEndPointsGre.size();
+	unsigned int toUp = vlNFs.size() + vlEndPointsGre.size() + vlEndPointsManagement.size();
 	unsigned int toDown = vlPhyPorts.size() + vlEndPointsInternal.size();
 	unsigned int numberOfVLrequired = (toUp > toDown)? toUp : toDown;
 
@@ -782,7 +789,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 		assert(description_gre_endpoints.size() == endpoints_gre.size());
 
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), description_gre_endpoints, lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS), this->ipsec_certificate);
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), description_gre_endpoints, lsi->getVirtualLinksRemoteLSI(), tenantAddress, this->ipsec_certificate);
 
 		clo = switchManager.createLsi(cli);
 
@@ -967,7 +974,19 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 			endpoints_internal_vlinks[*ep] = vlToDown->getID();
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*ep).c_str(),vlToDown->getID());
 		}
-		lsi->setEndPointsVLinks(endpoints_internal_vlinks);		
+		lsi->setEndPointsVLinks(endpoints_internal_vlinks);
+
+		//associate the vlinks to the management end point
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Management endpoint is virtual link ID (up):");
+		map<string, uint64_t> endpoints_management_vlinks;
+
+		for(set<string>::iterator ep = vlEndPointsManagement.begin(); ep != vlEndPointsManagement.end(); ep++, vlToUp++)
+		{
+			endpoints_management_vlinks[*ep] = vlToUp->getID();
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t\t%s -> %x",(*ep).c_str(),vlToUp->getID());
+		}
+
+		lsi->setEndPointsManagementVLinks(endpoints_management_vlinks);
 	}
 
 	/**
@@ -2427,6 +2446,7 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 	set<string> endPointsGre;
 	set<string> phyPorts;
 	set<string> endPointsInternal;
+	set<string> endPointsManagement;
 
 	//The number of virtual link depends on the rules, and not on the VNF ports / endpoints of the graph
 	list<highlevel::Rule> rules = graph->getRules();
@@ -2475,8 +2495,9 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 			//we are considering rules as
 			//	- match: gre tunnel with key 1 - action: output to interface eth0
 			//	- match: VNF firewall port 1 - action: output to interface eth0
+			//	- match: Management port - action: output to interface eth0
 			//Each different interface requires a different virtual link
-			if(match.matchOnNF() || match.matchOnEndPointGre())
+			if(match.matchOnNF() || match.matchOnEndPointGre() || match.matchOnEndPointManagement())
 				phyPorts.insert(action->getInfo());
 				
 			// interface -> interface does not require any virtual link
@@ -2492,6 +2513,21 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 			
 			// internal endpoint -> internal endpoint does not require any virtual link
 			// interface -> internal endpoint does not require any virtual link
+		}
+		else if(action->getType() == highlevel::ACTION_ON_ENDPOINT_MANAGEMENT)
+		{
+			//we are considering rules as
+			//	- match: internal-25 - action: output to management port
+			//	- match: interface eth0 - action: output to management port
+
+			if(match.matchOnPort() || match.matchOnEndPointInternal())
+			{
+				highlevel::ActionEndPointManagement *action_ep = (highlevel::ActionEndPointManagement*)action;
+				endPointsManagement.insert(action_ep->toString());
+			}
+
+			// VNF -> managementEP does not require any virtual link
+			// managementEP -> VNF does not require any virtual link
 		}
 	}
 
@@ -2519,6 +2555,12 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 		for(set<string>::iterator e = endPointsInternal.begin(); e != endPointsInternal.end(); e++)
 			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*e).c_str());
 	}
+	if(endPointsManagement.size() != 0)
+	{
+		logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Management endpoint requiring a virtual link:");
+		for(set<string>::iterator e = endPointsManagement.begin(); e != endPointsManagement.end(); e++)
+			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "\t%s",(*e).c_str());
+	}
 	
 	vector<set<string> > retval;
 	vector<set<string> >::iterator rv;
@@ -2531,10 +2573,12 @@ vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph
 	retval.insert(rv,endPointsGre);
 	rv = retval.end();
 	retval.insert(rv,endPointsInternal);
-
+	rv = retval.end();
+	retval.insert(rv,endPointsManagement);
 	return retval;
 }
 
+// TODO: implement support for management endpoint
 vector<set<string> > GraphManager::identifyVirtualLinksRequired(highlevel::Graph *newPiece, LSI *lsi)
 {
 	set<string> NFs;

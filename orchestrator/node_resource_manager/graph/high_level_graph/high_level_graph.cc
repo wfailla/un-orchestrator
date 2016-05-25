@@ -149,33 +149,26 @@ void Graph::removeEndPointVlan(EndPointVlan endpoint)
 	assert(0);
 }
 
-bool Graph::addEndPointManagement(EndPointManagement endpoint)
+bool Graph::addEndPointManagement(EndPointManagement *endpoint)
 {
-	for(list<EndPointManagement>::iterator e = endPointsManagement.begin(); e != endPointsManagement.end(); e++)
-	{
-		if(*e == endpoint)
-			return false;
-	}
-
-	endPointsManagement.push_back(endpoint);
-
+	if(endPointManagement != NULL)
+		return false;
+	endPointManagement = endpoint;
 	return true;
 }
 
-list<EndPointManagement> Graph::getEndPointsManagement()
+EndPointManagement *Graph::getEndPointManagement()
 {
-	return endPointsManagement;
+	return endPointManagement;
 }
 
-void Graph::removeEndPointManagement(EndPointManagement endpoint)
+void Graph::removeEndPointManagement(EndPointManagement *endpoint)
 {
-	for(list<EndPointManagement>::iterator e = endPointsManagement.begin(); e != endPointsManagement.end(); e++)
+	if(*endPointManagement == *endpoint)
 	{
-		if(*e == endpoint)
-		{
-			endPointsManagement.erase(e);
-			return;
-		}
+		delete endPointManagement;
+		endPointManagement=NULL;
+		return;
 	}
 	assert(0);
 }

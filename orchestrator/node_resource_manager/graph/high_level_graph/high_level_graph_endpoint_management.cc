@@ -10,6 +10,7 @@ EndPointManagement::EndPointManagement(string id, string name, bool isStatic, st
 
 EndPointManagement::~EndPointManagement()
 {
+
 }
 
 bool EndPointManagement::operator==(const EndPointManagement &other) const

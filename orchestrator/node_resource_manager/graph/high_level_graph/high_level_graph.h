@@ -74,9 +74,9 @@ private:
 	list<EndPointVlan> endPointsVlan;
 
 	/**
-	*	@brief: List of "management" endpoints
+	*	@brief: "management" endpoint
 	*/
-	list<EndPointManagement> endPointsManagement;
+	EndPointManagement *endPointManagement = NULL;
 
 	/**
 	*	@brief: List of VNFs describing the graph
@@ -238,17 +238,17 @@ public:
 	/**
 	*	@brief: Add a new "management" endpoint to the graph
 	*/
-	bool addEndPointManagement(EndPointManagement endpoint);
+	bool addEndPointManagement(EndPointManagement *endpoint);
 
 	/**
 	*	@brief: Return the "management" endpoints of the graph
 	*/
-	list<EndPointManagement> getEndPointsManagement();
+	EndPointManagement *getEndPointManagement();
 
 	/**
 	*	@brief: Remove an endpoint "management" from the graph
 	*/
-	void removeEndPointManagement(EndPointManagement endpoint);
+	void removeEndPointManagement(EndPointManagement *endpoint);
 
 	/**
 	*	Functions to manage the VNFs
