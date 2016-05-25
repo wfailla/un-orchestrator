@@ -10,7 +10,8 @@ Thses VNFs should be supported by the name-resolver.
 
 ## Use-Cases
 This folder contains additional files to deploy different use-cases.
-The `elastic-router` folder has all additional sources __other__ than the VNFs.
+The `elastic-router` folder has all additional sources __other__ than the VNFs. 
+Meaning containers or other files which are not being deployed by from the NFFG by the UN orchestrator.
 It contains all containers, configuration files that are needed to deploy the elastic router 
 use case and supporting functions for the troubleshooting and monitoring.
 
