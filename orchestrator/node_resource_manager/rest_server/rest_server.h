@@ -146,7 +146,7 @@ private:
 	static int httpResponse(struct MHD_Connection *connection, int code);
 
 public:
-	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, set<string> physical_ports, string un_address, bool orchestrator_in_band, char *un_interface, char *ipsec_certificate);
+	static bool init(SQLiteManager *dbm, bool cli_auth, char *nffg_filename,int core_mask, set<string> physical_ports, string un_address, bool orchestrator_in_band, char *un_interface, char *un_netmask, char *ipsec_certificate);
 
 	static void terminate();
 

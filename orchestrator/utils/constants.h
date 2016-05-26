@@ -7,6 +7,7 @@
 *	Connections
 */
 #define OF_CONTROLLER_ADDRESS 		"127.0.0.1"
+#define OF_CONTROLLER_NETMASK		"255.0.0.0"
 #define FIRTS_OF_CONTROLLER_PORT	6653
 
 #define REST_PORT 				8080

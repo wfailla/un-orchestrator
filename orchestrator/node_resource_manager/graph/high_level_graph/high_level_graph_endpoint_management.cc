@@ -41,6 +41,11 @@ string EndPointManagement::getIpAddress()
 	return ipAddress;
 }
 
+string EndPointManagement::getIpNetmask()
+{
+	return netmask;
+}
+
 Object EndPointManagement::toJSON()
 {
 	Object EndPointManagement, management;

@@ -71,6 +71,11 @@ public:
 	*/
 	string getIpAddress();
 
+	/**
+*	@brief: return the netmask of the ip address of the endpoint
+*/
+	string getIpNetmask();
+
 	~EndPointManagement();
 
 	bool operator==(const EndPointManagement &other) const;

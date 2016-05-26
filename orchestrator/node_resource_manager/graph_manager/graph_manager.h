@@ -113,6 +113,11 @@ private:
 	string un_address;
 
 	/**
+	*	Netmask of the local IP of the LSI0
+	*/
+	string un_netmask;
+
+	/**
 	*	Orchestrator can be in band (true) or out of band (false)
 	*/
 	bool orchestrator_in_band;
@@ -222,7 +227,7 @@ public:
 	//XXX: Currently I only support rules with a match expressed on a port or on a NF
 	//(plus other fields)
 
-	GraphManager(int core_mask,set<string> physical_ports,string un_address,bool control,string un_interface,string ipsec_certificate);
+	GraphManager(int core_mask,set<string> physical_ports,string un_address, string un_netmask, bool control,string un_interface, string ipsec_certificate);
 	~GraphManager();
 
 	/**

@@ -47,7 +47,7 @@ SQLiteManager *dbm = NULL;
 bool parse_command_line(int argc, char *argv[],int *core_mask,char **config_file);
 //bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, char **ports_file_name, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **ipsec_certificate);
 //>>>>>>> permissions
-bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, set<string> &physical_ports, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **ipsec_certificate);
+bool parse_config_file(char *config_file, int *rest_port, bool *cli_auth, char **nffg_file_name, set<string> &physical_ports, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **un_netmask, char **ipsec_certificate);
 
 bool usage(void);
 void printUniversalNodeInfo();
@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
 	char *t_client_name = NULL, *t_broker_address = NULL, *t_key_path = NULL;
 	char *un_interface = new char[BUFFER_SIZE], *t_un_interface = NULL;
 	char *un_address = new char[BUFFER_SIZE], *t_un_address = NULL;
+	char *un_netmask = new char[BUFFER_SIZE], *t_un_netmask = NULL;
 	char *ipsec_certificate = new char[BUFFER_SIZE], *t_ipsec_certificate = NULL;
 
 	string s_un_address;
@@ -121,7 +122,7 @@ int main(int argc, char *argv[])
 	if(!parse_command_line(argc,argv,&core_mask,&config_file_name))
 		exit(EXIT_FAILURE);
 
-	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,physical_ports,&t_descr_file_name,&t_client_name,&t_broker_address,&t_key_path,&t_orchestrator_in_band,&t_un_interface,&t_un_address,&t_ipsec_certificate))
+	if(!parse_config_file(config_file_name,&t_rest_port,&t_cli_auth,&t_nffg_file_name,physical_ports,&t_descr_file_name,&t_client_name,&t_broker_address,&t_key_path,&t_orchestrator_in_band,&t_un_interface,&t_un_address,&t_un_netmask,&t_ipsec_certificate))
 		exit(EXIT_FAILURE);
 
 	if(strcmp(t_descr_file_name, "UNKNOWN") != 0)
@@ -160,6 +161,11 @@ int main(int argc, char *argv[])
 		strcpy(un_address, t_un_address);
 	else
 		un_address = "";
+
+	if(strcmp(t_un_netmask, "UNKNOWN") != 0)
+		strcpy(un_netmask, t_un_netmask);
+	else
+		un_netmask = "";
 
 	if(strcmp(t_ipsec_certificate, "UNKNOWN") != 0)
 		strcpy(ipsec_certificate, t_ipsec_certificate);
@@ -213,7 +219,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,physical_ports,s_un_address,orchestrator_in_band,un_interface,ipsec_certificate))
+	if(!RestServer::init(dbm,cli_auth,nffg_file_name,core_mask,physical_ports,s_un_address,orchestrator_in_band,un_interface,un_netmask,ipsec_certificate))
 	{
 		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__, "Cannot start the %s",MODULE_NAME);
 		exit(EXIT_FAILURE);
@@ -315,7 +321,7 @@ static struct option lgopts[] = {
 	return true;
 }
 
-bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, set<string> &physical_ports, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **ipsec_certificate)
+bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, char **nffg_file_name, set<string> &physical_ports, char **descr_file_name, char **client_name, char **broker_address, char **key_path, bool *orchestrator_in_band, char **un_interface, char **un_address, char **un_netmask, char **ipsec_certificate)
 {
 	nffg_file_name[0] = '\0';
 	*rest_port = REST_PORT;
@@ -406,6 +412,11 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	char *temp_un_address = new char[64];
 	strcpy(temp_un_address, (char *)reader.Get("orchestrator", "un_address", "UNKNOWN").c_str());
 	*un_address = temp_un_address;
+
+	/* netmask of local ip */
+	char *temp_un_netmask = new char[64];
+	strcpy(temp_un_netmask, (char *)reader.Get("orchestrator", "un_netmask", "UNKNOWN").c_str());
+	*un_netmask = temp_un_netmask;
 
 	/* IPsec certificate */
 	char *temp_ipsec_certificate = new char[64];

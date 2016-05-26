@@ -8,8 +8,8 @@ void GraphManager::mutexInit()
 	pthread_mutex_init(&graph_manager_mutex, NULL);
 }
 
-GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_address,bool orchestrator_in_band,string un_interface,string ipsec_certificate) :
-	un_address(un_address), orchestrator_in_band(orchestrator_in_band), un_interface(un_interface), ipsec_certificate(ipsec_certificate), switchManager()
+GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_address,string un_netmask,bool orchestrator_in_band,string un_interface,string ipsec_certificate) :
+	un_address(un_address), un_netmask(un_netmask), orchestrator_in_band(orchestrator_in_band), un_interface(un_interface), ipsec_certificate(ipsec_certificate), switchManager()
 {
 	//TODO: this code can be simplified. Why don't providing the set<string> to the switch manager?
 	set<CheckPhysicalPortsIn> phyPortsRequired;
@@ -88,7 +88,7 @@ GraphManager::GraphManager(int core_mask,set<string> physical_ports,string un_ad
 		assert(lsi->getEndpointsPorts().size() == 0);
 		map<string,nf_t>  nf_types;
 		map<string,list<nf_port_info> > netFunctionsPortsInfo;
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,gre_endpoints,lsi->getVirtualLinksRemoteLSI(), this->un_address, this->ipsec_certificate);
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(),lsi->getPhysicalPortsName(),nf_types,netFunctionsPortsInfo,gre_endpoints,lsi->getVirtualLinksRemoteLSI(), this->un_address, this->un_netmask, this->ipsec_certificate);
 
 		CreateLsiOut *clo = switchManager.createLsi(cli);
 
@@ -679,14 +679,17 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	*	3) Create the LSI
 	*/
 	logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "3) Create the LSI");
-	string tenantAddress;
+	string tenantAddress, tenantNetmask;
 	list<highlevel::VNFs> network_functions = graph->getVNFs();
 	list<highlevel::EndPointInternal> endpointsInternal = graph->getEndPointsInternal();
 	list<highlevel::EndPointGre> endpointsGre = graph->getEndPointsGre();
 	highlevel::EndPointManagement *endpointManagement = graph->getEndPointManagement();
 
 	if(endpointManagement!=NULL)
+	{
 		tenantAddress=endpointManagement->getIpAddress();
+		tenantNetmask=endpointManagement->getIpNetmask();
+	}
 
 	vector<set<string> > vlVector = identifyVirtualLinksRequired(graph);
 	set<string> vlNFs = vlVector[0];
@@ -789,7 +792,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 
 		assert(description_gre_endpoints.size() == endpoints_gre.size());
 
-		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), description_gre_endpoints, lsi->getVirtualLinksRemoteLSI(), tenantAddress, this->ipsec_certificate);
+		CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),strControllerPort.str(), lsi->getPhysicalPortsName(), nf_types, lsi->getNetworkFunctionsPortsInfo(), description_gre_endpoints, lsi->getVirtualLinksRemoteLSI(), tenantAddress, tenantNetmask, this->ipsec_certificate);
 
 		clo = switchManager.createLsi(cli);
 
@@ -1253,7 +1256,7 @@ void GraphManager::handleGraphForInternalEndpoint(highlevel::Graph *graph)
 			{
 				map<string, nf_t> dummyNfsPortsTypeForCli;
 				//Create a new internal-LSI
-				CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),controllerPort, lsi->getPhysicalPortsName(), dummyNfsPortsTypeForCli, lsi->getNetworkFunctionsPortsInfo(), endpoints, lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS), this->ipsec_certificate);
+				CreateLsiIn cli(string(OF_CONTROLLER_ADDRESS),controllerPort, lsi->getPhysicalPortsName(), dummyNfsPortsTypeForCli, lsi->getNetworkFunctionsPortsInfo(), endpoints, lsi->getVirtualLinksRemoteLSI(), string(OF_CONTROLLER_ADDRESS), string(OF_CONTROLLER_NETMASK), this->ipsec_certificate);
 				
 				clo = switchManager.createLsi(cli);
 
