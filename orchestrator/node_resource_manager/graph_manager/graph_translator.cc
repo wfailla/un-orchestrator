@@ -957,7 +957,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToTenantLSI(highlevel::Graph *graph, 
 					if(strcmp(ep->first.c_str(), action_ep->getOutputEndpointID().c_str()) == 0)
 					{
 						e_id = ep->second;
-						assert(ep_port!=ep->first); //the two gre endpoint (input and output) can't be the same
+						assert(match.getInputEndpoint()!=ep->first); //the two gre endpoint (input and output) can't be the same
 					}
 
 				}
