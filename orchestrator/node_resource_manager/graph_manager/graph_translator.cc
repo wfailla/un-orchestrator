@@ -370,7 +370,7 @@ lowlevel::Graph GraphTranslator::lowerGraphToLSI0(highlevel::Graph *graph, LSI *
 		 } //end of match.matchOnEndPointGre()
 		 else if (match.matchOnEndPointInternal())
 		 {
-			 assert(action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION || action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE);
+			 assert(action->getType() == highlevel::ACTION_ON_NETWORK_FUNCTION || action->getType() == highlevel::ACTION_ON_ENDPOINT_GRE || action->getType() == highlevel::ACTION_ON_ENDPOINT_MANAGEMENT);
 
 			 stringstream ss;
 			 ss << match.getEndPointInternal();
