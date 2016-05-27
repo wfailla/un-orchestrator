@@ -3,10 +3,13 @@
 
 #pragma once
 
+#include "../graph/high_level_graph/high_level_graph.h"
 #include "lsi.h"
 #include "../../network_controller/openflow_controller/controller.h"
 #include "../../compute_controller/compute_controller.h"
-#include "../graph/high_level_graph/high_level_graph.h"
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	#include "../../monitoring_controller/monitoring_controller.h"
+#endif
 
 class Controller;
 
@@ -35,6 +38,13 @@ private:
 	*/
 	highlevel::Graph *graph;
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	/**
+	*	@brief: Monitoring controller used to handle the monitoring of this graph
+	*/
+	MonitoringController *monitoringController;
+#endif
+
 	//FIXME: PUT the following methods protected, and the GraphCreator as a friend?
 public:
 	GraphInfo();
@@ -43,9 +53,15 @@ public:
 	void setController(Controller *controller);
 	void setLSI(LSI *lsi);
 	void setComputeController(ComputeController *computeController);
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	void setMonitoringController(MonitoringController *monitoringController);
+#endif
 	void setGraph(highlevel::Graph *graph);
 
 	ComputeController *getComputeController();
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	MonitoringController *getMonitoringController();
+#endif
 	LSI *getLSI();
 	Controller *getController();
 	highlevel::Graph *getGraph();

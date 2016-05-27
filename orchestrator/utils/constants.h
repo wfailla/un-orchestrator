@@ -36,6 +36,7 @@
 	//#define F_ID				"id"
 	#define _NAME				"name"
 	#define F_DESCR				"description"
+	#define UNIFY_MONITORING	"unify-monitoring"
 	#define VNFS 				"VNFs"
 		//#define VNF_NAME			"name"
 		#define	VNF_TEMPLATE		"vnf_template"

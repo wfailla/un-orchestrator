@@ -102,6 +102,16 @@ IF(ENABLE_RESOURCE_MANAGER)
 	ADD_DEFINITIONS(-DENABLE_RESOURCE_MANAGER)
 ENDIF(ENABLE_RESOURCE_MANAGER)
 
+OPTION(
+	ENABLE_UNIFY_MONITORING_CONTROLLER
+	"Turn on to activate the 'monitoring controller')"
+	OFF
+)
+
+IF(ENABLE_UNIFY_MONITORING_CONTROLLER)
+	ADD_DEFINITIONS(-DENABLE_UNIFY_MONITORING_CONTROLLER)
+ENDIF(ENABLE_UNIFY_MONITORING_CONTROLLER)
+
 
 OPTION(
 	ENABLE_KVM
@@ -434,6 +444,19 @@ ELSE()
     )
 ENDIF(ENABLE_RESOURCE_MANAGER)
 
+IF(ENABLE_UNIFY_MONITORING_CONTROLLER)
+	SET(SOURCES9
+    ${SOURCES8}
+    monitoring_controller/monitoring_controller.h
+    monitoring_controller/monitoring_controller.cc
+    monitoring_controller/monitoring_controller_constants.h
+    )
+ELSE()
+	SET(SOURCES9
+		${SOURCES8}
+    )
+ENDIF(ENABLE_UNIFY_MONITORING_CONTROLLER)
+
 INCLUDE_DIRECTORIES (
 	/usr/include/boost
 	/usr/include/libxml2
@@ -442,7 +465,7 @@ INCLUDE_DIRECTORIES (
 # Create the executable
 ADD_EXECUTABLE(
 	node-orchestrator
-	${SOURCES8}
+	${SOURCES9}
 )
 
 LINK_DIRECTORIES(
@@ -519,6 +542,11 @@ IF(ENABLE_RESOURCE_MANAGER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
 	#The resource manager requires the DD connection
 	message(FATAL_ERROR "Resource manager requires to enable the double decker connection")
 ENDIF(ENABLE_RESOURCE_MANAGER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
+
+IF(ENABLE_UNIFY_MONITORING_CONTROLLER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
+	#The monitoring controller requires the DD connection
+	message(FATAL_ERROR "Monitoring controller requires to enable the double decker connection")
+ENDIF(ENABLE_UNIFY_MONITORING_CONTROLLER AND (NOT ENABLE_DOUBLE_DECKER_CONNECTION))
 
 IF(ENABLE_DPDK_PROCESSES AND ( (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 1) OR (${VSWITCH_IMPLEMENTATION_INDEX} EQUAL 3) ) )
 	#This configuration (ovs (ofconfig/ovsdb) + dpdk processes) is not supported
