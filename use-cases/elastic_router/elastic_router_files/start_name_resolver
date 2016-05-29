@@ -3,7 +3,7 @@
 #start name -resolver
 
 # need to login before docker images can be downloaded
-sudo docker login -u unify -p unify-demo-stress-out -e steven.vanrossem@intec.ugent.be gitlab.testbed.se:5000
+sudo docker login -u unify -p unify-demo-stress-out -e steven.vanrossem@intec.ugent.be gitlab.testbed.se:5000 &
 
 cp name_resolver_config_er_demo.xml ../../../name-resolver/config
 
