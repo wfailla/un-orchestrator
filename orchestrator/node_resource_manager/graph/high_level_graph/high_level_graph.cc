@@ -140,6 +140,13 @@ map<string, list<string> > Graph::getNetworkFunctionsEnvironmentVariables()
 }
 #endif
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+string Graph::getMeasureString()
+{
+	return measureString;
+}
+#endif
+
 list<Rule> Graph::getRules()
 {
 	return rules;
@@ -186,6 +193,14 @@ void Graph::addNetworkFunctionControlPort(string nf, port_mapping_t control)
 void Graph::addNetworkFunctionEnvironmentVariable(string nf, string env_var)
 {
 	networkFunctionsEnvironmentVariables[nf].push_back(env_var);
+}
+#endif
+
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+void Graph::setMeasureString(string measureString)
+{
+	this->measureString.clear();
+	this->measureString = measureString;
 }
 #endif
 
@@ -376,6 +391,9 @@ Object Graph::toJSON()
 
 	forwarding_graph[_ID] = ID;
 	forwarding_graph[_NAME] = name;
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+	forwarding_graph[UNIFY_MONITORING] = measureString;
+#endif
 	if(end_points.size() != 0)
 		forwarding_graph[END_POINTS] = end_points;
 	if(vnf.size() != 0)
