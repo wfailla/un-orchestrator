@@ -34,7 +34,7 @@ RUN pip3 install jsonrpcserver
 RUN pip3 install PyNaCl
 RUN wget https://github.com/acreo/DoubleDecker-py/archive/master.tar.gz -O dd.tar.gz
 RUN tar xzf dd.tar.gz && rm dd.tar.gz
-WORKDIR /root/DoubleDecker-master/python/
+WORKDIR /root/DoubleDecker-py-master/
 RUN python3 setup.py build
 RUN python3 setup.py install
 

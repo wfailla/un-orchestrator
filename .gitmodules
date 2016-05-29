@@ -7,3 +7,15 @@
 [submodule "virtualizer/un_native_nffg_library"]
 	path = virtualizer/un_native_nffg_library
 	url = https://github.com/netgroup-polito/nffg-library.git
+[submodule "use-cases/elastic_router/MEASURE-MFIB"]
+	path = use-cases/elastic_router/MEASURE-MFIB
+	url = https://github.com/Acreo/MEASURE-MFIB.git
+[submodule "use-cases/elastic_router/MEASURE-Aggregator"]
+	path = use-cases/elastic_router/MEASURE-Aggregator
+	url = https://github.com/Acreo/MEASURE-Aggregator.git
+[submodule "use-cases/elastic_router/MEASURE-MMP"]
+	path = use-cases/elastic_router/MEASURE-MMP
+	url = https://github.com/Acreo/MEASURE-MMP.git
+[submodule "use-cases/elastic_router/DoubleDecker"]
+	path = use-cases/elastic_router/DoubleDecker
+	url = https://github.com/Acreo/DoubleDecker

@@ -11,9 +11,9 @@ from doubledecker.clientSafe import ClientSafe
 
 
 class DDProxy(ClientSafe):
-    def __init__(self, name, dealerurl, customer, keyfile):
+    def __init__(self, name, dealerurl, keyfile):
         # init DD client
-        super().__init__(name, dealerurl, customer, keyfile)
+        super().__init__(name, dealerurl, keyfile)
         self.tsdb_url = 'http://127.0.0.1:4242/api/put/'
         self.session = requests.Session()
 
@@ -62,7 +62,6 @@ class DDProxy(ClientSafe):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DoubleDecker OpenTSDB proxy')
     parser.add_argument("name", help="Identity of this client")
-    parser.add_argument('customer', help="Name of the customer to get the keys (i.e. 'a' for the customer-a.json file)")
     parser.add_argument(
         '-d',
         "--dealer",
@@ -99,7 +98,6 @@ if __name__ == '__main__':
     logging.info("Safe client")
     dd_proxy = DDProxy(name=args.name.encode('utf8'),
                        dealerurl=args.dealer,
-                       customer=args.customer,
                        keyfile=args.keyfile)
 
     logging.info("Starting DoubleDecker example client")
