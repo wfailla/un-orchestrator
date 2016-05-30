@@ -25,6 +25,13 @@ void GraphInfo::setComputeController(ComputeController *computeController)
 	this->computeController = computeController;
 }
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+void GraphInfo::setMonitoringController(MonitoringController *monitoringController)
+{
+	this->monitoringController = monitoringController;
+}
+#endif
+
 void GraphInfo::setGraph(highlevel::Graph *graph)
 {
 	this->graph = graph;
@@ -50,3 +57,9 @@ ComputeController *GraphInfo::getComputeController()
 	return computeController;
 }
 
+#ifdef ENABLE_UNIFY_MONITORING_CONTROLLER
+MonitoringController *GraphInfo::getMonitoringController()
+{
+	return monitoringController;
+}
+#endif

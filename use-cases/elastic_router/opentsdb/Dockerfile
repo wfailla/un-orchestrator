@@ -9,10 +9,9 @@ MAINTAINER Bertrand Pechenot <berpec@acreo.se>
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y update \
 && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends \
                                                   -y \
-                                                     curl \
                                                      make \
+                                                     curl \
                                                      autoconf \
-                                                     git-core \
                                                      openjdk-8-jdk \
                                                      supervisor \
                                                      openssh-server \
@@ -45,8 +44,11 @@ ADD hbase-site.xml /opt/hbase/conf/
 EXPOSE 4242 5555 60000 60010 60030
 
 #Install OpenTSDB and scripts
-RUN git clone --depth 1 -b next --single-branch git://github.com/OpenTSDB/opentsdb.git /opt/opentsdb 
+RUN mkdir /opt/opentsdb
+ADD https://github.com/OpenTSDB/opentsdb/archive/master.tar.gz /opt/opentsdb/
 WORKDIR /opt/opentsdb 
+RUN tar xzf master.tar.gz -C . --strip-components=1
+RUN rm master.tar.gz
 RUN ./build.sh
 
 ADD start_opentsdb.sh create_tsdb_tables.sh /opt/sei-bin/
@@ -70,7 +72,8 @@ RUN python3 setup.py install
 
 ENV CLIENT_NAME opentsdb
 ENV DEALER_PORT tcp://172.17.0.1:5555
-ENV CUSTOMER_NAME a
 RUN chmod +x /opt/sei-bin/*
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get remove -yq make autoconf
 # default run command
 CMD /usr/bin/supervisord

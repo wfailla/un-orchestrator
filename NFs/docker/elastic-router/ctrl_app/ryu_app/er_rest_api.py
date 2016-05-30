@@ -16,7 +16,7 @@ api = Api(app)
 class er_rest_api():
 
 
-    def __init__(self, ip='127.0.0.1', port=5000, *args, **kwargs):
+    def __init__(self):
 
 
         self.log = logging.getLogger('rest_api_logger')
@@ -28,7 +28,6 @@ class er_rest_api():
             'ping': self.ping
              }
 
-    #@app.route('/')
     def get(self):
         return 'test'
 
