@@ -1,5 +1,48 @@
 #include "resource_manager.h"
+#include "description_parser.h"
+#include "domain_description/domain_description.h"
 
+void ResourceManager::publishDescriptionFromFile(char *descr_file)
+{
+	assert(descr_file != NULL);
+
+	string fileContent;
+
+	readDescriptionFromFile(descr_file, fileContent);
+
+	domainInformations::DomainDescription *domainDescription = new domainInformations::DomainDescription();
+
+	DescriptionParser::parseDescription(fileContent, domainDescription);
+
+	//logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "Publishing node configuration.");
+
+	//publish the domain description
+	//DoubleDeckerClient::publish(FROG_DOMAIN_DESCRIPTION, mesg);
+}
+
+bool ResourceManager::readDescriptionFromFile(char *filename, string &fileContent) {
+	logger(ORCH_INFO, MODULE_NAME, __FILE__, __LINE__,
+		   "Considering the domain informations in file '%s'", filename);
+
+	std::ifstream file;
+	file.open(filename);
+	if (file.fail()) {
+		logger(ORCH_ERROR, MODULE_NAME, __FILE__, __LINE__,
+			   "Cannot open the file %s", filename);
+		return false;
+	}
+
+	stringstream stream;
+	string str;
+	while (std::getline(file, str))
+		stream << str << endl;
+
+	fileContent=stream.str();
+
+	return true;
+}
+
+/*
 void ResourceManager::publishDescriptionFromFile(char *descr_file)
 {
 	assert(descr_file != NULL);
@@ -42,6 +85,7 @@ void ResourceManager::publishDescriptionFromFile(char *descr_file)
 	//publish the domain description
 	DoubleDeckerClient::publish(FROG_DOMAIN_DESCRIPTION, mesg);
 }
+ */
 
 //TODO currently not used. It must be ported to use the new DD client
 #if 0

@@ -4,6 +4,8 @@
 #include "../pub_sub/pub_sub.h"
 #include "../../utils/logger.h"
 #include "../../utils/constants.h"
+#include <string>
+using namespace std;
 
 class ResourceManager
 {
@@ -20,6 +22,8 @@ public:
 	*		be exported
 	*/
 	static void publishDescriptionFromFile(char *descr_file);
+	static bool readDescriptionFromFile(char *filename,string &fileContent) ;
+
 };
 
 #endif // RESOURCE_MANAGER_H_

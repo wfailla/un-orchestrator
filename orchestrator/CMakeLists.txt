@@ -447,6 +447,28 @@ IF(ENABLE_RESOURCE_MANAGER)
     ${SOURCES7}
     node_resource_manager/resource_manager/resource_manager.h
     node_resource_manager/resource_manager/resource_manager.cc
+    node_resource_manager/resource_manager/domain_description/domain_description.h
+    node_resource_manager/resource_manager/domain_description/domain_description.cc
+    node_resource_manager/resource_manager/domain_description/network_manager.h
+    node_resource_manager/resource_manager/domain_description/network_manager.cc
+    node_resource_manager/resource_manager/domain_description/interface.cc
+    node_resource_manager/resource_manager/domain_description/interface.h
+    node_resource_manager/resource_manager/domain_description/interface_state.cc
+    node_resource_manager/resource_manager/domain_description/interface_state.h
+    node_resource_manager/resource_manager/domain_description/interface_configuration.cc
+    node_resource_manager/resource_manager/domain_description/interface_configuration.h
+    node_resource_manager/resource_manager/domain_description/interface_capabilities.cc
+    node_resource_manager/resource_manager/domain_description/interface_capabilities.h
+    node_resource_manager/resource_manager/domain_description/interface_options.cc
+    node_resource_manager/resource_manager/domain_description/interface_options.h
+    node_resource_manager/resource_manager/domain_description/ethernet_info.cc
+    node_resource_manager/resource_manager/domain_description/ethernet_info.h
+    node_resource_manager/resource_manager/domain_description/vlan_info.cc
+    node_resource_manager/resource_manager/domain_description/vlan_info.h
+    node_resource_manager/resource_manager/domain_description/neighbor_info.cc
+    node_resource_manager/resource_manager/domain_description/neighbor_info.h
+    node_resource_manager/resource_manager/description_parser.cc
+    node_resource_manager/resource_manager/description_parser.h
     )
 ELSE()
 	SET(SOURCES8
