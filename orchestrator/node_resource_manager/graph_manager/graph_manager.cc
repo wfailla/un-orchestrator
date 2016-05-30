@@ -562,7 +562,7 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 
 		if(retVal == NFManager_NO_NF)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" cannot be retrieved",nf->first.c_str());
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" cannot be retrieved",nf->first.c_str());
 			return false;
 		}
 		else if(retVal == NFManager_SERVER_ERROR)
