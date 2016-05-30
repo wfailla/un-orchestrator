@@ -15,7 +15,7 @@ bool DoubleDeckerClient::init(char *clientName, char *brokerAddress, char *keyPa
 	pthread_mutex_init(&connected_mutex, NULL);
 
 	//Start and register a DD client on the brocker
-	client = start_ddactor((int)1, clientName, "public", brokerAddress,keyPath);
+        client = ddactor_new(clientName, brokerAddress, keyPath);
 
 	//Start a new thread that waits for events
 	pthread_t thread[1];
@@ -107,7 +107,8 @@ void DoubleDeckerClient::publish(topic_t topic, const char *message)
 	}
 	pthread_mutex_unlock(&connected_mutex);
 
-	logger(ORCH_DEBUG_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Publishing on topic '%s'",topicToString(topic));
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Publishing on topic '%s'",topicToString(topic));
+	logger(ORCH_INFO, DD_CLIENT_MODULE_NAME, __FILE__, __LINE__, "Publishing message '%s'",message);
 
 	int len = strlen(message);
 	zsock_send(client,"sssb", "publish", topicToString(topic), message,&len, sizeof(len));
@@ -119,8 +120,8 @@ char *DoubleDeckerClient::topicToString(topic_t topic)
 	{
 		case FROG_DOMAIN_DESCRIPTION:
 			return "frog:domain-description";
-		case UNIFY_MPP:
-			return "unify:mpp";
+		case UNIFY_MMP:
+			return "unify:mmp";
 		default:
 			assert(0 && "This is impossible!");
 			return "";

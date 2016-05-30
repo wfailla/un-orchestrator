@@ -60,7 +60,7 @@ void MonitoringController::startMonitoring(string measure_string, list< pair<str
 	logger(ORCH_DEBUG_INFO, MONITORING_CONTROLLER_MODULE_NAME, __FILE__, __LINE__, "Sending the following message to the plugin monitor:");
 	logger(ORCH_DEBUG_INFO, MONITORING_CONTROLLER_MODULE_NAME, __FILE__, __LINE__, "%s",message.str().c_str());
 
-	DoubleDeckerClient::publish(UNIFY_MPP,message.str().c_str());
+	DoubleDeckerClient::publish(UNIFY_MMP,message.str().c_str());
 }
 
 void MonitoringController::stopMonitoring()
@@ -78,5 +78,5 @@ void MonitoringController::stopMonitoring()
 	logger(ORCH_DEBUG_INFO, MONITORING_CONTROLLER_MODULE_NAME, __FILE__, __LINE__, "Sending the following message to the plugin monitor:");
 	logger(ORCH_DEBUG_INFO, MONITORING_CONTROLLER_MODULE_NAME, __FILE__, __LINE__, "%s",message.str().c_str());
 
-	DoubleDeckerClient::publish(UNIFY_MPP,message.str().c_str());
+	DoubleDeckerClient::publish(UNIFY_MMP,message.str().c_str());
 }
