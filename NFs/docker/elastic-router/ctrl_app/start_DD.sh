@@ -4,7 +4,8 @@
 sleep 3
 
 #DD command
-./ryu_ddclient.py -k ./DoubleDecker-master/keys/a-keys.json -d tcp://172.17.0.1:5555 ryu a &
+#./ryu_ddclient.py -k ./DoubleDecker-master/keys/a-keys.json -d tcp://172.17.0.1:5555 ryu a &
+./ryu_ddclient.py -k ./DoubleDecker-py-master/doubledecker/public-keys.json -d tcp://172.17.0.1:5555 ryu a &
 
 echo "Control app container started"
 
