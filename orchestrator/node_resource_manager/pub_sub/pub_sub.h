@@ -15,7 +15,7 @@ using namespace std;
 
 typedef enum {
 	FROG_DOMAIN_DESCRIPTION,
-	UNIFY_MPP,
+	UNIFY_MMP,
 	//[+] add here other topics
 }topic_t;
 
