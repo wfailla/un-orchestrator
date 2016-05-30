@@ -13,7 +13,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y update \
                                                      make \
                                                      autoconf \
                                                      git-core \
-                                                     openjdk-6-jdk \
+                                                     openjdk-8-jdk \
                                                      supervisor \
                                                      openssh-server \
                                                      automake \
@@ -61,10 +61,10 @@ ADD start_ddproxy.sh ddproxy.py /opt/sei-bin/
 WORKDIR /root
 
 RUN pip3 install PyNaCl
-ADD https://github.com/acreo/DoubleDecker/archive/master.tar.gz /root/
+ADD https://github.com/acreo/DoubleDecker-py/archive/master.tar.gz /root/
 RUN tar xzf master.tar.gz
 RUN rm master.tar.gz
-WORKDIR /root/DoubleDecker-master/python/
+WORKDIR /root/DoubleDecker-py-master/
 RUN python3 setup.py build
 RUN python3 setup.py install
 
