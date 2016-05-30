@@ -153,7 +153,10 @@ class DoEditConfig:
 		except ServerError:
 			LOG.error("Please, press 'ctrl+c' and restart the virtualizer.")
 			LOG.error("Please, also restart the universal node orchestrator.")
-			resp.status = falcon.HTTP_500			
+			resp.status = falcon.HTTP_500
+		except Exception as err:
+			LOG.exception(err)
+			resp.status = falcon.HTTP_500
 			
 
 def checkCorrectness(newContent):
@@ -210,8 +213,7 @@ def checkCorrectness(newContent):
 				flowtable.add(flowentry) 
 	except KeyError:
 		LOG.error("Trying to delete a flowrule that does not exist! ID:%s", flowentry.id.get_value())
-		raise ClientError("Trying to delete a VNF that does not exist! ID: "+ instance.id.get_value())
-		
+		raise ClientError("Trying to delete a flowrule that does not exist! ID: "+ flowentry.id.get_value())
 
 	#Here, infrastructure contains the new configuration of the node
 	#Then, we execute the checks on it!
@@ -263,9 +265,17 @@ def extractVNFsInstantiated(content):
 	LOG.debug("'%s'",infrastructure.xml())
 	
 	for instance in instances:
+		if instance.get_operation() is None:
+			LOG.error("Update of VNF is not supported by the UN! vnf: " + instance.id.get_value())
+			raise ClientError("Update of VNF is not supported by the UN! vnf: "+instance.id.get_value())
+
 		if instance.get_operation() == 'delete':
 			#This network function has to be removed from the universal node
 			continue
+
+		if instance.get_operation() != 'create':
+			LOG.error("Unsupported operation for vnf: " + instance.id.get_value())
+			raise ClientError("Unsupported operation for vnf: "+instance.id.get_value())
 			
 		vnfType = instance.type.get_value()
 		if vnfType not in supportedTypes:
@@ -306,7 +316,7 @@ def extractVNFsInstantiated(content):
 			else:
 				if int(port.id.get_value()) == 0:
 					LOG.error("Port with id = 0 should be present only if it has a L4 configuration on VNF of type '%s'", vnfType)
-					raise ClientError("Port with id = 0 should be present only if it has a L4 configuration on VNF of type '%s'", vnfType)
+					raise ClientError("Port with id = 0 should be present only if it has a L4 configuration on VNF of type " + vnfType)
 				unify_ip = None
 				if port.addresses.l3.length() != 0:
 					if port.addresses.l3.length() > 1:
@@ -340,7 +350,10 @@ def extractVNFsInstantiated(content):
 					unify_monitoring = unify_monitoring + value
 				else:
 					LOG.error("Unsupported metadata " + key)
-					raise ClientError("Unsupported metadata " + key)	
+					raise ClientError("Unsupported metadata " + key)
+		if instance.resources.cpu.data is not None or instance.resources.mem.data is not None or instance.resources.storage.data is not None:
+			LOG.warning("Resources are not supported inside a node element! Node: "+ instance.id.get_value())
+
 			
 		vnf = VNF(_id = instance.id.get_value(), name = vnfType, ports=port_list, unify_control=unify_control, unify_env_variables=unify_env_variables)
 		nfinstances.append(vnf)
@@ -355,25 +368,35 @@ def extractRules(content):
 	'''
 		
 	LOG.debug("Extracting the flowrules to be installed in the universal node")
-	
+
 	try:
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
 		raise ClientError("ParseError: " + e.message)
-	
+
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
 	flowtable = universal_node.flowtable
-	
+
 	endpoints_dict = {}
 	endpoint_id = 1
-		
+
 	flowrules = []
 	for flowentry in flowtable:		
+
+		if flowentry.get_operation() is None:
+			LOG.error("Update of flowentry is not supported by the UN! flowentry: " + flowentry.id.get_value())
+			raise ClientError("Update of flowentry is not supported by the UN! vnf: "+flowentry.id.get_value())
+
 		if flowentry.get_operation() == 'delete':
 			#This rule has to be removed from the universal node
 			continue
+
+		if flowentry.get_operation() != 'create':
+			LOG.error("Unsupported operation for flowentry: " + flowentry.id.get_value())
+			raise ClientError("Unsupported operation for flowentry: "+flowentry.id.get_value())
+
 	
 		flowrule = FlowRule()
 		
@@ -599,11 +622,11 @@ def extractToBeRemovedRules(content):
 		if flowentry.get_operation() == 'delete':
 			f_id = flowentry.id.get_value()
 			if f_id not in rulesDeployed:
-				LOG.warning("Rule with ID '%d' is not deployed in the UN!",int(f_id))
+				LOG.warning("Rule with ID '%s' is not deployed in the UN!",f_id)
 				LOG.warning("The rule cannot be removed!")
 				raise ClientError("ParseError: " + e.message)
 						
-			LOG.debug("Rule with id %d has to be removed",int(f_id))
+			LOG.debug("Rule with id %s has to be removed", f_id)
 			ids.append(f_id)
 
 	return ids
@@ -758,7 +781,7 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 	
 	try:
 		tmpFile = open(constants.GRAPH_FILE, "w")
-		tmpFile.write(nffg.getJSON())
+		tmpFile.write(json.dumps(nffg.getDict(), indent=4, separators=(',', ': ')))
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
@@ -802,7 +825,7 @@ def removeFromGraphFile(vnfsToBeRemoved,rulesToBeRemoved):
 	
 	try:
 		tmpFile = open(constants.GRAPH_FILE, "w")
-		tmpFile.write(nffg.getJSON())
+		tmpFile.write(json.dumps(nffg.getDict(), indent=4, separators=(',', ': ')))
 		tmpFile.close()
 	except IOError as e:
 		print "I/O error({0}): {1}".format(e.errno, e.strerror)
@@ -865,6 +888,7 @@ def updateUniversalNodeConfig(newContent):
 						if instance.id.get_value() == tmp2[0] and port_id == tmp2[1]:
 							l4_response[tmp1[1]] = v
 					port.addresses.l4.set_value(l4_response)
+			instance.set_operation(None)
 			nfInstances.add(instance)
 	
 	#Update the flowtable with the new flowentries
@@ -872,6 +896,7 @@ def updateUniversalNodeConfig(newContent):
 		if flowentry.get_operation() == 'delete':
 			flowtable[flowentry.id.get_value()].delete()
 		else:
+			flowentry.set_operation(None)
 			flowtable.add(flowentry)
 	#It is not necessary to remove conflicts, since they are already handled by the library,
 	#i.e., it does not insert two identical rules
@@ -1292,4 +1317,5 @@ api.add_route('/edit-config',DoEditConfig())
 #in_file = open ("config/nffg_examples/passthrough_with_vnf_nffg_v5.xml")
 #in_file = open ("config/nffg_examples/nffg_delete_flow_vnf.xml")
 #in_file = open ("config/nffg_examples/er_nffg_virtualizer5.xml")
+#in_file = open ("config/nffg_examples/step1.xml")
 #DoEditConfig().on_post(in_file.read(), None)
