@@ -36,6 +36,8 @@ class er_rest_api():
         self.log.debug('start scale in')
         if len(scaling_ports) > 0:
             self.ER_app.VNFs_to_be_deleted = self.ER_app.scale(scaling_ports, 'in')
+        else:
+            return 'scaling in not possible'
         return 'scaling in finished'
 
     def scale_out(self):
@@ -43,6 +45,8 @@ class er_rest_api():
         self.log.debug('start scale out')
         if len(scaling_ports) > 0:
             self.ER_app.VNFs_to_be_deleted = self.ER_app.scale(scaling_ports, 'out')
+        else:
+            return 'scaling out not possible'
         return 'scaling out finished'
 
     def ping(self):
