@@ -56,4 +56,4 @@ The elastic router control app deployed in the `ctrl` container has a rest api e
 
 * `curl -X GET localhost:9000/scale/out` triggers a scale out action and scales the elastic router to 4 data path containers instead of one.
 
-* `curl -x GET localhost:9000/scale/in` triggers a scale in action and deploys again one data path container.
+* `curl -X GET localhost:9000/scale/in` triggers a scale in action and deploys again one data path container.
