@@ -3,8 +3,13 @@
 
 #include <string>
 #include <map>
+#include <json_spirit/json_spirit.h>
+#include <json_spirit/value.h>
+#include <json_spirit/writer.h>
+#include "../keywords.h"
 
 using namespace std;
+using namespace json_spirit;
 
 namespace domainInformations
 {
@@ -31,6 +36,7 @@ namespace domainInformations
         void setGreLocalIP(string localIP);
         void setGreRemoteIP(string remoteIP);
         void setGreKey(string key);
+		Object toJSON();
 
     };
 

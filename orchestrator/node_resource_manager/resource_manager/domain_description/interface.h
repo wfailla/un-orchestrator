@@ -3,15 +3,19 @@
 
 #include <string>
 #include <list>
+#include <json_spirit/json_spirit.h>
+#include <json_spirit/value.h>
+#include <json_spirit/writer.h>
 
 #include "interface_configuration.h"
 #include "interface_state.h"
 #include "interface_capabilities.h"
 #include "interface_options.h"
 #include "ethernet_info.h"
+#include "../keywords.h"
 
 using namespace std;
-
+using namespace json_spirit;
 
 namespace domainInformations
 {
@@ -30,19 +34,19 @@ namespace domainInformations
         /**
         *	@brief: configuration of the interface
         */
-        InterfaceConfiguration *configuration;
+        InterfaceConfiguration *configuration = NULL;
         /**
         *	@brief: state of the interface
         */
-        InterfaceState *state;
+        InterfaceState *state = NULL;
         /**
         *	@brief: state of the interface
         */
-        InterfaceCapabilities *capabilities;
+        InterfaceCapabilities *capabilities = NULL;
         /**
         *	@brief: interface options
         */
-        InterfaceOptions *options;
+        InterfaceOptions *options = NULL;
         /**
         *	@brief: list of subinterfaces
         */
@@ -54,7 +58,7 @@ namespace domainInformations
         /**
         *	@brief: ethernet informations
         */
-        EthernetInfo *ethernetInfo;
+        EthernetInfo *ethernetInfo = NULL;
 
     public:
 
@@ -95,7 +99,10 @@ namespace domainInformations
         *	@brief: add a gre interface to this interface
         */
         void addGreInterface(Interface interfaceGre);
-    };
+
+		Object toJSON();
+
+	};
 
 }
 

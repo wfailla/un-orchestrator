@@ -40,5 +40,6 @@
                         #define ACCESS          "ACCESS"
             #define NEIGHBOR                    "frog-neighbor:neighbor"
                 #define NEIGHBOR_NAME           "domain-name"
-                #define NEIGHBOR_INTERFACE      "domain-interface"
+                #define NEIGHBOR_TYPE           "domain-type"
+                #define NEIGHBOR_INTERFACE      "remote-interface"
 #endif //KEYWORDS_H_

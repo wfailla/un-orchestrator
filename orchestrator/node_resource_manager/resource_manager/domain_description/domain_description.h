@@ -1,10 +1,15 @@
 #ifndef NODE_ORCHESTRATOR_DOMAIN_INFORMATIONS_H
 #define NODE_ORCHESTRATOR_DOMAIN_INFORMATIONS_H
 
-#include "network_manager.h"
 #include <string>
+#include <json_spirit/json_spirit.h>
+#include <json_spirit/value.h>
+#include <json_spirit/writer.h>
+#include "network_manager.h"
+#include "../keywords.h"
 
 using namespace std;
+using namespace json_spirit;
 
 namespace domainInformations
 {
@@ -27,7 +32,7 @@ namespace domainInformations
         /**
         *	@brief: network manager of the domain
         */
-        NetworkManager *networkManager;
+        NetworkManager *networkManager = NULL;
 
     public:
 
@@ -50,7 +55,9 @@ namespace domainInformations
         *	@brief: set the management address
         */
         void setManagementAddress(string managementAddress);
-    };
+		Object toJSON();
+
+	};
 
 }
 

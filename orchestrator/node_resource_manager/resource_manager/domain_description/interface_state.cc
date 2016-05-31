@@ -9,19 +9,22 @@ namespace domainInformations
 
     void InterfaceState::setAdminStatus(string status)
     {
-        if(status==STATUS_UP)
-            adminStatus = INTERFACE_STATE_UP;
-        else
-            adminStatus = INTERFACE_STATE_DOWN;
+		adminStatus = status;
     }
 
     void InterfaceState::setOperStatus(string status)
     {
-        if(status==STATUS_UP)
-            operStatus = INTERFACE_STATE_UP;
-        else
-            operStatus = INTERFACE_STATE_DOWN;
+		operStatus = status;
     }
 
+	Object InterfaceState::toJSON()
+	{
+		Object state;
+		if(adminStatus!="")
+			state[ADMIN_STATUS]=adminStatus;
+		if(operStatus!="")
+			state[OPER_STATUS]=operStatus;
+		return state;
+	}
 
 }

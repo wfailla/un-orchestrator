@@ -4,7 +4,8 @@ namespace domainInformations
 {
     InterfaceConfiguration::InterfaceConfiguration()
     {
-
+		isEnabledDefined = false;
+		isUnnumberedDefined = false;
     }
 
     void InterfaceConfiguration::setName(string name)
@@ -20,6 +21,7 @@ namespace domainInformations
     void InterfaceConfiguration::setUnnumbered(bool unnumbered)
     {
         this->unnumbered = unnumbered;
+		isUnnumberedDefined=true;
     }
 
     void InterfaceConfiguration::setDescription(string description)
@@ -30,5 +32,24 @@ namespace domainInformations
     void InterfaceConfiguration::setEnabled(bool enabled)
     {
         this->enabled = enabled;
+		isEnabledDefined=true;
     }
+
+	Object InterfaceConfiguration::toJSON()
+	{
+		Object configuration;
+		if(isUnnumberedDefined)
+			configuration[UNNUMBERED]=unnumbered;
+		if(name!="")
+			configuration[NAME]=name;
+		if(type!="")
+			configuration[TYPE]=type;
+		if(description!="")
+			configuration[DESCRIPTION]=description;
+		if(isEnabledDefined)
+			configuration[ENABLED]=enabled;
+		return configuration;
+
+	}
+
 }

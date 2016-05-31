@@ -3,9 +3,13 @@
 
 #include <string>
 #include <list>
-#include "../keywords.h"
+#include <json_spirit/json_spirit.h>
+#include <json_spirit/value.h>
+#include <json_spirit/writer.h>
 
+#include "../keywords.h"
 using namespace std;
+using namespace json_spirit;
 
 namespace domainInformations
 {
@@ -13,8 +17,6 @@ namespace domainInformations
     class VlanInfo
     {
     public:
-        typedef enum {TRUNK_MODE,ACCESS_MODE} portType;
-
         VlanInfo();
 
         void setVlanRange(int start, int end);
@@ -24,11 +26,13 @@ namespace domainInformations
         *	@brief: set the portType
         */
         void setPortType(string type);
-    private:
+		Object toJSON();
+
+	private:
         /**
-        *	@brief: type of port
+        *	@brief: type of interface (e.g. "TRUNK")
         */
-        portType interfaceMode;
+        string interfaceMode;
         /**
         *	@brief: vlan lower bound
         */
@@ -41,6 +45,7 @@ namespace domainInformations
         *	@brief: list of used vlan numbers
         */
         list<int> usedVlans;
+
     };
 
 }

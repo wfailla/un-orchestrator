@@ -140,6 +140,10 @@ bool DescriptionParser::parseInterface(Object &openconfig_if_interface,domainInf
                 {
                     interfaceConfiguration->setName(if_config_value.getString());
                 }
+				else if (if_config_key == TYPE)
+				{
+					interfaceConfiguration->setType(if_config_value.getString());
+				}
                 else if (if_config_key == UNNUMBERED)
                 {
                     interfaceConfiguration->setUnnumbered(if_config_value.getBool());
@@ -185,25 +189,40 @@ bool DescriptionParser::parseInterface(Object &openconfig_if_interface,domainInf
         }
         else if (openconfig_if_interface_key == OPENCONFIG_IF_SUBINTERFACES)
         {
+
+			Object openconfig_if_subinterfaces;
 			try {
-				openconfig_if_interface_value.getArray();
+				openconfig_if_subinterfaces = openconfig_if_interface_value.getObject();
 			} catch (exception &e) {
-				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", OPENCONFIG_IF_SUBINTERFACES);
+				logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Object", OPENCONFIG_IF_SUBINTERFACES);
 				return false;
 			}
-			const Array& if_subinterface_array = openconfig_if_interface_value.getArray();
-			for( unsigned int i = 0; i < if_subinterface_array.size(); i++ )
-			{
-				Object if_subinterface;
-				try {
-					if_subinterface = if_subinterface_array[i].getObject();
-				} catch (exception &e) {
-					logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: element of array \"%s\" should be an Objects", OPENCONFIG_IF_SUBINTERFACES);
-					return false;
+			for (Object::const_iterator openconfig_if_subinterfaces_iter = openconfig_if_subinterfaces.begin(); openconfig_if_subinterfaces_iter != openconfig_if_subinterfaces.end(); openconfig_if_subinterfaces_iter++) {
+				const string &openconfig_if_subinterfaces_key = openconfig_if_subinterfaces_iter->first;
+				const Value &openconfig_if_subinterfaces_value = openconfig_if_subinterfaces_iter->second;
+
+				if (openconfig_if_subinterfaces_key == OPENCONFIG_IF_SUBINTERFACE) {
+					try {
+						openconfig_if_subinterfaces_value.getArray();
+					} catch (exception &e) {
+						logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: \"%s\" should be an Array", OPENCONFIG_IF_SUBINTERFACE);
+						return false;
+					}
+					const Array& openconfig_if_subinterface_array = openconfig_if_subinterfaces_value.getArray();
+					for( unsigned int i = 0; i < openconfig_if_subinterface_array.size(); i++ )
+					{
+						Object if_subinterface;
+						try {
+							if_subinterface = openconfig_if_subinterface_array[i].getObject();
+						} catch (exception &e) {
+							logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: element of array \"%s\" should be an Objects", OPENCONFIG_IF_SUBINTERFACE);
+							return false;
+						}
+						domainInformations::Interface subinterface;
+						parseInterface(if_subinterface,subinterface);
+						interface.addSubinterface(subinterface);
+					}
 				}
-				domainInformations::Interface subinterface;
-				parseInterface(if_subinterface,subinterface);
-				interface.addSubinterface(subinterface);
 			}
         }
         else if (openconfig_if_interface_key == OPENCONFIG_IF_ETHERNET)
@@ -239,7 +258,7 @@ bool DescriptionParser::parseInterface(Object &openconfig_if_interface,domainInf
                         const string &ethernet_config_key = ethernet_config_iter->first;
                         const Value &ethernet_config_value = ethernet_config_iter->second;
 
-                        if (ethernet_config_key == ETHERNET_CONFIG)
+                        if (ethernet_config_key == MAC_ADDRESS)
                         {
                             ethernetInfo->setMacAddress(ethernet_config_value.getString());
                         }
@@ -339,6 +358,10 @@ bool DescriptionParser::parseInterface(Object &openconfig_if_interface,domainInf
 							else if (neighbor_key == NEIGHBOR_INTERFACE)
 							{
 								neighborInfo.setRemoteInterface(neighbor_value.getString());
+							}
+							else if (neighbor_key == NEIGHBOR_TYPE)
+							{
+								neighborInfo.setType(neighbor_value.getString());
 							}
 						}
 						ethernetInfo->addNeighborInfo(neighborInfo);

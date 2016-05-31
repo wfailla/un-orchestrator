@@ -2,8 +2,13 @@
 #define NODE_ORCHESTRATOR_INTERFACE_CONFIGURATION_H
 
 #include <string>
+#include <json_spirit/json_spirit.h>
+#include <json_spirit/value.h>
+#include <json_spirit/writer.h>
+#include "../keywords.h"
 
 using namespace std;
+using namespace json_spirit;
 
 namespace domainInformations
 {
@@ -31,7 +36,14 @@ namespace domainInformations
         *	@brief: describe if the interface in enabled
         */
         bool enabled;
-
+		/**
+        *	@brief: describe if the enabled variable makes sense (to decide to print or not in toJSON function)
+        */
+		bool isEnabledDefined ;
+		/**
+        *	@brief: describe if the enabled variable makes sense (to decide to print or not in toJSON function)
+        */
+		bool isUnnumberedDefined ;
     public:
 
         InterfaceConfiguration();
@@ -55,6 +67,7 @@ namespace domainInformations
         *	@brief: set if the interface is enabled
         */
         void setEnabled(bool enabled);
+		Object toJSON();
 
     };
 

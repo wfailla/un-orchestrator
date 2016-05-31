@@ -22,4 +22,16 @@ namespace domainInformations
         this->key=key;
     }
 
+	Object InterfaceOptions::toJSON()
+	{
+		Object options;
+		if(localIP!="")
+			options[OPT_LOCAL_IP]=localIP;
+		if(remoteIP!="")
+			options[OPT_REMOTE_IP]=remoteIP;
+		if(key!="")
+			options[OPT_KEY]=key;
+		return options;
+	}
+
 }

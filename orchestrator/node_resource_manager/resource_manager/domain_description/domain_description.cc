@@ -28,4 +28,19 @@ namespace domainInformations
         this->managementAddress = managementAddress;
     };
 
+	Object DomainDescription::toJSON()
+	{
+		Object domainInfo, domainInfoContent;
+		if(name!="")
+			domainInfoContent[NAME]=name;
+		if(type!="")
+			domainInfoContent[TYPE]=type;
+		if(managementAddress!="")
+			domainInfoContent[MANAGEMENT_ADDRESS]=managementAddress;
+		if(networkManager!=NULL)
+			domainInfoContent[NETWORK_MANAGER_INFO]=networkManager->toJSON();
+		domainInfo[DOMAIN_INFORMATIONS] = domainInfoContent;
+		return domainInfo;
+	}
+
 }

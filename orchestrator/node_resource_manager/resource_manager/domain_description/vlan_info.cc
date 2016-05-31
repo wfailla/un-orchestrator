@@ -20,15 +20,30 @@ namespace domainInformations
 
     void VlanInfo::setPortType(string type)
     {
-        if(type==TRUNK)
-            interfaceMode=TRUNK_MODE;
-        else
-            interfaceMode=ACCESS_MODE;
+        interfaceMode=type;
     }
 
     void VlanInfo::addFreeVlan(string vlanString)
     {
         //TODO: write this function
+    }
+
+    Object VlanInfo::toJSON()
+    {
+        /*
+          		{
+                "openconfig-vlan:config": {
+                  "interface-mode": "TRUNK",
+                  "trunk-vlans": [
+                    "1..4090"
+                  ]
+                }
+              }
+        */
+        Object vlanConfig, vlanConfigContent;
+        vlanConfigContent[IF_MODE] = interfaceMode;
+        vlanConfig[VLAN_CONFIG] = vlanConfigContent;
+        return vlanConfig;
     }
 
 }
