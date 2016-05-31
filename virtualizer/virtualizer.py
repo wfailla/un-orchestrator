@@ -267,6 +267,7 @@ def extractVNFsInstantiated(content):
 	for instance in instances:
 		if instance.get_operation() is None:
 			LOG.error("Update of VNF is not supported by the UN! vnf: " + instance.id.get_value())
+			LOG.error("If you want to create a new instance please set \"operation=create\" to the node element")
 			raise ClientError("Update of VNF is not supported by the UN! vnf: "+instance.id.get_value())
 
 		if instance.get_operation() == 'delete':
@@ -387,6 +388,7 @@ def extractRules(content):
 
 		if flowentry.get_operation() is None:
 			LOG.error("Update of flowentry is not supported by the UN! flowentry: " + flowentry.id.get_value())
+			LOG.error("If you want to create a new flowentry please set \"operation=create\" to the flowentry element")
 			raise ClientError("Update of flowentry is not supported by the UN! vnf: "+flowentry.id.get_value())
 
 		if flowentry.get_operation() == 'delete':
@@ -941,7 +943,7 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):
 	put_url = unOrchestratorURL + "/NF-FG/%s"
 	if debug_mode is False:
 		try:
-			headers =  {'Content-Type': 'application/json'}
+			headers = {'Content-Type': 'application/json'}
 			responseFromUN = requests.put(put_url % (nffg.id), data=nffg.getJSON(), headers=headers)
 		except (requests.ConnectionError):
 			LOG.error("Cannot contact the universal node orchestrator at '%s'",put_url % (nffg.id))
