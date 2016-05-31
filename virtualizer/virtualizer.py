@@ -91,6 +91,7 @@ class DoEditConfig:
 		'''
 		Edit the configuration of the node
 		'''
+		global unify_monitoring
 		try:
 			LOG.info("Executing the 'edit-config' command")
 			content = req.stream.read()
@@ -144,8 +145,10 @@ class DoEditConfig:
 			un_config = updateUniversalNodeConfig(content) #Updates the file containing the current configuration of the universal node, by editing the #<flowtable> and the <NF_instances> and returning the xml
 			
 			resp.body = un_config
-			resp.status = falcon.HTTP_200	
-			
+			resp.status = falcon.HTTP_200
+
+			unify_monitoring = ""
+
 			LOG.info("'edit-config' command properly handled")
 			
 		except ClientError:
@@ -738,8 +741,6 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 	
 	LOG.debug("Updating the json representation of the whole graph deployed")
 
-	global unify_monitoring
-
 	try:
 		LOG.debug("Reading file: %s",constants.GRAPH_FILE)
 		tmpFile = open(constants.GRAPH_FILE,"r")
@@ -771,12 +772,11 @@ def addToGraphFile(newRules,newVNFs, newEndpoints):
 			if endp.interface == endpoint.interface:
 				already_present = True
 				break
-		if already_present is False:		
+		if already_present is False:
+			LOG.debug("New Endpoint: %s!",endp.interface)
 			nffg.addEndPoint(endp)
 	if unify_monitoring != "":
 		nffg.unify_monitoring = unify_monitoring
-		# Needed?
-		unify_monitoring = ""
 	
 	LOG.debug("Updated graph:");	
 	LOG.debug("%s",nffg.getJSON());
@@ -926,7 +926,8 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):
 	nffg = NF_FG()
 	nffg.id = graph_id
 	nffg.name = graph_name
-	nffg.unify_monitoring = unify_monitoring
+	if unify_monitoring != "":
+		nffg.unify_monitoring = unify_monitoring
 	nffg.flow_rules = rulesToBeAdded
 	nffg.vnfs = vnfsToBeAdded
 	nffg.end_points = endpoints
