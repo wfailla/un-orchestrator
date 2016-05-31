@@ -941,7 +941,8 @@ def instantiateOnUniversalNode(rulesToBeAdded,vnfsToBeAdded, endpoints):
 	put_url = unOrchestratorURL + "/NF-FG/%s"
 	if debug_mode is False:
 		try:
-			responseFromUN = requests.put(put_url % (nffg.id), nffg.getJSON())
+			headers =  {'Content-Type': 'application/json'}
+			responseFromUN = requests.put(put_url % (nffg.id), data=nffg.getJSON(), headers=headers)
 		except (requests.ConnectionError):
 			LOG.error("Cannot contact the universal node orchestrator at '%s'",put_url % (nffg.id))
 			raise ServerError("Cannot contact the universal node orchestrator at "+put_url)
