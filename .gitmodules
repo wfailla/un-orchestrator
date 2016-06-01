@@ -23,3 +23,6 @@
 	path = use-cases/frog/authentication_graph/Controller-Openflow/pox
 	url = https://github.com/noxrepo/pox.git
 
+[submodule "use-cases/elastic_router/ramon"]
+	path = use-cases/elastic_router/ramon
+	url = https://github.com/nigsics/ramon
