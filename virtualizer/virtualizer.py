@@ -736,8 +736,8 @@ def equivalentAction(tag):
 	
 def updateGraphFile (newRules,newVNFs, newEndpoints, rulesToBeRemoved, vnfsToBeRemoved):
 	'''
-	Read the configuration of the universal node, and applies the required modifications to
-	the NF instances and to the flowtable
+	Read the graph currently deployed. It is stored in a tmp file, in a json format.
+ 	Then, adds to it the new VNFs, the new flowrules and the new endpoints to be instantiated and removes parts to be deleted.
 	'''
 	LOG.debug("Updating the json representation of the whole graph deployed")
 
