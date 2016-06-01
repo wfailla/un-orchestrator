@@ -19,9 +19,8 @@ namespace domainInformations
     public:
         VlanInfo();
 
-        void setVlanRange(int start, int end);
-        void addUsedVlan(int number);
-        void addFreeVlan(string vlanString);
+        void addFreeVlan(int number);
+		void addFreeVlanRange(string range);
         /**
         *	@brief: set the portType
         */
@@ -33,18 +32,15 @@ namespace domainInformations
         *	@brief: type of interface (e.g. "TRUNK")
         */
         string interfaceMode;
-        /**
-        *	@brief: vlan lower bound
+
+		/**
+        *	@brief: list of free vlan numbers expressed as range (e.g "20..30")
         */
-        int lowerVlanNumber;
+		list<string> freeVlansRange;
         /**
-        *	@brief: vlan upper bound
+        *	@brief: list of free vlan numbers
         */
-        int upperVlanNumber;
-        /**
-        *	@brief: list of used vlan numbers
-        */
-        list<int> usedVlans;
+        list<int> freeVlans;
 
     };
 

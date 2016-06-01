@@ -84,7 +84,8 @@ bool DescriptionParser::parseDescription(std::string description, domainInformat
                                         return false;
                                     }
                                     domainInformations::Interface interface;
-                                    parseInterface(openconfig_if_interface,interface);
+									if(!parseInterface(openconfig_if_interface,interface))
+										return false;
                                     networkManager->addInterface(interface);
                                 }
                             }
@@ -219,7 +220,8 @@ bool DescriptionParser::parseInterface(Object &openconfig_if_interface,domainInf
 							return false;
 						}
 						domainInformations::Interface subinterface;
-						parseInterface(if_subinterface,subinterface);
+						if(!parseInterface(if_subinterface,subinterface))
+							return false;
 						interface.addSubinterface(subinterface);
 					}
 				}
@@ -312,14 +314,21 @@ bool DescriptionParser::parseInterface(Object &openconfig_if_interface,domainInf
 									const Array& free_vlan_array = vlan_config_value.getArray();
 									for( unsigned int i = 0; i < free_vlan_array.size(); i++ )
 									{
-										string free_vlan;
+										//available vlan can be expressed as range (string) or number (int)
+										string free_vlan_range;
+										int free_vlan;
 										try {
-											free_vlan = free_vlan_array[i].getString();
+											free_vlan_range = free_vlan_array[i].getString();
+											vlanInfo->addFreeVlanRange(free_vlan_range);
 										} catch (exception &e) {
-											logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: element of array \"%s\" should be a String", TRUNK_VLANS);
-											return false;
+											try {
+												free_vlan = free_vlan_array[i].getInt();
+												vlanInfo->addFreeVlan(free_vlan);
+											} catch (exception &e) {
+												logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "The content does not respect the JSON syntax: elements of array \"%s\" should be a String or a number", TRUNK_VLANS);
+												return false;
+											}
 										}
-										vlanInfo->addFreeVlan(free_vlan);
 									}
 								}
 							}
@@ -413,7 +422,8 @@ bool DescriptionParser::parseInterface(Object &openconfig_if_interface,domainInf
 					return false;
 				}
 				domainInformations::Interface interfaceGre;
-				parseInterface(if_gre,interfaceGre);
+				if(!parseInterface(if_gre,interfaceGre))
+					return false;
 				interface.addGreInterface(interfaceGre);
 			}
         }

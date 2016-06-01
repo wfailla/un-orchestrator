@@ -32,7 +32,7 @@
                     "oper-status": "UP"
                   },
                   "capabilities": {
-                    "gre": "true"
+                    "gre": true
                   },
                   "openconfig-if-ip:ipv4": {
                     "openconfig-if-ip:address": [

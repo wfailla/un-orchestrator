@@ -7,25 +7,19 @@ namespace domainInformations
 
     }
 
-    void VlanInfo::addUsedVlan(int number)
+    void VlanInfo::addFreeVlan(int number)
     {
-        usedVlans.push_back(number);
+        freeVlans.push_back(number);
     }
 
-    void VlanInfo::setVlanRange(int start, int end)
+    void VlanInfo::addFreeVlanRange(string range)
     {
-        lowerVlanNumber=start;
-        upperVlanNumber=end;
+		freeVlansRange.push_back(range);
     }
 
     void VlanInfo::setPortType(string type)
     {
         interfaceMode=type;
-    }
-
-    void VlanInfo::addFreeVlan(string vlanString)
-    {
-        //TODO: write this function
     }
 
     Object VlanInfo::toJSON()
@@ -42,6 +36,17 @@ namespace domainInformations
         */
         Object vlanConfig, vlanConfigContent;
         vlanConfigContent[IF_MODE] = interfaceMode;
+		if(freeVlans.size()!=0 || freeVlansRange.size()!=0)
+		{
+			Array trunks_vlan_array;
+			if(freeVlansRange.size()!=0)
+				for(list<string>::iterator iter = freeVlansRange.begin(); iter!=freeVlansRange.end(); iter++)
+					trunks_vlan_array.push_back(*iter);
+			if(freeVlans.size()!=0)
+				for(list<int>::iterator iter = freeVlans.begin(); iter!=freeVlans.end(); iter++)
+					trunks_vlan_array.push_back(*iter);
+			vlanConfigContent[TRUNK_VLANS]=trunks_vlan_array;
+		}
         vlanConfig[VLAN_CONFIG] = vlanConfigContent;
         return vlanConfig;
     }
