@@ -176,7 +176,7 @@ def checkCorrectness(newContent):
 		oldTree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ServerError("ParseError: "+ e.message)
+		raise ServerError("ParseError: %s" % e.message)
 	LOG.debug("File correctly read")
 		
 	infrastructure = Virtualizer.parse(root=oldTree.getroot())
@@ -191,7 +191,7 @@ def checkCorrectness(newContent):
 		newTree = ET.ElementTree(ET.fromstring(newContent))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ClientError("ParseError: "+ e.message)
+		raise ClientError("ParseError: %s" % e.message)
 							
 	newInfrastructure = Virtualizer.parse(root=newTree.getroot())
 	newFlowtable = newInfrastructure.nodes.node[constants.NODE_ID].flowtable
@@ -239,7 +239,7 @@ def extractVNFsInstantiated(content):
 		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ServerError("ParseError: "+ e.message)
+		raise ServerError("ParseError: %s" % e.message)
 	
 	tmpInfrastructure = Virtualizer.parse(root=tree.getroot())
 	supportedNFs = tmpInfrastructure.nodes.node[constants.NODE_ID].capabilities.supported_NFs
@@ -255,7 +255,7 @@ def extractVNFsInstantiated(content):
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ClientError("ParseError: "+ e.message)
+		raise ClientError("ParseError: %s" % e.message)
 	
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
@@ -392,7 +392,7 @@ def extractRules(content):
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ClientError("ParseError: " + e.message)
+		raise ClientError("ParseError: %s" % e.message)
 
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
@@ -570,7 +570,7 @@ def	extractToBeRemovedVNFs(content):
 		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ServerError("ParseError: "+ e.message)
+		raise ServerError("ParseError: %s" % e.message)
 	
 	tmpInfrastructure = Virtualizer.parse(root=tree.getroot())
 	nf_instances = tmpInfrastructure.nodes.node[constants.NODE_ID].NF_instances
@@ -586,7 +586,7 @@ def	extractToBeRemovedVNFs(content):
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ClientError("ParseError: " + e.message)
+		raise ClientError("ParseError: %s" % e.message)
 
 	infrastructure = Virtualizer.parse(root=tree.getroot())
 	universal_node = infrastructure.nodes.node[constants.NODE_ID]
@@ -618,7 +618,7 @@ def extractToBeRemovedRules(content):
 		tree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ServerError("ParseError: " + e.message)
+		raise ServerError("ParseError: %s" % e.message)
 	
 	tmpInfrastructure = Virtualizer.parse(root=tree.getroot())
 	flowtable = tmpInfrastructure.nodes.node[constants.NODE_ID].flowtable
@@ -633,7 +633,7 @@ def extractToBeRemovedRules(content):
 		tree = ET.ElementTree(ET.fromstring(content))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ServerError("ParseError: " + e.message)
+		raise ServerError("ParseError: %s" % e.message)
 
 			
 	infrastructure = Virtualizer.parse(root=tree.getroot())
@@ -647,7 +647,7 @@ def extractToBeRemovedRules(content):
 			if f_id not in rulesDeployed:
 				LOG.warning("Rule with ID '%s' is not deployed in the UN!",f_id)
 				LOG.warning("The rule cannot be removed!")
-				raise ClientError("ParseError: " + e.message)
+				raise ClientError("ParseError: %s" % e.message)
 						
 			LOG.debug("Rule with id %s has to be removed", f_id)
 			ids.append(f_id)
@@ -837,7 +837,7 @@ def updateUniversalNodeConfig(newContent):
 		oldTree = ET.parse(constants.GRAPH_XML_FILE)
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ServerError("ParseError: " + e.message)
+		raise ServerError("ParseError: %s" % e.message)
 	LOG.debug("File correctly read")
 		
 	infrastructure = Virtualizer.parse(root=oldTree.getroot())
@@ -851,7 +851,7 @@ def updateUniversalNodeConfig(newContent):
 		newTree = ET.ElementTree(ET.fromstring(newContent))
 	except ET.ParseError as e:
 		print('ParseError: %s' % e.message)
-		raise ServerError("ParseError: " + e.message)
+		raise ServerError("ParseError: %s" % e.message)
 			
 	newInfrastructure = Virtualizer.parse(root=newTree.getroot())
 	newFlowtable = newInfrastructure.nodes.node[constants.NODE_ID].flowtable
