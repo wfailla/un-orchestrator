@@ -436,8 +436,8 @@ ELSE()
 ENDIF(ENABLE_RESOURCE_MANAGER)
 
 INCLUDE_DIRECTORIES (
-	/usr/include/boost
-	/usr/include/libxml2
+	AFTER SYSTEM "$<1:=>/usr/include/boost"
+	AFTER SYSTEM "$<1:=>/usr/include/libxml2"
 )
 
 # Create the executable
@@ -456,7 +456,7 @@ LINK_DIRECTORIES(
 
 TARGET_LINK_LIBRARIES( node-orchestrator
 	libpthread.so
-	/usr/local/lib/librofl_common.so
+	librofl_common.so
 	libjson_spirit.so
 	libmicrohttpd.so
 	libboost_system.so
