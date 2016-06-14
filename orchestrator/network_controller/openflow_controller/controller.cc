@@ -133,6 +133,12 @@ bool Controller::removeRuleFromID(string ID)
 
 bool Controller::installNewRulesIntoLSI(list<Rule> rules)
 {
+	if(rules.size() == 0)
+	{
+		logger(ORCH_DEBUG_INFO, OFCONTROLLER_MODULE_NAME, __FILE__, __LINE__, "No rule to be installed.");
+		return true;
+	}
+
 	if(isOpen)
 	{
 		logger(ORCH_DEBUG_INFO, OFCONTROLLER_MODULE_NAME, __FILE__, __LINE__, "Installing (%d) new rules!",rules.size());
