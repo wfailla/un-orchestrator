@@ -47,4 +47,5 @@ Since creation permissions are related to not existing resources, they cannot be
 
 ## Creating the database and enabling the security in the UN
 The database structure described above is created by the [db_inizializer](../db_inizializer) module.
+
 In order to enable the security in the `un-orchestrator`, you have to edit its configuration file [config/default-config.ini](config/default-config.ini) by setting `user_authentication = true`.
