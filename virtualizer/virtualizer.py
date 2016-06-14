@@ -1129,7 +1129,7 @@ def contactNameResolver():
 		LOG.error("Cannot contact the name-resolver at %s",url)
 		return False
 
-	LOG.debug("Answer from the name resolver, in plain text %s",response.tex())
+	LOG.debug("Answer from the name resolver, in plain text %s",response.text)
 
 	data = response.json()
 	
