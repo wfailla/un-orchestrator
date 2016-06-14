@@ -1128,7 +1128,9 @@ def contactNameResolver():
 	except (requests.ConnectionError) as e:
 		LOG.error("Cannot contact the name-resolver at %s",url)
 		return False
-	
+
+	LOG.debug("Answer from the name resolver, in plain text %s",response.tex())
+
 	data = response.json()
 	
 	LOG.debug("Data received from the name-resolver")
@@ -1246,7 +1248,7 @@ api = falcon.API()
 
 #Set the logger
 LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
+LOG.setLevel(logging.DEBUG)
 LOG.propagate = False
 sh = logging.StreamHandler()
 f = logging.Formatter('[%(asctime)s][Virtualizer][%(levelname)s] %(message)s')
