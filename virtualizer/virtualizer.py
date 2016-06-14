@@ -151,7 +151,6 @@ class DoEditConfig:
 			LOG.exception(err)
 			resp.status = falcon.HTTP_500
 
-
 def checkCorrectness(newContent):
 	'''
 	Check if the new configuration of the node (in particular, the flowtable) is correct:
@@ -741,6 +740,7 @@ def equivalentAction(tag):
 	Given an element within action, this function return the element with equivalent meaning in native orchestrator NF-FG
 	'''
 	return constants.equivalent_actions[tag]
+
 """
 def updateGraphFile (newRules,newVNFs, newEndpoints, rulesToBeRemoved, vnfsToBeRemoved):
 	'''
@@ -1282,4 +1282,5 @@ api.add_route('/edit-config',DoEditConfig())
 #in_file = open ("config/nffg_examples/passthrough_with_vnf_nffg_v5.xml")
 #in_file = open ("config/nffg_examples/nffg_delete_flow_vnf.xml")
 #in_file = open ("config/nffg_examples/er_nffg_virtualizer5.xml")
+#in_file = open ("config/nffg_examples/step1.xml")
 #DoEditConfig().on_post(in_file.read(), None)

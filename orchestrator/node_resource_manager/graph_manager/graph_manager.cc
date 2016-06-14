@@ -548,7 +548,8 @@ bool GraphManager::checkGraphValidity(highlevel::Graph *graph, ComputeController
 		nf_manager_ret_t retVal = computeController->retrieveDescription(nf->getId(),nf->getName());
 		if(retVal == NFManager_NO_NF)
 		{
-			logger(ORCH_DEBUG_INFO, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" cannot be retrieved",nf->getName().c_str());
+
+			logger(ORCH_WARNING, MODULE_NAME, __FILE__, __LINE__, "NF \"%s\" cannot be retrieved",nf->getName().c_str());
 			return false;
 		}
 		else if(retVal == NFManager_SERVER_ERROR)
@@ -586,7 +587,7 @@ bool GraphManager::newGraph(highlevel::Graph *graph)
 	assert(tenantLSIs.count(graph->getID()) == 0);
 
 	/**
-	*	@outline:
+*	@outline:
 	*
 	*		0) check the validity of the graph
 	*		1) create the Openflow controller for the tenant LSI
