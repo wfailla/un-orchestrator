@@ -1803,7 +1803,7 @@ highlevel::Graph *GraphManager::updateGraph_add(string graphID, highlevel::Graph
 			for(list<struct nf_port_info>::iterator port_it = newPortList.begin(); port_it != newPortList.end(); port_it++)
 			{
 				stringstream ss;
-        			ss << lsiID << "_" << port_it->port_name;
+				ss << lsiID << "_" << port_it->port_name;
 				newPortsNamesAndID[ss.str()] = port_it->port_id;
 			}
 			lsi->setNetworkFunctionsPortsNameOnSwitch(anpo->getNfId(), newPortsNamesAndID);
