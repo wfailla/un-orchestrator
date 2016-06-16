@@ -333,7 +333,8 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 	}
 
 	/* Physical ports */
-	char *tmp_physical_ports = new char[64];
+	char temp_physical_ports_buf[PATH_MAX];
+	char *tmp_physical_ports = temp_physical_ports_buf;
 	strcpy(tmp_physical_ports, (char *)reader.Get("physical ports", "ports_name", "UNKNOWN").c_str());
 	if(strcmp(tmp_physical_ports, "UNKNOWN") != 0 && strcmp(tmp_physical_ports, "") != 0)
 	{
@@ -346,7 +347,7 @@ bool parse_config_file(char *config_file_name, int *rest_port, bool *cli_auth, c
 		}
 		tmp_physical_ports[strlen(tmp_physical_ports)-1] = '\0';
 		tmp_physical_ports++;
-		
+
 		//the string just read must be tokenized
 		char delimiter[] = " ";
 	 	char * pnt;
